@@ -1,0 +1,6 @@
+export const TipoColaboracion = {
+  GRATUITA: "GRATUITA",
+  INCENTIVO: "INCENTIVO",
+  CONTRATACION: "CONTRATACION",
+}
+
