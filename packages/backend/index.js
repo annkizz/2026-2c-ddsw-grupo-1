@@ -12,8 +12,11 @@ app.use(
   }),
 );
 
-app.get("/hello", (req, res) => {
-  res.json({ message: "hello world" });
+app.get("/healthcheck", (req, res) => {
+  res.status(200).json({ 
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.listen(process.env.SERVER_PORT, () => {

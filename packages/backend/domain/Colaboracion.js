@@ -1,10 +1,7 @@
 export class Colabooracion {
-    constructor(proyecto) {
-        this.proyecto = this.proyecto
-        this.colaboradores = []
-    }
-
-    agregarColaborador(colaborador) {
-        this.colaboradores.push(colaborador)
+    constructor(proyecto, colaborador, fecha) {
+        this.proyecto = proyecto;
+        this.colaborador = colaborador;
+        this.fecha = fecha;
     }
 }

@@ -6,7 +6,8 @@ export class Colaborador {
     apellido,
     presentacion,
     pronombres,
-    idColaborador
+    idColaborador,
+    habilidades
     ) {
         this.nombreFantasia = nombreFantasia;
         this.usuarioGitHub = usuarioGitHub;
@@ -15,6 +16,7 @@ export class Colaborador {
         this.presentacion = presentacion;
         this.pronombres = pronombres;
         this.idColaborador = idColaborador;
+        this.habilidades = habilidades;
     }
 
    anotarse(proyecto) {
