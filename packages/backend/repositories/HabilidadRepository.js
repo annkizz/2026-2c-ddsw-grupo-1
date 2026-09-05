@@ -1,14 +1,14 @@
 import { HabilidadProyecto } from "../domain/HabilidadProyecto.js"
 
 const habilidadesIniciales = [
-    { titulo: "Desarrollo Web React", descripcion: "desarrollando ando" },
-    { titulo: "Testing E2E con Cypress", descripcion: "no se que es cypress" },
-    { titulo: "buscando a nemo", descripcion: "pez azul"}
+    { titulo: "Desarrollo Web React" },
+    { titulo: "Testing E2E con Cypress" },
+    { titulo: "buscando a nemo"}
 ]
 
 export class HabilidadRepository {
     constructor() {
-        this.habilidades = habilidadesIniciales.map((habilidad) => new HabilidadProyecto(habilidad.titulo, habilidad.descripcion))
+        this.habilidades = habilidadesIniciales.map((habilidad) => new HabilidadProyecto(habilidad.titulo))
     }
 
     obtenerTodos() {

@@ -10,7 +10,7 @@ export class HabilidadService {
     crear = (habilidadNueva) => {
         const habilidadExistente = this.habilidadRepository.encontrarPorTitulo(habilidadNueva.titulo)
         if (!habilidadExistente) {
-            const habilidad = new HabilidadProyecto(habilidadNueva.titulo, habilidadNueva.descripcion);
+            const habilidad = new HabilidadProyecto(habilidadNueva.titulo);
             return this.habilidadRepository.save(habilidad);
         }
         throw new ConflictError ("el producto ya existe!!")

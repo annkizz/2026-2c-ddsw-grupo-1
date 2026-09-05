@@ -4,7 +4,6 @@ import { z } from 'zod'
 
 const habilidadSchema = z.object({
     titulo: z.string(),
-    descripcion: z.string().min(2).max(100)
 }).strict()
 
 export class HabilidadController {
