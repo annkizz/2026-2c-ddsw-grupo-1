@@ -1,4 +1,4 @@
-export class Colabooracion {
+export class Colaboracion {
     constructor(proyecto, colaborador, fecha) {
         this.proyecto = proyecto;
         this.colaborador = colaborador;
