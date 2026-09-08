@@ -17,6 +17,7 @@ export class Colaborador {
     this.pronombres = pronombres;
     this.idColaborador = idColaborador;
     this.habilidades = habilidades;
+    this.proyectos = [];
   }
 
   anotarse(proyecto) {

@@ -112,8 +112,59 @@ const swaggerSpec = {
         },
       },
     },
+        "/colaboradoras": {
+      get: {
+        summary: "Obtiene todas las personas colaboradoras",
+        responses: {
+          200: {
+            description: "Lista de colaboradoras",
+          },
+        },
+      },
+      post: {
+        summary: "Crea una persona colaboradora",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["habilidades"],
+                properties: {
+                  nombreFantasia: { type: "string", example: "Anon_42" },
+                  usuarioGitHub: { type: "string", example: "cande-dev" },
+                  nombre: { type: "string", example: "Candela" },
+                  apellido: { type: "string", example: "Perez" },
+                  presentacion: {
+                    type: "string",
+                    example: "Estudiante de Diseño Industral, disponible fines de semana",
+                  },
+                  pronombres: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["ella", "elle"],
+                  },
+                  habilidades: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Modelado 3D"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: "Colaboradora creada" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Alguna habilidad indicada no existe" },
+        },
+      },
+    },
   },
 };
+
+
 
 export default swaggerSpec;
 
