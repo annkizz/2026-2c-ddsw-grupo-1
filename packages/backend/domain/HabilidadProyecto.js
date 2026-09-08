@@ -1,5 +1,5 @@
 export class HabilidadProyecto {
-    constructor(titulo) {
-        this.titulo = titulo;
-    }
+  constructor(titulo) {
+    this.titulo = titulo;
+  }
 }

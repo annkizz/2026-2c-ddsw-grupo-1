@@ -1,4 +1,4 @@
 export const Estado = {
-    ACTIVO: 'ACTIVO',
-    FINALIZADO: 'FINALIZADO',
+  ACTIVO: "ACTIVO",
+  FINALIZADO: "FINALIZADO",
 };

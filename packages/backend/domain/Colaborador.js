@@ -1,5 +1,5 @@
 export class Colaborador {
-    constructor(
+  constructor(
     nombreFantasia,
     usuarioGitHub,
     nombre,
@@ -7,21 +7,21 @@ export class Colaborador {
     presentacion,
     pronombres,
     idColaborador,
-    habilidades
-    ) {
-        this.nombreFantasia = nombreFantasia;
-        this.usuarioGitHub = usuarioGitHub;
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.presentacion = presentacion;
-        this.pronombres = pronombres;
-        this.idColaborador = idColaborador;
-        this.habilidades = habilidades;
-    }
+    habilidades,
+  ) {
+    this.nombreFantasia = nombreFantasia;
+    this.usuarioGitHub = usuarioGitHub;
+    this.nombre = nombre;
+    this.apellido = apellido;
+    this.presentacion = presentacion;
+    this.pronombres = pronombres;
+    this.idColaborador = idColaborador;
+    this.habilidades = habilidades;
+  }
 
-   anotarse(proyecto) {
+  anotarse(proyecto) {
     if (proyecto.aceptarColaborador()) {
-    this.proyectos.push(proyecto)}
+      this.proyectos.push(proyecto);
     }
+  }
 }
-

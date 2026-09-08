@@ -3,5 +3,4 @@ export const TipoColectivo = {
   ASOCIACIONES_BARRIALES: "ASOCIACIONES_BARRIALES",
   ONG: "ONG",
   ASAMBLEA: "ASAMBLEA",
-}
-
+};
