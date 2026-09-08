@@ -7,7 +7,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: "http://localhost:3001",
+      url: "http://localhost:8000",
     },
   ],
 };
@@ -74,7 +74,46 @@ const swaggerSpec = {
         },
       },
     },
+    "/habilidades": {
+      get: {
+        summary: "Obtiene todas las habilidades",
+        responses: {
+          200: {
+            description: "Lista de habilidades",
+          },
+        },
+      },
+      post: {
+        summary: "Crea una habilidad",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["titulo"],
+                properties: {
+                  titulo: {
+                    type: "string",
+                    example: "Diseño gráfico",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Habilidad creada",
+          },
+          400: {
+            description: "Datos inválidos",
+          },
+        },
+      },
+    },
   },
 };
 
 export default swaggerSpec;
+
