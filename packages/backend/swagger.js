@@ -161,6 +161,58 @@ const swaggerSpec = {
         },
       },
     },
+    "/proyectos": {
+      get: {
+        summary: "Obtiene todos los proyectos",
+        responses: {
+          200: { description: "Lista de proyectos" },
+        },
+      },
+      post: {
+        summary: "Crea un nuevo proyecto para un colectivo",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_colectivo", "titulo", "descripcion", "habilidades", "compromiso", "modalidadColaboracion"],
+                properties: {
+                  id_colectivo: { type: "string", example: "a1b2c3d4-..." },
+                  titulo: { type: "string", example: "Desarrollo de plataforma web" },
+                  descripcion: { type: "string", example: "Necesitamos programadores para la web solidaria" },
+                  habilidades: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "string" },
+                    example: ["Desarrollo Web", "Node.js"],
+                  },
+                  compromiso: {
+                    type: "object",
+                    required: ["tipoCompromiso", "horas"],
+                    properties: {
+                      tipoCompromiso: { type: "string", enum: ["TOTALES", "SEMANALES", "MENSUALES"] },
+                      horas: { type: "number", exclusiveMinimum: 0, example: 10 },
+                    },
+                  },
+                  modalidadColaboracion: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "string", enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"] },
+                    example: ["GRATUITA"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: "Proyecto creado exitosamente" },
+          400: { description: "Datos inválidos o faltan campos obligatorios" },
+          404: { description: "El colectivo o alguna de las habilidades requeridas no existe" },
+        },
+      },
+    },
   },
 };
 
