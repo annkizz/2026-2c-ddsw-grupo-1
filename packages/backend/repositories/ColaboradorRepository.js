@@ -7,14 +7,14 @@ export class ColaboradorRepository{
         return this.colaboradores;
     }
 
-    encontrarPorId(unColaborador) {
+    encontrarPorId(idColaborador) {
         return this.colaboradores.find(
             (colaborador) => colaborador.id_colaborador === idColaborador);
     }
 
     save(unColaborador){
         const indice = this.colaboradores.findIndex(
-            (colaborador) => colaboradores.id_colaborador === unColaborador.id_colaborador,
+            (colaborador) => colaborador.id_colaborador === unColaborador.id_colaborador,
         );
 
         if(indice === -1){
