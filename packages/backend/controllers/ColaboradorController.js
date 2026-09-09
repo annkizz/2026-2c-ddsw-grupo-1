@@ -4,7 +4,7 @@ import { ColaboradorService } from "../services/ColaboradorService.js"
 
 const colaborador = z.object({
     nombreFantasia: z.string().optional(),
-    usuarioGitHub: z.string.optional(),
+    usuarioGitHub: z.string().optional(),
     nombre: z.string().optional(),
     apellido: z.string().optional(),
     presentacion: z.string().min(1),
