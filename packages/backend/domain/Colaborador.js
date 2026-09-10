@@ -17,12 +17,16 @@ export class Colaborador {
     this.pronombres = pronombres;
     this.idColaborador = idColaborador;
     this.habilidades = habilidades;
-    this.proyectos = [];
+    this.colaboraciones = [];
   }
 
   anotarse(proyecto) {
     if (proyecto.aceptarColaborador()) {
       this.proyectos.push(proyecto);
     }
+  }
+
+  agregarColaboracion = (nuevaColaboracion) => {
+    this.colaboraciones.push(nuevaColaboracion);
   }
 }

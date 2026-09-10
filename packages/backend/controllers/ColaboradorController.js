@@ -9,7 +9,6 @@ const colaborador = z.object({
     apellido: z.string().optional(),
     presentacion: z.string().min(1),
     pronombres:  z.array((z.string())).min(1),
-    proyectos: z.array(z.string()).min(0),
     habilidades: z.array(z.string()).min(1),
 }).strict();
 

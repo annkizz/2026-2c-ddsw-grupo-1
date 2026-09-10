@@ -104,7 +104,7 @@ export class ProyectoService {
   }
 
   crearColaboracion(proyecto, colaboradorId) {
-    const colaborador = this.colaboradorService.obtenerPorId(colaboradorId);
+    const colaborador = this.colaboradorService.obtenerPorId(colaboradorId); // TO-DO: Corregir
 
     if(colaborador){
       if(this.colaboradorPerteneceAProyecto(proyecto.id_proyecto, colaboradorId)) {
