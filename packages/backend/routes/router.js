@@ -37,6 +37,7 @@ const colaboradorController = new ColaboradorController(colaboradorService);
 const proyectoService = new ProyectoService(
   new ProyectoRepository(),
   habilidadRepository,
+  colaboradorService,
   colectivoRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);

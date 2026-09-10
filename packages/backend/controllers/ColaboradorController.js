@@ -30,7 +30,7 @@ crear(req, res) {
     res.status(201).json(colaboradorNuevo)
     }
 
-    obtenerTodos(req,rest){
+    obtenerTodos = (req,res) => {
         const colaboradores = this.colaboradorService.obtenerTodos();
         res.status(200).json(colaboradores)
     }

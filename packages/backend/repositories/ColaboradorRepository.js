@@ -14,7 +14,7 @@ export class ColaboradorRepository{
 
     save(unColaborador){
         const indice = this.colaboradores.findIndex(
-            (colaborador) => colaboradores.id_colaborador === unColaborador.id_colaborador,
+            (colaborador) => this.colaboradores.id_colaborador === unColaborador.id_colaborador,
         );
 
         if(indice === -1){

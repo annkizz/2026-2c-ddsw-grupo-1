@@ -42,4 +42,8 @@ export class ColaboradorService {
   obtenerTodos() {
     return this.colaboradorRepository.obtenerTodos();
   }
+
+  obtenerPorId = (colaboradorId) => {
+    return this.obtenerTodos().find((c)=> c.idColaborador == colaboradorId);
+  }
 }

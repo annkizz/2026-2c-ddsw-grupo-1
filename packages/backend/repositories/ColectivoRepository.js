@@ -7,8 +7,8 @@ export class ColectivoRepository {
     return this.colectivos;
   }
 
-  encontrarPorId(id) {
-    return this.colectivos.find((unColectivo) => unColectivo.id === id);
+  encontrarPorId = (id) => {
+    return this.colectivos.find((unColectivo) => unColectivo.id_colectivo === id);
   }
 
   save(unColectivo) {

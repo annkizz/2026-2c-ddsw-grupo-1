@@ -1,10 +1,17 @@
+import { Colaboracion } from "../domain/Colaboracion.js";
+
 export class ProyectoRepository {
   constructor() {
     this.proyectos = [];
+    this.colaboraciones = [];
   }
 
   obtenerTodos() {
     return this.proyectos;
+  }
+
+  obtenerTodasColaboraciones = () => {
+    return this.colaboraciones;
   }
 
   encontrarPorId(idProyecto) {
@@ -26,4 +33,10 @@ export class ProyectoRepository {
     this.proyectos[indice] = unProyecto;
     return unProyecto;
   }
+
+  saveColaboracion = (colaboracion) => {
+    const indice = this.colaboraciones.push(colaboracion);
+  }
+
+
 }
