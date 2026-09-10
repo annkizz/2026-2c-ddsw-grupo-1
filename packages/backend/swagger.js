@@ -213,7 +213,33 @@ const swaggerSpec = {
         },
       },
     },
-  },
+
+    "/proyectos/<id>/colaboracion": {
+      post : {
+        summary: "Crea una nueva colaboración entre un Proyecto y un Colaborador.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_colaborador"],
+                properties: {
+                  id_colaborador: { type: "string", example: "a1b2c3d4-..." },
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: "Colaboración creada exitosamente" },
+          400: { description: "Datos inválidos o faltan campos obligatorios" },
+          404: { description: "El Proyecto o el Colaborador no existe." },
+        },
+      }
+
+  }
+}
 };
 
 
