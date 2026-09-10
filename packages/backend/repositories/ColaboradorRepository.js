@@ -7,7 +7,7 @@ export class ColaboradorRepository{
         return this.colaboradores;
     }
 
-    encontrarPorId(unColaborador) {
+    encontrarPorId(idColaborador) {
         return this.colaboradores.find(
             (colaborador) => colaborador.id_colaborador === idColaborador);
     }
