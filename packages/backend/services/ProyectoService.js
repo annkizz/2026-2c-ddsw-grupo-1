@@ -29,7 +29,7 @@ export class ProyectoService {
       );
 
       if (!colectivo) {
-        throw new NotFoundError("el colectivo no existe");
+        throw new NotFoundError("el colectivo no existe","COLECTIVO_NO_ENCONTRADO");
       }
     }
 
@@ -38,7 +38,7 @@ export class ProyectoService {
         this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
 
       if (!habilidad) {
-        throw new NotFoundError(`la habilidad ${tituloHabilidad} no existe`);
+        throw new NotFoundError("la habilidad ${tituloHabilidad} no existe","HABILIDAD_NO_ENCONTRADA");
       }
 
       return habilidad;

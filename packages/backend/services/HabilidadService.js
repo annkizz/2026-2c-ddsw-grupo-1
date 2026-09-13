@@ -15,7 +15,7 @@ export class HabilidadService {
       const habilidad = new HabilidadProyecto(habilidadNueva.titulo);
       return this.habilidadRepository.save(habilidad);
     }
-    throw new ConflictError("La habilidad ya existe!!");
+    throw new ConflictError("La habilidad ya existe!!", "HABILIDAD_YA_EXISTE");
   };
 
   obtenerTodos() {

@@ -18,19 +18,23 @@ export class HabilidadRepository {
   }
 
   encontrarPorTitulo(titulo) {
+    const tituloNormalizado = titulo.trim().toLowerCase();
     return this.habilidades.find(
-      (unaHabilidad) => unaHabilidad.titulo === titulo,
-    );
+      (unaHabilidad) =>
+      unaHabilidad.titulo.trim().toLowerCase() === tituloNormalizado,
+  );
   }
 
   save(unaHabilidad) {
+    const tituloNormalizado = unaHabilidad.titulo.trim().toLowerCase();
     const indice = this.habilidades.findIndex(
-      (p) => p.titulo === unaHabilidad.titulo,
-    );
+      (p) => p.titulo.trim().toLowerCase() === tituloNormalizado);
+
     if (indice === -1) {
       this.habilidades.push(unaHabilidad);
       return unaHabilidad;
     }
+    
     this.habilidades[indice] = unaHabilidad;
     return unaHabilidad;
   }

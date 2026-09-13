@@ -4,6 +4,8 @@ import cors from "cors";
 import router from "./routes/router.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
+import { errorHandler } from "./middlewares/ErrorHandler.js";
+import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 
 const app = express();
 app.use(express.json());
@@ -24,6 +26,9 @@ app.get("/healthcheck", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(process.env.SERVER_PORT, () => {
   console.log(`Backend escuchando en puerto ${process.env.SERVER_PORT}`);

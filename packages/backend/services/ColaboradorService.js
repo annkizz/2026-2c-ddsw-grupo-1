@@ -19,7 +19,8 @@ export class ColaboradorService {
         this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
 
       if (!habilidad) {
-        throw new NotFoundError(`la habilidad ${tituloHabilidad} no existe`);
+        throw new NotFoundError(
+          `la habilidad ${tituloHabilidad} no existe`, "HABILIDAD_NO_ENCONTRADA");
       }
 
       return habilidad;
@@ -44,6 +45,6 @@ export class ColaboradorService {
   }
 
   obtenerPorId = (colaboradorId) => {
-    return this.obtenerTodos().find((c)=> c.idColaborador == colaboradorId);
-  }
+    return this.obtenerTodos().find((c) => c.idColaborador == colaboradorId);
+  };
 }
