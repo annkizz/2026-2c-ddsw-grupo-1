@@ -3,7 +3,7 @@ import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
-const proyectoSchema = z
+export const proyectoSchema = z
   .object({
     id_colectivo: z.string().trim().min(1),
     titulo: z.string().trim().min(1),
@@ -31,13 +31,7 @@ export class ProyectoController {
   }
 
   crear = (req, res) => {
-    const resultadoParseado = proyectoSchema.safeParse(req.body);
-
-    if (!resultadoParseado.success) {
-      throw new BadRequestError("los datos ingresados son invalidos :(");
-    }
-
-    const proyectoNuevo = this.proyectoService.crear(resultadoParseado.data);
+    const proyectoNuevo = this.proyectoService.crear(req.body);
     res.status(201).json(proyectoNuevo);
   }
 

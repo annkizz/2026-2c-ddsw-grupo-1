@@ -1,4 +1,6 @@
 import express from "express";
+import { validate } from "../middlewares/validate.js";
+import { colectivoSchema } from "../controllers/ColectivoController.js"; 
 
 export function crearColectivoRouter(colectivoController) {
   const router = express.Router();
@@ -6,7 +8,8 @@ export function crearColectivoRouter(colectivoController) {
   router
     .route("/")
     .get((req, res) => colectivoController.obtenerTodos(req, res))
-    .post((req, res) => colectivoController.crear(req, res));
+    .post(validate(colectivoSchema),
+      (req, res) => colectivoController.crear(req, res));
 
   return router;
 }

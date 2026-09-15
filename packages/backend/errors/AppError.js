@@ -4,6 +4,7 @@ export class AppError extends Error {
     this.status = 500;
     this.codigo = codigo;
     this.timestamp = new Date().toISOString();
+    this.esAppError = true;
   }
 }
 
