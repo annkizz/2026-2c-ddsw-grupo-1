@@ -5,7 +5,7 @@ import { ProyectoService } from "../services/ProyectoService.js";
 
 export const proyectoSchema = z
   .object({
-    id_colectivo: z.string().trim().min(1),
+    idColectivo: z.string().trim().min(1),
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     habilidades: z.array(z.string().trim().min(1)).min(1),
@@ -21,7 +21,7 @@ export const proyectoSchema = z
 
 const idColaboradorSchema = z
   .object({
-    id_colaborador: z.string().trim().min(1)
+    idColaborador: z.string().trim().min(1)
   })
   .strict();
 
@@ -55,7 +55,7 @@ export class ProyectoController {
       throw new BadRequestError("los datos ingresados son invalidos :(");
     }
 
-    const colaboradorId = resultado.data.id_colaborador;
+    const colaboradorId = resultado.data.idColaborador;
     
     const colaboracion = this.proyectoService.crearColaboracion(proyectoExistente,colaboradorId)
     

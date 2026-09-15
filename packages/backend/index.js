@@ -4,7 +4,7 @@ import cors from "cors";
 import router from "./routes/router.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
-import { errorHandler } from "./middlewares/ErrorHandler.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 
 const app = express();

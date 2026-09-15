@@ -1,7 +1,7 @@
 export class Colectivo {
-  constructor(nombre, id_colectivo, descripcion, ubicacion, tipoDeColectivo) {
+  constructor(nombre, idColectivo, descripcion, ubicacion, tipoDeColectivo) {
     this.nombre = nombre;
-    this.id_colectivo = id_colectivo;
+    this.idcolectivo = idColectivo;
     this.descripcion = descripcion;
     this.ubicacion = ubicacion;
     this.tipoDeColectivo = tipoDeColectivo;

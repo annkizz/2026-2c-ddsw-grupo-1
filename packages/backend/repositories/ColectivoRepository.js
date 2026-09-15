@@ -8,11 +8,11 @@ export class ColectivoRepository {
   }
 
   encontrarPorId = (id) => {
-    return this.colectivos.find((unColectivo) => unColectivo.id_colectivo === id);
+    return this.colectivos.find((unColectivo) => unColectivo.idColectivo === id);
   }
 
   save(unColectivo) {
-    const indice = this.colectivos.findIndex((p) => p.id === unColectivo.id);
+    const indice = this.colectivos.findIndex((p) => p.idColectivo === unColectivo.idColectivo);
     if (indice === -1) {
       this.colectivos.push(unColectivo);
       return unColectivo;

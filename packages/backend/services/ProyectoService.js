@@ -25,7 +25,7 @@ export class ProyectoService {
   crear = (datosProyecto) => {
     if (this.colectivoRepository) {
       const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.id_colectivo,
+        datosProyecto.idColectivo,
       );
 
       if (!colectivo) {
@@ -62,7 +62,7 @@ export class ProyectoService {
 
     if (this.colectivoRepository) {
       const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.id_colectivo,
+        datosProyecto.idColectivo,
       );
       colectivo.agregarProyecto(proyecto);
     }
@@ -75,7 +75,7 @@ export class ProyectoService {
   }
 
   obtenerProyectoPorId(id) {
-    return this.obtenerTodos().find((p) => p.id_proyecto === id);
+    return this.obtenerTodos().find((p) => p.idProyecto === id);
   }
 
   obtenerTodasColaboraciones = () => {
@@ -84,7 +84,7 @@ export class ProyectoService {
 
   obtenerColaboracionPorIdProyecto = (proyectoId) => {
     if(this.obtenerTodasColaboraciones){
-      return this.obtenerTodasColaboraciones().find((c)=> c.proyecto.id_proyecto == proyectoId);
+      return this.obtenerTodasColaboraciones().find((c)=> c.proyecto.idProyecto == proyectoId);
     } else {
       return;
     }
@@ -107,7 +107,7 @@ export class ProyectoService {
     const colaborador = this.colaboradorService.obtenerPorId(colaboradorId); // TO-DO: Corregir
 
     if(colaborador){
-      if(this.colaboradorPerteneceAProyecto(proyecto.id_proyecto, colaboradorId)) {
+      if(this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
         console.log("Colaboración ya existente.")
         //res.status(409).json({error: "Colaboración ya existente."})
         //return 409; 

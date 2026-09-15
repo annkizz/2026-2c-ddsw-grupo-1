@@ -176,9 +176,9 @@ const swaggerSpec = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_colectivo", "titulo", "descripcion", "habilidades", "compromiso", "modalidadColaboracion"],
+                required: ["idColectivo", "titulo", "descripcion", "habilidades", "compromiso", "modalidadColaboracion"],
                 properties: {
-                  id_colectivo: { type: "string", example: "a1b2c3d4-..." },
+                  idColectivo: { type: "string", example: "a1b2c3d4-..." },
                   titulo: { type: "string", example: "Desarrollo de plataforma web" },
                   descripcion: { type: "string", example: "Necesitamos programadores para la web solidaria" },
                   habilidades: {
@@ -223,9 +223,9 @@ const swaggerSpec = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_colaborador"],
+                required: ["idColaborador"],
                 properties: {
-                  id_colaborador: { type: "string", example: "a1b2c3d4-..." },
+                  idColaborador: { type: "string", example: "a1b2c3d4-..." },
                 }
               }
             }

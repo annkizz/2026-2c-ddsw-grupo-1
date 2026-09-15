@@ -9,12 +9,12 @@ export class ColaboradorRepository{
 
     encontrarPorId(idColaborador) {
         return this.colaboradores.find(
-            (colaborador) => colaborador.id_colaborador === idColaborador);
+            (colaborador) => colaborador.idColaborador === idColaborador);
     }
 
     save(unColaborador){
         const indice = this.colaboradores.findIndex(
-            (colaborador) => this.colaboradores.id_colaborador === unColaborador.id_colaborador,
+            (colaborador) => this.colaboradores.idColaborador === unColaborador.idColaborador,
         );
 
         if(indice === -1){
