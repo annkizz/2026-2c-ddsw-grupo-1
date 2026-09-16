@@ -18,24 +18,31 @@ export class HabilidadRepository {
   }
 
   encontrarPorTitulo(titulo) {
-    const tituloNormalizado = titulo.trim().toLowerCase();
+    const tituloNormalizado = normalizarHabilidad(titulo);
     return this.habilidades.find(
-      (unaHabilidad) =>
-      unaHabilidad.titulo.trim().toLowerCase() === tituloNormalizado,
-  );
+      (unaHabilidad) => normalizarHabilidad(unaHabilidad.titulo) === tituloNormalizado,
+    );
   }
 
   save(unaHabilidad) {
-    const tituloNormalizado = unaHabilidad.titulo.trim().toLowerCase();
+    const tituloNormalizado = normalizarHabilidad(unaHabilidad.titulo);
     const indice = this.habilidades.findIndex(
-      (p) => p.titulo.trim().toLowerCase() === tituloNormalizado);
+      (p) => normalizarHabilidad(p.titulo) === tituloNormalizado,
+    );
 
     if (indice === -1) {
       this.habilidades.push(unaHabilidad);
       return unaHabilidad;
     }
-    
+
     this.habilidades[indice] = unaHabilidad;
     return unaHabilidad;
   }
+}
+
+export function normalizarHabilidad(texto = "") {
+  return String(texto)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+(.)/g, (_, letra) => letra.toUpperCase());
 }

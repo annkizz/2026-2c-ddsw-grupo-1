@@ -4,7 +4,10 @@ import { Estado } from "../domain/Estado.js";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
-import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
+import {
+  HabilidadRepository,
+  normalizarHabilidad,
+} from "../repositories/HabilidadRepository.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ColaboradorService} from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
@@ -97,10 +100,16 @@ export class ProyectoService {
   }
 
   verificarHabilidades = (proyecto , colaborador) => {
-    const habilidadesNecesarias = proyecto.habilidades.map((h)=> h.titulo);
-    const habilidadesColaborador = colaborador.habilidades.map((h)=> h.nombre);
+    const habilidadesNecesarias = proyecto.habilidades.map((h) =>
+      normalizarHabilidad(h.titulo),
+    );
+    const habilidadesColaborador = colaborador.habilidades.map((h) =>
+      normalizarHabilidad(h.nombre),
+    );
 
-    return habilidadesNecesarias.some((habilidad) => habilidadesColaborador.includes(habilidad));
+    return habilidadesNecesarias.some((habilidad) =>
+      habilidadesColaborador.includes(habilidad),
+    );
   }
 
   crearColaboracion(proyecto, colaboradorId) {
@@ -115,7 +124,11 @@ export class ProyectoService {
       } else {
         
         if(!this.verificarHabilidades(proyecto, colaborador)){
-          const nuevaColaboracion = new Colaboracion(proyecto, colaborador, Date.now());
+          const nuevaColaboracion = new Colaboracion(
+            proyecto,
+            colaborador,
+            new Date().toISOString(),
+          );
           this.proyectoRepository.saveColaboracion(nuevaColaboracion);
           return nuevaColaboracion;
 
