@@ -30,6 +30,8 @@ app.get("/healthcheck", (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(process.env.SERVER_PORT, () => {
-  console.log(`Backend escuchando en puerto ${process.env.SERVER_PORT}`);
+const PORT = process.env.SERVER_PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Backend escuchando en puerto ${PORT}`);
 });
