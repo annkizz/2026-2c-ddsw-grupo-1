@@ -8,8 +8,12 @@ import {
   HabilidadRepository,
   normalizarHabilidad,
 } from "../repositories/HabilidadRepository.js";
-import { NotFoundError } from "../errors/AppError.js";
-import { ColaboradorService} from "./ColaboradorService.js";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from "../errors/AppError.js";
+import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 
 export class ProyectoService {
@@ -81,61 +85,86 @@ export class ProyectoService {
     return this.obtenerTodos().find((p) => p.idProyecto === id);
   }
 
-  obtenerTodasColaboraciones = () => {
-    return this.proyectoRepository.obtenerTodasColaboraciones(); 
+  cerrarProyecto(idProyecto) {
+    const proyecto = this.obtenerProyectoPorId(idProyecto);
+
+    if (!proyecto) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+
+    proyecto.cerrar();
+    return proyecto;
   }
+
+  obtenerTodasColaboraciones = () => {
+    return this.proyectoRepository.obtenerTodasColaboraciones();
+  };
 
   obtenerColaboracionPorIdProyecto = (proyectoId) => {
-    if(this.obtenerTodasColaboraciones){
-      return this.obtenerTodasColaboraciones().find((c)=> c.proyecto.idProyecto == proyectoId);
-    } else {
-      return;
+    if (this.obtenerTodasColaboraciones) {
+      return this.obtenerTodasColaboraciones().find(
+        (c) => c.proyecto.idProyecto === proyectoId,
+      );
     }
-    
-  }
+
+    return undefined;
+  };
 
   colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
-    if(this.obtenerColaboracionPorIdProyecto(proyectoId)){
-    return this.obtenerColaboracionPorIdProyecto(proyectoId).colaborador.idColaborador == colaboradorId ; }
-  }
+    const colaboracion = this.obtenerColaboracionPorIdProyecto(proyectoId);
+    return colaboracion && colaboracion.colaborador.idColaborador === colaboradorId;
+  };
 
-  verificarHabilidades = (proyecto , colaborador) => {
+  verificarHabilidades = (proyecto, colaborador) => {
     const habilidadesNecesarias = proyecto.habilidades.map((h) =>
       normalizarHabilidad(h.titulo),
     );
     const habilidadesColaborador = colaborador.habilidades.map((h) =>
-      normalizarHabilidad(h.nombre),
+      normalizarHabilidad(h.titulo),
     );
 
     return habilidadesNecesarias.some((habilidad) =>
       habilidadesColaborador.includes(habilidad),
     );
-  }
+  };
 
   crearColaboracion(proyecto, colaboradorId) {
-    const colaborador = this.colaboradorService.obtenerPorId(colaboradorId); // TO-DO: Corregir
-
-    if(colaborador){
-      if(this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
-        console.log("Colaboración ya existente.")
-        //res.status(409).json({error: "Colaboración ya existente."})
-        //return 409; 
-
-      } else {
-        
-        if(!this.verificarHabilidades(proyecto, colaborador)){
-          const nuevaColaboracion = new Colaboracion(
-            proyecto,
-            colaborador,
-            new Date().toISOString(),
-          );
-          this.proyectoRepository.saveColaboracion(nuevaColaboracion);
-          return nuevaColaboracion;
-
-        } else {
-          console.log("No cumple con habilidades requeridas.")
-        }
-      }
+    if (proyecto.estaFinalizado()) {
+      throw new ConflictError(
+        "No se puede anotar a un proyecto finalizado",
+        "PROYECTO_FINALIZADO",
+      );
     }
+
+    const colaborador = this.colaboradorService.obtenerPorId(colaboradorId);
+
+    if (!colaborador) {
+      throw new NotFoundError(
+        "La colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+
+    if (this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
+      throw new ConflictError(
+        "La colaboradora ya está anotada en este proyecto",
+        "COLABORACION_YA_EXISTENTE",
+      );
+    }
+
+    if (!this.verificarHabilidades(proyecto, colaborador)) {
+      throw new BadRequestError(
+        "La colaboradora no cumple con las habilidades requeridas",
+        "HABILIDADES_INSUFICIENTES",
+      );
+    }
+
+    const nuevaColaboracion = new Colaboracion(
+      proyecto,
+      colaborador,
+      new Date().toISOString(),
+    );
+    this.proyectoRepository.saveColaboracion(nuevaColaboracion);
+    return nuevaColaboracion;
   }
 }

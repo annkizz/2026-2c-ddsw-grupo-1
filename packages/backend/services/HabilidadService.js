@@ -1,4 +1,7 @@
-import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
+import {
+  HabilidadRepository,
+  normalizarHabilidad,
+} from "../repositories/HabilidadRepository.js";
 import { HabilidadProyecto } from "../domain/HabilidadProyecto.js";
 import { ConflictError } from "../errors/AppError.js";
 
@@ -8,11 +11,12 @@ export class HabilidadService {
   }
 
   crear = (habilidadNueva) => {
+    const tituloNormalizado = normalizarHabilidad(habilidadNueva.titulo);
     const habilidadExistente = this.habilidadRepository.encontrarPorTitulo(
-      habilidadNueva.titulo,
+      tituloNormalizado,
     );
     if (!habilidadExistente) {
-      const habilidad = new HabilidadProyecto(habilidadNueva.titulo);
+      const habilidad = new HabilidadProyecto(tituloNormalizado);
       return this.habilidadRepository.save(habilidad);
     }
     throw new ConflictError("La habilidad ya existe!!", "HABILIDAD_YA_EXISTE");

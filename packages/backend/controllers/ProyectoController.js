@@ -19,9 +19,9 @@ export const proyectoSchema = z
   })
   .strict();
 
-const idColaboradorSchema = z
+export const idColaboradorSchema = z
   .object({
-    idColaborador: z.string().trim().min(1)
+    idColaborador: z.string().trim().min(1),
   })
   .strict();
 
@@ -41,25 +41,41 @@ export class ProyectoController {
   }
  
   crearColaboracion(req, res) {
-    const proyectoId = req.params.id ;
-    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId) ;
+    const proyectoId = req.params.id;
+    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId);
 
-    if(!proyectoExistente){
-      throw new NotFoundError("Proyecto no encontrado");
+    if (!proyectoExistente) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
     }
 
-    const body = req.body ;
-    const resultado = idColaboradorSchema.safeParse(body)
-    
+    const body = req.body;
+    const resultado = idColaboradorSchema.safeParse(body);
+
     if (!resultado.success) {
-      throw new BadRequestError("los datos ingresados son invalidos :(");
+      throw new BadRequestError(
+        "los datos ingresados son invalidos :(",
+        "DATOS_COLABORACION_INVALIDOS",
+      );
     }
 
     const colaboradorId = resultado.data.idColaborador;
-    
-    const colaboracion = this.proyectoService.crearColaboracion(proyectoExistente,colaboradorId)
-    
-    res.status(201).json(colaboracion);
+    const colaboracion = this.proyectoService.crearColaboracion(
+      proyectoExistente,
+      colaboradorId,
+    );
 
-  } 
+    res.status(201).json(colaboracion);
+  }
+
+  cerrarProyecto(req, res) {
+    const proyectoId = req.params.id;
+    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId);
+
+    if (!proyectoExistente) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+
+    const proyectoCerrado = this.proyectoService.cerrarProyecto(proyectoId);
+    res.status(200).json(proyectoCerrado);
+  }
 }

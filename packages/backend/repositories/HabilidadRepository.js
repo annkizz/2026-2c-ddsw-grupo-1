@@ -1,7 +1,6 @@
 import { HabilidadProyecto } from "../domain/HabilidadProyecto.js";
 
 const habilidadesIniciales = [
-  { titulo: "Desarrollo Web React" },
   { titulo: "Testing E2E con Cypress" },
   { titulo: "buscando a nemo" },
 ];
