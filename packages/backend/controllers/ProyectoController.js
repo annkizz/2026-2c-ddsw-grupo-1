@@ -33,19 +33,23 @@ export class ProyectoController {
   crear = (req, res) => {
     const proyectoNuevo = this.proyectoService.crear(req.body);
     res.status(201).json(proyectoNuevo);
-  }
+  };
 
   obtenerTodos = (req, res) => {
     const proyectos = this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
-  }
- 
+  };
+
   crearColaboracion(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente =
+      this.proyectoService.obtenerProyectoPorId(proyectoId);
 
     if (!proyectoExistente) {
-      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
 
     const body = req.body;
@@ -69,10 +73,14 @@ export class ProyectoController {
 
   cerrarProyecto(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente =
+      this.proyectoService.obtenerProyectoPorId(proyectoId);
 
     if (!proyectoExistente) {
-      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
 
     const proyectoCerrado = this.proyectoService.cerrarProyecto(proyectoId);

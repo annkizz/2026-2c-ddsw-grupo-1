@@ -12,7 +12,7 @@ export class ProyectoRepository {
 
   obtenerTodasColaboraciones = () => {
     return this.colaboraciones;
-  }
+  };
 
   encontrarPorId(idProyecto) {
     return this.proyectos.find(
@@ -36,7 +36,5 @@ export class ProyectoRepository {
 
   saveColaboracion = (colaboracion) => {
     const indice = this.colaboraciones.push(colaboracion);
-  }
-
-
+  };
 }

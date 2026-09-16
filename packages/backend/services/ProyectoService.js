@@ -25,7 +25,7 @@ export class ProyectoService {
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
-    this.colaboradorService = colaboradorService ; 
+    this.colaboradorService = colaboradorService;
     this.colectivoRepository = colectivoRepository;
   }
 
@@ -36,7 +36,10 @@ export class ProyectoService {
       );
 
       if (!colectivo) {
-        throw new NotFoundError("el colectivo no existe","COLECTIVO_NO_ENCONTRADO");
+        throw new NotFoundError(
+          "el colectivo no existe",
+          "COLECTIVO_NO_ENCONTRADO",
+        );
       }
     }
 
@@ -45,7 +48,10 @@ export class ProyectoService {
         this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
 
       if (!habilidad) {
-        throw new NotFoundError("la habilidad ${tituloHabilidad} no existe","HABILIDAD_NO_ENCONTRADA");
+        throw new NotFoundError(
+          "la habilidad ${tituloHabilidad} no existe",
+          "HABILIDAD_NO_ENCONTRADA",
+        );
       }
 
       return habilidad;
@@ -89,7 +95,10 @@ export class ProyectoService {
     const proyecto = this.obtenerProyectoPorId(idProyecto);
 
     if (!proyecto) {
-      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
 
     proyecto.cerrar();
@@ -112,7 +121,9 @@ export class ProyectoService {
 
   colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
     const colaboracion = this.obtenerColaboracionPorIdProyecto(proyectoId);
-    return colaboracion && colaboracion.colaborador.idColaborador === colaboradorId;
+    return (
+      colaboracion && colaboracion.colaborador.idColaborador === colaboradorId
+    );
   };
 
   verificarHabilidades = (proyecto, colaborador) => {
@@ -145,7 +156,9 @@ export class ProyectoService {
       );
     }
 
-    if (this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
+    if (
+      this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)
+    ) {
       throw new ConflictError(
         "La colaboradora ya está anotada en este proyecto",
         "COLABORACION_YA_EXISTENTE",

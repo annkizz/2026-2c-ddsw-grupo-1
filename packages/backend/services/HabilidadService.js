@@ -12,9 +12,8 @@ export class HabilidadService {
 
   crear = (habilidadNueva) => {
     const tituloNormalizado = normalizarHabilidad(habilidadNueva.titulo);
-    const habilidadExistente = this.habilidadRepository.encontrarPorTitulo(
-      tituloNormalizado,
-    );
+    const habilidadExistente =
+      this.habilidadRepository.encontrarPorTitulo(tituloNormalizado);
     if (!habilidadExistente) {
       const habilidad = new HabilidadProyecto(tituloNormalizado);
       return this.habilidadRepository.save(habilidad);

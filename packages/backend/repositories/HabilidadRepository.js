@@ -19,7 +19,8 @@ export class HabilidadRepository {
   encontrarPorTitulo(titulo) {
     const tituloNormalizado = normalizarHabilidad(titulo);
     return this.habilidades.find(
-      (unaHabilidad) => normalizarHabilidad(unaHabilidad.titulo) === tituloNormalizado,
+      (unaHabilidad) =>
+        normalizarHabilidad(unaHabilidad.titulo) === tituloNormalizado,
     );
   }
 
