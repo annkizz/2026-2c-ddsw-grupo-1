@@ -28,11 +28,7 @@ docker build -t codigo-a-voluntad .
 ### Ejecutar el contenedor
 
 ```bash
-docker run -d --name api \
-  -p 3000:3000 \
-  -e SERVER_PORT=3000 \
-  --restart unless-stopped \
-  codigo-a-voluntad
+docker run -d --name api -p 3000:3000 codigo-a-voluntad
 ```
 
 Va a quedar disponible en el puerto `3000`.
@@ -54,7 +50,7 @@ docker logs api
 También se puede verificar el estado de la API accediendo al endpoint:
 
 ```text
-http://34.176.212.196:3000/healthcheck
+http://<IPPUBLICA>:3000/healthcheck
 ```
 
 La API debería responder con un estado `ok`.
@@ -67,9 +63,5 @@ Cuando haya nuevos cambios en el repositorio:
 git pull
 docker build -t codigo-a-voluntad .
 docker rm -f api
-docker run -d --name api \
-  -p 3000:3000 \
-  -e SERVER_PORT=3000 \
-  --restart unless-stopped \
-  codigo-a-voluntad
+docker run -d --name api -p 3000:3000 codigo-a-voluntad
 ```
