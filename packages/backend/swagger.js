@@ -138,7 +138,7 @@ const swaggerSpec = {
                   presentacion: {
                     type: "string",
                     example:
-                      "Estudiante de Diseño Industral, disponible fines de semana",
+                      "Estudiante de Diseño Industrial, disponible fines de semana",
                   },
                   pronombres: {
                     type: "array",
@@ -240,11 +240,19 @@ const swaggerSpec = {
         },
       },
     },
-
-    "/proyectos/<id>/colaboracion": {
+    "/proyectos/{id}/colaboraciones": {
       post: {
         summary:
-          "Crea una nueva colaboración entre un Proyecto y un Colaborador.",
+          "Crea una nueva colaboración entre un proyecto y una colaboradora.",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
         requestBody: {
           required: true,
           content: {
@@ -262,7 +270,31 @@ const swaggerSpec = {
         responses: {
           201: { description: "Colaboración creada exitosamente" },
           400: { description: "Datos inválidos o faltan campos obligatorios" },
-          404: { description: "El Proyecto o el Colaborador no existe." },
+          404: {
+            description: "El proyecto o la persona colaboradora no existe",
+          },
+          409: {
+            description:
+              "El proyecto está finalizado o la persona colaboradora ya está anotada",
+          },
+        },
+      },
+    },
+    "/proyectos/{id}/cierre": {
+      patch: {
+        summary: "Cierra un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: { description: "Proyecto cerrado exitosamente" },
+          404: { description: "Proyecto no encontrado" },
         },
       },
     },
