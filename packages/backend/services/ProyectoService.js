@@ -30,56 +30,24 @@ export class ProyectoService {
   }
 
   crear = (datosProyecto) => {
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
+  const colectivo = this.colectivoRepository.encontrarPorId(
+    datosProyecto.idColectivo,
+  );
 
-      if (!colectivo) {
-        throw new NotFoundError(
-          "el colectivo no existe",
-          "COLECTIVO_NO_ENCONTRADO",
-        );
-      }
-    }
-
-    const habilidades = datosProyecto.habilidades.map((tituloHabilidad) => {
-      const habilidad =
-        this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
-
-      if (!habilidad) {
-        throw new NotFoundError(
-          "la habilidad ${tituloHabilidad} no existe",
-          "HABILIDAD_NO_ENCONTRADA",
-        );
-      }
-
-      return habilidad;
-    });
-
-    const compromiso = new Compromiso(
-      datosProyecto.compromiso.tipoCompromiso,
-      datosProyecto.compromiso.horas,
-    );
+  if (!colectivo) {
+    throw new NotFoundError("el colectivo no existe", "COLECTIVO_NO_ENCONTRADO");
+  }
 
     const proyecto = new Proyecto(
       datosProyecto.titulo,
       datosProyecto.descripcion,
-      habilidades,
-      compromiso,
-      datosProyecto.modalidadColaboracion,
+      [], // perfiles
       Estado.ACTIVO,
       new Date(),
       randomUUID(),
     );
 
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
-      colectivo.agregarProyecto(proyecto);
-    }
-
+    colectivo.agregarProyecto(proyecto);
     return this.proyectoRepository.save(proyecto);
   };
 

@@ -30,7 +30,7 @@ export class PerfilController {
     }
 
     eliminar = async (req, res) => {
-        await this.perfilService.eliminar(req.params.id, req.params.perfilId);
+        await this.perfilService.eliminar(req.params.id, req.params.idPerfil);
         res.status(204).send();
     }
 }

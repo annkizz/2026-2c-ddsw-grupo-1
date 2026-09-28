@@ -33,40 +33,44 @@ export class PerfilService {
         return perfiles.map((perfil) => this.toDTO(perfil));
     }
 
-    async crear (idProyecto, datos) {
-        await this.validarProyecto(idProyecto);
+    async crear(idProyecto, datos) {
+    const proyecto = await this.validarProyecto(idProyecto);
 
-        const requeridas = await this.validarHabilidades(datos.habilidadesRequeridas);
-        const opcionales = await this.validarHabilidades(datos.habilidadesOpcionales);
+    const requeridas = await this.validarHabilidades(datos.habilidadesRequeridas);
+    const opcionales = await this.validarHabilidades(datos.habilidadesOpcionales);
 
-        const guardado = await this.perfilRepository.save({
-            proyecto: idProyecto,
-            descripcion: datos.descripcion,
-            habilidadesRequeridas: requeridas.map((h) => h.titulo),
-            habilidadesOpcionales: opcionales.map((h) => h.titulo),
-            compromiso: datos.compromiso,
-            });
+    const guardado = await this.perfilRepository.save({
+        proyecto: idProyecto,
+        descripcion: datos.descripcion,
+        habilidadesRequeridas: requeridas.map((h) => h.titulo),
+        habilidadesOpcionales: opcionales.map((h) => h.titulo),
+        compromiso: datos.compromiso,
+    });
 
-        return this.toDTO(guardado);
+    const dto = this.toDTO(guardado);
+    proyecto.perfiles.push(dto);
+    return dto;
     }
 
-    async eliminar (idProyecto, idPerfil) {
-        await this.validarProyecto(idProyecto);
+    async eliminar(idProyecto, idPerfil) {
+    const proyecto = await this.validarProyecto(idProyecto);
 
-        const perfil = await this.perfilRepository.buscarPorId(idPerfil);
+    const perfil = await this.perfilRepository.buscarPorId(idPerfil);
 
-        if (!perfil || perfil.proyecto !== idProyecto) {
-            throw new NotFoundError ("perfil no encontrado", "PERFIL_NO_ENCONTRADO")
-        }
+    if (!perfil || perfil.proyecto !== idProyecto) {
+        throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
+    }
 
-        await this.perfilRepository.eliminar(idPerfil);
+    await this.perfilRepository.eliminar(idPerfil);
+    proyecto.perfiles = proyecto.perfiles.filter((p) => p.idPerfil !== idPerfil);
     }
 
     async validarProyecto(idProyecto) {
-        const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
-        if (!proyecto) {
-            throw new NotFoundError ("proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
-        }
+    const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
+    if (!proyecto) {
+        throw new NotFoundError("proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+    return proyecto; // ahora lo devuelve
     }
 
     async validarHabilidades(titulos = []) {
