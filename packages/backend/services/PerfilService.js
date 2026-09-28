@@ -22,21 +22,22 @@ export class PerfilService {
         compromiso: {
             tipoCompromiso: perfil.compromiso.tipoCompromiso,
             horas: perfil.compromiso.horas,
+            tipoColaboracion: perfil.compromiso.tipoColaboracion
         },
-        modalidadColaboracion: perfil.modalidadColaboracion,
         };
     }
 
     async obtenerTodos(idProyecto) {
-        this.validadProyecto(idProyecto)
-        return this.perfilRepository.obtenerTodos();
+        await this.validarProyecto(idProyecto);
+        const perfiles = await this.perfilRepository.obtenerTodos(idProyecto);
+        return perfiles.map((perfil) => this.toDTO(perfil));
     }
 
     async crear (idProyecto, datos) {
-        this.validarProyecto(idProyecto);
+        await this.validarProyecto(idProyecto);
 
-        const requeridas = this.validarHabilidades(datos.habilidadesRequeridas);
-        const opcionales = this.validarHabilidades(datos.habilidadesOpcionales);
+        const requeridas = await this.validarHabilidades(datos.habilidadesRequeridas);
+        const opcionales = await this.validarHabilidades(datos.habilidadesOpcionales);
 
         const guardado = await this.perfilRepository.save({
             proyecto: idProyecto,
@@ -44,14 +45,13 @@ export class PerfilService {
             habilidadesRequeridas: requeridas.map((h) => h.titulo),
             habilidadesOpcionales: opcionales.map((h) => h.titulo),
             compromiso: datos.compromiso,
-            modalidadColaboracion: datos.modalidadColaboracion,
             });
 
         return this.toDTO(guardado);
     }
 
     async eliminar (idProyecto, idPerfil) {
-        this.validadProyecto(idProyecto)
+        await this.validarProyecto(idProyecto);
 
         const perfil = await this.perfilRepository.buscarPorId(idPerfil);
 
@@ -62,21 +62,22 @@ export class PerfilService {
         await this.perfilRepository.eliminar(idPerfil);
     }
 
-    validarProyecto(idProyecto) {
-        const proyecto = this.proyectoRepository.buscarPorId(idProyecto);
-
+    async validarProyecto(idProyecto) {
+        const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
         if (!proyecto) {
             throw new NotFoundError ("proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
         }
     }
 
-    validarHabilidades(titulos = []) {
-    return titulos.map((titulo) => {
-        const habilidad = this.habilidadRepository.encontrarPorTitulo(titulo);
-        if (!habilidad) {
-            throw new NotFoundError(`la habilidad ${titulo} no existe`, "HABILIDAD_NO_ENCONTRADA");
-        }
-        return habilidad;
-        });
+    async validarHabilidades(titulos = []) {
+        return Promise.all(
+        titulos.map(async (titulo) => {
+            const habilidad = await this.habilidadRepository.encontrarPorTitulo(titulo);
+            if (!habilidad) {
+            throw new NotFoundError("la habilidad ${titulo} no existe", "HABILIDAD_NO_ENCONTRADA",);
+            }
+            return habilidad;
+        }),
+        );
     }
 }

@@ -5,7 +5,7 @@ export const perfilSchema = z
     .object({
         descripcion: z.string().min(1),
         habilidadesRequeridas: z.array(z.string()).min(1),
-        habilidadesOpcionales: z.array(z.string()),
+        habilidadesOpcionales: z.array(z.string()).default([]), // si no pone nada, el array es vacio
         compromiso: z.object({
             tipoCompromiso: z.enum(["TOTALES", "MENSUALES", "SEMANALES"]),
             horas: z.int(),
@@ -25,7 +25,7 @@ export class PerfilController {
     }
 
     crear = async (req,res) => {
-        const perfilNuevo = await this.proyectoService.crear(req.params.id, req.body);
+        const perfilNuevo = await this.perfilService.crear(req.params.id, req.body);
         res.status(201).json(perfilNuevo);
     }
 
