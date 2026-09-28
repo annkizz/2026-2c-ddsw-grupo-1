@@ -8,14 +8,6 @@ export const proyectoSchema = z
     idColectivo: z.string().trim().min(1),
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
-    habilidades: z.array(z.string().trim().min(1)).min(1),
-    compromiso: z.object({
-      tipoCompromiso: z.enum(["TOTALES", "SEMANALES", "MENSUALES"]),
-      horas: z.number().positive(),
-    }),
-    modalidadColaboracion: z
-      .array(z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]))
-      .min(1),
   })
   .strict();
 

@@ -1,5 +1,5 @@
 import express from "express";
-import { validate } from "../middlewares/validate.js";
+import { validate } from "../middlewares/validate.js"; 
 import {
   proyectoSchema,
   idColaboradorSchema,
@@ -25,5 +25,6 @@ export function crearProyectoRouter(proyectoController) {
     .route("/:id/cierre")
     .patch((req, res) => proyectoController.cerrarProyecto(req, res));
 
+  
   return router;
 }

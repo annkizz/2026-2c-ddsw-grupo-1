@@ -4,8 +4,11 @@ import cors from "cors";
 import router from "./routes/router.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
+import { errorHandler } from "./middlewares/ErrorHandler.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
+import { MongoDBClient } from "./config/database.js"
+
+await MongoDBClient.connect();
 
 const app = express();
 app.use(express.json());

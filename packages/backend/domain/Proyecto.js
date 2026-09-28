@@ -2,19 +2,15 @@ export class Proyecto {
   constructor(
     titulo,
     descripcion,
-    habilidades,
-    compromiso,
-    modalidadColaboracion,
+    perfiles,
     estado,
     fechaInicio,
     idProyecto,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
-    this.habilidades = habilidades;
-    this.compromiso = compromiso;
-    this.modalidadColaboracion = modalidadColaboracion;
     this.estado = estado;
+    this.perfiles = perfiles;
     this.fechaInicio = fechaInicio;
     this.idProyecto = idProyecto;
   }
