@@ -8,12 +8,19 @@ export const proyectoSchema = z
     idColectivo: z.string().trim().min(1),
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
+    fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
   })
   .strict();
 
 export const idColaboradorSchema = z
   .object({
     idColaborador: z.string().trim().min(1),
+  })
+  .strict();
+
+export const cierreProgramadoSchema = z
+  .object({
+    fechaLimiteCierre: fechaLimiteCierreSchema,
   })
   .strict();
 
@@ -31,6 +38,14 @@ export class ProyectoController {
     const proyectos = this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
   };
+
+  programarCierre(req, res) {
+    const proyecto = this.proyectoService.programarCierre(
+      req.params.id,
+      req.body.fechaLimiteCierre,
+    );
+    res.status(200).json(proyecto);
+  }
 
   crearColaboracion(req, res) {
     const proyectoId = req.params.id;
