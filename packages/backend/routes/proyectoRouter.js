@@ -1,4 +1,9 @@
 import express from "express";
+import { validate } from "../middlewares/validate.js";
+import {
+  proyectoSchema,
+  idColaboradorSchema,
+} from "../controllers/ProyectoController.js";
 
 export function crearProyectoRouter(proyectoController) {
   const router = express.Router();
@@ -6,11 +11,19 @@ export function crearProyectoRouter(proyectoController) {
   router
     .route("/")
     .get((req, res) => proyectoController.obtenerTodos(req, res))
-    .post((req, res) => proyectoController.crear(req, res));
+    .post(validate(proyectoSchema), (req, res) =>
+      proyectoController.crear(req, res),
+    );
 
-  router 
+  router
     .route("/:id/colaboraciones")
-    .post((req,res) => proyectoController.crearColaboracion(req, res)) ;
+    .post(validate(idColaboradorSchema), (req, res) =>
+      proyectoController.crearColaboracion(req, res),
+    );
+
+  router
+    .route("/:id/cierre")
+    .patch((req, res) => proyectoController.cerrarProyecto(req, res));
 
   return router;
 }

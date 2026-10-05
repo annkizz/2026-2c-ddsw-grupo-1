@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { Colaborador } from "../domain/Colaborador.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
-import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
+import {
+  HabilidadRepository,
+  normalizarHabilidad,
+} from "../repositories/HabilidadRepository.js";
 import { NotFoundError } from "../errors/AppError.js";
 
 export class ColaboradorService {
@@ -15,12 +18,16 @@ export class ColaboradorService {
 
   crear = (datosColaborador) => {
     const habilidades = datosColaborador.habilidades.map((tituloHabilidad) => {
-      const habilidad =
-        this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
+      const habilidadTituloNormalizado = normalizarHabilidad(tituloHabilidad);
+      const habilidad = this.habilidadRepository.encontrarPorTitulo(
+        habilidadTituloNormalizado,
+      );
 
       if (!habilidad) {
         throw new NotFoundError(
-          `la habilidad ${tituloHabilidad} no existe`, "HABILIDAD_NO_ENCONTRADA");
+          `la habilidad ${tituloHabilidad} no existe`,
+          "HABILIDAD_NO_ENCONTRADA",
+        );
       }
 
       return habilidad;

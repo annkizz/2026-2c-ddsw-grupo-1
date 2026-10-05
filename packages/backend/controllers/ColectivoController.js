@@ -2,7 +2,7 @@ import { z } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 import { ColectivoService } from "../services/ColectivoService.js";
 
-const colectivoSchema = z
+export const colectivoSchema = z
   .object({
     nombre: z.string(),
     descripcion: z.string(),
@@ -28,11 +28,7 @@ export class ColectivoController {
   }
 
   crear(req, res) {
-    const resultadoParseado = colectivoSchema.safeParse(req.body);
-    if (!resultadoParseado.success) {
-      throw new BadRequestError("los datos ingresados son inválidos :(");
-    }
-    const colectivoNuevo = this.colectivoService.crear(resultadoParseado.data);
+    const colectivoNuevo = this.colectivoService.crear(req.body);
     res.status(201).json(colectivoNuevo);
   }
 

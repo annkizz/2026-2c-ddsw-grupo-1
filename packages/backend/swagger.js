@@ -112,7 +112,7 @@ const swaggerSpec = {
         },
       },
     },
-        "/colaboradoras": {
+    "/colaboradoras": {
       get: {
         summary: "Obtiene todas las personas colaboradoras",
         responses: {
@@ -137,7 +137,8 @@ const swaggerSpec = {
                   apellido: { type: "string", example: "Perez" },
                   presentacion: {
                     type: "string",
-                    example: "Estudiante de Diseño Industral, disponible fines de semana",
+                    example:
+                      "Estudiante de Diseño Industrial, disponible fines de semana",
                   },
                   pronombres: {
                     type: "array",
@@ -176,11 +177,24 @@ const swaggerSpec = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_colectivo", "titulo", "descripcion", "habilidades", "compromiso", "modalidadColaboracion"],
+                required: [
+                  "idColectivo",
+                  "titulo",
+                  "descripcion",
+                  "habilidades",
+                  "compromiso",
+                  "modalidadColaboracion",
+                ],
                 properties: {
-                  id_colectivo: { type: "string", example: "a1b2c3d4-..." },
-                  titulo: { type: "string", example: "Desarrollo de plataforma web" },
-                  descripcion: { type: "string", example: "Necesitamos programadores para la web solidaria" },
+                  idColectivo: { type: "string", example: "a1b2c3d4-..." },
+                  titulo: {
+                    type: "string",
+                    example: "Desarrollo de plataforma web",
+                  },
+                  descripcion: {
+                    type: "string",
+                    example: "Necesitamos programadores para la web solidaria",
+                  },
                   habilidades: {
                     type: "array",
                     minItems: 1,
@@ -191,14 +205,24 @@ const swaggerSpec = {
                     type: "object",
                     required: ["tipoCompromiso", "horas"],
                     properties: {
-                      tipoCompromiso: { type: "string", enum: ["TOTALES", "SEMANALES", "MENSUALES"] },
-                      horas: { type: "number", exclusiveMinimum: 0, example: 10 },
+                      tipoCompromiso: {
+                        type: "string",
+                        enum: ["TOTALES", "SEMANALES", "MENSUALES"],
+                      },
+                      horas: {
+                        type: "number",
+                        exclusiveMinimum: 0,
+                        example: 10,
+                      },
                     },
                   },
                   modalidadColaboracion: {
                     type: "array",
                     minItems: 1,
-                    items: { type: "string", enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"] },
+                    items: {
+                      type: "string",
+                      enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"],
+                    },
                     example: ["GRATUITA"],
                   },
                 },
@@ -209,40 +233,72 @@ const swaggerSpec = {
         responses: {
           201: { description: "Proyecto creado exitosamente" },
           400: { description: "Datos inválidos o faltan campos obligatorios" },
-          404: { description: "El colectivo o alguna de las habilidades requeridas no existe" },
+          404: {
+            description:
+              "El colectivo o alguna de las habilidades requeridas no existe",
+          },
         },
       },
     },
-
-    "/proyectos/<id>/colaboracion": {
-      post : {
-        summary: "Crea una nueva colaboración entre un Proyecto y un Colaborador.",
+    "/proyectos/{id}/colaboraciones": {
+      post: {
+        summary:
+          "Crea una nueva colaboración entre un proyecto y una colaboradora.",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_colaborador"],
+                required: ["idColaborador"],
                 properties: {
-                  id_colaborador: { type: "string", example: "a1b2c3d4-..." },
-                }
-              }
-            }
-          }
+                  idColaborador: { type: "string", example: "a1b2c3d4-..." },
+                },
+              },
+            },
+          },
         },
         responses: {
           201: { description: "Colaboración creada exitosamente" },
           400: { description: "Datos inválidos o faltan campos obligatorios" },
-          404: { description: "El Proyecto o el Colaborador no existe." },
+          404: {
+            description: "El proyecto o la persona colaboradora no existe",
+          },
+          409: {
+            description:
+              "El proyecto está finalizado o la persona colaboradora ya está anotada",
+          },
         },
-      }
-
-  }
-}
+      },
+    },
+    "/proyectos/{id}/cierre": {
+      patch: {
+        summary: "Cierra un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: { description: "Proyecto cerrado exitosamente" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+    },
+  },
 };
 
-
-
 export default swaggerSpec;
-

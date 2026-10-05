@@ -4,6 +4,7 @@ export class AppError extends Error {
     this.status = 500;
     this.codigo = codigo;
     this.timestamp = new Date().toISOString();
+    this.esAppError = true;
   }
 }
 
@@ -35,4 +36,4 @@ export class UnprocessableEntityError extends AppError {
   }
 }
 
-// agrego el codigo para poder identificar mas facil el error!! 
+// agrego el codigo para poder identificar mas facil el error!!

@@ -12,17 +12,17 @@ export class ProyectoRepository {
 
   obtenerTodasColaboraciones = () => {
     return this.colaboraciones;
-  }
+  };
 
   encontrarPorId(idProyecto) {
     return this.proyectos.find(
-      (proyecto) => proyecto.id_proyecto === idProyecto,
+      (proyecto) => proyecto.idProyecto === idProyecto,
     );
   }
 
   save(unProyecto) {
     const indice = this.proyectos.findIndex(
-      (proyecto) => proyecto.id_proyecto === unProyecto.id_proyecto,
+      (proyecto) => proyecto.idProyecto === unProyecto.idProyecto,
     );
 
     if (indice === -1) {
@@ -36,7 +36,5 @@ export class ProyectoRepository {
 
   saveColaboracion = (colaboracion) => {
     const indice = this.colaboraciones.push(colaboracion);
-  }
-
-
+  };
 }

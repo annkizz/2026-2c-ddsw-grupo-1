@@ -7,7 +7,7 @@ export class Proyecto {
     modalidadColaboracion,
     estado,
     fechaInicio,
-    id_proyecto,
+    idProyecto,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -16,7 +16,7 @@ export class Proyecto {
     this.modalidadColaboracion = modalidadColaboracion;
     this.estado = estado;
     this.fechaInicio = fechaInicio;
-    this.id_proyecto = id_proyecto;
+    this.idProyecto = idProyecto;
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;

@@ -2,7 +2,7 @@ import { HabilidadService } from "../services/HabilidadService.js";
 import { BadRequestError } from "../errors/AppError.js";
 import { z } from "zod";
 
-const habilidadSchema = z
+export const habilidadSchema = z
   .object({
     titulo: z.string(),
   })
@@ -14,12 +14,7 @@ export class HabilidadController {
   }
 
   crear(req, res) {
-    const cuerpo = req.body;
-    const resultadoParseado = habilidadSchema.safeParse(cuerpo);
-    if (!resultadoParseado.success) {
-      throw new BadRequestError("los datos ingresados son invalidos :(");
-    }
-    const habilidadNueva = resultadoParseado.data;
+    const habilidadNueva = req.body;
     this.habilidadService.crear(habilidadNueva);
     res.status(201).json({ message: "habilidad creada exitosamente :)" });
   }

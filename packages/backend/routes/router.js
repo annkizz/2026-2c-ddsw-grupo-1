@@ -11,12 +11,10 @@ import { ColectivoController } from "../controllers/ColectivoController.js";
 import { ColectivoService } from "../services/ColectivoService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { crearColectivoRouter } from "./colectivoRouter.js";
-import { ColaboradorController } from "../controllers/ColaboradorController.js"
-import { ColaboradorService } from "../services/ColaboradorService.js"
+import { ColaboradorController } from "../controllers/ColaboradorController.js";
+import { ColaboradorService } from "../services/ColaboradorService.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
 import { crearColaboradorRouter } from "./colaboradorRouter.js";
-
-
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
@@ -30,7 +28,7 @@ const colectivoController = new ColectivoController(colectivoService);
 const colaboradorRepository = new ColaboradorRepository();
 const colaboradorService = new ColaboradorService(
   colaboradorRepository,
-  habilidadRepository, 
+  habilidadRepository,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 

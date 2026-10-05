@@ -28,5 +28,5 @@ export class Colaborador {
 
   agregarColaboracion = (nuevaColaboracion) => {
     this.colaboraciones.push(nuevaColaboracion);
-  }
+  };
 }

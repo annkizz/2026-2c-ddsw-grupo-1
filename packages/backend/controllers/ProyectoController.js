@@ -3,9 +3,9 @@ import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
-const proyectoSchema = z
+export const proyectoSchema = z
   .object({
-    id_colectivo: z.string().trim().min(1),
+    idColectivo: z.string().trim().min(1),
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     habilidades: z.array(z.string().trim().min(1)).min(1),
@@ -19,9 +19,9 @@ const proyectoSchema = z
   })
   .strict();
 
-const idColaboradorSchema = z
+export const idColaboradorSchema = z
   .object({
-    id_colaborador: z.string().trim().min(1)
+    idColaborador: z.string().trim().min(1),
   })
   .strict();
 
@@ -31,41 +31,59 @@ export class ProyectoController {
   }
 
   crear = (req, res) => {
-    const resultadoParseado = proyectoSchema.safeParse(req.body);
-
-    if (!resultadoParseado.success) {
-      throw new BadRequestError("los datos ingresados son invalidos :(");
-    }
-
-    const proyectoNuevo = this.proyectoService.crear(resultadoParseado.data);
+    const proyectoNuevo = this.proyectoService.crear(req.body);
     res.status(201).json(proyectoNuevo);
-  }
+  };
 
   obtenerTodos = (req, res) => {
     const proyectos = this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
-  }
- 
+  };
+
   crearColaboracion(req, res) {
-    const proyectoId = req.params.id ;
-    const proyectoExistente = this.proyectoService.obtenerProyectoPorId(proyectoId) ;
+    const proyectoId = req.params.id;
+    const proyectoExistente =
+      this.proyectoService.obtenerProyectoPorId(proyectoId);
 
-    if(!proyectoExistente){
-      throw new NotFoundError("Proyecto no encontrado");
+    if (!proyectoExistente) {
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
 
-    const body = req.body ;
-    const resultado = idColaboradorSchema.safeParse(body)
-    
+    const body = req.body;
+    const resultado = idColaboradorSchema.safeParse(body);
+
     if (!resultado.success) {
-      throw new BadRequestError("los datos ingresados son invalidos :(");
+      throw new BadRequestError(
+        "los datos ingresados son invalidos :(",
+        "DATOS_COLABORACION_INVALIDOS",
+      );
     }
 
-    const colaboradorId = resultado.data.id_colaborador;
-    
-    const colaboracion = this.proyectoService.crearColaboracion(proyectoExistente,colaboradorId)
-    
-    res.status(201).json(colaboracion);
+    const colaboradorId = resultado.data.idColaborador;
+    const colaboracion = this.proyectoService.crearColaboracion(
+      proyectoExistente,
+      colaboradorId,
+    );
 
-  } 
+    res.status(201).json(colaboracion);
+  }
+
+  cerrarProyecto(req, res) {
+    const proyectoId = req.params.id;
+    const proyectoExistente =
+      this.proyectoService.obtenerProyectoPorId(proyectoId);
+
+    if (!proyectoExistente) {
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
+    }
+
+    const proyectoCerrado = this.proyectoService.cerrarProyecto(proyectoId);
+    res.status(200).json(proyectoCerrado);
+  }
 }
