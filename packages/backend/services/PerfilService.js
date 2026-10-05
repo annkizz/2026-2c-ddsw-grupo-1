@@ -78,8 +78,7 @@ export class PerfilService {
         titulos.map(async (titulo) => {
             const habilidad = await this.habilidadRepository.encontrarPorTitulo(titulo);
             if (!habilidad) {
-            throw new NotFoundError("la habilidad ${titulo} no existe", "HABILIDAD_NO_ENCONTRADA",);
-            }
+            throw new NotFoundError(`la habilidad ${titulo} no existe`, "HABILIDAD_NO_ENCONTRADA");            }
             return habilidad;
         }),
         );

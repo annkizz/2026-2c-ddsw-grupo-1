@@ -12,6 +12,8 @@ export const proyectoSchema = z
   })
   .strict();
 
+const fechaLimiteCierreSchema = z.coerce.date();
+
 export const idColaboradorSchema = z
   .object({
     idColaborador: z.string().trim().min(1),

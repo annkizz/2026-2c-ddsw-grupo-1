@@ -8,7 +8,7 @@ export const perfilSchema = z
         habilidadesOpcionales: z.array(z.string()).default([]), // si no pone nada, el array es vacio
         compromiso: z.object({
             tipoCompromiso: z.enum(["TOTALES", "MENSUALES", "SEMANALES"]),
-            horas: z.int(),
+            horas: z.int().min(1),
             tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"])
         })
     })

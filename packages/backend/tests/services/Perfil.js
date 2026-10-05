@@ -33,8 +33,7 @@ describe("PerfilService", () => {
       eliminar: jest.fn(async () => undefined),
     };
     proyectoRepository = {
-      encontrarPorId: jest.fn((id) => (id === ID_PROYECTO ? { idProyecto: id } : undefined)),
-    };
+      encontrarPorId: jest.fn((id) => (id === ID_PROYECTO ? { idProyecto: id, perfiles: [] } : undefined)),    };
     habilidadRepository = {
       encontrarPorTitulo: jest.fn((titulo) => ({ titulo })),
     };

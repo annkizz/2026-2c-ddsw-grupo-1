@@ -52,7 +52,7 @@ const perfilController = new PerfilController(perfilService);
 
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
 router.use("/proyectos/:id/perfiles", crearPerfilRouter(perfilController));
-router.use("/proyectos", crearProyectoRouter(proyectoController, perfilController));
+router.use("/proyectos", crearProyectoRouter(proyectoController));
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
 

@@ -10,7 +10,8 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "transform": {}
+    "transform": {},
+    "testMatch": ["**/tests/**/*.js"]
   },
   "keywords": [],
   "author": "",
