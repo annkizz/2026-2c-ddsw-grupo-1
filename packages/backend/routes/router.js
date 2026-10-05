@@ -15,6 +15,11 @@ import { ColaboradorController } from "../controllers/ColaboradorController.js";
 import { ColaboradorService } from "../services/ColaboradorService.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
 import { crearColaboradorRouter } from "./colaboradorRouter.js";
+import { PerfilRepository } from "../repositories/PerfilRepository.js";
+import { PerfilController } from "../controllers/PerfilController.js";
+import { PerfilService } from "../services/PerfilService.js";
+import { crearPerfilRouter } from "./perfilRouter.js";
+export { proyectoService };
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
@@ -32,15 +37,22 @@ const colaboradorService = new ColaboradorService(
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
+const proyectoRepository = new ProyectoRepository();
+
 const proyectoService = new ProyectoService(
-  new ProyectoRepository(),
+  proyectoRepository,
   habilidadRepository,
   colaboradorService,
   colectivoRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
+const perfilRepository = new PerfilRepository();
+const perfilService = new PerfilService(perfilRepository, proyectoRepository, habilidadRepository)
+const perfilController = new PerfilController(perfilService);
+
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
+router.use("/proyectos/:id/perfiles", crearPerfilRouter(perfilController));
 router.use("/proyectos", crearProyectoRouter(proyectoController));
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));

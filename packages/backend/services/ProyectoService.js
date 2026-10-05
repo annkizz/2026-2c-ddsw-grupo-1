@@ -30,58 +30,107 @@ export class ProyectoService {
   }
 
   crear = (datosProyecto) => {
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
+  const colectivo = this.colectivoRepository.encontrarPorId(
+    datosProyecto.idColectivo,
+  );
 
-      if (!colectivo) {
-        throw new NotFoundError(
-          "el colectivo no existe",
-          "COLECTIVO_NO_ENCONTRADO",
-        );
-      }
+  if (!colectivo) {
+    throw new NotFoundError("el colectivo no existe", "COLECTIVO_NO_ENCONTRADO");
+  }
+
+    const fechaLimiteCierre = datosProyecto.fechaLimiteCierre ?? null;
+    if (fechaLimiteCierre !== null) {
+      this.validarFechaLimite(fechaLimiteCierre);
     }
-
-    const habilidades = datosProyecto.habilidades.map((tituloHabilidad) => {
-      const habilidad =
-        this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
-
-      if (!habilidad) {
-        throw new NotFoundError(
-          "la habilidad ${tituloHabilidad} no existe",
-          "HABILIDAD_NO_ENCONTRADA",
-        );
-      }
-
-      return habilidad;
-    });
-
-    const compromiso = new Compromiso(
-      datosProyecto.compromiso.tipoCompromiso,
-      datosProyecto.compromiso.horas,
-    );
 
     const proyecto = new Proyecto(
       datosProyecto.titulo,
       datosProyecto.descripcion,
-      habilidades,
-      compromiso,
-      datosProyecto.modalidadColaboracion,
+      [], // perfiles
       Estado.ACTIVO,
       new Date(),
       randomUUID(),
+      fechaLimiteCierre,
     );
 
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
-      colectivo.agregarProyecto(proyecto);
-    }
-
+    colectivo.agregarProyecto(proyecto);
     return this.proyectoRepository.save(proyecto);
   };
+
+  validarFechaLimite(fechaLimiteCierre, ahora = new Date()) {
+    if (fechaLimiteCierre <= ahora) {
+      throw new BadRequestError(
+        "La fecha límite de cierre debe ser futura",
+        "FECHA_LIMITE_INVALIDA",
+      );
+    }
+  }
+
+  programarCierre(idProyecto, fechaLimite) {
+    const proyecto = this.buscarProyectoOFallar(idProyecto);
+
+    if (proyecto.estaFinalizado()) {
+      throw new ConflictError(
+        "No se puede programar el cierre de un proyecto finalizado",
+        "PROYECTO_FINALIZADO",
+      );
+    }
+
+    this.validarFechaLimite(fechaLimite);
+    proyecto.programarCierre(fechaLimite);
+    return proyecto;
+  }
+
+  cerrarProyecto(idProyecto) {
+    const proyecto = this.buscarProyectoOFallar(idProyecto);
+    this.finalizar(proyecto);
+    return proyecto;
+  }
+
+  cerrarSiVencido(proyecto, ahora = new Date()) {
+    if (!proyecto.cierreVencido(ahora)) {
+      return false;
+    }
+    this.finalizar(proyecto);
+    return true;
+  }
+
+  buscarProyectoOFallar(idProyecto) {
+    const proyecto = this.obtenerProyectoPorId(idProyecto);
+ 
+    if (!proyecto) {
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
+    }
+    return proyecto;
+  }
+
+  finalizar(proyecto) {
+    // falta implementar lo de la 3era entrega: rechazar las postulaciones pendientes del proyecto
+    proyecto.cerrar();
+  }
+
+  async cerrarProyectosVencidos(ahora = new Date()) {
+    const vencidos = await this.proyectoRepository.obtenerVencidos(ahora);
+    const cerrados = [];
+    const fallidos = [];
+
+    for (const proyecto of vencidos) {
+      try {
+        await this.finalizar(proyecto);
+        cerrados.push(proyecto.idProyecto);
+      } catch (error) {
+        fallidos.push({
+          idProyecto: proyecto.idProyecto,
+          error: error.message,
+        });
+      }
+    }
+
+    return { cerrados, fallidos };
+  }
 
   obtenerTodos() {
     return this.proyectoRepository.obtenerTodos();

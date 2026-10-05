@@ -20,6 +20,10 @@ export class ProyectoRepository {
     );
   }
 
+  obtenerVencidos(ahora = new Date()) {
+    return this.proyectos.filter((proyecto) => proyecto.cierreVencido(ahora));
+  }
+
   save(unProyecto) {
     const indice = this.proyectos.findIndex(
       (proyecto) => proyecto.idProyecto === unProyecto.idProyecto,
