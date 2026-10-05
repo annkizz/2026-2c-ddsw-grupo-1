@@ -97,7 +97,7 @@ export class ProyectoService {
 
   buscarProyectoOFallar(idProyecto) {
     const proyecto = this.obtenerProyectoPorId(idProyecto);
-
+ 
     if (!proyecto) {
       throw new NotFoundError(
         "Proyecto no encontrado",
@@ -105,6 +105,11 @@ export class ProyectoService {
       );
     }
     return proyecto;
+  }
+
+  finalizar(proyecto) {
+    // falta implementar lo de la 3era entrega: rechazar las postulaciones pendientes del proyecto
+    proyecto.cerrar();
   }
 
   async cerrarProyectosVencidos(ahora = new Date()) {

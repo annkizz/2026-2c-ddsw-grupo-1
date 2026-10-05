@@ -19,6 +19,7 @@ import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { PerfilController } from "../controllers/PerfilController.js";
 import { PerfilService } from "../services/PerfilService.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
+export { proyectoService };
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();

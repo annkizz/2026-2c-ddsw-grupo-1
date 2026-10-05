@@ -3,6 +3,8 @@ import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
+const fechaLimiteCierreSchema = z.coerce.date();
+
 export const proyectoSchema = z
   .object({
     idColectivo: z.string().trim().min(1),
@@ -11,8 +13,6 @@ export const proyectoSchema = z
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
   })
   .strict();
-
-const fechaLimiteCierreSchema = z.coerce.date();
 
 export const idColaboradorSchema = z
   .object({
