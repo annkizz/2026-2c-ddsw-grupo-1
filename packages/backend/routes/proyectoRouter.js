@@ -1,8 +1,9 @@
 import express from "express";
-import { validate } from "../middlewares/validate.js";
+import { validate } from "../middlewares/validate.js"; 
 import {
   proyectoSchema,
   idColaboradorSchema,
+  cierreProgramadoSchema,
 } from "../controllers/ProyectoController.js";
 
 export function crearProyectoRouter(proyectoController) {
@@ -25,5 +26,11 @@ export function crearProyectoRouter(proyectoController) {
     .route("/:id/cierre")
     .patch((req, res) => proyectoController.cerrarProyecto(req, res));
 
+  router
+  .route("/:id/cierre-programado")
+  .patch(validate(cierreProgramadoSchema), (req, res) =>
+    proyectoController.programarCierre(req, res),
+  );
+  
   return router;
 }

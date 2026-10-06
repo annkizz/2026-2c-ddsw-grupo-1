@@ -112,6 +112,105 @@ const swaggerSpec = {
         },
       },
     },
+        "/proyectos/{id}/perfiles": {
+      get: {
+        summary: "Obtiene los perfiles de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+        ],
+        responses: {
+          200: { description: "Lista de perfiles del proyecto" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+      post: {
+        summary: "Crea un perfil dentro de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["descripcion", "habilidadesRequeridas", "compromiso"],
+                properties: {
+                  descripcion: { type: "string", example: "Tester" },
+                  habilidadesRequeridas: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Testing E2E con Cypress"],
+                  },
+                  habilidadesOpcionales: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: [],
+                  },
+                  compromiso: {
+                    type: "object",
+                    required: ["tipoCompromiso", "horas", "tipoColaboracion"],
+                    properties: {
+                      tipoCompromiso: {
+                        type: "string",
+                        enum: ["TOTALES", "MENSUALES", "SEMANALES"],
+                      },
+                      horas: { type: "integer", minimum: 1, example: 5 },
+                      tipoColaboracion: {
+                        type: "string",
+                        enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: "Perfil creado" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Proyecto o habilidad no encontrados" },
+        },
+      },
+    },
+    "/proyectos/{id}/perfiles/{idPerfil}": {
+      delete: {
+        summary: "Elimina un perfil de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del perfil",
+          },
+        ],
+        responses: {
+          204: { description: "Perfil eliminado" },
+          404: { description: "Proyecto o perfil no encontrado" },
+        },
+      },
+    },
     "/colaboradoras": {
       get: {
         summary: "Obtiene todas las personas colaboradoras",

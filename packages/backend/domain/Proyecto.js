@@ -2,21 +2,19 @@ export class Proyecto {
   constructor(
     titulo,
     descripcion,
-    habilidades,
-    compromiso,
-    modalidadColaboracion,
+    perfiles,
     estado,
     fechaInicio,
     idProyecto,
+    fechaLimiteCierre,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
-    this.habilidades = habilidades;
-    this.compromiso = compromiso;
-    this.modalidadColaboracion = modalidadColaboracion;
     this.estado = estado;
+    this.perfiles = perfiles;
     this.fechaInicio = fechaInicio;
     this.idProyecto = idProyecto;
+    this.fechaLimiteCierre = fechaLimiteCierre;
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;
@@ -34,5 +32,14 @@ export class Proyecto {
         "No se puede aceptar un colaborador en un proyecto finalizado.",
       );
     }
+  }
+  programarCierre(unaFechaLimite) {
+    this.fechaLimiteCierre = unaFechaLimite;
+  }
+  tieneCierreProgramado() {
+    return this.fechaLimiteCierre !== null;
+  }
+  cierreVencido(ahora = new Date()) {
+    return !this.estaFinalizado() && this.fechaLimiteCierre <= ahora && this.tieneCierreProgramado()
   }
 }
