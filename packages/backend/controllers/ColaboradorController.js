@@ -14,7 +14,8 @@ export const colaboradorSchema = z
     mediosDeContacto: z.array(z.object({
       tipoDeContacto: z.enum(["SMS ", "EMAIL", "WHATSAPP"]),
       contacto: z.string().min(1), // TODO: Regex
-    })).default([]),                
+    })).default([]),
+    aceptaMensajeria: z.boolean(),
   })
   .strict();
 
