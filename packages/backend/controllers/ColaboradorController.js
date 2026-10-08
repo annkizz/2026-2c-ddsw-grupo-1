@@ -11,6 +11,10 @@ export const colaboradorSchema = z
     presentacion: z.string().min(1),
     pronombres: z.array(z.string()).min(1),
     habilidades: z.array(z.string()).min(1),
+    mediosDeContacto: z.array(z.object({
+      tipoDeContacto: z.enum(["SMS ", "EMAIL", "WHATSAPP"]),
+      contacto: z.string().min(1), // TODO: Regex
+    })).default([]),                
   })
   .strict();
 
