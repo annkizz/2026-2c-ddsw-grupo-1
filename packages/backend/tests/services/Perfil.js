@@ -27,13 +27,14 @@ describe("PerfilService", () => {
 
   beforeEach(() => {
     perfilRepository = {
-      save: jest.fn(async (datos) => ({ id: "perfil-1", ...datos })),
+      save: jest.fn(async (perfil, idProyecto) => ({ id: "perfil-1", proyecto: idProyecto, ...perfil })),
       obtenerTodos: jest.fn(async () => []),
       buscarPorId: jest.fn(async () => null),
       eliminar: jest.fn(async () => undefined),
     };
     proyectoRepository = {
-      encontrarPorId: jest.fn((id) => (id === ID_PROYECTO ? { idProyecto: id, perfiles: [] } : undefined)),    };
+      encontrarPorId: jest.fn((id) => (id === ID_PROYECTO ? { idProyecto: id, perfiles: [] } : undefined)),
+    };
     habilidadRepository = {
       encontrarPorTitulo: jest.fn((titulo) => ({ titulo })),
     };
@@ -45,13 +46,15 @@ describe("PerfilService", () => {
       const resultado = await service.crear(ID_PROYECTO, datosPerfil());
 
       expect(perfilRepository.save).toHaveBeenCalledTimes(1);
-      expect(perfilRepository.save).toHaveBeenCalledWith({
-        proyecto: ID_PROYECTO,
-        descripcion: "Tester",
-        habilidadesRequeridas: ["Testing E2E con Cypress"],
-        habilidadesOpcionales: ["Uso de Soap UI"],
-        compromiso: datosPerfil().compromiso,
-      });
+      expect(perfilRepository.save).toHaveBeenCalledWith(
+        {
+          descripcion: "Tester",
+          habilidadesRequeridas: ["Testing E2E con Cypress"],
+          habilidadesOpcionales: ["Uso de Soap UI"],
+          compromiso: datosPerfil().compromiso,
+        },
+        ID_PROYECTO,
+      );
       expect(resultado).toEqual({
         idPerfil: "perfil-1",
         idProyecto: ID_PROYECTO,

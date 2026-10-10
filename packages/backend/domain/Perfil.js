@@ -3,7 +3,6 @@ export class Perfil {
         this.descripcion = descripcion,
         this.habilidadesRequeridas = habilidadesRequeridas,
         this.habilidadesOpcionales = habilidadesOpcionales,
-        this.compromiso = compromiso,
-        this.idPerfil = idPerfil
+        this.compromiso = compromiso
     }
 }

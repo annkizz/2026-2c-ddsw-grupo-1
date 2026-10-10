@@ -2,6 +2,7 @@ import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { HabilidadRepository } from "../repositories/HabilidadRepository.js"
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js"
 import { NotFoundError } from "../errors/AppError.js"
+import { Perfil } from "../domain/Perfil.js";   // ← nuevo
 
 export class PerfilService {
     constructor(perfilRepository = new PerfilRepository(),
@@ -34,23 +35,24 @@ export class PerfilService {
     }
 
     async crear(idProyecto, datos) {
-    const proyecto = await this.validarProyecto(idProyecto);
+        const proyecto = await this.validarProyecto(idProyecto);
 
-    const requeridas = await this.validarHabilidades(datos.habilidadesRequeridas);
-    const opcionales = await this.validarHabilidades(datos.habilidadesOpcionales);
+        const requeridas = await this.validarHabilidades(datos.habilidadesRequeridas);
+        const opcionales = await this.validarHabilidades(datos.habilidadesOpcionales);
 
-    const guardado = await this.perfilRepository.save({
-        proyecto: idProyecto,
-        descripcion: datos.descripcion,
-        habilidadesRequeridas: requeridas.map((h) => h.titulo),
-        habilidadesOpcionales: opcionales.map((h) => h.titulo),
-        compromiso: datos.compromiso,
-    });
+        const perfilNuevo = new Perfil(
+            datos.descripcion,
+            requeridas.map((h) => h.titulo),
+            opcionales.map((h) => h.titulo),
+            datos.compromiso,
+        );
 
-    const dto = this.toDTO(guardado);
-    proyecto.perfiles.push(dto);
-    return dto;
+        const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
+
+        proyecto.perfiles.push(guardado);
+        return this.toDTO(guardado);
     }
+
 
     async eliminar(idProyecto, idPerfil) {
     const proyecto = await this.validarProyecto(idProyecto);
@@ -62,7 +64,7 @@ export class PerfilService {
     }
 
     await this.perfilRepository.eliminar(idPerfil);
-    proyecto.perfiles = proyecto.perfiles.filter((p) => p.idPerfil !== idPerfil);
+        proyecto.perfiles = proyecto.perfiles.filter((p) => p.id !== idPerfil);
     }
 
     async validarProyecto(idProyecto) {
