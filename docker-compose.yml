@@ -1,0 +1,58 @@
+# Levanta la API y MongoDB juntas.
+# Desde la raiz del proyecto:  docker compose up -d --build
+# Las variables ${...} salen del archivo .env de la raiz (ver .env.example).
+
+x-api-env: &api-env             # variables que comparten la API y el seed
+  SERVER_PORT: 3000
+  # "mongo" es el nombre del servicio de abajo (NO localhost). La contraseña
+  # no debe tener caracteres especiales (@ : / ?) porque va dentro de la URL.
+  MONGODB_URI: mongodb://${MONGO_USER:?Falta MONGO_USER en .env}:${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}@mongo:27017
+  MONGODB_DB_NAME: ${MONGODB_DB_NAME:-codigo_a_voluntad}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}   # vacio = cualquier origen (ok mientras no haya frontend desplegado)
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:                  # crea el usuario administrador la PRIMERA vez que se inicializa el volumen
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:?Falta MONGO_USER en .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}
+    volumes:
+      - mongo-data:/data/db       # los datos viven en este "disco" y sobreviven a reinicios
+    healthcheck:                  # Docker pregunta si Mongo ya esta listo para recibir conexiones
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # No hay "ports": Mongo NO se expone fuera de Docker, solo la API puede hablarle.
+
+  api:
+    build: .                      # usa el Dockerfile de la raiz
+    image: codigo-a-voluntad-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy   # la API arranca recien cuando Mongo esta listo
+    environment: *api-env
+    ports:
+      - "${API_PORT:-3000}:3000"     # puerto de la VM : puerto dentro del contenedor
+    healthcheck:                     # usa la ruta /healthcheck de la API
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthcheck >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  seed:                           # tarea de una sola vez: carga datos iniciales
+    build: .
+    image: codigo-a-voluntad-api
+    profiles: ["seed"]            # no arranca con "up"; se corre a mano (ver DESPLIEGUE.md)
+    restart: "no"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment: *api-env
+    command: ["node", "packages/backend/seeds/seed.js"]
+
+volumes:
+  mongo-data:
