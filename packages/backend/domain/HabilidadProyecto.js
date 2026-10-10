@@ -1,6 +1,6 @@
 export class HabilidadProyecto {
-  constructor(titulo) {
-    this.titulo = titulo;
-    this.descripcion = descripcion;
+  constructor(titulo, descripcion = "") {
+    this.titulo = String(titulo ?? "").trim();
+    this.descripcion = String(descripcion ?? "").trim();
   }
 }

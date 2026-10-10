@@ -1,7 +1,4 @@
-import {
-  HabilidadRepository,
-  normalizarHabilidad,
-} from "../repositories/HabilidadRepository.js";
+import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { HabilidadProyecto } from "../domain/HabilidadProyecto.js";
 import { ConflictError } from "../errors/AppError.js";
 
@@ -11,14 +8,14 @@ export class HabilidadService {
   }
 
   crear = async (habilidadNueva) => {
-    const tituloNormalizado = normalizarHabilidad(habilidadNueva.titulo);
-    const habilidadExistente =
-      await this.habilidadRepository.encontrarPorTitulo(tituloNormalizado);
+    const titulo = String(habilidadNueva?.titulo ?? "").trim();
+    const descripcion = String(habilidadNueva?.descripcion ?? "");
+
+    const habilidadExistente = await this.habilidadRepository.encontrarPorTitulo(
+      titulo,
+    );
     if (!habilidadExistente) {
-      const habilidad = new HabilidadProyecto(
-        tituloNormalizado,
-        habilidadNueva.descripcion,
-      );
+      const habilidad = new HabilidadProyecto(titulo, descripcion);
       return await this.habilidadRepository.save(habilidad);
     }
     throw new ConflictError("La habilidad ya existe!!", "HABILIDAD_YA_EXISTE");
