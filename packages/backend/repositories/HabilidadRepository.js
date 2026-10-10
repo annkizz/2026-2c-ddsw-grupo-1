@@ -15,13 +15,14 @@ export class HabilidadRepository {
   }
 
   save(unaHabilidad) {
-    const titulo = normalizarHabilidad(unaHabilidad.titulo);
+    const titulo = String(unaHabilidad.titulo).trim(); // se muestra tal cual
+    const codigo = normalizarHabilidad(titulo); // se compara por este
     return this.model.findOneAndUpdate(
-      { codigo: titulo },
+      { codigo },
       {
         $set: {
           titulo,
-          codigo: titulo,
+          codigo,
           descripcion: unaHabilidad.descripcion ?? "",
         },
       },
@@ -32,7 +33,10 @@ export class HabilidadRepository {
 
 export function normalizarHabilidad(texto = "") {
   return String(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase()
-    .replace(/\s+(.)/g, (_, letra) => letra.toUpperCase());
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
