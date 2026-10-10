@@ -37,7 +37,7 @@ export class ColaboradorService {
       datosColaborador.nombre,
       datosColaborador.apellido,
       datosColaborador.presentacion,
-      datosColaborador.pronombres,
+      datosColaborador.pronombres ?? [],
       randomUUID(),
       habilidades,
     );
