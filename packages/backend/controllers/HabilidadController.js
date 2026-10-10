@@ -1,10 +1,10 @@
 import { HabilidadService } from "../services/HabilidadService.js";
-import { BadRequestError } from "../errors/AppError.js";
 import { z } from "zod";
 
 export const habilidadSchema = z
   .object({
-    titulo: z.string(),
+    titulo: z.string().trim().min(1),
+    descripcion: z.string().trim().default(""),
   })
   .strict();
 
@@ -13,14 +13,14 @@ export class HabilidadController {
     this.habilidadService = habilidadService;
   }
 
-  crear(req, res) {
+  async crear(req, res) {
     const habilidadNueva = req.body;
-    this.habilidadService.crear(habilidadNueva);
+    await this.habilidadService.crear(habilidadNueva);
     res.status(201).json({ message: "habilidad creada exitosamente :)" });
   }
 
-  obtenerTodos(req, res) {
-    const habilidades = this.habilidadService.obtenerTodos();
+  async obtenerTodos(req, res) {
+    const habilidades = await this.habilidadService.obtenerTodos();
     res.status(200).json(habilidades);
   }
 }

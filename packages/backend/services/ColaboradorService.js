@@ -1,10 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Colaborador } from "../domain/Colaborador.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
-import {
-  HabilidadRepository,
-  normalizarHabilidad,
-} from "../repositories/HabilidadRepository.js";
+import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { NotFoundError } from "../errors/AppError.js";
 
 export class ColaboradorService {
@@ -16,22 +13,23 @@ export class ColaboradorService {
     this.habilidadRepository = habilidadRepository;
   }
 
-  crear = (datosColaborador) => {
-    const habilidades = datosColaborador.habilidades.map((tituloHabilidad) => {
-      const habilidadTituloNormalizado = normalizarHabilidad(tituloHabilidad);
-      const habilidad = this.habilidadRepository.encontrarPorTitulo(
-        habilidadTituloNormalizado,
-      );
-
-      if (!habilidad) {
-        throw new NotFoundError(
-          `la habilidad ${tituloHabilidad} no existe`,
-          "HABILIDAD_NO_ENCONTRADA",
+  crear = async (datosColaborador) => {
+    const habilidades = await Promise.all(
+      datosColaborador.habilidades.map(async (tituloHabilidad) => {
+        const habilidad = await this.habilidadRepository.encontrarPorTitulo(
+          tituloHabilidad,
         );
-      }
 
-      return habilidad;
-    });
+        if (!habilidad) {
+          throw new NotFoundError(
+            `la habilidad ${tituloHabilidad} no existe`,
+            "HABILIDAD_NO_ENCONTRADA",
+          );
+        }
+
+        return habilidad.titulo;
+      }),
+    );
 
     const colaborador = new Colaborador(
       datosColaborador.nombreFantasia,
@@ -44,14 +42,14 @@ export class ColaboradorService {
       habilidades,
     );
 
-    return this.colaboradorRepository.save(colaborador);
+    return await this.colaboradorRepository.save(colaborador);
   };
 
-  obtenerTodos() {
-    return this.colaboradorRepository.obtenerTodos();
+  async obtenerTodos() {
+    return await this.colaboradorRepository.obtenerTodos();
   }
 
   obtenerPorId = (colaboradorId) => {
-    return this.obtenerTodos().find((c) => c.idColaborador == colaboradorId);
+    return this.colaboradorRepository.encontrarPorId(colaboradorId);
   };
 }

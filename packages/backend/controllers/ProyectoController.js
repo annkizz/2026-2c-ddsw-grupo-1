@@ -31,28 +31,29 @@ export class ProyectoController {
     this.proyectoService = proyectoService;
   }
 
-  crear = (req, res) => {
-    const proyectoNuevo = this.proyectoService.crear(req.body);
+  crear = async (req, res) => {
+    const proyectoNuevo = await this.proyectoService.crear(req.body);
     res.status(201).json(proyectoNuevo);
   };
 
-  obtenerTodos = (req, res) => {
-    const proyectos = this.proyectoService.obtenerTodos();
+  obtenerTodos = async (req, res) => {
+    const proyectos = await this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
   };
 
-  programarCierre(req, res) {
-    const proyecto = this.proyectoService.programarCierre(
+  async programarCierre(req, res) {
+    const proyecto = await this.proyectoService.programarCierre(
       req.params.id,
       req.body.fechaLimiteCierre,
     );
     res.status(200).json(proyecto);
   }
 
-  crearColaboracion(req, res) {
+  async crearColaboracion(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente =
-      this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente = await this.proyectoService.obtenerProyectoPorId(
+      proyectoId,
+    );
 
     if (!proyectoExistente) {
       throw new NotFoundError(
@@ -72,7 +73,7 @@ export class ProyectoController {
     }
 
     const colaboradorId = resultado.data.idColaborador;
-    const colaboracion = this.proyectoService.crearColaboracion(
+    const colaboracion = await this.proyectoService.crearColaboracion(
       proyectoExistente,
       colaboradorId,
     );
@@ -80,10 +81,11 @@ export class ProyectoController {
     res.status(201).json(colaboracion);
   }
 
-  cerrarProyecto(req, res) {
+  async cerrarProyecto(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente =
-      this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente = await this.proyectoService.obtenerProyectoPorId(
+      proyectoId,
+    );
 
     if (!proyectoExistente) {
       throw new NotFoundError(
@@ -92,7 +94,7 @@ export class ProyectoController {
       );
     }
 
-    const proyectoCerrado = this.proyectoService.cerrarProyecto(proyectoId);
+    const proyectoCerrado = await this.proyectoService.cerrarProyecto(proyectoId);
     res.status(200).json(proyectoCerrado);
   }
 }

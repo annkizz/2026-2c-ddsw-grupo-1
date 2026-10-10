@@ -9,7 +9,11 @@ export class Colectivo {
   }
 
   agregarProyecto(unProyecto) {
-    this.proyectos.push(unProyecto);
+    const idProyecto =
+      typeof unProyecto === "string" ? unProyecto : unProyecto.idProyecto;
+    if (!this.proyectos.includes(idProyecto)) {
+      this.proyectos.push(idProyecto);
+    }
   }
 
   finalizar(proyecto) {

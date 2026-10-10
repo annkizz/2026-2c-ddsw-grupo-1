@@ -7,6 +7,7 @@ export class Proyecto {
     fechaInicio,
     idProyecto,
     fechaLimiteCierre,
+    idColectivo,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -15,7 +16,8 @@ export class Proyecto {
     this.fechaInicio = fechaInicio;
     this.idProyecto = idProyecto;
     this.fechaLimiteCierre = fechaLimiteCierre;
-  }
+    this.idColectivo = idColectivo;
+}
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;
   }

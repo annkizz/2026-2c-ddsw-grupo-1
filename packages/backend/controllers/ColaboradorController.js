@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { BadRequestError } from "../errors/AppError.js";
 import { ColaboradorService } from "../services/ColaboradorService.js";
 
 export const colaboradorSchema = z
@@ -19,13 +18,14 @@ export class ColaboradorController {
     this.colaboradorService = colaboradorService;
   }
 
-  crear(req, res) {
-    const colaboradorNuevo = this.colaboradorService.crear(req.body);
+  async crear(req, res) {
+    const colaboradorNuevo = await this.colaboradorService.crear(req.body);
     res.status(201).json(colaboradorNuevo);
   }
 
   obtenerTodos = (req, res) => {
-    const colaboradores = this.colaboradorService.obtenerTodos();
-    res.status(200).json(colaboradores);
+    return this.colaboradorService.obtenerTodos().then((colaboradores) => {
+      res.status(200).json(colaboradores);
+    });
   };
 }

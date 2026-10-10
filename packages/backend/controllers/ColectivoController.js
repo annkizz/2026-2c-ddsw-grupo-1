@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { BadRequestError } from "../errors/AppError.js";
 import { ColectivoService } from "../services/ColectivoService.js";
 
 export const colectivoSchema = z
@@ -27,13 +26,13 @@ export class ColectivoController {
     this.colectivoService = colectivoService;
   }
 
-  crear(req, res) {
-    const colectivoNuevo = this.colectivoService.crear(req.body);
+  async crear(req, res) {
+    const colectivoNuevo = await this.colectivoService.crear(req.body);
     res.status(201).json(colectivoNuevo);
   }
 
-  obtenerTodos(req, res) {
-    const colectivos = this.colectivoService.obtenerTodos();
+  async obtenerTodos(req, res) {
+    const colectivos = await this.colectivoService.obtenerTodos();
     res.status(200).json(colectivos);
   }
 }

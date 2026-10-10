@@ -1,42 +1,32 @@
-import { HabilidadProyecto } from "../domain/HabilidadProyecto.js";
-
-const habilidadesIniciales = [
-  { titulo: "Testing E2E con Cypress" },
-  { titulo: "buscando a nemo" },
-];
+import { HabilidadModel } from "../schemas/habilidadSchema.js";
 
 export class HabilidadRepository {
-  constructor() {
-    this.habilidades = habilidadesIniciales.map(
-      (habilidad) => new HabilidadProyecto(habilidad.titulo),
-    );
+  constructor(model = HabilidadModel) {
+    this.model = model;
   }
 
   obtenerTodos() {
-    return this.habilidades;
+    return this.model.find().sort({ titulo: 1 }).exec();
   }
 
   encontrarPorTitulo(titulo) {
-    const tituloNormalizado = normalizarHabilidad(titulo);
-    return this.habilidades.find(
-      (unaHabilidad) =>
-        normalizarHabilidad(unaHabilidad.titulo) === tituloNormalizado,
-    );
+    const codigo = normalizarHabilidad(titulo);
+    return this.model.findOne({ codigo }).exec();
   }
 
   save(unaHabilidad) {
-    const tituloNormalizado = normalizarHabilidad(unaHabilidad.titulo);
-    const indice = this.habilidades.findIndex(
-      (p) => normalizarHabilidad(p.titulo) === tituloNormalizado,
-    );
-
-    if (indice === -1) {
-      this.habilidades.push(unaHabilidad);
-      return unaHabilidad;
-    }
-
-    this.habilidades[indice] = unaHabilidad;
-    return unaHabilidad;
+    const titulo = normalizarHabilidad(unaHabilidad.titulo);
+    return this.model.findOneAndUpdate(
+      { codigo: titulo },
+      {
+        $set: {
+          titulo,
+          codigo: titulo,
+          descripcion: unaHabilidad.descripcion ?? "",
+        },
+      },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
+    ).exec();
   }
 }
 
