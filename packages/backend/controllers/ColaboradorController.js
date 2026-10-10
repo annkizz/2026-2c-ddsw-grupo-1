@@ -19,13 +19,13 @@ export class ColaboradorController {
     this.colaboradorService = colaboradorService;
   }
 
-  crear(req, res) {
-    const colaboradorNuevo = this.colaboradorService.crear(req.body);
+async crear(req, res) {
+    const colaboradorNuevo = await this.colaboradorService.crear(req.body);
     res.status(201).json(colaboradorNuevo);
   }
 
-  obtenerTodos = (req, res) => {
-    const colaboradores = this.colaboradorService.obtenerTodos();
+  obtenerTodos = async (req, res) => {
+    const colaboradores = await this.colaboradorService.obtenerTodos();
     res.status(200).json(colaboradores);
   };
 }
