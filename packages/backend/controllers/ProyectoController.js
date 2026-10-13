@@ -17,6 +17,7 @@ export const proyectoSchema = z
 export const idColaboradorSchema = z
   .object({
     idColaborador: z.string().trim().min(1),
+    esAnonima: z.boolean().default(false),
   })
   .strict();
 
@@ -39,6 +40,13 @@ export class ProyectoController {
   obtenerTodos = async (req, res) => {
     const proyectos = await this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
+  };
+
+  obtenerColaboracionesPublicas = async (req, res) => {
+    const colaboraciones = await this.proyectoService.obtenerColaboracionesPublicas(
+      req.params.id,
+    );
+    res.status(200).json(colaboraciones);
   };
 
   async programarCierre(req, res) {
@@ -73,12 +81,16 @@ export class ProyectoController {
     }
 
     const colaboradorId = resultado.data.idColaborador;
+    const { esAnonima } = resultado.data;
     const colaboracion = await this.proyectoService.crearColaboracion(
       proyectoExistente,
       colaboradorId,
+      esAnonima,
     );
 
-    res.status(201).json(colaboracion);
+    res.status(201).json(
+      this.proyectoService.toContribucionPublica(colaboracion),
+    );
   }
 
   async cerrarProyecto(req, res) {

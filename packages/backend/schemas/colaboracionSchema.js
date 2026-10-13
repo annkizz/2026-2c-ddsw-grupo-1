@@ -5,6 +5,7 @@ const colaboracionSchema = new mongoose.Schema(
     idProyecto: { type: String, required: true, index: true },
     idColaborador: { type: String, required: true, index: true },
     fecha: { type: Date, required: true },
+    esAnonima: { type: Boolean, default: false },
   },
   { timestamps: true, collection: "colaboraciones" },
 );

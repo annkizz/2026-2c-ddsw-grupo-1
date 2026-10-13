@@ -18,6 +18,7 @@ export function crearProyectoRouter(proyectoController) {
 
   router
     .route("/:id/colaboraciones")
+    .get((req, res) => proyectoController.obtenerColaboracionesPublicas(req, res))
     .post(validate(idColaboradorSchema), (req, res) =>
       proyectoController.crearColaboracion(req, res),
     );

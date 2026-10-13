@@ -145,6 +145,43 @@ export class ProyectoService {
     return this.proyectoRepository.obtenerTodasColaboraciones();
   };
 
+  toContribucionPublica(colaboracion) {
+    const esAnonima = colaboracion.esAnonima ?? false;
+    const contribucion = {
+      idProyecto: colaboracion.proyecto?.idProyecto,
+      fecha: colaboracion.fecha,
+      esAnonima,
+    };
+
+    if (!esAnonima && colaboracion.colaborador) {
+      const {
+        idColaborador,
+        nombreFantasia,
+        usuarioGitHub,
+        nombre,
+        apellido,
+      } = colaboracion.colaborador;
+      contribucion.colaborador = {
+        idColaborador,
+        nombreFantasia,
+        usuarioGitHub,
+        nombre,
+        apellido,
+      };
+    }
+
+    return contribucion;
+  }
+
+  obtenerColaboracionesPublicas = async (idProyecto) => {
+    await this.buscarProyectoOFallar(idProyecto);
+    const colaboraciones =
+      await this.proyectoRepository.obtenerColaboracionesPorProyecto(idProyecto);
+    return colaboraciones.map((colaboracion) =>
+      this.toContribucionPublica({ ...colaboracion, proyecto: { idProyecto } }),
+    );
+  };
+
   obtenerColaboracionPorIdProyecto = async (proyectoId) => {
     const colaboraciones = await this.obtenerTodasColaboraciones();
     return colaboraciones.find((c) => c.proyecto?.idProyecto === proyectoId);
@@ -169,7 +206,7 @@ export class ProyectoService {
     );
   };
 
-  async crearColaboracion(proyecto, colaboradorId) {
+  async crearColaboracion(proyecto, colaboradorId, esAnonima = false) {
     if (proyecto.estaFinalizado()) {
       throw new ConflictError(
         "No se puede anotar a un proyecto finalizado",
@@ -204,6 +241,7 @@ export class ProyectoService {
       proyecto,
       colaborador,
       new Date().toISOString(),
+      esAnonima,
     );
     return await this.proyectoRepository.saveColaboracion(nuevaColaboracion);
   }

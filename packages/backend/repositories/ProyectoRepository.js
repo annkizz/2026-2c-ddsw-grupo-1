@@ -20,13 +20,28 @@ export class ProyectoRepository {
   obtenerTodasColaboraciones = async () => {
     const colaboraciones = await this.colaboracionModel.find().lean().exec();
     return Promise.all(
-      colaboraciones.map(async ({ idProyecto, idColaborador, fecha }) => {
+      colaboraciones.map(async ({ idProyecto, idColaborador, fecha, esAnonima }) => {
         const [proyecto, colaborador] = await Promise.all([
           this.proyectoModel.findOne({ idProyecto }).exec(),
           ColaboradorModel.findOne({ idColaborador }).exec(),
         ]);
-        return { proyecto, colaborador, fecha };
+        return { proyecto, colaborador, fecha, esAnonima: esAnonima ?? false };
       }),
+    );
+  };
+
+  obtenerColaboracionesPorProyecto = async (idProyecto) => {
+    const colaboraciones = await this.colaboracionModel
+      .find({ idProyecto })
+      .lean()
+      .exec();
+
+    return Promise.all(
+      colaboraciones.map(async ({ idColaborador, fecha, esAnonima }) => ({
+        colaborador: await ColaboradorModel.findOne({ idColaborador }).exec(),
+        fecha,
+        esAnonima: esAnonima ?? false,
+      })),
     );
   };
 
@@ -84,6 +99,7 @@ export class ProyectoRepository {
           idProyecto: colaboracion.proyecto.idProyecto,
           idColaborador: colaboracion.colaborador.idColaborador,
           fecha: colaboracion.fecha,
+          esAnonima: colaboracion.esAnonima,
         },
       },
       { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
@@ -93,6 +109,7 @@ export class ProyectoRepository {
       colaboracion.proyecto,
       colaboracion.colaborador,
       guardada.fecha,
+      guardada.esAnonima ?? colaboracion.esAnonima,
     );
   };
 }

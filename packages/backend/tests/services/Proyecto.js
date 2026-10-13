@@ -3,6 +3,8 @@ import { ProyectoService } from "../../services/ProyectoService.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 import { Colectivo } from "../../domain/Colectivo.js";
 import { BadRequestError, ConflictError, NotFoundError } from "../../errors/AppError.js";
+import { idColaboradorSchema } from "../../controllers/ProyectoController.js";
+import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
 
 const proyectoActivo = (extra = {}) =>
   Object.assign(new Proyecto("Titulo", "Desc", [], "ACTIVO", new Date(), "p-1", null, "col-1"), extra);
@@ -24,6 +26,7 @@ describe("ProyectoService", () => {
       save: jest.fn(async (proyecto) => proyecto),
       encontrarPorId: jest.fn(async () => null),
       obtenerTodasColaboraciones: jest.fn(async () => []),
+      obtenerColaboracionesPorProyecto: jest.fn(async () => []),
       saveColaboracion: jest.fn(async (colaboracion) => colaboracion),
       obtenerVencidos: jest.fn(async () => []),
     };
@@ -161,6 +164,59 @@ describe("ProyectoService", () => {
       const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
       expect(guardada.proyecto).toBe(proyecto);
       expect(guardada.colaborador).toBe(colaboradora);
+      expect(guardada.esAnonima).toBe(false);
+    });
+
+    it("registra la preferencia de contribución anónima", async () => {
+      await service.crearColaboracion(proyectoActivo(), "c-1", true);
+
+      const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
+      expect(guardada.esAnonima).toBe(true);
+    });
+
+    it("publica la contribución sin identidad cuando es anónima", async () => {
+      const fecha = new Date();
+      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
+      proyectoRepository.obtenerColaboracionesPorProyecto.mockResolvedValue([
+        {
+          colaborador: {
+            idColaborador: "c-1",
+            nombre: "Nombre privado",
+            apellido: "Apellido privado",
+          },
+          fecha,
+          esAnonima: true,
+        },
+        {
+          colaborador: {
+            idColaborador: "c-2",
+            nombreFantasia: "Colaboradora visible",
+            usuarioGitHub: "visible-dev",
+          },
+          fecha,
+          esAnonima: false,
+        },
+      ]);
+
+      const contribuciones = await service.obtenerColaboracionesPublicas("p-1");
+
+      expect(contribuciones[0]).toEqual({
+        idProyecto: "p-1",
+        fecha,
+        esAnonima: true,
+      });
+      expect(contribuciones[1]).toEqual({
+        idProyecto: "p-1",
+        fecha,
+        esAnonima: false,
+        colaborador: {
+          idColaborador: "c-2",
+          nombreFantasia: "Colaboradora visible",
+          usuarioGitHub: "visible-dev",
+          nombre: undefined,
+          apellido: undefined,
+        },
+      });
     });
 
     it("rechaza anotarse a un proyecto finalizado", async () => {
@@ -205,5 +261,39 @@ describe("ProyectoService", () => {
       perfilRepository.obtenerTodos.mockResolvedValue([]);
       await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toThrow(BadRequestError);
     });
+  });
+});
+
+describe("preferencia de anonimato de una colaboración", () => {
+  it("acepta la preferencia y la deja desactivada si se omite", () => {
+    expect(idColaboradorSchema.parse({ idColaborador: "c-1" })).toEqual({
+      idColaborador: "c-1",
+      esAnonima: false,
+    });
+    expect(
+      idColaboradorSchema.parse({ idColaborador: "c-1", esAnonima: true }),
+    ).toEqual({ idColaborador: "c-1", esAnonima: true });
+    expect(
+      idColaboradorSchema.safeParse({ idColaborador: "c-1", esAnonima: "true" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("usa false por defecto en Mongo y permite guardar true", () => {
+    const fecha = new Date();
+    const normal = new ColaboracionModel({
+      idProyecto: "p-1",
+      idColaborador: "c-1",
+      fecha,
+    });
+    const anonima = new ColaboracionModel({
+      idProyecto: "p-1",
+      idColaborador: "c-2",
+      fecha,
+      esAnonima: true,
+    });
+
+    expect(normal.esAnonima).toBe(false);
+    expect(anonima.esAnonima).toBe(true);
   });
 });
