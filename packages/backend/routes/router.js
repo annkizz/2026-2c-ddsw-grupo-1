@@ -23,6 +23,10 @@ import { MatchingController } from "../controllers/MatchingController.js";
 import { MatchingService } from "../services/MatchingService.js";
 import { crearMatchingRouter } from "./matchingRouter.js";
 export { proyectoService };
+import { LogroRepository } from "../repositories/LogroRepository.js";
+import { LogroService } from "../services/LogroService.js";
+import { LogroController } from "../controllers/LogroController.js";
+import { crearLogroRouter } from "./logroRouter.js";
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
