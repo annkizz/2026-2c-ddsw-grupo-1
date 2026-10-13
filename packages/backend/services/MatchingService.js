@@ -45,7 +45,6 @@ export class MatchingService {
         ...evaluarCoincidencia(perfil, colaboradora.habilidades),
       }))
       .filter((r) => r.tieneCoincidencia)
-      .sort((a, b) => b.porcentajeCoincidencia - a.porcentajeCoincidencia)
       .map(({ colaboradora, ...coincidencia }) => ({
         // DTO publico, no se exponen nombre/apellido, colaboraciones ni medios de contacto.
         idColaborador: colaboradora.idColaborador,
@@ -91,15 +90,13 @@ export class MatchingService {
             ...evaluarCoincidencia(perfil, colaboradora.habilidades),
           }))
           .filter((p) => p.tieneCoincidencia)
-          .map(({ idPerfil, descripcion, compromiso, requeridasCoincidentes, opcionalesCoincidentes, porcentajeCoincidencia }) => ({
+          .map(({ idPerfil, descripcion, compromiso, requeridasCoincidentes, opcionalesCoincidentes }) => ({
             idPerfil,
             descripcion,
             compromiso,
             requeridasCoincidentes,
             opcionalesCoincidentes,
-            porcentajeCoincidencia,
-          }))
-          .sort((a, b) => b.porcentajeCoincidencia - a.porcentajeCoincidencia);
+          }));
 
         return {
           idProyecto: proyecto.idProyecto,
@@ -110,12 +107,6 @@ export class MatchingService {
       }),
     );
 
-    return resultados
-      .filter((r) => r.perfilesCompatibles.length > 0)
-      .sort(
-        (a, b) =>
-          b.perfilesCompatibles[0].porcentajeCoincidencia -
-          a.perfilesCompatibles[0].porcentajeCoincidencia,
-      );
+    return resultados.filter((r) => r.perfilesCompatibles.length > 0);
   }
 }

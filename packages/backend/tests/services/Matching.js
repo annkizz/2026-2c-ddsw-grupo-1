@@ -92,7 +92,7 @@ function crearServicio(colaboraciones = []) {
 }
 
 describe("evaluarCoincidencia", () => {
-  it("normaliza habilidades y exige al menos una requerida", () => {
+  it("normaliza habilidades y exige al menos una requerida sin calcular porcentaje", () => {
     const perfil = {
       habilidadesRequeridas: ["Testing E2E con Cypress", "React"],
       habilidadesOpcionales: ["Jest"],
@@ -100,10 +100,10 @@ describe("evaluarCoincidencia", () => {
 
     expect(
       evaluarCoincidencia(perfil, ["  testing   e2e CON cypress  "]),
-    ).toMatchObject({
+    ).toEqual({
       tieneCoincidencia: true,
       requeridasCoincidentes: ["Testing E2E con Cypress"],
-      porcentajeCoincidencia: 33,
+      opcionalesCoincidentes: [],
     });
     expect(evaluarCoincidencia(perfil, ["Jest"]).tieneCoincidencia).toBe(
       false,
@@ -112,21 +112,31 @@ describe("evaluarCoincidencia", () => {
 });
 
 describe("MatchingService.buscarColaboradorasParaPerfil", () => {
-  it("devuelve coincidencias ordenadas y omite datos privados", async () => {
+  it("devuelve coincidencias sin puntaje ni datos privados", async () => {
     const resultado = await crearServicio().buscarColaboradorasParaPerfil(
       "proyecto-1",
       "perfil-1",
     );
 
-    expect(resultado.map((c) => c.idColaborador)).toEqual([
-      "completa",
-      "parcial",
-    ]);
+    expect(new Set(resultado.map((c) => c.idColaborador))).toEqual(
+      new Set(["completa", "parcial"]),
+    );
     expect(resultado[0]).toMatchObject({
-      requeridasCoincidentes: ["React", "Node.js"],
-      opcionalesCoincidentes: ["Jest", "SQL"],
-      porcentajeCoincidencia: 100,
+      requeridasCoincidentes: ["React"],
+      opcionalesCoincidentes: ["Jest"],
     });
+    expect(Object.keys(resultado[0]).sort()).toEqual(
+      [
+        "idColaborador",
+        "nombreFantasia",
+        "usuarioGitHub",
+        "pronombres",
+        "presentacion",
+        "tieneCoincidencia",
+        "requeridasCoincidentes",
+        "opcionalesCoincidentes",
+      ].sort(),
+    );
     expect(resultado[0]).not.toHaveProperty("nombre");
     expect(resultado[0]).not.toHaveProperty("mediosContacto");
     expect(resultado[0]).not.toHaveProperty("colaboraciones");
@@ -183,21 +193,34 @@ describe("MatchingService.buscarProyectosParaColaboradora", () => {
 
     const resultado = await servicio.buscarProyectosParaColaboradora("parcial");
 
-    expect(resultado.map((p) => p.idProyecto)).toEqual([
-      "proyecto-2",
-      "proyecto-1",
-    ]);
-    expect(resultado[0].perfilesCompatibles[0]).toMatchObject({
-      idPerfil: "perfil-2",
-      requeridasCoincidentes: ["React"],
-      porcentajeCoincidencia: 100,
-    });
-    expect(resultado[1].perfilesCompatibles[0]).toMatchObject({
-      idPerfil: "perfil-1",
-      requeridasCoincidentes: ["React"],
-      opcionalesCoincidentes: ["Jest"],
-      porcentajeCoincidencia: 50,
-    });
+    expect(new Set(resultado.map((p) => p.idProyecto))).toEqual(
+      new Set(["proyecto-1", "proyecto-2"]),
+    );
+    const perfilesCompatibles = resultado.flatMap((p) => p.perfilesCompatibles);
+    expect(perfilesCompatibles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          idPerfil: "perfil-2",
+          requeridasCoincidentes: ["React"],
+        }),
+        expect.objectContaining({
+          idPerfil: "perfil-1",
+          requeridasCoincidentes: ["React"],
+          opcionalesCoincidentes: ["Jest"],
+        }),
+      ]),
+    );
+    for (const perfil of perfilesCompatibles) {
+      expect(Object.keys(perfil).sort()).toEqual(
+        [
+          "idPerfil",
+          "descripcion",
+          "compromiso",
+          "requeridasCoincidentes",
+          "opcionalesCoincidentes",
+        ].sort(),
+      );
+    }
   });
 
   it("devuelve error cuando la colaboradora no existe", async () => {

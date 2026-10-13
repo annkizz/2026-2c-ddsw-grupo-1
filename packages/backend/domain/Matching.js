@@ -22,17 +22,10 @@ export function evaluarCoincidencia(perfil, habilidadesPersona) {
 
   const requeridasCoincidentes = coinciden(requeridas);
   const opcionalesCoincidentes = coinciden(opcionales);
-  const totalSolicitadas = requeridas.size + opcionales.size;
-  const totalCoincidentes =
-    requeridasCoincidentes.length + opcionalesCoincidentes.length;
 
   return {
     tieneCoincidencia: requeridasCoincidentes.length > 0,
     requeridasCoincidentes,
     opcionalesCoincidentes,
-    porcentajeCoincidencia:
-      totalSolicitadas === 0
-        ? 0
-        : Math.round((totalCoincidentes / totalSolicitadas) * 100),
   };
 }

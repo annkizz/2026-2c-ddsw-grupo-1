@@ -150,7 +150,6 @@ const swaggerSpec = {
                         items: { type: "string" },
                       },
                       presentacion: { type: "string" },
-                      porcentajeCoincidencia: { type: "number" },
                       tieneCoincidencia: { type: "boolean" },
                       requeridasCoincidentes: {
                         type: "array",
@@ -220,7 +219,6 @@ const swaggerSpec = {
                               type: "array",
                               items: { type: "string" },
                             },
-                            porcentajeCoincidencia: { type: "number" },
                           },
                         },
                       },
@@ -464,6 +462,53 @@ const swaggerSpec = {
       },
     },
     "/proyectos/{id}/colaboraciones": {
+      get: {
+        summary: "Obtiene las contribuciones públicas de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              "Lista de contribuciones; las anónimas no incluyen identidad de la colaboradora",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["idProyecto", "fecha", "esAnonima"],
+                    properties: {
+                      idProyecto: { type: "string" },
+                      fecha: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      colaborador: {
+                        type: "object",
+                        description:
+                          "Solo se incluye cuando la contribución no es anónima",
+                        properties: {
+                          idColaborador: { type: "string" },
+                          nombreFantasia: { type: "string" },
+                          usuarioGitHub: { type: "string" },
+                          nombre: { type: "string" },
+                          apellido: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
       post: {
         summary:
           "Crea una nueva colaboración entre un proyecto y una colaboradora.",
@@ -485,6 +530,12 @@ const swaggerSpec = {
                 required: ["idColaborador"],
                 properties: {
                   idColaborador: { type: "string", example: "a1b2c3d4-..." },
+                  esAnonima: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "Si es true, la contribución se registra sin exponer la identidad públicamente",
+                  },
                 },
               },
             },
