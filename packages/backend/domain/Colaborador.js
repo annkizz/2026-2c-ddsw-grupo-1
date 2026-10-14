@@ -8,6 +8,8 @@ export class Colaborador {
     pronombres,
     idColaborador,
     habilidades,
+    mediosDeContacto,
+    aceptaMensajeria,
   ) {
     this.nombreFantasia = nombreFantasia;
     this.usuarioGitHub = usuarioGitHub;
@@ -18,6 +20,8 @@ export class Colaborador {
     this.idColaborador = idColaborador;
     this.habilidades = habilidades;
     this.colaboraciones = [];
+    this.mediosDeContacto = mediosDeContacto;
+    this.aceptaMensajeria = aceptaMensajeria;
   }
 
   anotarse(proyecto) {
@@ -26,7 +30,11 @@ export class Colaborador {
     }
   }
 
-  agregarColaboracion = (nuevaColaboracion) => {
+  agregarColaboracion(nuevaColaboracion) {
     this.colaboraciones.push(nuevaColaboracion);
   };
+  
+  agregarMedioDeContacto(nuevoMedio) {
+    this.mediosDeContacto.push(nuevaColaboracion);
+  }
 }

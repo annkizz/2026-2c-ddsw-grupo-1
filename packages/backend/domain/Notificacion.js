@@ -3,12 +3,13 @@ export class Notificacion {
     fecha,
     contenido,
     colectivo, 
-    colaborador 
+    colaborador,
+    medioDeContacto 
   ) {
     this.fecha = fecha;
     this.contenido = contenido;
     this.colectivo = colectivo;
     this.colaborador = colaborador;
-
+    this.medioDeContacto = medioDeContacto;
   }
 }

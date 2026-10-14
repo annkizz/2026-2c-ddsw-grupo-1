@@ -2,6 +2,9 @@ import { z } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 import { ColaboradorService } from "../services/ColaboradorService.js";
 
+
+
+
 export const colaboradorSchema = z
   .object({
     nombreFantasia: z.string().optional(),
@@ -11,6 +14,8 @@ export const colaboradorSchema = z
     presentacion: z.string().min(1).optional(),
     pronombres: z.array(z.string()).optional(),
     habilidades: z.array(z.string()).min(1),
+    aceptaMensajeria: z.boolean(),
+    mediosDeContacto: z.array(medioDeContactoSchema).default([]),
   })
   .strict();
 
