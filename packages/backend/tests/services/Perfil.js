@@ -25,6 +25,7 @@ describe("PerfilService", () => {
   let habilidadRepository;
   let service;
 
+  beforeEach(() => {
     perfilRepository = {
       save: jest.fn(async (perfil, idProyecto) => ({ id: "perfil-1", proyecto: idProyecto, ...perfil })),
       obtenerTodos: jest.fn(async () => []),
