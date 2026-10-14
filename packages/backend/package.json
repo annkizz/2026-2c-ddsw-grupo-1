@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "seed": "node seeds/seed.js",
     "lint": "eslint .",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },

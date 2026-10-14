@@ -112,7 +112,129 @@ const swaggerSpec = {
         },
       },
     },
-        "/proyectos/{id}/perfiles": {
+    "/proyectos/{id}/perfiles/{idPerfil}/colaboradoras": {
+      get: {
+        summary:
+          "Busca colaboradoras candidatas para un perfil específico de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del perfil del proyecto",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de colaboradoras compatibles con el perfil",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idColaborador: { type: "string" },
+                      nombreFantasia: { type: "string" },
+                      usuarioGitHub: { type: "string" },
+                      pronombres: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                      presentacion: { type: "string" },
+                      tieneCoincidencia: { type: "boolean" },
+                      requeridasCoincidentes: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                      opcionalesCoincidentes: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            description: "Proyecto o perfil no encontrado",
+          },
+          409: {
+            description: "El proyecto está finalizado",
+          },
+        },
+      },
+    },
+    "/colaboradoras/{id}/proyectos": {
+      get: {
+        summary:
+          "Busca proyectos abiertos y compatibles con las habilidades de una colaboradora",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID de la colaboradora",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de proyectos compatibles",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idProyecto: { type: "string" },
+                      titulo: { type: "string" },
+                      descripcion: { type: "string" },
+                      perfilesCompatibles: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            idPerfil: { type: "string" },
+                            descripcion: { type: "string" },
+                            compromiso: {
+                              type: "object",
+                              additionalProperties: true,
+                            },
+                            requeridasCoincidentes: {
+                              type: "array",
+                              items: { type: "string" },
+                            },
+                            opcionalesCoincidentes: {
+                              type: "array",
+                              items: { type: "string" },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            description: "La colaboradora no existe",
+          },
+        },
+      },
+    },
+    "/proyectos/{id}/perfiles": {
       get: {
         summary: "Obtiene los perfiles de un proyecto",
         parameters: [
@@ -340,6 +462,53 @@ const swaggerSpec = {
       },
     },
     "/proyectos/{id}/colaboraciones": {
+      get: {
+        summary: "Obtiene las contribuciones públicas de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              "Lista de contribuciones; las anónimas no incluyen identidad de la colaboradora",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["idProyecto", "fecha", "esAnonima"],
+                    properties: {
+                      idProyecto: { type: "string" },
+                      fecha: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      colaborador: {
+                        type: "object",
+                        description:
+                          "Solo se incluye cuando la contribución no es anónima",
+                        properties: {
+                          idColaborador: { type: "string" },
+                          nombreFantasia: { type: "string" },
+                          usuarioGitHub: { type: "string" },
+                          nombre: { type: "string" },
+                          apellido: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
       post: {
         summary:
           "Crea una nueva colaboración entre un proyecto y una colaboradora.",
@@ -361,6 +530,12 @@ const swaggerSpec = {
                 required: ["idColaborador"],
                 properties: {
                   idColaborador: { type: "string", example: "a1b2c3d4-..." },
+                  esAnonima: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "Si es true, la contribución se registra sin exponer la identidad públicamente",
+                  },
                 },
               },
             },

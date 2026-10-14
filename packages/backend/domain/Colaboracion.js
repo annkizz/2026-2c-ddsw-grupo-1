@@ -1,9 +1,8 @@
 export class Colaboracion {
-  constructor(proyecto, colaborador, fecha, esPublica) {
+  constructor(proyecto, colaborador, fecha, esAnonima = false) {
     this.proyecto = proyecto;
     this.colaborador = colaborador;
     this.fecha = fecha;
-    this.esPublica = esPublica;
-
+    this.esAnonima = esAnonima;
   }
 }

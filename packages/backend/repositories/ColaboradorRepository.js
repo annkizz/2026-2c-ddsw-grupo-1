@@ -1,30 +1,33 @@
+import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
+
 export class ColaboradorRepository {
-  constructor() {
-    this.colaboradores = [];
-  }
+  constructor(model = ColaboradorModel) {
+      this.model = model;
+    }
 
   obtenerTodos() {
-    return this.colaboradores;
+    return this.model.find().exec();
   }
 
   encontrarPorId(idColaborador) {
-    return this.colaboradores.find(
-      (colaborador) => colaborador.idColaborador === idColaborador,
-    );
+    return this.model.findOne({ idColaborador }).exec();
   }
 
   save(unColaborador) {
-    const indice = this.colaboradores.findIndex(
-      (colaborador) =>
-        this.colaboradores.idColaborador === unColaborador.idColaborador,
-    );
-
-    if (indice === -1) {
-      this.colaboradores.push(unColaborador);
-      return unColaborador;
-    }
-
-    this.colaboradores[indice] = unColaborador;
-    return unColaborador;
+    return this.model.findOneAndUpdate(
+      { idColaborador: unColaborador.idColaborador },
+      {
+        $set: {
+          nombreFantasia: unColaborador.nombreFantasia,
+          usuarioGitHub: unColaborador.usuarioGitHub,
+          nombre: unColaborador.nombre,
+          apellido: unColaborador.apellido,
+          presentacion: unColaborador.presentacion,
+          pronombres: unColaborador.pronombres,
+          habilidades: unColaborador.habilidades,
+        },
+      },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
+    ).exec();
   }
 }
