@@ -4,6 +4,7 @@ import {
   proyectoSchema,
   idColaboradorSchema,
   cierreProgramadoSchema,
+  avanceSchema,
 } from "../controllers/ProyectoController.js";
 
 export function crearProyectoRouter(proyectoController) {
