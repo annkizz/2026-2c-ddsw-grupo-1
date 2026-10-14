@@ -91,6 +91,14 @@ describe("ProyectoService", () => {
       });
       expect(creado.fechaLimiteCierre).toEqual(fecha);
     });
+
+    it("deja el proyecto nuevo en 0% y sin enlaces", async () => {
+      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+
+      expect(creado.porcentajeConcrecion).toBe(0);
+      expect(creado.enlaceSistema).toBeNull();
+      expect(creado.enlaceCodigoFuente).toBeNull();
+    });
   });
 
   describe("cerrarProyecto", () => {
@@ -106,6 +114,40 @@ describe("ProyectoService", () => {
 
     it("falla si el proyecto no existe", async () => {
       await expect(service.cerrarProyecto("nope")).rejects.toThrow(NotFoundError);
+    });
+  });
+
+    describe("actualizarAvance", () => {
+    it("actualiza el avance, lo guarda y devuelve el DTO", async () => {
+      const proyecto = proyectoActivo();
+      proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
+
+      const resultado = await service.actualizarAvance("p-1", {
+        porcentajeConcrecion: 40,
+        enlaceCodigoFuente: "https://github.com/colectivo/app",
+      });
+
+      expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
+      expect(resultado.idProyecto).toBe("p-1");
+      expect(resultado.porcentajeConcrecion).toBe(40);
+      expect(resultado.enlaceCodigoFuente).toBe("https://github.com/colectivo/app");
+    });
+
+    it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
+      await expect(
+        service.actualizarAvance("nope", { porcentajeConcrecion: 10 }),
+      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("falla con AVANCE_VACIO si no se indica ningún dato", async () => {
+      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
+
+      await expect(service.actualizarAvance("p-1", {})).rejects.toMatchObject({
+        status: 400,
+        codigo: "AVANCE_VACIO",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
   });
 

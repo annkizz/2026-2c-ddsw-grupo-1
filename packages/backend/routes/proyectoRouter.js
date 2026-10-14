@@ -32,6 +32,13 @@ export function crearProyectoRouter(proyectoController) {
   .patch(validate(cierreProgramadoSchema), (req, res) =>
     proyectoController.programarCierre(req, res),
   );
+
+  router
+    .route("/:id/avance")
+    .patch(validate(avanceSchema), (req, res) =>
+      proyectoController.actualizarAvance(req, res),
+    );
+
   
   return router;
 }

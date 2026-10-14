@@ -27,6 +27,14 @@ export const cierreProgramadoSchema = z
   })
   .strict();
 
+export const avanceSchema = z
+  .object({
+    porcentajeConcrecion: z.number().min(0).max(100).optional(),
+    enlaceSistema: z.url({ protocol: /^https?$/ }).optional(),
+    enlaceCodigoFuente: z.url({ protocol: /^https?$/ }).optional(),
+  })
+  .strict();
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
@@ -93,6 +101,14 @@ export class ProyectoController {
     );
   }
 
+  async actualizarAvance(req, res) {
+    const avance = await this.proyectoService.actualizarAvance(
+      req.params.id,
+      req.body,
+    );
+    res.status(200).json(avance);
+    }
+
   async cerrarProyecto(req, res) {
     const proyectoId = req.params.id;
     const proyectoExistente = await this.proyectoService.obtenerProyectoPorId(
@@ -108,5 +124,7 @@ export class ProyectoController {
 
     const proyectoCerrado = await this.proyectoService.cerrarProyecto(proyectoId);
     res.status(200).json(proyectoCerrado);
+
+    
   }
 }

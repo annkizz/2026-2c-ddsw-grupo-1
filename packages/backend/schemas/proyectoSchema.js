@@ -12,6 +12,9 @@ const proyectoSchema = new mongoose.Schema(
     estado: { type: String, enum: Object.values(Estado), required: true },
     fechaInicio: { type: Date, required: true },
     fechaLimiteCierre: { type: Date, default: null },
+    porcentajeConcrecion: { type: Number, default: 0, min: 0, max: 100 },
+    enlaceSistema: { type: String, default: null },
+    enlaceCodigoFuente: { type: String, default: null },
   },
   { timestamps: true, collection: "proyectos" },
 );

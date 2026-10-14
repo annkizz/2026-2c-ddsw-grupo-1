@@ -60,6 +60,9 @@ export const proyectos = [
         compromiso: { tipoCompromiso: "MENSUALES", horas: 15, tipoColaboracion: "INCENTIVO" },
       },
     ],
+    porcentajeConcrecion: 35,
+    enlaceSistema: null,
+    enlaceCodigoFuente: "https://github.com/colectivo-ejemplo/turnos-solidarios",
   },
   {
     idProyecto: "seed-proyecto-2",
@@ -77,6 +80,9 @@ export const proyectos = [
         compromiso: { tipoCompromiso: "SEMANALES", horas: 6, tipoColaboracion: "GRATUITA" },
       },
     ],
+    porcentajeConcrecion: 10,
+    enlaceSistema: null,
+    enlaceCodigoFuente: "https://github.com/colectivo-ejemplo/mapa-comedores",
   },
   {
     idProyecto: "seed-proyecto-3",
@@ -94,6 +100,9 @@ export const proyectos = [
         compromiso: { tipoCompromiso: "TOTALES", horas: 40, tipoColaboracion: "CONTRATACION" },
       },
     ],
+    porcentajeConcrecion: 100,
+    enlaceSistema: "https://donaciones.example.org",
+    enlaceCodigoFuente: "https://github.com/colectivo-ejemplo/inventario-donaciones",
   },
 ];
 

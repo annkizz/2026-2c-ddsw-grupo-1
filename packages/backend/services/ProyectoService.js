@@ -55,6 +55,9 @@ export class ProyectoService {
       randomUUID(),
       fechaLimiteCierre,
       colectivo.idColectivo,
+      0,
+      null,
+      null,
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -249,5 +252,29 @@ export class ProyectoService {
   async cerrarProyecto(idProyecto) {
     const proyecto = await this.buscarProyectoOFallar(idProyecto);
     return await this.finalizar(proyecto);
+  }
+
+   async actualizarAvance(idProyecto, datosAvance) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (Object.keys(datosAvance).length === 0) {
+      throw new BadRequestError(
+        "indicá al menos un dato de avance",
+        "AVANCE_VACIO",
+      );
+    }
+
+    proyecto.actualizarAvance(datosAvance);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    return this.toAvanceDTO(guardado);
+  }
+
+  toAvanceDTO(proyecto) {
+    return {
+      idProyecto: proyecto.idProyecto,
+      porcentajeConcrecion: proyecto.porcentajeConcrecion,
+      enlaceSistema: proyecto.enlaceSistema,
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+    };
   }
 }
