@@ -58,6 +58,10 @@ const perfilRepository = new PerfilRepository();
 const perfilService = new PerfilService(perfilRepository, proyectoRepository, habilidadRepository)
 const perfilController = new PerfilController(perfilService);
 
+const logroRepository = new LogroRepository();
+const logroService = new LogroService(logroRepository, proyectoRepository);
+const logroController = new LogroController(logroService);
+
 const matchingService = new MatchingService(
   colaboradorRepository,
   proyectoRepository,
@@ -70,6 +74,7 @@ router.use("/proyectos/:id/perfiles", crearPerfilRouter(perfilController));
 router.use("/proyectos", crearProyectoRouter(proyectoController));
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
+router.use("/proyectos", crearLogroRouter(logroController));
 router.use(crearMatchingRouter(matchingController));
 
 export default router;
