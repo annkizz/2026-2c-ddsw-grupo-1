@@ -11,7 +11,6 @@ const swaggerDefinition = {
     },
   ],
 };
-
 const swaggerSpec = {
   ...swaggerDefinition,
   paths: {
@@ -308,7 +307,93 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/perfiles/{idPerfil}": {
+        "/proyectos/{id}/perfiles/{idPerfil}": {
+      get: {
+        summary: "Obtiene un perfil de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del perfil",
+          },
+        ],
+        responses: {
+          200: { description: "Perfil del proyecto" },
+          404: { description: "Proyecto o perfil no encontrado" },
+        },
+      },
+      put: {
+        summary: "Actualiza un perfil de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del perfil",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["descripcion", "habilidadesRequeridas", "compromiso"],
+                properties: {
+                  descripcion: { type: "string", example: "Tester" },
+                  habilidadesRequeridas: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Testing E2E con Cypress"],
+                  },
+                  habilidadesOpcionales: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: [],
+                  },
+                  compromiso: {
+                    type: "object",
+                    required: ["tipoCompromiso", "horas", "tipoColaboracion"],
+                    properties: {
+                      tipoCompromiso: {
+                        type: "string",
+                        enum: ["TOTALES", "MENSUALES", "SEMANALES"],
+                      },
+                      horas: { type: "integer", minimum: 1, example: 5 },
+                      tipoColaboracion: {
+                        type: "string",
+                        enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Perfil actualizado" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Proyecto, perfil o habilidad no encontrados" },
+        },
+      },
       delete: {
         summary: "Elimina un perfil de un proyecto",
         parameters: [
