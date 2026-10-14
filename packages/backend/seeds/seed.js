@@ -37,7 +37,7 @@ try {
     await PerfilModel.deleteMany({ proyecto: p.idProyecto });
     const idsPerfiles = [];
     for (const perfil of p.perfiles) {
-      const guardado = await perfilRepository.save({ ...perfil, proyecto: p.idProyecto });
+      const guardado = await perfilRepository.save(perfil, p.idProyecto);
       idsPerfiles.push(String(guardado.id));
     }
     const proyecto = await proyectoRepository.save(
