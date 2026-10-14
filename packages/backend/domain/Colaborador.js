@@ -20,7 +20,7 @@ export class Colaborador {
     this.idColaborador = idColaborador;
     this.habilidades = habilidades;
     this.colaboraciones = [];
-    this.mediosDeContacto = mediosDeContacto;
+    this.mediosDeContacto = mediosDeContacto ?? [];
     this.aceptaMensajeria = aceptaMensajeria;
   }
 
@@ -35,6 +35,6 @@ export class Colaborador {
   };
   
   agregarMedioDeContacto(nuevoMedio) {
-    this.mediosDeContacto.push(nuevaColaboracion);
+    this.mediosDeContacto.push(nuevoMedio);
   }
 }

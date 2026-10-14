@@ -13,7 +13,7 @@ export const medioSMSSchema = z.object({
     });
 
 export const medioEmailSchema = z.object({
-        tipoDeContacto: z.literal("SMS"),
+        tipoDeContacto: z.literal("EMAIL"),
         contacto: z.string().regex(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i),
     });
 

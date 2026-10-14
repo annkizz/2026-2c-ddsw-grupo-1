@@ -25,6 +25,7 @@ export class ColaboradorRepository {
           presentacion: unColaborador.presentacion,
           pronombres: unColaborador.pronombres,
           habilidades: unColaborador.habilidades,
+          mediosDeContacto: unColaborador.mediosDeContacto,
         },
       },
       { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },

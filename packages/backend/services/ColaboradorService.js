@@ -40,6 +40,7 @@ export class ColaboradorService {
       datosColaborador.pronombres ?? [],
       randomUUID(),
       habilidades,
+      datosColaborador.mediosDeContacto ?? [],
     );
 
     return await this.colaboradorRepository.save(colaborador);
