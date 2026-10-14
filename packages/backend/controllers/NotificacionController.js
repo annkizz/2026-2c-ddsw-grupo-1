@@ -1,10 +1,12 @@
-import { z } from "zod";
-import { medioDeContactoSchema } from "../schemas/zod/medioDeContactoSchema";
+import { NotificacionService } from "../services/NotificacionService";
 
-export const notificacionSchema = z .object ({
-    fecha: z.string(), // TODO
-    contenido: z.string().trim().min(4),
-    idColectivo: z.string().length(36), 
-    idColaborador: z.string().length(36),
-    medioDeContacto: medioDeContactoSchema
-})
+export class NotificacionController {
+  constructor(notificacionService = new NotificacionService()){
+    this.notificacionService = notificacionService
+  }
+
+  crear(req, res){
+    const nuevaNotificacion = this.notificacionService.crear(req.body);
+    res.status(201).json(nuevaNotificacion);
+  }
+}
