@@ -1,40 +1,101 @@
-import {Notificacion} from "../domain/Notificacion.js"
-import {NotificacionRepository}  from "../repositories/NotificacionRepository.js"
-import {ColectivoRepository}  from "../repositories/ColectivoRepository.js"
-import {ColaboradorRepository}  from "../repositories/ColaboradorRepository.js"
+import { randomUUID } from "node:crypto";
+import { Notificacion } from "../domain/Notificacion.js";
+import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
+import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
+import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
+import { NotificadorExterno } from "./notificadores/NotificadorExterno.js";
+import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 
 export class NotificacionService {
-    constructor(notificacionRepository = new NotificacionRepository,
-                colectivoRepository = new ColectivoRepository,
-                colaboradorRepository = new ColaboradorRepository
-    ){
-        this.notificacionRepository = notificacionRepository;
-        this.colectivoRepository = colectivoRepository;
-        this.colaboradorRepository = colaboradorRepository;
+  constructor(
+    notificacionRepository = new NotificacionRepository(),
+    colectivoRepository = new ColectivoRepository(),
+    colaboradorRepository = new ColaboradorRepository(),
+    notificadorExterno = new NotificadorExterno(),
+  ) {
+    this.notificacionRepository = notificacionRepository;
+    this.colectivoRepository = colectivoRepository;
+    this.colaboradorRepository = colaboradorRepository;
+    this.notificadorExterno = notificadorExterno;
+  }
+
+  toDTO(notificacion) {
+    return {
+      idNotificacion: notificacion.idNotificacion,
+      fecha: notificacion.fecha,
+      contenido: notificacion.contenido,
+      idColectivo: notificacion.idColectivo,
+      idColaborador: notificacion.idColaborador,
+      envios: (notificacion.envios ?? []).map(({ tipoDeContacto, estado, detalle }) => ({
+        tipoDeContacto,
+        estado,
+        ...(detalle && { detalle }),
+      })),
+    };
+  }
+
+  construirMensaje(colectivo, contenido) {
+    return {
+      asunto: `Nuevo mensaje de ${colectivo.nombre} en Código a Voluntad`,
+      texto: `${colectivo.nombre} te escribió en Código a Voluntad:\n\n${contenido}`,
+    };
+  }
+
+  // Un colectivo contacta a una colaboradora. Si ella aceptó ser contactada:
+  // 1) se guarda el mensaje interno; 2) se lo replica por cada medio de contacto registrado.
+  async crear(datosNotificacion) {
+    const { idColectivo, idColaborador, contenido } = datosNotificacion;
+
+    const colectivo = await this.colectivoRepository.encontrarPorId(idColectivo);
+    if (!colectivo) {
+      throw new NotFoundError("el colectivo no existe", "COLECTIVO_NO_ENCONTRADO");
     }
 
-
-    crear(datosNotificacion){
-        const colectivo = this.colectivoRepository.encontrarPorId(datosNotificacion.idColectivo);
-        if(!colectivo){
-            throw new NotFoundError("el colectivo no existe", "COLECTIVO_NO_ENCONTRADO");
-        } 
-
-        const colaborador = this.colaboradorRepository.encontrarPorId(datosNotificacion.idColaborador);
-        if(!colaborador){
-            throw new NotFoundError("El colaborador no existe", "COLABORADOR_NO_ENCONTRADO");
-        } 
-
-        const notificacion = new Notificacion(
-            new Date().toISOString(),
-            datosNotificacion.contenido,
-            datosNotificacion.idColectivo, 
-            datosNotificacion.idColaborador,
-            datosNotificacion.medioDeContacto // TODO: Esto lo tengo que hacer como una clase de medio de contacto
-        )
-
-        return this.notificacionRepository.save(notificacion);
-
+    const colaboradora = await this.colaboradorRepository.encontrarPorId(idColaborador);
+    if (!colaboradora) {
+      throw new NotFoundError("la colaboradora no existe", "COLABORADORA_NO_ENCONTRADA");
     }
 
+    if (!colaboradora.aceptaMensajeria) {
+      throw new ForbiddenError(
+        "la colaboradora no aceptó ser contactada por la mensajería de la plataforma",
+        "COLABORADORA_NO_ACEPTA_MENSAJERIA",
+      );
+    }
+
+    const notificacion = new Notificacion(
+      randomUUID(),
+      new Date(),
+      contenido,
+      idColectivo,
+      idColaborador,
+    );
+
+    // el mensaje interno queda guardado aunque falle (o se corte) el envío externo
+    await this.notificacionRepository.save(notificacion);
+
+    const mensaje = this.construirMensaje(colectivo, contenido);
+    const envios = await Promise.all(
+      (colaboradora.mediosDeContacto ?? []).map((medio) =>
+        this.notificadorExterno.enviar(medio, mensaje),
+      ),
+    );
+    envios.forEach((envio) => notificacion.registrarEnvio(envio));
+
+    const guardada = await this.notificacionRepository.save(notificacion);
+    return this.toDTO(guardada);
+  }
+
+  async obtenerTodos(filtro = {}) {
+    const notificaciones = await this.notificacionRepository.obtenerTodos(filtro);
+    return notificaciones.map((n) => this.toDTO(n));
+  }
+
+  async obtenerPorId(idNotificacion) {
+    const notificacion = await this.notificacionRepository.encontrarPorId(idNotificacion);
+    if (!notificacion) {
+      throw new NotFoundError("la notificación no existe", "NOTIFICACION_NO_ENCONTRADA");
+    }
+    return this.toDTO(notificacion);
+  }
 }
