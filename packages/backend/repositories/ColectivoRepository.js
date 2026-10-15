@@ -14,18 +14,25 @@ export class ColectivoRepository {
   }
 
   save(unColectivo) {
-    return this.model.findOneAndUpdate(
-      { idColectivo: unColectivo.idColectivo },
-      {
-        $set: {
-          nombre: unColectivo.nombre,
-          descripcion: unColectivo.descripcion,
-          ubicacion: unColectivo.ubicacion,
-          tipoDeColectivo: unColectivo.tipoDeColectivo,
-          proyectos: unColectivo.proyectos,
+    return this.model
+      .findOneAndUpdate(
+        { idColectivo: unColectivo.idColectivo },
+        {
+          $set: {
+            nombre: unColectivo.nombre,
+            descripcion: unColectivo.descripcion,
+            ubicacion: unColectivo.ubicacion,
+            tipoDeColectivo: unColectivo.tipoDeColectivo,
+            proyectos: unColectivo.proyectos,
+          },
         },
-      },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
-    ).exec();
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
   }
 }

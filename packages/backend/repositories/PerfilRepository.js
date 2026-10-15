@@ -23,7 +23,7 @@ export class PerfilRepository {
 
   async buscarPorId(idPerfil) {
     if (!mongoose.isValidObjectId(idPerfil)) {
-        return null;
+      return null;
     }
     return await this.model.findById(idPerfil);
   }
@@ -34,9 +34,9 @@ export class PerfilRepository {
 
   async actualizar(idPerfil, datos) {
     return await this.model.findByIdAndUpdate(
-        idPerfil,
-        { $set: datos },
-        { new: true, runValidators: true },
+      idPerfil,
+      { $set: datos },
+      { new: true, runValidators: true },
     );
   }
 }

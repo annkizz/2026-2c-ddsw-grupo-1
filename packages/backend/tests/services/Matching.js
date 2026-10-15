@@ -107,9 +107,7 @@ describe("evaluarCoincidencia", () => {
       requeridasCoincidentes: ["Testing E2E con Cypress"],
       opcionalesCoincidentes: [],
     });
-    expect(evaluarCoincidencia(perfil, ["Jest"]).tieneCoincidencia).toBe(
-      false,
-    );
+    expect(evaluarCoincidencia(perfil, ["Jest"]).tieneCoincidencia).toBe(false);
   });
 });
 

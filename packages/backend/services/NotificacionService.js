@@ -26,11 +26,13 @@ export class NotificacionService {
       contenido: notificacion.contenido,
       idColectivo: notificacion.idColectivo,
       idColaborador: notificacion.idColaborador,
-      envios: (notificacion.envios ?? []).map(({ tipoDeContacto, estado, detalle }) => ({
-        tipoDeContacto,
-        estado,
-        ...(detalle && { detalle }),
-      })),
+      envios: (notificacion.envios ?? []).map(
+        ({ tipoDeContacto, estado, detalle }) => ({
+          tipoDeContacto,
+          estado,
+          ...(detalle && { detalle }),
+        }),
+      ),
     };
   }
 
@@ -46,14 +48,22 @@ export class NotificacionService {
   async crear(datosNotificacion) {
     const { idColectivo, idColaborador, contenido } = datosNotificacion;
 
-    const colectivo = await this.colectivoRepository.encontrarPorId(idColectivo);
+    const colectivo =
+      await this.colectivoRepository.encontrarPorId(idColectivo);
     if (!colectivo) {
-      throw new NotFoundError("el colectivo no existe", "COLECTIVO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "el colectivo no existe",
+        "COLECTIVO_NO_ENCONTRADO",
+      );
     }
 
-    const colaboradora = await this.colaboradorRepository.encontrarPorId(idColaborador);
+    const colaboradora =
+      await this.colaboradorRepository.encontrarPorId(idColaborador);
     if (!colaboradora) {
-      throw new NotFoundError("la colaboradora no existe", "COLABORADORA_NO_ENCONTRADA");
+      throw new NotFoundError(
+        "la colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
     }
 
     if (!colaboradora.aceptaMensajeria) {
@@ -77,7 +87,10 @@ export class NotificacionService {
     const envios = await Promise.all(
       (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
         try {
-          const resultado = await this.notificadorExterno.enviar(medio, mensaje);
+          const resultado = await this.notificadorExterno.enviar(
+            medio,
+            mensaje,
+          );
           return { ...resultado, tipoDeContacto: medio.tipoDeContacto };
         } catch (error) {
           console.error(
@@ -98,14 +111,19 @@ export class NotificacionService {
   }
 
   async obtenerTodos(filtro = {}) {
-    const notificaciones = await this.notificacionRepository.obtenerTodos(filtro);
+    const notificaciones =
+      await this.notificacionRepository.obtenerTodos(filtro);
     return notificaciones.map((n) => this.toDTO(n));
   }
 
   async obtenerPorId(idNotificacion) {
-    const notificacion = await this.notificacionRepository.encontrarPorId(idNotificacion);
+    const notificacion =
+      await this.notificacionRepository.encontrarPorId(idNotificacion);
     if (!notificacion) {
-      throw new NotFoundError("la notificación no existe", "NOTIFICACION_NO_ENCONTRADA");
+      throw new NotFoundError(
+        "la notificación no existe",
+        "NOTIFICACION_NO_ENCONTRADA",
+      );
     }
     return this.toDTO(notificacion);
   }

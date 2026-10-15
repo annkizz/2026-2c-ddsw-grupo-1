@@ -30,12 +30,19 @@ describe("ColectivoService", () => {
   });
 
   it("permite crear un colectivo sin ubicacion (es opcional)", async () => {
-    const creado = await service.crear({ nombre: "N", descripcion: "D", tipoDeColectivo: "ONG" });
+    const creado = await service.crear({
+      nombre: "N",
+      descripcion: "D",
+      tipoDeColectivo: "ONG",
+    });
     expect(creado.ubicacion).toBeUndefined();
   });
 
   it("devuelve todos los colectivos del repositorio", async () => {
-    repository.obtenerTodos.mockResolvedValue([{ nombre: "A" }, { nombre: "B" }]);
+    repository.obtenerTodos.mockResolvedValue([
+      { nombre: "A" },
+      { nombre: "B" },
+    ]);
     expect(await service.obtenerTodos()).toHaveLength(2);
   });
 });

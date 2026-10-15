@@ -19,9 +19,14 @@ describe("ColaboradorService", () => {
       encontrarPorId: jest.fn(async () => null),
     };
     habilidadRepository = {
-      encontrarPorTitulo: jest.fn(async (titulo) => catalogo[titulo.toLowerCase()] ?? null),
+      encontrarPorTitulo: jest.fn(
+        async (titulo) => catalogo[titulo.toLowerCase()] ?? null,
+      ),
     };
-    service = new ColaboradorService(colaboradorRepository, habilidadRepository);
+    service = new ColaboradorService(
+      colaboradorRepository,
+      habilidadRepository,
+    );
   });
 
   it("guarda las habilidades como titulos (strings) tomados del catalogo", async () => {
@@ -34,13 +39,19 @@ describe("ColaboradorService", () => {
   });
 
   it("le asigna un id propio a la colaboradora", async () => {
-    const creada = await service.crear({ nombreFantasia: "ada", habilidades: ["React"] });
+    const creada = await service.crear({
+      nombreFantasia: "ada",
+      habilidades: ["React"],
+    });
     expect(typeof creada.idColaborador).toBe("string");
     expect(creada.idColaborador.length).toBeGreaterThan(0);
   });
 
   it("permite crear sin presentacion ni pronombres (son opcionales)", async () => {
-    const creada = await service.crear({ nombreFantasia: "ada", habilidades: ["React"] });
+    const creada = await service.crear({
+      nombreFantasia: "ada",
+      habilidades: ["React"],
+    });
     expect(creada.presentacion).toBeUndefined();
     expect(colaboradorRepository.save).toHaveBeenCalledTimes(1);
   });
@@ -62,17 +73,27 @@ describe("ColaboradorService", () => {
 
   it("falla si alguna habilidad no existe y no guarda nada", async () => {
     await expect(
-      service.crear({ nombreFantasia: "ada", habilidades: ["React", "Cocina molecular"] }),
+      service.crear({
+        nombreFantasia: "ada",
+        habilidades: ["React", "Cocina molecular"],
+      }),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      service.crear({ nombreFantasia: "ada", habilidades: ["Cocina molecular"] }),
+      service.crear({
+        nombreFantasia: "ada",
+        habilidades: ["Cocina molecular"],
+      }),
     ).rejects.toMatchObject({ codigo: "HABILIDAD_NO_ENCONTRADA" });
     expect(colaboradorRepository.save).not.toHaveBeenCalled();
   });
 
   it("obtiene todas y por id delegando en el repositorio", async () => {
-    colaboradorRepository.obtenerTodos.mockResolvedValue([{ idColaborador: "c1" }]);
-    colaboradorRepository.encontrarPorId.mockResolvedValue({ idColaborador: "c1" });
+    colaboradorRepository.obtenerTodos.mockResolvedValue([
+      { idColaborador: "c1" },
+    ]);
+    colaboradorRepository.encontrarPorId.mockResolvedValue({
+      idColaborador: "c1",
+    });
 
     expect(await service.obtenerTodos()).toHaveLength(1);
     expect(await service.obtenerPorId("c1")).toEqual({ idColaborador: "c1" });

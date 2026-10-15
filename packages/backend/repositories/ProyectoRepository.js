@@ -20,13 +20,20 @@ export class ProyectoRepository {
   obtenerTodasColaboraciones = async () => {
     const colaboraciones = await this.colaboracionModel.find().lean().exec();
     return Promise.all(
-      colaboraciones.map(async ({ idProyecto, idColaborador, fecha, esAnonima }) => {
-        const [proyecto, colaborador] = await Promise.all([
-          this.proyectoModel.findOne({ idProyecto }).exec(),
-          ColaboradorModel.findOne({ idColaborador }).exec(),
-        ]);
-        return { proyecto, colaborador, fecha, esAnonima: esAnonima ?? false };
-      }),
+      colaboraciones.map(
+        async ({ idProyecto, idColaborador, fecha, esAnonima }) => {
+          const [proyecto, colaborador] = await Promise.all([
+            this.proyectoModel.findOne({ idProyecto }).exec(),
+            ColaboradorModel.findOne({ idColaborador }).exec(),
+          ]);
+          return {
+            proyecto,
+            colaborador,
+            fecha,
+            esAnonima: esAnonima ?? false,
+          };
+        },
+      ),
     );
   };
 
@@ -71,42 +78,56 @@ export class ProyectoRepository {
   }
 
   save(unProyecto) {
-    return this.proyectoModel.findOneAndUpdate(
-      { idProyecto: unProyecto.idProyecto },
-      {
-        $set: {
-          idColectivo: unProyecto.idColectivo,
-          titulo: unProyecto.titulo,
-          descripcion: unProyecto.descripcion,
-          perfiles: unProyecto.perfiles,
-          estado: unProyecto.estado,
-          fechaInicio: unProyecto.fechaInicio,
-          fechaLimiteCierre: unProyecto.fechaLimiteCierre,
-          porcentajeConcrecion: unProyecto.porcentajeConcrecion,
-          enlaceSistema: unProyecto.enlaceSistema,
-          enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
+    return this.proyectoModel
+      .findOneAndUpdate(
+        { idProyecto: unProyecto.idProyecto },
+        {
+          $set: {
+            idColectivo: unProyecto.idColectivo,
+            titulo: unProyecto.titulo,
+            descripcion: unProyecto.descripcion,
+            perfiles: unProyecto.perfiles,
+            estado: unProyecto.estado,
+            fechaInicio: unProyecto.fechaInicio,
+            fechaLimiteCierre: unProyecto.fechaLimiteCierre,
+            porcentajeConcrecion: unProyecto.porcentajeConcrecion,
+            enlaceSistema: unProyecto.enlaceSistema,
+            enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
+          },
         },
-      },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
-    ).exec();
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
   }
 
   saveColaboracion = async (colaboracion) => {
-    const guardada = await this.colaboracionModel.findOneAndUpdate(
-      {
-        idProyecto: colaboracion.proyecto.idProyecto,
-        idColaborador: colaboracion.colaborador.idColaborador,
-      },
-      {
-        $setOnInsert: {
+    const guardada = await this.colaboracionModel
+      .findOneAndUpdate(
+        {
           idProyecto: colaboracion.proyecto.idProyecto,
           idColaborador: colaboracion.colaborador.idColaborador,
-          fecha: colaboracion.fecha,
-          esAnonima: colaboracion.esAnonima,
         },
-      },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
-    ).exec();
+        {
+          $setOnInsert: {
+            idProyecto: colaboracion.proyecto.idProyecto,
+            idColaborador: colaboracion.colaborador.idColaborador,
+            fecha: colaboracion.fecha,
+            esAnonima: colaboracion.esAnonima,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
 
     return new Colaboracion(
       colaboracion.proyecto,

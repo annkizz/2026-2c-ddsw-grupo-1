@@ -43,14 +43,18 @@ describe("Dominio - Compromiso y enums de perfil", () => {
   });
 
   it("TipoCompromiso tiene los tres tipos del enunciado", () => {
-    expect(Object.values(TipoCompromiso).sort()).toEqual(
-      ["MENSUALES", "SEMANALES", "TOTALES"],
-    );
+    expect(Object.values(TipoCompromiso).sort()).toEqual([
+      "MENSUALES",
+      "SEMANALES",
+      "TOTALES",
+    ]);
   });
 
   it("TipoColaboracion tiene las tres modalidades del enunciado", () => {
-    expect(Object.values(TipoColaboracion).sort()).toEqual(
-      ["CONTRATACION", "GRATUITA", "INCENTIVO"],
-    );
+    expect(Object.values(TipoColaboracion).sort()).toEqual([
+      "CONTRATACION",
+      "GRATUITA",
+      "INCENTIVO",
+    ]);
   });
 });

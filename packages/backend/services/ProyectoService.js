@@ -31,8 +31,8 @@ export class ProyectoService {
 
   crear = async (datosProyecto) => {
     const colectivo = await this.colectivoRepository.encontrarPorId(
-    datosProyecto.idColectivo,
-  );
+      datosProyecto.idColectivo,
+    );
 
     if (!colectivo) {
       throw new NotFoundError(
@@ -157,13 +157,8 @@ export class ProyectoService {
     };
 
     if (!esAnonima && colaboracion.colaborador) {
-      const {
-        idColaborador,
-        nombreFantasia,
-        usuarioGitHub,
-        nombre,
-        apellido,
-      } = colaboracion.colaborador;
+      const { idColaborador, nombreFantasia, usuarioGitHub, nombre, apellido } =
+        colaboracion.colaborador;
       contribucion.colaborador = {
         idColaborador,
         nombreFantasia,
@@ -179,7 +174,9 @@ export class ProyectoService {
   obtenerColaboracionesPublicas = async (idProyecto) => {
     await this.buscarProyectoOFallar(idProyecto);
     const colaboraciones =
-      await this.proyectoRepository.obtenerColaboracionesPorProyecto(idProyecto);
+      await this.proyectoRepository.obtenerColaboracionesPorProyecto(
+        idProyecto,
+      );
     return colaboraciones.map((colaboracion) =>
       this.toContribucionPublica({ ...colaboracion, proyecto: { idProyecto } }),
     );
@@ -217,7 +214,8 @@ export class ProyectoService {
       );
     }
 
-    const colaborador = await this.colaboradorService.obtenerPorId(colaboradorId);
+    const colaborador =
+      await this.colaboradorService.obtenerPorId(colaboradorId);
 
     if (!colaborador) {
       throw new NotFoundError(
@@ -226,7 +224,12 @@ export class ProyectoService {
       );
     }
 
-    if (await this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
+    if (
+      await this.colaboradorPerteneceAProyecto(
+        proyecto.idProyecto,
+        colaboradorId,
+      )
+    ) {
       throw new ConflictError(
         "La colaboradora ya está anotada en este proyecto",
         "COLABORACION_YA_EXISTENTE",
@@ -254,7 +257,7 @@ export class ProyectoService {
     return await this.finalizar(proyecto);
   }
 
-   async actualizarAvance(idProyecto, datosAvance) {
+  async actualizarAvance(idProyecto, datosAvance) {
     const proyecto = await this.buscarProyectoOFallar(idProyecto);
 
     if (Object.keys(datosAvance).length === 0) {

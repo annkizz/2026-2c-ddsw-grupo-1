@@ -8,7 +8,7 @@ const sinRepetidas = (habilidades = []) => {
       vistas.set(codigo, titulo);
     }
   }
-  return vistas; 
+  return vistas;
 };
 
 export function evaluarCoincidencia(perfil, habilidadesPersona) {

@@ -5,7 +5,13 @@ import { Colaborador } from "../domain/Colaborador.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 
 export async function ejecutarSeed(
-  { habilidadRepository, colectivoRepository, proyectoRepository, colaboradorRepository, db },
+  {
+    habilidadRepository,
+    colectivoRepository,
+    proyectoRepository,
+    colaboradorRepository,
+    db,
+  },
   datos,
 ) {
   for (const titulo of datos.habilidades) {
@@ -15,8 +21,14 @@ export async function ejecutarSeed(
   for (const c of datos.colaboradoras) {
     await colaboradorRepository.save(
       new Colaborador(
-        c.nombreFantasia, c.usuarioGitHub, c.nombre, c.apellido,
-        c.presentacion, c.pronombres ?? [], c.idColaborador, c.habilidades,
+        c.nombreFantasia,
+        c.usuarioGitHub,
+        c.nombre,
+        c.apellido,
+        c.presentacion,
+        c.pronombres ?? [],
+        c.idColaborador,
+        c.habilidades,
       ),
     );
   }
@@ -31,9 +43,17 @@ export async function ejecutarSeed(
     }
     const proyecto = await proyectoRepository.save(
       new Proyecto(
-        p.titulo, p.descripcion, p.perfiles.map((perfil) => perfil.idPerfil), p.estado,
-        p.fechaInicio, p.idProyecto, p.fechaLimiteCierre, p.idColectivo,
-        p.porcentajeConcrecion, p.enlaceSistema, p.enlaceCodigoFuente,
+        p.titulo,
+        p.descripcion,
+        p.perfiles.map((perfil) => perfil.idPerfil),
+        p.estado,
+        p.fechaInicio,
+        p.idProyecto,
+        p.fechaLimiteCierre,
+        p.idColectivo,
+        p.porcentajeConcrecion,
+        p.enlaceSistema,
+        p.enlaceCodigoFuente,
       ),
     );
     proyectosGuardados.push(proyecto);
@@ -44,7 +64,13 @@ export async function ejecutarSeed(
   }
 
   for (const c of datos.colectivos) {
-    const colectivo = new Colectivo(c.nombre, c.idColectivo, c.descripcion, c.ubicacion, c.tipoDeColectivo);
+    const colectivo = new Colectivo(
+      c.nombre,
+      c.idColectivo,
+      c.descripcion,
+      c.ubicacion,
+      c.tipoDeColectivo,
+    );
     for (const idProyecto of await db.idsProyectosDeColectivo(c.idColectivo)) {
       colectivo.agregarProyecto(idProyecto);
     }
@@ -52,8 +78,12 @@ export async function ejecutarSeed(
   }
 
   for (const c of datos.colaboraciones) {
-    const proyecto = proyectosGuardados.find((p) => p.idProyecto === c.idProyecto);
-    const colaborador = await colaboradorRepository.encontrarPorId(c.idColaborador);
+    const proyecto = proyectosGuardados.find(
+      (p) => p.idProyecto === c.idProyecto,
+    );
+    const colaborador = await colaboradorRepository.encontrarPorId(
+      c.idColaborador,
+    );
     await proyectoRepository.saveColaboracion(
       new Colaboracion(proyecto, colaborador, c.fecha, c.esAnonima),
     );

@@ -1,5 +1,5 @@
 import express from "express";
-import { validate } from "../middlewares/validate.js"; 
+import { validate } from "../middlewares/validate.js";
 import {
   proyectoSchema,
   idColaboradorSchema,
@@ -20,7 +20,9 @@ export function crearProyectoRouter(proyectoController, perfilController) {
 
   router
     .route("/:id/colaboraciones")
-    .get((req, res) => proyectoController.obtenerColaboracionesPublicas(req, res))
+    .get((req, res) =>
+      proyectoController.obtenerColaboracionesPublicas(req, res),
+    )
     .post(validate(idColaboradorSchema), (req, res) =>
       proyectoController.crearColaboracion(req, res),
     );
@@ -30,10 +32,10 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     .patch((req, res) => proyectoController.cerrarProyecto(req, res));
 
   router
-  .route("/:id/cierre-programado")
-  .patch(validate(cierreProgramadoSchema), (req, res) =>
-    proyectoController.programarCierre(req, res),
-  );
+    .route("/:id/cierre-programado")
+    .patch(validate(cierreProgramadoSchema), (req, res) =>
+      proyectoController.programarCierre(req, res),
+    );
 
   router
     .route("/:id/avance")
@@ -41,7 +43,6 @@ export function crearProyectoRouter(proyectoController, perfilController) {
       proyectoController.actualizarAvance(req, res),
     );
 
-  
   router.use("/:id/perfiles", crearPerfilRouter(perfilController));
 
   return router;

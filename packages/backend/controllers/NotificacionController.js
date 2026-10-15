@@ -15,15 +15,22 @@ export class NotificacionController {
   obtenerTodos = async (req, res) => {
     const resultado = notificacionFiltroSchema.safeParse(req.query);
     if (!resultado.success) {
-      throw new BadRequestError("los filtros son inválidos", "FILTROS_INVALIDOS");
+      throw new BadRequestError(
+        "los filtros son inválidos",
+        "FILTROS_INVALIDOS",
+      );
     }
 
-    const notificaciones = await this.notificacionService.obtenerTodos(resultado.data);
+    const notificaciones = await this.notificacionService.obtenerTodos(
+      resultado.data,
+    );
     res.status(200).json(notificaciones);
   };
 
   obtenerPorId = async (req, res) => {
-    const notificacion = await this.notificacionService.obtenerPorId(req.params.id);
+    const notificacion = await this.notificacionService.obtenerPorId(
+      req.params.id,
+    );
     res.status(200).json(notificacion);
-  }
+  };
 }

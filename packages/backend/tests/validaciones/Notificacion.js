@@ -1,4 +1,7 @@
-import { notificacionFiltroSchema, notificacionSchema } from "../../schemas/zod/notificacionSchema.js";
+import {
+  notificacionFiltroSchema,
+  notificacionSchema,
+} from "../../schemas/zod/notificacionSchema.js";
 
 describe("validaciones de notificaciones", () => {
   it("valida un mensaje con IDs UUID o IDs de seed", () => {
@@ -26,7 +29,12 @@ describe("validaciones de notificaciones", () => {
   });
 
   it("solo acepta IDs de colectivo y colaboradora como filtros de listado", () => {
-    expect(notificacionFiltroSchema.safeParse({ idColectivo: "colectivo-1" }).success).toBe(true);
-    expect(notificacionFiltroSchema.safeParse({ $where: "true" }).success).toBe(false);
+    expect(
+      notificacionFiltroSchema.safeParse({ idColectivo: "colectivo-1" })
+        .success,
+    ).toBe(true);
+    expect(notificacionFiltroSchema.safeParse({ $where: "true" }).success).toBe(
+      false,
+    );
   });
 });

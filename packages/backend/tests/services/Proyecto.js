@@ -2,12 +2,28 @@ import { jest } from "@jest/globals";
 import { ProyectoService } from "../../services/ProyectoService.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 import { Colectivo } from "../../domain/Colectivo.js";
-import { BadRequestError, ConflictError, NotFoundError } from "../../errors/AppError.js";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from "../../errors/AppError.js";
 import { idColaboradorSchema } from "../../controllers/ProyectoController.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
 
 const proyectoActivo = (extra = {}) =>
-  Object.assign(new Proyecto("Titulo", "Desc", [], "ACTIVO", new Date(), "p-1", null, "col-1"), extra);
+  Object.assign(
+    new Proyecto(
+      "Titulo",
+      "Desc",
+      [],
+      "ACTIVO",
+      new Date(),
+      "p-1",
+      null,
+      "col-1",
+    ),
+    extra,
+  );
 
 const enUnaHora = () => new Date(Date.now() + 60 * 60 * 1000);
 const haceUnaHora = () => new Date(Date.now() - 60 * 60 * 1000);
@@ -31,7 +47,9 @@ describe("ProyectoService", () => {
       obtenerVencidos: jest.fn(async () => []),
     };
     colectivoRepository = {
-      encontrarPorId: jest.fn(async (id) => (id === "col-1" ? colectivo : null)),
+      encontrarPorId: jest.fn(async (id) =>
+        id === "col-1" ? colectivo : null,
+      ),
       save: jest.fn(async (c) => c),
     };
     colaboradorService = { obtenerPorId: jest.fn(async () => null) };
@@ -47,7 +65,11 @@ describe("ProyectoService", () => {
 
   describe("crear", () => {
     it("crea un proyecto activo, sin perfiles, ligado a su colectivo", async () => {
-      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
 
       expect(creado.estado).toBe("ACTIVO");
       expect(creado.perfiles).toEqual([]);
@@ -56,7 +78,11 @@ describe("ProyectoService", () => {
     });
 
     it("agrega el id del proyecto al colectivo y guarda el colectivo", async () => {
-      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
 
       expect(colectivo.proyectos).toContain(creado.idProyecto);
       expect(colectivoRepository.save).toHaveBeenCalledWith(colectivo);
@@ -93,7 +119,11 @@ describe("ProyectoService", () => {
     });
 
     it("deja el proyecto nuevo en 0% y sin enlaces", async () => {
-      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
 
       expect(creado.porcentajeConcrecion).toBe(0);
       expect(creado.enlaceSistema).toBeNull();
@@ -113,11 +143,13 @@ describe("ProyectoService", () => {
     });
 
     it("falla si el proyecto no existe", async () => {
-      await expect(service.cerrarProyecto("nope")).rejects.toThrow(NotFoundError);
+      await expect(service.cerrarProyecto("nope")).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
-    describe("actualizarAvance", () => {
+  describe("actualizarAvance", () => {
     it("actualiza el avance, lo guarda y devuelve el DTO", async () => {
       const proyecto = proyectoActivo();
       proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
@@ -130,13 +162,18 @@ describe("ProyectoService", () => {
       expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
       expect(resultado.idProyecto).toBe("p-1");
       expect(resultado.porcentajeConcrecion).toBe(40);
-      expect(resultado.enlaceCodigoFuente).toBe("https://github.com/colectivo/app");
+      expect(resultado.enlaceCodigoFuente).toBe(
+        "https://github.com/colectivo/app",
+      );
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
       await expect(
         service.actualizarAvance("nope", { porcentajeConcrecion: 10 }),
-      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
+      ).rejects.toMatchObject({
+        status: 404,
+        codigo: "PROYECTO_NO_ENCONTRADO",
+      });
       expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
 
@@ -164,8 +201,12 @@ describe("ProyectoService", () => {
     });
 
     it("no permite programar el cierre de un proyecto finalizado", async () => {
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo({ estado: "FINALIZADO" }));
-      await expect(service.programarCierre("p-1", enUnaHora())).rejects.toThrow(ConflictError);
+      proyectoRepository.encontrarPorId.mockResolvedValue(
+        proyectoActivo({ estado: "FINALIZADO" }),
+      );
+      await expect(service.programarCierre("p-1", enUnaHora())).rejects.toThrow(
+        ConflictError,
+      );
     });
   });
 
@@ -182,12 +223,17 @@ describe("ProyectoService", () => {
       const resultado = await service.cerrarProyectosVencidos();
 
       expect(resultado.cerrados).toEqual(["ok"]);
-      expect(resultado.fallidos).toEqual([{ idProyecto: "falla", error: "se cayo la base" }]);
+      expect(resultado.fallidos).toEqual([
+        { idProyecto: "falla", error: "se cayo la base" },
+      ]);
     });
   });
 
   describe("crearColaboracion (anotarse a un proyecto)", () => {
-    const colaboradora = { idColaborador: "c-1", habilidades: ["Testing E2E con Cypress"] };
+    const colaboradora = {
+      idColaborador: "c-1",
+      habilidades: ["Testing E2E con Cypress"],
+    };
     const perfilTester = {
       habilidadesRequeridas: ["testing e2e con cypress"],
       habilidadesOpcionales: [],
@@ -263,7 +309,9 @@ describe("ProyectoService", () => {
 
     it("rechaza anotarse a un proyecto finalizado", async () => {
       const proyecto = proyectoActivo({ estado: "FINALIZADO" });
-      await expect(service.crearColaboracion(proyecto, "c-1")).rejects.toMatchObject({
+      await expect(
+        service.crearColaboracion(proyecto, "c-1"),
+      ).rejects.toMatchObject({
         codigo: "PROYECTO_FINALIZADO",
       });
       expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
@@ -271,29 +319,49 @@ describe("ProyectoService", () => {
 
     it("falla si la colaboradora no existe", async () => {
       colaboradorService.obtenerPorId.mockResolvedValue(null);
-      await expect(service.crearColaboracion(proyectoActivo(), "x")).rejects.toThrow(NotFoundError);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "x"),
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("rechaza anotarla dos veces en el mismo proyecto", async () => {
       proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "c-1" } },
+        {
+          proyecto: { idProyecto: "p-1" },
+          colaborador: { idColaborador: "c-1" },
+        },
       ]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toMatchObject({
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toMatchObject({
         codigo: "COLABORACION_YA_EXISTENTE",
       });
     });
 
     it("detecta el duplicado aunque haya otras colaboraciones antes en el proyecto", async () => {
       proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "otra" } },
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "c-1" } },
+        {
+          proyecto: { idProyecto: "p-1" },
+          colaborador: { idColaborador: "otra" },
+        },
+        {
+          proyecto: { idProyecto: "p-1" },
+          colaborador: { idColaborador: "c-1" },
+        },
       ]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toThrow(ConflictError);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toThrow(ConflictError);
     });
 
     it("rechaza si no tiene ninguna habilidad requerida de ningun perfil", async () => {
-      colaboradorService.obtenerPorId.mockResolvedValue({ idColaborador: "c-1", habilidades: ["Jest"] });
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toMatchObject({
+      colaboradorService.obtenerPorId.mockResolvedValue({
+        idColaborador: "c-1",
+        habilidades: ["Jest"],
+      });
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toMatchObject({
         codigo: "HABILIDADES_INSUFICIENTES",
       });
       expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
@@ -301,7 +369,9 @@ describe("ProyectoService", () => {
 
     it("rechaza si el proyecto no tiene perfiles", async () => {
       perfilRepository.obtenerTodos.mockResolvedValue([]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toThrow(BadRequestError);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toThrow(BadRequestError);
     });
   });
 });

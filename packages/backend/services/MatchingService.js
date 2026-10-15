@@ -92,13 +92,21 @@ export class MatchingService {
             ...evaluarCoincidencia(perfil, colaboradora.habilidades),
           }))
           .filter((p) => p.tieneCoincidencia)
-          .map(({ idPerfil, descripcion, compromiso, requeridasCoincidentes, opcionalesCoincidentes }) => ({
-            idPerfil,
-            descripcion,
-            compromiso,
-            requeridasCoincidentes,
-            opcionalesCoincidentes,
-          }));
+          .map(
+            ({
+              idPerfil,
+              descripcion,
+              compromiso,
+              requeridasCoincidentes,
+              opcionalesCoincidentes,
+            }) => ({
+              idPerfil,
+              descripcion,
+              compromiso,
+              requeridasCoincidentes,
+              opcionalesCoincidentes,
+            }),
+          );
 
         return {
           idProyecto: proyecto.idProyecto,

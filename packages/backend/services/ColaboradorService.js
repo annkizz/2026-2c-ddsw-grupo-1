@@ -16,9 +16,8 @@ export class ColaboradorService {
   crear = async (datosColaborador) => {
     const habilidades = await Promise.all(
       datosColaborador.habilidades.map(async (tituloHabilidad) => {
-        const habilidad = await this.habilidadRepository.encontrarPorTitulo(
-          tituloHabilidad,
-        );
+        const habilidad =
+          await this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
 
         if (!habilidad) {
           throw new NotFoundError(

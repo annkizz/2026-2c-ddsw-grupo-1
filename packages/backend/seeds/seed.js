@@ -26,14 +26,24 @@ const db = {
     return PerfilModel.findOneAndUpdate(
       { _id: idPerfil },
       { $set: datos },
-      { upsert: true, returnDocument: "after", runValidators: true, setDefaultsOnInsert: true },
+      {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
   },
   guardarLogro({ idLogro, ...datos }) {
     return LogroModel.findOneAndUpdate(
       { _id: idLogro },
       { $set: datos },
-      { upsert: true, returnDocument: "after", runValidators: true, setDefaultsOnInsert: true },
+      {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
   },
   idsProyectosDeColectivo(idColectivo) {
@@ -60,7 +70,9 @@ try {
       `${resumen.proyectos} proyectos, ${resumen.perfiles} perfiles, ${resumen.logros} logros, ` +
       `${resumen.colaboradoras} colaboradoras, ${resumen.colaboraciones} colaboraciones`,
   );
-  console.log(`El proyecto seed-proyecto-4 se cierra solo en ${minutosParaCierre} minutos.`);
+  console.log(
+    `El proyecto seed-proyecto-4 se cierra solo en ${minutosParaCierre} minutos.`,
+  );
 } finally {
   await mongoose.disconnect();
 }

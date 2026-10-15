@@ -23,11 +23,14 @@ describe("Validaciones - logroSchema (zod)", () => {
     expect(logroSchema.safeParse(datos).success).toBe(true);
   });
 
-  it.each(["titulo", "descripcion", "fecha"])("rechaza un logro sin %s", (campo) => {
-    const datos = logroValido();
-    delete datos[campo];
-    expect(logroSchema.safeParse(datos).success).toBe(false);
-  });
+  it.each(["titulo", "descripcion", "fecha"])(
+    "rechaza un logro sin %s",
+    (campo) => {
+      const datos = logroValido();
+      delete datos[campo];
+      expect(logroSchema.safeParse(datos).success).toBe(false);
+    },
+  );
 
   it("rechaza título vacío", () => {
     const datos = { ...logroValido(), titulo: "" };

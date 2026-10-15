@@ -7,11 +7,11 @@ los datos iniciales (seed).
 **Dockerfile y Compose se complementan, no se reemplazan:** el `Dockerfile` es la receta para construir la imagen de la
 API, y `docker-compose.yml` describe cómo se levantan y conectan los contenedores (API + Mongo + volumen + variables).
 
-| Servicio | Qué es | Notas |
-|---|---|---|
-| `mongo` | MongoDB 7 (imagen oficial) | Con usuario y contraseña. **No publica ningún puerto**: solo la API puede conectarse. Los datos viven en el volumen `mongo-data`. |
-| `api` | Backend Express (se construye con el `Dockerfile`) | Espera a que Mongo esté sano, tiene healthcheck (`/healthcheck`) y se reinicia sola si se cae. Puerto 3000. |
-| `seed` | Carga de datos iniciales | Tarea de una sola ejecución, se corre a mano. No arranca con `up`. |
+| Servicio | Qué es                                             | Notas                                                                                                                             |
+| -------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `mongo`  | MongoDB 7 (imagen oficial)                         | Con usuario y contraseña. **No publica ningún puerto**: solo la API puede conectarse. Los datos viven en el volumen `mongo-data`. |
+| `api`    | Backend Express (se construye con el `Dockerfile`) | Espera a que Mongo esté sano, tiene healthcheck (`/healthcheck`) y se reinicia sola si se cae. Puerto 3000.                       |
+| `seed`   | Carga de datos iniciales                           | Tarea de una sola ejecución, se corre a mano. No arranca con `up`.                                                                |
 
 ### Requisitos en la VM
 
@@ -58,12 +58,12 @@ EOF
 
 (Si el repositorio trae un `.env.example`, alcanza con `cp .env.example .env` y editarlo con `nano .env`).
 
-| Variable | Para qué sirve |
-|---|---|
-| `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen. |
-| `MONGODB_DB_NAME` | Nombre de la base de datos. |
-| `API_PORT` | Puerto de la VM por el que se accede a la API. |
-| `ALLOWED_ORIGINS` | Orígenes permitidos por CORS, separados por coma y **sin barra final**. Vacío = cualquiera. Postman y Swagger no lo necesitan; solo importa cuando haya un frontend en otro origen. |
+| Variable                        | Para qué sirve                                                                                                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen.                                                                                                                  |
+| `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                                                                                                         |
+| `API_PORT`                      | Puerto de la VM por el que se accede a la API.                                                                                                                                      |
+| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. Vacío = cualquiera. Postman y Swagger no lo necesitan; solo importa cuando haya un frontend en otro origen. |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
@@ -91,6 +91,7 @@ docker compose run --rm seed
 **Esperado:** `Seed listo: 12 habilidades, 3 colectivos, 4 proyectos, 5 perfiles, 3 logros, 7 colaboradoras, 2 colaboraciones`.
 
 El seed se puede correr todas las veces que haga falta, y **deja las entidades del seed en un estado conocido**:
+
 - Habilidades, colectivos, proyectos y colaboradoras se guardan por id fijo (no se duplican).
 - De los 4 proyectos del seed se borran y recrean los perfiles, las colaboraciones y los logros (se limpia lo agregado
   probando). Los proyectos creados por la API quedan intactos.
@@ -99,16 +100,16 @@ El seed se puede correr todas las veces que haga falta, y **deja las entidades d
 
 **Ids fijos del seed:**
 
-| Qué | Id |
-|---|---|
-| Colectivos | `seed-colectivo-1` a `seed-colectivo-3` |
-| Proyectos | `seed-proyecto-1` a `seed-proyecto-4` (el 3 está `FINALIZADO`) |
-| Colaboradoras | `seed-colaboradora-1` a `seed-colaboradora-7` |
-| Perfil Tester / Analista de Datos (proyecto 1) | `5eed00000000000000000001` / `5eed00000000000000000002` |
-| Perfil Frontend (proyecto 2) | `5eed00000000000000000003` |
-| Perfil Backend (proyecto 3) | `5eed00000000000000000004` |
-| Perfil Tester de carga (proyecto 4) | `5eed00000000000000000005` |
-| Logros (proyectos 1 y 3) | `5eed00000000000000000101`, `...102`, `...103` |
+| Qué                                            | Id                                                             |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| Colectivos                                     | `seed-colectivo-1` a `seed-colectivo-3`                        |
+| Proyectos                                      | `seed-proyecto-1` a `seed-proyecto-4` (el 3 está `FINALIZADO`) |
+| Colaboradoras                                  | `seed-colaboradora-1` a `seed-colaboradora-7`                  |
+| Perfil Tester / Analista de Datos (proyecto 1) | `5eed00000000000000000001` / `5eed00000000000000000002`        |
+| Perfil Frontend (proyecto 2)                   | `5eed00000000000000000003`                                     |
+| Perfil Backend (proyecto 3)                    | `5eed00000000000000000004`                                     |
+| Perfil Tester de carga (proyecto 4)            | `5eed00000000000000000005`                                     |
+| Logros (proyectos 1 y 3)                       | `5eed00000000000000000101`, `...102`, `...103`                 |
 
 Resultados esperados del matching con el seed:
 Tester → Luna Código · Analista → Martín · Frontend → Sofía · Tester de carga → Probadora · Proyecto 3 → 409.
@@ -154,32 +155,32 @@ db.proyectos.find()
 db.colaboraciones.countDocuments()
 ```
 
-| Colección | Contenido |
-|---|---|
-| `habilidades` | Catálogo de habilidades (título y código normalizado) |
-| `colectivos` | Colectivos y los ids de sus proyectos |
-| `proyectos` | Proyectos, estado, fecha límite y los ids de sus perfiles |
-| `perfiles` | Perfiles de cada proyecto (habilidades y compromiso) |
-| `logros` | Logros/hitos de cada proyecto |
-| `colaboradoras` | Colaboradoras, habilidades, `aceptaMensajeria` y `mediosDeContacto` |
-| `colaboraciones` | Quién colabora en qué proyecto, y si es anónima (`esAnonima`) |
-| `notificaciones` | Mensajes internos y el resultado de cada envío externo (`envios`) |
+| Colección        | Contenido                                                           |
+| ---------------- | ------------------------------------------------------------------- |
+| `habilidades`    | Catálogo de habilidades (título y código normalizado)               |
+| `colectivos`     | Colectivos y los ids de sus proyectos                               |
+| `proyectos`      | Proyectos, estado, fecha límite y los ids de sus perfiles           |
+| `perfiles`       | Perfiles de cada proyecto (habilidades y compromiso)                |
+| `logros`         | Logros/hitos de cada proyecto                                       |
+| `colaboradoras`  | Colaboradoras, habilidades, `aceptaMensajeria` y `mediosDeContacto` |
+| `colaboraciones` | Quién colabora en qué proyecto, y si es anónima (`esAnonima`)       |
+| `notificaciones` | Mensajes internos y el resultado de cada envío externo (`envios`)   |
 
 **Lo que la API oculta pero la base conserva.** La anonimidad y los datos de contacto se protegen en la capa de la API
 (los `GET` y los DTO), pero el registro real se guarda completo en la base:
 
 ```js
 // Contribuciones anónimas: la base guarda quién fue; el GET público no lo muestra
-db.colaboraciones.find({ esAnonima: true })
+db.colaboraciones.find({ esAnonima: true });
 
 // Colaboradoras que aceptaron mensajería, con sus medios de contacto (nunca salen por la API)
 db.colaboradoras.find(
   { aceptaMensajeria: true },
-  { _id: 0, idColaborador: 1, nombreFantasia: 1, mediosDeContacto: 1 }
-)
+  { _id: 0, idColaborador: 1, nombreFantasia: 1, mediosDeContacto: 1 },
+);
 
 // Últimos mensajes enviados y el estado de cada canal
-db.notificaciones.find().sort({ fecha: -1 }).limit(5)
+db.notificaciones.find().sort({ fecha: -1 }).limit(5);
 ```
 
 > Los medios de contacto están guardados en texto plano. Por eso Mongo no se expone: solo se accede por SSH a la VM.
@@ -195,8 +196,8 @@ docker compose exec mongo mongosh -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authen
 
 1. En `docker-compose.yml`, dentro del servicio `mongo`, agregar el puerto **solo para la propia VM**:
    ```yaml
-       ports:
-         - "127.0.0.1:27017:27017"
+   ports:
+     - "127.0.0.1:27017:27017"
    ```
    y aplicar con `docker compose up -d`. **Nunca** usar `0.0.0.0` ni abrir el 27017 en el firewall.
 2. Desde tu compu (con `gcloud` instalado), abrir el túnel:
@@ -213,11 +214,11 @@ Cuando no se use más, sacar la línea `ports` y volver a hacer `docker compose 
 WHATSAPP). **Por defecto el envío es simulado**: no hace falta configurar nada y cada intento queda en `envios` con
 estado `SIMULADO`. En los logs aparece con el contacto enmascarado (`docker compose logs api | grep notificaciones`).
 
-| Estado en `envios` | Significado |
-|---|---|
-| `SIMULADO` | El canal no está configurado: no se envió nada real |
-| `ENVIADO` | El proveedor aceptó el mensaje |
-| `FALLIDO` | Falló el canal; el mensaje interno se guarda igual |
+| Estado en `envios` | Significado                                         |
+| ------------------ | --------------------------------------------------- |
+| `SIMULADO`         | El canal no está configurado: no se envió nada real |
+| `ENVIADO`          | El proveedor aceptó el mensaje                      |
+| `FALLIDO`          | Falló el canal; el mensaje interno se guarda igual  |
 
 **Opcional: envío real** (no es necesario para la entrega; Twilio y los servicios de mail con volumen pueden tener costo):
 
@@ -253,18 +254,18 @@ Para volver a un entorno limpio: `docker compose down -v`, `docker compose up -d
 
 ### Problemas frecuentes
 
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| `port is already allocated` al levantar | Un contenedor viejo (por ejemplo de la entrega anterior) ocupa el puerto 3000 | `docker ps`, y luego `docker stop NOMBRE` y `docker rm NOMBRE`. O cambiar `API_PORT` en el `.env` |
-| `Error conectando a MongoDB: getaddrinfo EAI_AGAIN mongo` | La API no resuelve el nombre `mongo` en la red de Docker, típico tras un primer arranque fallido | `docker compose down` y `docker compose up -d` |
-| La API queda en `health: starting` y se reinicia | El proceso se cierra al fallar | `docker compose logs --tail 30 api` y actuar según el error |
-| `Authentication failed` | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | `docker compose down -v`, `docker compose up -d --build` y volver a correr el seed |
-| `Falta MONGO_PASSWORD en .env` | No existe el `.env` en la raíz del proyecto | Crearlo al lado de `docker-compose.yml` |
-| El seed falla con un error de validación (por ejemplo `proyecto is required`) | La imagen tiene una versión vieja del código | `git pull`, `docker compose build` y volver a correr el seed |
-| `mongo` se reinicia con `Illegal instruction` | La CPU de la VM no expone instrucciones AVX, que MongoDB 5+ necesita | Habilitar el modo de CPU «host passthrough» o usar `image: mongo:4.4` |
-| Responde desde la VM pero no desde afuera | Falta la regla de firewall para el puerto 3000, o se usó `https://` | Crear la regla `tcp:3000` y usar `http://` |
-| `docker: command not found` / `permission denied` | Docker no está instalado, o el usuario no está en el grupo `docker` | Ver «Requisitos en la VM», o usar `sudo docker ...` |
-| Las notificaciones salen siempre `SIMULADO` | Es lo esperado sin configuración | Ver «Notificaciones → envío real» |
+| Síntoma                                                                       | Causa probable                                                                                     | Solución                                                                                          |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `port is already allocated` al levantar                                       | Un contenedor viejo (por ejemplo de la entrega anterior) ocupa el puerto 3000                      | `docker ps`, y luego `docker stop NOMBRE` y `docker rm NOMBRE`. O cambiar `API_PORT` en el `.env` |
+| `Error conectando a MongoDB: getaddrinfo EAI_AGAIN mongo`                     | La API no resuelve el nombre `mongo` en la red de Docker, típico tras un primer arranque fallido   | `docker compose down` y `docker compose up -d`                                                    |
+| La API queda en `health: starting` y se reinicia                              | El proceso se cierra al fallar                                                                     | `docker compose logs --tail 30 api` y actuar según el error                                       |
+| `Authentication failed`                                                       | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | `docker compose down -v`, `docker compose up -d --build` y volver a correr el seed                |
+| `Falta MONGO_PASSWORD en .env`                                                | No existe el `.env` en la raíz del proyecto                                                        | Crearlo al lado de `docker-compose.yml`                                                           |
+| El seed falla con un error de validación (por ejemplo `proyecto is required`) | La imagen tiene una versión vieja del código                                                       | `git pull`, `docker compose build` y volver a correr el seed                                      |
+| `mongo` se reinicia con `Illegal instruction`                                 | La CPU de la VM no expone instrucciones AVX, que MongoDB 5+ necesita                               | Habilitar el modo de CPU «host passthrough» o usar `image: mongo:4.4`                             |
+| Responde desde la VM pero no desde afuera                                     | Falta la regla de firewall para el puerto 3000, o se usó `https://`                                | Crear la regla `tcp:3000` y usar `http://`                                                        |
+| `docker: command not found` / `permission denied`                             | Docker no está instalado, o el usuario no está en el grupo `docker`                                | Ver «Requisitos en la VM», o usar `sudo docker ...`                                               |
+| Las notificaciones salen siempre `SIMULADO`                                   | Es lo esperado sin configuración                                                                   | Ver «Notificaciones → envío real»                                                                 |
 
 ### Consideraciones
 

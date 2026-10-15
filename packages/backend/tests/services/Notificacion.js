@@ -18,7 +18,9 @@ describe("NotificacionService", () => {
     colaboradora = {
       idColaborador: "colaboradora-1",
       aceptaMensajeria: true,
-      mediosDeContacto: [{ tipoDeContacto: "EMAIL", contacto: "privado@example.org" }],
+      mediosDeContacto: [
+        { tipoDeContacto: "EMAIL", contacto: "privado@example.org" },
+      ],
     };
     notificacionRepository = {
       save: jest.fn(async (notificacion) => notificacion),
@@ -72,7 +74,9 @@ describe("NotificacionService", () => {
   });
 
   it("persiste la notificación y el fallo si un proveedor lanza un error", async () => {
-    notificadorExterno.enviar.mockRejectedValue(new Error("provider unavailable"));
+    notificadorExterno.enviar.mockRejectedValue(
+      new Error("provider unavailable"),
+    );
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     try {

@@ -10,10 +10,7 @@ const colaboracionSchema = new mongoose.Schema(
   { timestamps: true, collection: "colaboraciones" },
 );
 
-colaboracionSchema.index(
-  { idProyecto: 1, idColaborador: 1 },
-  { unique: true },
-);
+colaboracionSchema.index({ idProyecto: 1, idColaborador: 1 }, { unique: true });
 
 export const ColaboracionModel = mongoose.model(
   "Colaboracion",

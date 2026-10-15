@@ -10,7 +10,13 @@ describe("esquemas de persistencia de mensajería", () => {
       contenido: "Mensaje de prueba",
       idColectivo: "colectivo-1",
       idColaborador: "colaboradora-1",
-      envios: [{ tipoDeContacto: "EMAIL", estado: EstadoEnvio.SIMULADO, detalle: "Sin proveedor" }],
+      envios: [
+        {
+          tipoDeContacto: "EMAIL",
+          estado: EstadoEnvio.SIMULADO,
+          detalle: "Sin proveedor",
+        },
+      ],
     });
 
     expect(NotificacionModel.collection.collectionName).toBe("notificaciones");

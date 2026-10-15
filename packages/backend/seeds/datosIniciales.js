@@ -9,7 +9,10 @@
 const MIN = 60 * 1000;
 const DIA = 24 * 60 * MIN;
 
-export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 } = {}) {
+export function crearDatosIniciales({
+  ahora = new Date(),
+  minutosParaCierre = 5,
+} = {}) {
   const enDias = (dias) => new Date(ahora.getTime() + dias * DIA);
   const enMinutos = (min) => new Date(ahora.getTime() + min * MIN);
 
@@ -32,9 +35,14 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
     {
       idColectivo: "seed-colectivo-1",
       nombre: "Fundación Manos Solidarias",
-      descripcion: "Fundación que organiza turnos de voluntariado en hospitales.",
+      descripcion:
+        "Fundación que organiza turnos de voluntariado en hospitales.",
       tipoDeColectivo: "FUNDACIONES",
-      ubicacion: { pais: "Argentina", provincia: "Buenos Aires", ciudad: "Lomas de Zamora" },
+      ubicacion: {
+        pais: "Argentina",
+        provincia: "Buenos Aires",
+        ciudad: "Lomas de Zamora",
+      },
     },
     {
       idColectivo: "seed-colectivo-2",
@@ -70,14 +78,22 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
           descripcion: "Tester",
           habilidadesRequeridas: ["Testing E2E con Cypress"],
           habilidadesOpcionales: ["Uso de Soap UI"],
-          compromiso: { tipoCompromiso: "MENSUALES", horas: 5, tipoColaboracion: "GRATUITA" },
+          compromiso: {
+            tipoCompromiso: "MENSUALES",
+            horas: 5,
+            tipoColaboracion: "GRATUITA",
+          },
         },
         {
           idPerfil: "000000000000000000000002",
           descripcion: "Analista de Datos",
           habilidadesRequeridas: ["Conocimientos de Pandas"],
           habilidadesOpcionales: ["SQL"],
-          compromiso: { tipoCompromiso: "MENSUALES", horas: 15, tipoColaboracion: "INCENTIVO" },
+          compromiso: {
+            tipoCompromiso: "MENSUALES",
+            horas: 15,
+            tipoColaboracion: "INCENTIVO",
+          },
         },
       ],
       logros: [
@@ -113,7 +129,11 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
           descripcion: "Desarrollo frontend",
           habilidadesRequeridas: ["React"],
           habilidadesOpcionales: ["Accesibilidad web", "Diseño UX/UI"],
-          compromiso: { tipoCompromiso: "SEMANALES", horas: 6, tipoColaboracion: "GRATUITA" },
+          compromiso: {
+            tipoCompromiso: "SEMANALES",
+            horas: 6,
+            tipoColaboracion: "GRATUITA",
+          },
         },
       ],
       logros: [],
@@ -123,7 +143,8 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
       idProyecto: "seed-proyecto-3",
       idColectivo: "seed-colectivo-2",
       titulo: "Inventario de donaciones",
-      descripcion: "Sistema para registrar las donaciones que recibe la despensa.",
+      descripcion:
+        "Sistema para registrar las donaciones que recibe la despensa.",
       estado: "FINALIZADO",
       fechaInicio: enDias(-120),
       fechaLimiteCierre: enDias(-20),
@@ -136,7 +157,11 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
           descripcion: "Desarrollo backend",
           habilidadesRequeridas: ["Node.js"],
           habilidadesOpcionales: ["MongoDB"],
-          compromiso: { tipoCompromiso: "TOTALES", horas: 40, tipoColaboracion: "CONTRATACION" },
+          compromiso: {
+            tipoCompromiso: "TOTALES",
+            horas: 40,
+            tipoColaboracion: "CONTRATACION",
+          },
         },
       ],
       logros: [
@@ -155,7 +180,8 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
       idProyecto: "seed-proyecto-4",
       idColectivo: "seed-colectivo-1",
       titulo: "Laboratorio de pruebas",
-      descripcion: "Proyecto para probar anotación, cierre programado y cierre automático.",
+      descripcion:
+        "Proyecto para probar anotación, cierre programado y cierre automático.",
       estado: "ACTIVO",
       fechaInicio: enDias(-1),
       fechaLimiteCierre: enMinutos(minutosParaCierre),
@@ -168,7 +194,11 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
           descripcion: "Tester de carga",
           habilidadesRequeridas: ["Pruebas de carga con k6"],
           habilidadesOpcionales: ["Jest"],
-          compromiso: { tipoCompromiso: "TOTALES", horas: 10, tipoColaboracion: "GRATUITA" },
+          compromiso: {
+            tipoCompromiso: "TOTALES",
+            horas: 10,
+            tipoColaboracion: "GRATUITA",
+          },
         },
       ],
       logros: [],
@@ -221,9 +251,19 @@ export function crearDatosIniciales({ ahora = new Date(), minutosParaCierre = 5 
 
   const colaboraciones = [
     // Pública: GET /proyectos/seed-proyecto-3/colaboraciones muestra a Nico.
-    { idProyecto: "seed-proyecto-3", idColaborador: "seed-colaboradora-5", fecha: enDias(-100), esAnonima: false },
+    {
+      idProyecto: "seed-proyecto-3",
+      idColaborador: "seed-colaboradora-5",
+      fecha: enDias(-100),
+      esAnonima: false,
+    },
     // Anónima: GET /proyectos/seed-proyecto-2/colaboraciones NO muestra quién es.
-    { idProyecto: "seed-proyecto-2", idColaborador: "seed-colaboradora-5", fecha: enDias(-5), esAnonima: true },
+    {
+      idProyecto: "seed-proyecto-2",
+      idColaborador: "seed-colaboradora-5",
+      fecha: enDias(-5),
+      esAnonima: true,
+    },
   ];
 
   return { habilidades, colectivos, proyectos, colaboradoras, colaboraciones };

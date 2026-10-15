@@ -36,7 +36,9 @@ export class NotificadorExterno {
       const { estado, detalle } = await canal.enviar(contacto, mensaje);
       return { tipoDeContacto, estado, ...(detalle && { detalle }) };
     } catch (error) {
-      console.error(`[notificaciones] fallo el envio por ${tipoDeContacto}: ${error.message}`);
+      console.error(
+        `[notificaciones] fallo el envio por ${tipoDeContacto}: ${error.message}`,
+      );
       return {
         tipoDeContacto,
         estado: EstadoEnvio.FALLIDO,

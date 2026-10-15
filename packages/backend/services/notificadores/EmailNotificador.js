@@ -14,8 +14,10 @@ export class EmailNotificador {
   async obtenerTransporte() {
     if (!this.transporte) {
       const crear =
-        this.crearTransporte ?? (await import("nodemailer")).default.createTransport;
-      const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = this.config;
+        this.crearTransporte ??
+        (await import("nodemailer")).default.createTransport;
+      const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } =
+        this.config;
       this.transporte = crear({
         host: SMTP_HOST,
         port: Number(SMTP_PORT) || 587, // vacío o inválido -> 587
@@ -28,7 +30,9 @@ export class EmailNotificador {
 
   async enviar(destino, { asunto, texto }) {
     if (!this.config.SMTP_HOST) {
-      console.log(`[notificaciones] SIMULADO EMAIL -> ${enmascarar(destino)} (falta SMTP_HOST)`);
+      console.log(
+        `[notificaciones] SIMULADO EMAIL -> ${enmascarar(destino)} (falta SMTP_HOST)`,
+      );
       return { estado: EstadoEnvio.SIMULADO, detalle: "SMTP no configurado" };
     }
 

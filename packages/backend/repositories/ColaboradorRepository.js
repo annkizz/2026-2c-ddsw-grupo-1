@@ -2,8 +2,8 @@ import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
 
 export class ColaboradorRepository {
   constructor(model = ColaboradorModel) {
-      this.model = model;
-    }
+    this.model = model;
+  }
 
   obtenerTodos() {
     return this.model.find().exec();
@@ -14,22 +14,29 @@ export class ColaboradorRepository {
   }
 
   save(unColaborador) {
-    return this.model.findOneAndUpdate(
-      { idColaborador: unColaborador.idColaborador },
-      {
-        $set: {
-          nombreFantasia: unColaborador.nombreFantasia,
-          usuarioGitHub: unColaborador.usuarioGitHub,
-          nombre: unColaborador.nombre,
-          apellido: unColaborador.apellido,
-          presentacion: unColaborador.presentacion,
-          pronombres: unColaborador.pronombres,
-          aceptaMensajeria: unColaborador.aceptaMensajeria,
-          habilidades: unColaborador.habilidades,
-          mediosDeContacto: unColaborador.mediosDeContacto,
+    return this.model
+      .findOneAndUpdate(
+        { idColaborador: unColaborador.idColaborador },
+        {
+          $set: {
+            nombreFantasia: unColaborador.nombreFantasia,
+            usuarioGitHub: unColaborador.usuarioGitHub,
+            nombre: unColaborador.nombre,
+            apellido: unColaborador.apellido,
+            presentacion: unColaborador.presentacion,
+            pronombres: unColaborador.pronombres,
+            aceptaMensajeria: unColaborador.aceptaMensajeria,
+            habilidades: unColaborador.habilidades,
+            mediosDeContacto: unColaborador.mediosDeContacto,
+          },
         },
-      },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
-    ).exec();
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
   }
 }

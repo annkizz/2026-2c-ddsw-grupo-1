@@ -6,7 +6,11 @@ import { enmascarar } from "./enmascarar.js";
 // TWILIO_SMS_FROM (ej. +15005550006) o TWILIO_WHATSAPP_FROM (ej. +14155238886, sandbox).
 // Si falta alguna: SIMULADO.
 export class TwilioNotificador {
-  constructor(canal, config = process.env, fetchFn = (...args) => fetch(...args)) {
+  constructor(
+    canal,
+    config = process.env,
+    fetchFn = (...args) => fetch(...args),
+  ) {
     this.canal = canal; // "SMS" | "WHATSAPP"
     this.config = config;
     this.fetch = fetchFn;
@@ -36,7 +40,9 @@ export class TwilioNotificador {
     }
 
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN } = this.config;
-    const credenciales = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64");
+    const credenciales = Buffer.from(
+      `${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`,
+    ).toString("base64");
 
     const respuesta = await this.fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,

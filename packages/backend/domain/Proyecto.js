@@ -10,7 +10,7 @@ export class Proyecto {
     idColectivo,
     porcentajeConcrecion,
     enlaceSistema,
-    enlaceCodigoFuente
+    enlaceCodigoFuente,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -23,7 +23,7 @@ export class Proyecto {
     this.porcentajeConcrecion = porcentajeConcrecion;
     this.enlaceSistema = enlaceSistema;
     this.enlaceCodigoFuente = enlaceCodigoFuente;
-}
+  }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;
   }
@@ -48,9 +48,17 @@ export class Proyecto {
     return this.fechaLimiteCierre !== null;
   }
   cierreVencido(ahora = new Date()) {
-    return !this.estaFinalizado() && this.fechaLimiteCierre <= ahora && this.tieneCierreProgramado()
+    return (
+      !this.estaFinalizado() &&
+      this.fechaLimiteCierre <= ahora &&
+      this.tieneCierreProgramado()
+    );
   }
-   actualizarAvance({ porcentajeConcrecion, enlaceSistema, enlaceCodigoFuente }) {
+  actualizarAvance({
+    porcentajeConcrecion,
+    enlaceSistema,
+    enlaceCodigoFuente,
+  }) {
     if (porcentajeConcrecion !== undefined) {
       this.porcentajeConcrecion = porcentajeConcrecion;
     }
