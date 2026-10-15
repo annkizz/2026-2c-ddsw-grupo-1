@@ -1,15 +1,21 @@
 export class Notificacion {
-    constructor(
-    fecha,
+  constructor({
+    idNotificacion,
+    fecha = new Date(),
     contenido,
-    colectivo, 
-    colaborador,
-    medioDeContacto 
-  ) {
+    idColectivo,
+    idColaborador,
+    envios = [],
+  }) {
+    this.idNotificacion = idNotificacion;
     this.fecha = fecha;
     this.contenido = contenido;
-    this.colectivo = colectivo;
-    this.colaborador = colaborador;
-    this.medioDeContacto = medioDeContacto;
+    this.idColectivo = idColectivo;
+    this.idColaborador = idColaborador;
+    this.envios = envios;
+  }
+
+  registrarEnvio(envio) {
+    this.envios.push(envio);
   }
 }

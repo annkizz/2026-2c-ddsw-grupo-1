@@ -701,6 +701,72 @@ const swaggerSpec = {
         },
       },
     },
+    "/notificaciones": {
+      get: {
+        summary: "Lista notificaciones, opcionalmente filtradas por colectivo o colaboradora",
+        parameters: [
+          {
+            in: "query",
+            name: "idColectivo",
+            schema: { type: "string" },
+          },
+          {
+            in: "query",
+            name: "idColaborador",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: { description: "Lista de notificaciones sin datos de contacto privados" },
+          400: { description: "Filtros inválidos" },
+        },
+      },
+      post: {
+        summary: "Crea un mensaje interno para una colaboradora",
+        description:
+          "Requiere que la colaboradora haya aceptado mensajería. Los intentos por canales externos se informan en envios; canales no configurados figuran como FALLIDO.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["idColectivo", "idColaborador", "contenido"],
+                properties: {
+                  idColectivo: { type: "string", example: "seed-colectivo-1" },
+                  idColaborador: { type: "string", example: "seed-colaboradora-1" },
+                  contenido: { type: "string", example: "Hola, queremos colaborar." },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: "Mensaje guardado con el estado de cada intento de envío" },
+          400: { description: "Body inválido" },
+          403: { description: "La colaboradora no aceptó mensajería" },
+          404: { description: "Colectivo o colaboradora no encontrados" },
+        },
+      },
+    },
+    "/notificaciones/{id}": {
+      get: {
+        summary: "Obtiene una notificación por su ID",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: { description: "Notificación encontrada" },
+          404: { description: "Notificación no encontrada" },
+        },
+      },
+    },
   },
 };
 

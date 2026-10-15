@@ -26,6 +26,10 @@ import { LogroRepository } from "../repositories/LogroRepository.js";
 import { LogroService } from "../services/LogroService.js";
 import { LogroController } from "../controllers/LogroController.js";
 import { crearLogroRouter } from "./logroRouter.js";
+import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
+import { NotificacionService } from "../services/NotificacionService.js";
+import { NotificacionController } from "../controllers/NotificacionController.js";
+import { crearNotificacionRouter } from "./notificacionRouter.js";
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
@@ -61,6 +65,14 @@ const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository);
 const logroController = new LogroController(logroService);
 
+const notificacionRepository = new NotificacionRepository();
+const notificacionService = new NotificacionService(
+  notificacionRepository,
+  colectivoRepository,
+  colaboradorRepository,
+);
+const notificacionController = new NotificacionController(notificacionService);
+
 const matchingService = new MatchingService(
   colaboradorRepository,
   proyectoRepository,
@@ -73,6 +85,7 @@ router.use("/proyectos", crearProyectoRouter(proyectoController, perfilControlle
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
 router.use("/proyectos", crearLogroRouter(logroController));
+router.use("/notificaciones", crearNotificacionRouter(notificacionController));
 router.use(crearMatchingRouter(matchingController));
 
 export default router;

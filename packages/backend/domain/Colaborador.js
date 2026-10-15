@@ -9,7 +9,7 @@ export class Colaborador {
     idColaborador,
     habilidades,
     mediosDeContacto,
-    aceptaMensajeria,
+    aceptaMensajeria = false,
   ) {
     this.nombreFantasia = nombreFantasia;
     this.usuarioGitHub = usuarioGitHub;

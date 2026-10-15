@@ -3,8 +3,8 @@ import { Notificacion } from "../domain/Notificacion.js";
 import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
-import { NotificadorExterno } from "./notificadores/NotificadorExterno.js";
 import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
+import { NotificadorExterno } from "./notificadores/NotificadorExterno.js";
 
 export class NotificacionService {
   constructor(
@@ -63,22 +63,33 @@ export class NotificacionService {
       );
     }
 
-    const notificacion = new Notificacion(
-      randomUUID(),
-      new Date(),
+    const notificacion = new Notificacion({
+      idNotificacion: randomUUID(),
       contenido,
-      idColectivo,
-      idColaborador,
-    );
+      idColectivo: colectivo.idColectivo,
+      idColaborador: colaboradora.idColaborador,
+    });
 
     // el mensaje interno queda guardado aunque falle (o se corte) el envío externo
     await this.notificacionRepository.save(notificacion);
 
     const mensaje = this.construirMensaje(colectivo, contenido);
     const envios = await Promise.all(
-      (colaboradora.mediosDeContacto ?? []).map((medio) =>
-        this.notificadorExterno.enviar(medio, mensaje),
-      ),
+      (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
+        try {
+          const resultado = await this.notificadorExterno.enviar(medio, mensaje);
+          return { ...resultado, tipoDeContacto: medio.tipoDeContacto };
+        } catch (error) {
+          console.error(
+            `Falló el envío de notificación por ${medio.tipoDeContacto} (${error.name}).`,
+          );
+          return {
+            tipoDeContacto: medio.tipoDeContacto,
+            estado: "FALLIDO",
+            detalle: "No se pudo completar el envío por este medio.",
+          };
+        }
+      }),
     );
     envios.forEach((envio) => notificacion.registrarEnvio(envio));
 

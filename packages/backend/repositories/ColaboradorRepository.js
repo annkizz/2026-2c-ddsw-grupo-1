@@ -24,6 +24,7 @@ export class ColaboradorRepository {
           apellido: unColaborador.apellido,
           presentacion: unColaborador.presentacion,
           pronombres: unColaborador.pronombres,
+          aceptaMensajeria: unColaborador.aceptaMensajeria,
           habilidades: unColaborador.habilidades,
           mediosDeContacto: unColaborador.mediosDeContacto,
         },

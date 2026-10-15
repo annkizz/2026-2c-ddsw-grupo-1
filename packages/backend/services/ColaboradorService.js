@@ -41,6 +41,7 @@ export class ColaboradorService {
       randomUUID(),
       habilidades,
       datosColaborador.mediosDeContacto ?? [],
+      datosColaborador.aceptaMensajeria ?? false,
     );
 
     return await this.colaboradorRepository.save(colaborador);

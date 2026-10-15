@@ -11,6 +11,7 @@ const colaboradorSchema = new mongoose.Schema(
     apellido: { type: String, trim: true },
     presentacion: { type: String, trim: true },
     pronombres: { type: [String], default: [] },
+    aceptaMensajeria: { type: Boolean, required: true, default: false },
     habilidades: { type: [String], required: true },
     mediosDeContacto: { type: [medioDeContactoSchema], default: [] },
   },
