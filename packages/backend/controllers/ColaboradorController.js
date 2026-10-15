@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 import { ColaboradorService } from "../services/ColaboradorService.js";
-
+import { medioDeContactoSchema} from "../schemas/zod/medioDeContactoSchema.js"
 
 
 
