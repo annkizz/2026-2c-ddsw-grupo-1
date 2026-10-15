@@ -18,7 +18,6 @@ import { crearColaboradorRouter } from "./colaboradorRouter.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { PerfilController } from "../controllers/PerfilController.js";
 import { PerfilService } from "../services/PerfilService.js";
-import { crearPerfilRouter } from "./perfilRouter.js";
 import { MatchingController } from "../controllers/MatchingController.js";
 import { MatchingService } from "../services/MatchingService.js";
 import { crearMatchingRouter } from "./matchingRouter.js";
@@ -70,8 +69,7 @@ const matchingService = new MatchingService(
 const matchingController = new MatchingController(matchingService);
 
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
-router.use("/proyectos/:id/perfiles", crearPerfilRouter(perfilController));
-router.use("/proyectos", crearProyectoRouter(proyectoController));
+router.use("/proyectos", crearProyectoRouter(proyectoController, perfilController));
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
 router.use("/proyectos", crearLogroRouter(logroController));

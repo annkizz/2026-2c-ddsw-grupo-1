@@ -6,6 +6,7 @@ import {
   cierreProgramadoSchema,
   avanceSchema,
 } from "../controllers/ProyectoController.js";
+import { crearPerfilRouter } from "./perfilRouter.js";
 
 export function crearProyectoRouter(proyectoController) {
   const router = express.Router();
@@ -41,5 +42,7 @@ export function crearProyectoRouter(proyectoController) {
     );
 
   
+  router.use("/:id/perfiles", crearPerfilRouter(perfilController));
+
   return router;
 }

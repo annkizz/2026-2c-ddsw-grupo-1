@@ -657,6 +657,50 @@ const swaggerSpec = {
         },
       },
     },
+        "/proyectos/{id}/cierre-programado": {
+      patch: {
+        summary: "Programa la fecha límite de cierre automático de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["fechaLimiteCierre"],
+                properties: {
+                  fechaLimiteCierre: {
+                    type: "string",
+                    format: "date-time",
+                    description: "Fecha y hora en que se cerrará el proyecto. Debe ser futura.",
+                    example: "2026-12-31T23:59:59Z",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Cierre programado; devuelve el proyecto actualizado" },
+          400: {
+            description:
+              "Body inválido (falta la fecha o no es una fecha válida) o la fecha no es futura",
+          },
+          404: { description: "Proyecto no encontrado" },
+          409: {
+            description: "El proyecto ya está finalizado",
+          },
+        },
+      },
+    },
   },
 };
 
