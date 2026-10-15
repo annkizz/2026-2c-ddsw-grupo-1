@@ -45,6 +45,21 @@ describe("ColaboradorService", () => {
     expect(colaboradorRepository.save).toHaveBeenCalledTimes(1);
   });
 
+  it("persiste el consentimiento de mensajeria y lo deja desactivado por defecto", async () => {
+    const acepto = await service.crear({
+      nombreFantasia: "ada",
+      habilidades: ["React"],
+      aceptaMensajeria: true,
+    });
+    const noAcepto = await service.crear({
+      nombreFantasia: "bea",
+      habilidades: ["React"],
+    });
+
+    expect(acepto.aceptaMensajeria).toBe(true);
+    expect(noAcepto.aceptaMensajeria).toBe(false);
+  });
+
   it("falla si alguna habilidad no existe y no guarda nada", async () => {
     await expect(
       service.crear({ nombreFantasia: "ada", habilidades: ["React", "Cocina molecular"] }),
