@@ -12,25 +12,23 @@ describe("Dominio - Perfil", () => {
       ["Testing E2E con Cypress"],
       ["Uso de Soap UI"],
       compromiso,
-      "perfil-1",
     );
 
     expect(perfil.descripcion).toBe("Tester");
     expect(perfil.habilidadesRequeridas).toEqual(["Testing E2E con Cypress"]);
     expect(perfil.habilidadesOpcionales).toEqual(["Uso de Soap UI"]);
     expect(perfil.compromiso).toBe(compromiso);
-    expect(perfil.idPerfil).toBe("perfil-1");
   });
 
   it("guarda el tipo y las horas del compromiso", () => {
-    const perfil = new Perfil("Analista de Datos", ["Pandas"], [], compromiso, "p-2");
+    const perfil = new Perfil("Analista de Datos", ["Pandas"], [], compromiso);
 
     expect(perfil.compromiso.tipoCompromiso).toBe("MENSUALES");
     expect(perfil.compromiso.horas).toBe(5);
   });
 
   it("puede no tener habilidades opcionales", () => {
-    const perfil = new Perfil("Backend", ["Node.js"], [], compromiso, "p-3");
+    const perfil = new Perfil("Backend", ["Node.js"], [], compromiso);
 
     expect(perfil.habilidadesOpcionales).toEqual([]);
   });

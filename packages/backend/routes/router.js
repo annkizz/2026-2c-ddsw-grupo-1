@@ -20,6 +20,10 @@ import { PerfilController } from "../controllers/PerfilController.js";
 import { PerfilService } from "../services/PerfilService.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
 export { proyectoService };
+import { LogroRepository } from "../repositories/LogroRepository.js";
+import { LogroService } from "../services/LogroService.js";
+import { LogroController } from "../controllers/LogroController.js";
+import { crearLogroRouter } from "./logroRouter.js";
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
@@ -51,10 +55,15 @@ const perfilRepository = new PerfilRepository();
 const perfilService = new PerfilService(perfilRepository, proyectoRepository, habilidadRepository)
 const perfilController = new PerfilController(perfilService);
 
+const logroRepository = new LogroRepository();
+const logroService = new LogroService(logroRepository, proyectoRepository);
+const logroController = new LogroController(logroService);
+
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
 router.use("/proyectos/:id/perfiles", crearPerfilRouter(perfilController));
 router.use("/proyectos", crearProyectoRouter(proyectoController));
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
+router.use("/proyectos", crearLogroRouter(logroController));
 
 export default router;

@@ -6,8 +6,15 @@ export class PerfilRepository {
     this.model = PerfilModel;
   }
 
-  async save(perfil) {
-    return await new this.model(perfil).save();
+  async save(perfil, idProyecto) {
+    const documento = new this.model({
+      proyecto: idProyecto,
+      descripcion: perfil.descripcion,
+      habilidadesRequeridas: perfil.habilidadesRequeridas,
+      habilidadesOpcionales: perfil.habilidadesOpcionales,
+      compromiso: perfil.compromiso,
+    });
+    return await documento.save();
   }
 
   async obtenerTodos(idProyecto) {
