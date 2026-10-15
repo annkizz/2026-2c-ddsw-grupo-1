@@ -50,7 +50,9 @@ export class MatchingService {
         idColaborador: colaboradora.idColaborador,
         nombreFantasia: colaboradora.nombreFantasia,
         usuarioGitHub: colaboradora.usuarioGitHub,
-        pronombres: colaboradora.pronombres,
+        ...(colaboradora.pronombres?.length > 0 && {
+          pronombres: colaboradora.pronombres,
+        }),
         presentacion: colaboradora.presentacion,
         ...coincidencia,
       }));

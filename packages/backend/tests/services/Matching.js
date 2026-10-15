@@ -19,12 +19,14 @@ const colaboradoras = [
     idColaborador: "parcial",
     nombreFantasia: "Coincidencia parcial",
     habilidades: ["React", "Jest"],
+    pronombres: [],
   },
   {
     idColaborador: "completa",
     nombreFantasia: "Coincidencia completa",
     habilidades: ["React", "Node.js", "Jest", "SQL"],
     nombre: "Nombre privado",
+    pronombres: ["ella"],
     mediosContacto: ["privado@example.com"],
     colaboraciones: [],
   },
@@ -130,7 +132,6 @@ describe("MatchingService.buscarColaboradorasParaPerfil", () => {
         "idColaborador",
         "nombreFantasia",
         "usuarioGitHub",
-        "pronombres",
         "presentacion",
         "tieneCoincidencia",
         "requeridasCoincidentes",
@@ -140,6 +141,8 @@ describe("MatchingService.buscarColaboradorasParaPerfil", () => {
     expect(resultado[0]).not.toHaveProperty("nombre");
     expect(resultado[0]).not.toHaveProperty("mediosContacto");
     expect(resultado[0]).not.toHaveProperty("colaboraciones");
+    expect(resultado[0]).not.toHaveProperty("pronombres");
+    expect(resultado[1].pronombres).toEqual(["ella"]);
   });
 
   it("excluye colaboradoras ya anotadas en el proyecto", async () => {
