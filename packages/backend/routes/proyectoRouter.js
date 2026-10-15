@@ -8,7 +8,7 @@ import {
 } from "../controllers/ProyectoController.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
 
-export function crearProyectoRouter(proyectoController) {
+export function crearProyectoRouter(proyectoController, perfilController) {
   const router = express.Router();
 
   router
