@@ -33,4 +33,15 @@ export class PerfilController {
         await this.perfilService.eliminar(req.params.id, req.params.idPerfil);
         res.status(204).send();
     }
+
+    obtenerPorId = async (req, res) => {
+    const perfil = await this.perfilService.obtenerPorId(req.params.id, req.params.idPerfil);
+    res.status(200).json(perfil);
+    }
+
+    actualizar = async (req, res) => {
+    const perfil = await this.perfilService.actualizar(req.params.id, req.params.idPerfil, req.body);
+    res.status(200).json(perfil);
+    }
+
 }

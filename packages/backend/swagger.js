@@ -11,7 +11,6 @@ const swaggerDefinition = {
     },
   ],
 };
-
 const swaggerSpec = {
   ...swaggerDefinition,
   paths: {
@@ -112,7 +111,129 @@ const swaggerSpec = {
         },
       },
     },
-        "/proyectos/{id}/perfiles": {
+    "/proyectos/{id}/perfiles/{idPerfil}/colaboradoras": {
+      get: {
+        summary:
+          "Busca colaboradoras candidatas para un perfil específico de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del perfil del proyecto",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de colaboradoras compatibles con el perfil",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idColaborador: { type: "string" },
+                      nombreFantasia: { type: "string" },
+                      usuarioGitHub: { type: "string" },
+                      pronombres: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                      presentacion: { type: "string" },
+                      tieneCoincidencia: { type: "boolean" },
+                      requeridasCoincidentes: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                      opcionalesCoincidentes: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            description: "Proyecto o perfil no encontrado",
+          },
+          409: {
+            description: "El proyecto está finalizado",
+          },
+        },
+      },
+    },
+    "/colaboradoras/{id}/proyectos": {
+      get: {
+        summary:
+          "Busca proyectos abiertos y compatibles con las habilidades de una colaboradora",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "ID de la colaboradora",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de proyectos compatibles",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idProyecto: { type: "string" },
+                      titulo: { type: "string" },
+                      descripcion: { type: "string" },
+                      perfilesCompatibles: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            idPerfil: { type: "string" },
+                            descripcion: { type: "string" },
+                            compromiso: {
+                              type: "object",
+                              additionalProperties: true,
+                            },
+                            requeridasCoincidentes: {
+                              type: "array",
+                              items: { type: "string" },
+                            },
+                            opcionalesCoincidentes: {
+                              type: "array",
+                              items: { type: "string" },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            description: "La colaboradora no existe",
+          },
+        },
+      },
+    },
+    "/proyectos/{id}/perfiles": {
       get: {
         summary: "Obtiene los perfiles de un proyecto",
         parameters: [
@@ -186,7 +307,93 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/perfiles/{idPerfil}": {
+        "/proyectos/{id}/perfiles/{idPerfil}": {
+      get: {
+        summary: "Obtiene un perfil de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del perfil",
+          },
+        ],
+        responses: {
+          200: { description: "Perfil del proyecto" },
+          404: { description: "Proyecto o perfil no encontrado" },
+        },
+      },
+      put: {
+        summary: "Actualiza un perfil de un proyecto",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del proyecto",
+          },
+          {
+            name: "idPerfil",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Id del perfil",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["descripcion", "habilidadesRequeridas", "compromiso"],
+                properties: {
+                  descripcion: { type: "string", example: "Tester" },
+                  habilidadesRequeridas: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Testing E2E con Cypress"],
+                  },
+                  habilidadesOpcionales: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: [],
+                  },
+                  compromiso: {
+                    type: "object",
+                    required: ["tipoCompromiso", "horas", "tipoColaboracion"],
+                    properties: {
+                      tipoCompromiso: {
+                        type: "string",
+                        enum: ["TOTALES", "MENSUALES", "SEMANALES"],
+                      },
+                      horas: { type: "integer", minimum: 1, example: 5 },
+                      tipoColaboracion: {
+                        type: "string",
+                        enum: ["GRATUITA", "INCENTIVO", "CONTRATACION"],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Perfil actualizado" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Proyecto, perfil o habilidad no encontrados" },
+        },
+      },
       delete: {
         summary: "Elimina un perfil de un proyecto",
         parameters: [
@@ -340,6 +547,53 @@ const swaggerSpec = {
       },
     },
     "/proyectos/{id}/colaboraciones": {
+      get: {
+        summary: "Obtiene las contribuciones públicas de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              "Lista de contribuciones; las anónimas no incluyen identidad de la colaboradora",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["idProyecto", "fecha", "esAnonima"],
+                    properties: {
+                      idProyecto: { type: "string" },
+                      fecha: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      colaborador: {
+                        type: "object",
+                        description:
+                          "Solo se incluye cuando la contribución no es anónima",
+                        properties: {
+                          idColaborador: { type: "string" },
+                          nombreFantasia: { type: "string" },
+                          usuarioGitHub: { type: "string" },
+                          nombre: { type: "string" },
+                          apellido: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
       post: {
         summary:
           "Crea una nueva colaboración entre un proyecto y una colaboradora.",
@@ -361,6 +615,12 @@ const swaggerSpec = {
                 required: ["idColaborador"],
                 properties: {
                   idColaborador: { type: "string", example: "a1b2c3d4-..." },
+                  esAnonima: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "Si es true, la contribución se registra sin exponer la identidad públicamente",
+                  },
                 },
               },
             },
@@ -394,6 +654,50 @@ const swaggerSpec = {
         responses: {
           200: { description: "Proyecto cerrado exitosamente" },
           404: { description: "Proyecto no encontrado" },
+        },
+      },
+    },
+        "/proyectos/{id}/cierre-programado": {
+      patch: {
+        summary: "Programa la fecha límite de cierre automático de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["fechaLimiteCierre"],
+                properties: {
+                  fechaLimiteCierre: {
+                    type: "string",
+                    format: "date-time",
+                    description: "Fecha y hora en que se cerrará el proyecto. Debe ser futura.",
+                    example: "2026-12-31T23:59:59Z",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Cierre programado; devuelve el proyecto actualizado" },
+          400: {
+            description:
+              "Body inválido (falta la fecha o no es una fecha válida) o la fecha no es futura",
+          },
+          404: { description: "Proyecto no encontrado" },
+          409: {
+            description: "El proyecto ya está finalizado",
+          },
         },
       },
     },

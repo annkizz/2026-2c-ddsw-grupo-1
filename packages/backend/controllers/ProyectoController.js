@@ -17,6 +17,7 @@ export const proyectoSchema = z
 export const idColaboradorSchema = z
   .object({
     idColaborador: z.string().trim().min(1),
+    esAnonima: z.boolean().default(false),
   })
   .strict();
 
@@ -26,33 +27,49 @@ export const cierreProgramadoSchema = z
   })
   .strict();
 
+export const avanceSchema = z
+  .object({
+    porcentajeConcrecion: z.number().min(0).max(100).optional(),
+    enlaceSistema: z.url({ protocol: /^https?$/ }).optional(),
+    enlaceCodigoFuente: z.url({ protocol: /^https?$/ }).optional(),
+  })
+  .strict();
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
   }
 
-  crear = (req, res) => {
-    const proyectoNuevo = this.proyectoService.crear(req.body);
+  crear = async (req, res) => {
+    const proyectoNuevo = await this.proyectoService.crear(req.body);
     res.status(201).json(proyectoNuevo);
   };
 
-  obtenerTodos = (req, res) => {
-    const proyectos = this.proyectoService.obtenerTodos();
+  obtenerTodos = async (req, res) => {
+    const proyectos = await this.proyectoService.obtenerTodos();
     res.status(200).json(proyectos);
   };
 
-  programarCierre(req, res) {
-    const proyecto = this.proyectoService.programarCierre(
+  obtenerColaboracionesPublicas = async (req, res) => {
+    const colaboraciones = await this.proyectoService.obtenerColaboracionesPublicas(
+      req.params.id,
+    );
+    res.status(200).json(colaboraciones);
+  };
+
+  async programarCierre(req, res) {
+    const proyecto = await this.proyectoService.programarCierre(
       req.params.id,
       req.body.fechaLimiteCierre,
     );
     res.status(200).json(proyecto);
   }
 
-  crearColaboracion(req, res) {
+  async crearColaboracion(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente =
-      this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente = await this.proyectoService.obtenerProyectoPorId(
+      proyectoId,
+    );
 
     if (!proyectoExistente) {
       throw new NotFoundError(
@@ -72,18 +89,31 @@ export class ProyectoController {
     }
 
     const colaboradorId = resultado.data.idColaborador;
-    const colaboracion = this.proyectoService.crearColaboracion(
+    const { esAnonima } = resultado.data;
+    const colaboracion = await this.proyectoService.crearColaboracion(
       proyectoExistente,
       colaboradorId,
+      esAnonima,
     );
 
-    res.status(201).json(colaboracion);
+    res.status(201).json(
+      this.proyectoService.toContribucionPublica(colaboracion),
+    );
   }
 
-  cerrarProyecto(req, res) {
+  async actualizarAvance(req, res) {
+    const avance = await this.proyectoService.actualizarAvance(
+      req.params.id,
+      req.body,
+    );
+    res.status(200).json(avance);
+    }
+
+  async cerrarProyecto(req, res) {
     const proyectoId = req.params.id;
-    const proyectoExistente =
-      this.proyectoService.obtenerProyectoPorId(proyectoId);
+    const proyectoExistente = await this.proyectoService.obtenerProyectoPorId(
+      proyectoId,
+    );
 
     if (!proyectoExistente) {
       throw new NotFoundError(
@@ -92,7 +122,9 @@ export class ProyectoController {
       );
     }
 
-    const proyectoCerrado = this.proyectoService.cerrarProyecto(proyectoId);
+    const proyectoCerrado = await this.proyectoService.cerrarProyecto(proyectoId);
     res.status(200).json(proyectoCerrado);
+
+    
   }
 }

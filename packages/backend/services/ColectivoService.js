@@ -7,7 +7,7 @@ export class ColectivoService {
     this.colectivoRepository = colectivoRepository;
   }
 
-  crear = (datosColectivo) => {
+  crear = async (datosColectivo) => {
     const colectivo = new Colectivo(
       datosColectivo.nombre,
       randomUUID(),
@@ -15,10 +15,10 @@ export class ColectivoService {
       datosColectivo.ubicacion,
       datosColectivo.tipoDeColectivo,
     );
-    return this.colectivoRepository.save(colectivo);
+    return await this.colectivoRepository.save(colectivo);
   };
 
-  obtenerTodos() {
-    return this.colectivoRepository.obtenerTodos();
+  async obtenerTodos() {
+    return await this.colectivoRepository.obtenerTodos();
   }
 }

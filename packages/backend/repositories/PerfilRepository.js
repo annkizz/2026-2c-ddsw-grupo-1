@@ -31,4 +31,12 @@ export class PerfilRepository {
   async eliminar(idPerfil) {
     return await this.model.findByIdAndDelete(idPerfil);
   }
+
+  async actualizar(idPerfil, datos) {
+    return await this.model.findByIdAndUpdate(
+        idPerfil,
+        { $set: datos },
+        { new: true, runValidators: true },
+    );
+  }
 }
