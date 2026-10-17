@@ -15,8 +15,8 @@ export class PerfilService {
 
     toDTO (perfil) {
         return {
-        idPerfil: perfil.id,
-        idProyecto: perfil.proyecto,
+        id: perfil.id,
+        idProyecto: perfil.idProyecto,
         descripcion: perfil.descripcion,
         habilidadesRequeridas: perfil.habilidadesRequeridas,
         habilidadesOpcionales: perfil.habilidadesOpcionales,
