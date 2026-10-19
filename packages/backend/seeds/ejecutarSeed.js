@@ -4,12 +4,15 @@ import { Proyecto } from "../domain/Proyecto.js";
 import { Colaborador } from "../domain/Colaborador.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 
+//recibe los datos iniciales y los inserta usando repo real
+
 export async function ejecutarSeed(
   {
     habilidadRepository,
     colectivoRepository,
     proyectoRepository,
     colaboradorRepository,
+    colaboracionRepository,
     db,
   },
   datos,
@@ -84,7 +87,7 @@ export async function ejecutarSeed(
     const colaborador = await colaboradorRepository.encontrarPorId(
       c.idColaborador,
     );
-    await proyectoRepository.saveColaboracion(
+    await colaboracionRepository.save(
       new Colaboracion(proyecto, colaborador, c.fecha, c.esAnonima),
     );
   }

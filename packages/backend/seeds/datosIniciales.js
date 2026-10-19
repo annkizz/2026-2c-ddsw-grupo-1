@@ -6,6 +6,11 @@
 // Los ids de Mongo son 24 caracteres hexadecimales: los perfiles usan una
 // secuencia predecible para facilitar las pruebas manuales.
 
+// datosIniciales: que datos (puros, sin base de datos)
+// ejecutarSeed: como interpretarlos (usa repo reales)
+//adaptadorDeSeed: operaciones q los repos no tienen
+//seed: conecta y dispara
+
 const MIN = 60 * 1000;
 const DIA = 24 * 60 * MIN;
 
