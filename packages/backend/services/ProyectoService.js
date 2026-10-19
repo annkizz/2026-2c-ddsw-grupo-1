@@ -13,6 +13,7 @@ import {
 import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
+import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 
 export class ProyectoService {
   constructor(
@@ -20,12 +21,14 @@ export class ProyectoService {
     habilidadRepository = new HabilidadRepository(),
     colaboradorService = new ColaboradorService(),
     colectivoRepository = new ColectivoRepository(),
+    colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
     this.colaboradorService = colaboradorService;
     this.colectivoRepository = colectivoRepository;
+    this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
   }
 
@@ -144,10 +147,6 @@ export class ProyectoService {
     return this.proyectoRepository.encontrarPorId(id);
   }
 
-  obtenerTodasColaboraciones = () => {
-    return this.proyectoRepository.obtenerTodasColaboraciones();
-  };
-
   toContribucionPublica(colaboracion) {
     const esAnonima = colaboracion.esAnonima ?? false;
     const contribucion = {
@@ -174,25 +173,16 @@ export class ProyectoService {
   obtenerColaboracionesPublicas = async (idProyecto) => {
     await this.buscarProyectoOFallar(idProyecto);
     const colaboraciones =
-      await this.proyectoRepository.obtenerColaboracionesPorProyecto(
-        idProyecto,
-      );
+      await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
     return colaboraciones.map((colaboracion) =>
       this.toContribucionPublica({ ...colaboracion, proyecto: { idProyecto } }),
     );
   };
 
-  obtenerColaboracionPorIdProyecto = async (proyectoId) => {
-    const colaboraciones = await this.obtenerTodasColaboraciones();
-    return colaboraciones.find((c) => c.proyecto?.idProyecto === proyectoId);
-  };
-
-  colaboradorPerteneceAProyecto = async (proyectoId, colaboradorId) => {
-    const colaboraciones = await this.obtenerTodasColaboraciones();
-    return colaboraciones.some(
-      (colaboracion) =>
-        colaboracion.proyecto?.idProyecto === proyectoId &&
-        colaboracion.colaborador?.idColaborador === colaboradorId,
+  colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
+    return this.colaboracionRepository.existeColaboracion(
+      proyectoId,
+      colaboradorId,
     );
   };
 
@@ -249,7 +239,7 @@ export class ProyectoService {
       new Date().toISOString(),
       esAnonima,
     );
-    return await this.proyectoRepository.saveColaboracion(nuevaColaboracion);
+    return await this.colaboracionRepository.save(nuevaColaboracion);
   }
 
   async cerrarProyecto(idProyecto) {

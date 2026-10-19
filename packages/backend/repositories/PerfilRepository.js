@@ -21,6 +21,11 @@ export class PerfilRepository {
     return await this.model.find({ proyecto: idProyecto });
   }
 
+  async obtenerPorProyectos(idsProyectos) {
+    if (idsProyectos.length === 0) return [];
+    return await this.model.find({ proyecto: { $in: idsProyectos } });
+  }
+
   async buscarPorId(idPerfil) {
     if (!mongoose.isValidObjectId(idPerfil)) {
       return null;

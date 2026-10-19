@@ -3,8 +3,11 @@ import { ColaboradorService } from "../../services/ColaboradorService.js";
 import { NotFoundError } from "../../errors/AppError.js";
 
 const catalogo = {
-  "testing e2e con cypress": { titulo: "Testing E2E con Cypress" },
-  react: { titulo: "React" },
+  testing_e2e_con_cypress: {
+    codigo: "testing_e2e_con_cypress",
+    titulo: "Testing E2E con Cypress",
+  },
+  react: { codigo: "react", titulo: "React" },
 };
 
 describe("ColaboradorService", () => {
@@ -19,8 +22,8 @@ describe("ColaboradorService", () => {
       encontrarPorId: jest.fn(async () => null),
     };
     habilidadRepository = {
-      encontrarPorTitulo: jest.fn(
-        async (titulo) => catalogo[titulo.toLowerCase()] ?? null,
+      encontrarPorCodigos: jest.fn(async (codigos) =>
+        codigos.map((codigo) => catalogo[codigo]).filter(Boolean),
       ),
     };
     service = new ColaboradorService(

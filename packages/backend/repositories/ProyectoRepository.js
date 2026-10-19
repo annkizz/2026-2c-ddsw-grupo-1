@@ -1,56 +1,21 @@
-import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoModel } from "../schemas/proyectoSchema.js";
-import { ColaboracionModel } from "../schemas/colaboracionSchema.js";
-import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
 import { Estado } from "../domain/Estado.js";
 
 export class ProyectoRepository {
-  constructor(
-    proyectoModel = ProyectoModel,
-    colaboracionModel = ColaboracionModel,
-  ) {
+  constructor(proyectoModel = ProyectoModel) {
     this.proyectoModel = proyectoModel;
-    this.colaboracionModel = colaboracionModel;
   }
 
   obtenerTodos() {
     return this.proyectoModel.find().sort({ fechaInicio: -1 }).exec();
   }
 
-  obtenerTodasColaboraciones = async () => {
-    const colaboraciones = await this.colaboracionModel.find().lean().exec();
-    return Promise.all(
-      colaboraciones.map(
-        async ({ idProyecto, idColaborador, fecha, esAnonima }) => {
-          const [proyecto, colaborador] = await Promise.all([
-            this.proyectoModel.findOne({ idProyecto }).exec(),
-            ColaboradorModel.findOne({ idColaborador }).exec(),
-          ]);
-          return {
-            proyecto,
-            colaborador,
-            fecha,
-            esAnonima: esAnonima ?? false,
-          };
-        },
-      ),
-    );
-  };
-
-  obtenerColaboracionesPorProyecto = async (idProyecto) => {
-    const colaboraciones = await this.colaboracionModel
-      .find({ idProyecto })
-      .lean()
+  obtenerAbiertos() {
+    return this.proyectoModel
+      .find({ estado: { $ne: Estado.FINALIZADO } })
+      .sort({ fechaInicio: -1 })
       .exec();
-
-    return Promise.all(
-      colaboraciones.map(async ({ idColaborador, fecha, esAnonima }) => ({
-        colaborador: await ColaboradorModel.findOne({ idColaborador }).exec(),
-        fecha,
-        esAnonima: esAnonima ?? false,
-      })),
-    );
-  };
+  }
 
   encontrarPorId(idProyecto) {
     return this.proyectoModel.findOne({ idProyecto }).exec();
@@ -104,36 +69,4 @@ export class ProyectoRepository {
       )
       .exec();
   }
-
-  saveColaboracion = async (colaboracion) => {
-    const guardada = await this.colaboracionModel
-      .findOneAndUpdate(
-        {
-          idProyecto: colaboracion.proyecto.idProyecto,
-          idColaborador: colaboracion.colaborador.idColaborador,
-        },
-        {
-          $setOnInsert: {
-            idProyecto: colaboracion.proyecto.idProyecto,
-            idColaborador: colaboracion.colaborador.idColaborador,
-            fecha: colaboracion.fecha,
-            esAnonima: colaboracion.esAnonima,
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-          runValidators: true,
-          setDefaultsOnInsert: true,
-        },
-      )
-      .exec();
-
-    return new Colaboracion(
-      colaboracion.proyecto,
-      colaboracion.colaborador,
-      guardada.fecha,
-      guardada.esAnonima ?? colaboracion.esAnonima,
-    );
-  };
 }

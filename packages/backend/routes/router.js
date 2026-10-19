@@ -5,6 +5,7 @@ import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { ProyectoController } from "../controllers/ProyectoController.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
+import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { crearHabilidadRouter } from "./habilidadRouter.js";
 import { crearProyectoRouter } from "./proyectoRouter.js";
 import { ColectivoController } from "../controllers/ColectivoController.js";
@@ -48,12 +49,14 @@ const colaboradorService = new ColaboradorService(
 const colaboradorController = new ColaboradorController(colaboradorService);
 
 const proyectoRepository = new ProyectoRepository();
+const colaboracionRepository = new ColaboracionRepository();
 
 const proyectoService = new ProyectoService(
   proyectoRepository,
   habilidadRepository,
   colaboradorService,
   colectivoRepository,
+  colaboracionRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
@@ -81,6 +84,7 @@ const matchingService = new MatchingService(
   colaboradorRepository,
   proyectoRepository,
   perfilRepository,
+  colaboracionRepository,
 );
 const matchingController = new MatchingController(matchingService);
 

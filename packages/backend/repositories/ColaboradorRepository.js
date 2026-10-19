@@ -13,6 +13,11 @@ export class ColaboradorRepository {
     return this.model.findOne({ idColaborador }).exec();
   }
 
+  async encontrarPorHabilidades(titulos) {
+    if (titulos.length === 0) return [];
+    return await this.model.find({ habilidades: { $in: titulos } }).exec();
+  }
+
   save(unColaborador) {
     return this.model
       .findOneAndUpdate(

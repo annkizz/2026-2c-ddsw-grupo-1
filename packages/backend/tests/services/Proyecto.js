@@ -33,6 +33,7 @@ describe("ProyectoService", () => {
   let colectivoRepository;
   let colaboradorService;
   let perfilRepository;
+  let colaboracionRepository;
   let service;
   let colectivo;
 
@@ -41,10 +42,12 @@ describe("ProyectoService", () => {
     proyectoRepository = {
       save: jest.fn(async (proyecto) => proyecto),
       encontrarPorId: jest.fn(async () => null),
-      obtenerTodasColaboraciones: jest.fn(async () => []),
-      obtenerColaboracionesPorProyecto: jest.fn(async () => []),
-      saveColaboracion: jest.fn(async (colaboracion) => colaboracion),
       obtenerVencidos: jest.fn(async () => []),
+    };
+    colaboracionRepository = {
+      obtenerPorProyecto: jest.fn(async () => []),
+      existeColaboracion: jest.fn(async () => false),
+      save: jest.fn(async (colaboracion) => colaboracion),
     };
     colectivoRepository = {
       encontrarPorId: jest.fn(async (id) =>
@@ -59,6 +62,7 @@ describe("ProyectoService", () => {
       {},
       colaboradorService,
       colectivoRepository,
+      colaboracionRepository,
       perfilRepository,
     );
   });
@@ -248,8 +252,8 @@ describe("ProyectoService", () => {
       const proyecto = proyectoActivo();
       await service.crearColaboracion(proyecto, "c-1");
 
-      expect(proyectoRepository.saveColaboracion).toHaveBeenCalledTimes(1);
-      const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
+      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
+      const guardada = colaboracionRepository.save.mock.calls[0][0];
       expect(guardada.proyecto).toBe(proyecto);
       expect(guardada.colaborador).toBe(colaboradora);
       expect(guardada.esAnonima).toBe(false);
@@ -258,14 +262,14 @@ describe("ProyectoService", () => {
     it("registra la preferencia de contribución anónima", async () => {
       await service.crearColaboracion(proyectoActivo(), "c-1", true);
 
-      const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
+      const guardada = colaboracionRepository.save.mock.calls[0][0];
       expect(guardada.esAnonima).toBe(true);
     });
 
     it("publica la contribución sin identidad cuando es anónima", async () => {
       const fecha = new Date();
       proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
-      proyectoRepository.obtenerColaboracionesPorProyecto.mockResolvedValue([
+      colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
         {
           colaborador: {
             idColaborador: "c-1",
@@ -314,7 +318,7 @@ describe("ProyectoService", () => {
       ).rejects.toMatchObject({
         codigo: "PROYECTO_FINALIZADO",
       });
-      expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
+      expect(colaboracionRepository.save).not.toHaveBeenCalled();
     });
 
     it("falla si la colaboradora no existe", async () => {
@@ -325,12 +329,7 @@ describe("ProyectoService", () => {
     });
 
     it("rechaza anotarla dos veces en el mismo proyecto", async () => {
-      proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        {
-          proyecto: { idProyecto: "p-1" },
-          colaborador: { idColaborador: "c-1" },
-        },
-      ]);
+      colaboracionRepository.existeColaboracion.mockResolvedValue(true);
       await expect(
         service.crearColaboracion(proyectoActivo(), "c-1"),
       ).rejects.toMatchObject({
@@ -338,20 +337,13 @@ describe("ProyectoService", () => {
       });
     });
 
-    it("detecta el duplicado aunque haya otras colaboraciones antes en el proyecto", async () => {
-      proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        {
-          proyecto: { idProyecto: "p-1" },
-          colaborador: { idColaborador: "otra" },
-        },
-        {
-          proyecto: { idProyecto: "p-1" },
-          colaborador: { idColaborador: "c-1" },
-        },
-      ]);
-      await expect(
-        service.crearColaboracion(proyectoActivo(), "c-1"),
-      ).rejects.toThrow(ConflictError);
+    it("pregunta por la colaboración exacta en vez de traer todas", async () => {
+      await service.crearColaboracion(proyectoActivo(), "c-1");
+
+      expect(colaboracionRepository.existeColaboracion).toHaveBeenCalledWith(
+        "p-1",
+        "c-1",
+      );
     });
 
     it("rechaza si no tiene ninguna habilidad requerida de ningun perfil", async () => {
@@ -364,7 +356,7 @@ describe("ProyectoService", () => {
       ).rejects.toMatchObject({
         codigo: "HABILIDADES_INSUFICIENTES",
       });
-      expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
+      expect(colaboracionRepository.save).not.toHaveBeenCalled();
     });
 
     it("rechaza si el proyecto no tiene perfiles", async () => {

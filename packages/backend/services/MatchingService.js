@@ -4,13 +4,21 @@ import { evaluarCoincidencia } from "../domain/Matching.js";
 const idDe = (documento) => String(documento.id ?? documento._id);
 
 export class MatchingService {
-  constructor(colaboradorRepository, proyectoRepository, perfilRepository) {
+  constructor(
+    colaboradorRepository,
+    proyectoRepository,
+    perfilRepository,
+    colaboracionRepository,
+  ) {
     this.colaboradorRepository = colaboradorRepository;
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
+    this.colaboracionRepository = colaboracionRepository;
   }
 
   // busqueda de potenciales colaboradoras segun perfil del proyecto
+  //las q estan anotadas al proyecto y las q comparten alguna habilidad del perfil
+
   async buscarColaboradorasParaPerfil(idProyecto, idPerfil) {
     const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
     if (!proyecto) {
@@ -33,12 +41,17 @@ export class MatchingService {
     }
 
     const yaAnotadas = new Set(
-      (await this.proyectoRepository.obtenerTodasColaboraciones())
-        .filter((c) => c.proyecto?.idProyecto === idProyecto)
-        .map((c) => c.colaborador?.idColaborador),
+      await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
+        idProyecto,
+      ),
     );
 
-    return (await this.colaboradorRepository.obtenerTodos())
+    const candidatas = await this.colaboradorRepository.encontrarPorHabilidades([
+      ...perfil.habilidadesRequeridas,
+      ...perfil.habilidadesOpcionales,
+    ]);
+
+    return candidatas
       .filter((colaboradora) => !yaAnotadas.has(colaboradora.idColaborador))
       .map((colaboradora) => ({
         colaboradora,
@@ -59,6 +72,8 @@ export class MatchingService {
   }
 
   // busqueda de potenciales proyectos segun habilidades de colaboradora.
+  // proyectos donde esta anotada, proyectos abiertos y perfiles de esos 
+
   async buscarProyectosParaColaboradora(idColaborador) {
     const colaboradora =
       await this.colaboradorRepository.encontrarPorId(idColaborador);
@@ -70,52 +85,59 @@ export class MatchingService {
     }
 
     const yaAnotadas = new Set(
-      (await this.proyectoRepository.obtenerTodasColaboraciones())
-        .filter((c) => c.colaborador?.idColaborador === idColaborador)
-        .map((c) => c.proyecto?.idProyecto),
+      await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
+        idColaborador,
+      ),
     );
 
-    const abiertos = (await this.proyectoRepository.obtenerTodos()).filter(
-      (p) => !p.estaFinalizado() && !yaAnotadas.has(p.idProyecto),
+    const abiertos = (await this.proyectoRepository.obtenerAbiertos()).filter(
+      (p) => !yaAnotadas.has(p.idProyecto),
     );
 
-    const resultados = await Promise.all(
-      abiertos.map(async (proyecto) => {
-        const perfiles = await this.perfilRepository.obtenerTodos(
-          proyecto.idProyecto,
+    const perfiles = await this.perfilRepository.obtenerPorProyectos(
+      abiertos.map((p) => p.idProyecto),
+    );
+    const perfilesPorProyecto = new Map();
+    for (const perfil of perfiles) {
+      const ids = perfilesPorProyecto.get(perfil.proyecto) ?? [];
+      ids.push(perfil);
+      perfilesPorProyecto.set(perfil.proyecto, ids);
+    }
+
+    const resultados = abiertos.map((proyecto) => {
+      const perfilesCompatibles = (
+        perfilesPorProyecto.get(proyecto.idProyecto) ?? []
+      )
+        .map((perfil) => ({
+          idPerfil: idDe(perfil),
+          descripcion: perfil.descripcion,
+          compromiso: perfil.compromiso,
+          ...evaluarCoincidencia(perfil, colaboradora.habilidades),
+        }))
+        .filter((p) => p.tieneCoincidencia)
+        .map(
+          ({
+            idPerfil,
+            descripcion,
+            compromiso,
+            requeridasCoincidentes,
+            opcionalesCoincidentes,
+          }) => ({
+            idPerfil,
+            descripcion,
+            compromiso,
+            requeridasCoincidentes,
+            opcionalesCoincidentes,
+          }),
         );
-        const perfilesCompatibles = perfiles
-          .map((perfil) => ({
-            idPerfil: idDe(perfil),
-            descripcion: perfil.descripcion,
-            compromiso: perfil.compromiso,
-            ...evaluarCoincidencia(perfil, colaboradora.habilidades),
-          }))
-          .filter((p) => p.tieneCoincidencia)
-          .map(
-            ({
-              idPerfil,
-              descripcion,
-              compromiso,
-              requeridasCoincidentes,
-              opcionalesCoincidentes,
-            }) => ({
-              idPerfil,
-              descripcion,
-              compromiso,
-              requeridasCoincidentes,
-              opcionalesCoincidentes,
-            }),
-          );
 
-        return {
-          idProyecto: proyecto.idProyecto,
-          titulo: proyecto.titulo,
-          descripcion: proyecto.descripcion,
-          perfilesCompatibles,
-        };
-      }),
-    );
+      return {
+        idProyecto: proyecto.idProyecto,
+        titulo: proyecto.titulo,
+        descripcion: proyecto.descripcion,
+        perfilesCompatibles,
+      };
+    });
 
     return resultados.filter((r) => r.perfilesCompatibles.length > 0);
   }
