@@ -2,8 +2,18 @@ import mongoose from "mongoose";
 
 const colaboracionSchema = new mongoose.Schema(
   {
-    idProyecto: { type: String, required: true, index: true },
-    idColaborador: { type: String, required: true, index: true },
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Proyecto",
+      required: true,
+      index: true,
+    },
+    idColaborador: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Colaborador",
+      required: true,
+      index: true,
+    },
     fecha: { type: Date, required: true },
     esAnonima: { type: Boolean, default: false },
   },

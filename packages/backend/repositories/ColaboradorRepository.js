@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
 
 export class ColaboradorRepository {
@@ -9,8 +10,9 @@ export class ColaboradorRepository {
     return this.model.find().exec();
   }
 
-  encontrarPorId(idColaborador) {
-    return this.model.findOne({ idColaborador }).exec();
+  async encontrarPorId(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return await this.model.findById(id).exec();
   }
 
   async encontrarPorHabilidades(titulos) {
@@ -18,10 +20,10 @@ export class ColaboradorRepository {
     return await this.model.find({ habilidades: { $in: titulos } }).exec();
   }
 
-  save(unColaborador) {
+  save(unColaborador, id = unColaborador._id) {
     return this.model
       .findOneAndUpdate(
-        { idColaborador: unColaborador.idColaborador },
+        { _id: id ?? new mongoose.Types.ObjectId() },
         {
           $set: {
             nombreFantasia: unColaborador.nombreFantasia,

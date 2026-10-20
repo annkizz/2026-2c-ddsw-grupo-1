@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { ProyectoModel } from "../schemas/proyectoSchema.js";
 import { Estado } from "../domain/Estado.js";
 
@@ -17,19 +18,20 @@ export class ProyectoRepository {
       .exec();
   }
 
-  encontrarPorId(idProyecto) {
-    return this.proyectoModel.findOne({ idProyecto }).exec();
+  async encontrarPorId(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return await this.proyectoModel.findById(id).exec();
   }
 
   agregarPerfil(idProyecto, idPerfil) {
     return this.proyectoModel
-      .updateOne({ idProyecto }, { $addToSet: { perfiles: idPerfil } })
+      .updateOne({ _id: idProyecto }, { $addToSet: { perfiles: idPerfil } })
       .exec();
   }
 
   quitarPerfil(idProyecto, idPerfil) {
     return this.proyectoModel
-      .updateOne({ idProyecto }, { $pull: { perfiles: idPerfil } })
+      .updateOne({ _id: idProyecto }, { $pull: { perfiles: idPerfil } })
       .exec();
   }
 
@@ -42,10 +44,10 @@ export class ProyectoRepository {
       .exec();
   }
 
-  save(unProyecto) {
+  save(unProyecto, id = unProyecto._id) {
     return this.proyectoModel
       .findOneAndUpdate(
-        { idProyecto: unProyecto.idProyecto },
+        { _id: id ?? new mongoose.Types.ObjectId() },
         {
           $set: {
             idColectivo: unProyecto.idColectivo,

@@ -30,36 +30,35 @@ export async function ejecutarSeed(
         c.apellido,
         c.presentacion,
         c.pronombres ?? [],
-        c.idColaborador,
         c.habilidades,
       ),
+      c.idColaborador,
     );
   }
 
   const idsProyectosSeed = datos.proyectos.map((p) => p.idProyecto);
   await db.borrarDatosDeProyectos(idsProyectosSeed);
 
-  const proyectosGuardados = [];
   for (const p of datos.proyectos) {
     for (const perfil of p.perfiles) {
       await db.guardarPerfil({ ...perfil, proyecto: p.idProyecto });
     }
-    const proyecto = await proyectoRepository.save(
+
+    await proyectoRepository.save(
       new Proyecto(
         p.titulo,
         p.descripcion,
         p.perfiles.map((perfil) => perfil.idPerfil),
         p.estado,
         p.fechaInicio,
-        p.idProyecto,
         p.fechaLimiteCierre,
         p.idColectivo,
         p.porcentajeConcrecion,
         p.enlaceSistema,
         p.enlaceCodigoFuente,
       ),
+      p.idProyecto,
     );
-    proyectosGuardados.push(proyecto);
 
     for (const logro of p.logros) {
       await db.guardarLogro({ ...logro, proyecto: p.idProyecto });
@@ -67,23 +66,18 @@ export async function ejecutarSeed(
   }
 
   for (const c of datos.colectivos) {
-    const colectivo = new Colectivo(
-      c.nombre,
+    await colectivoRepository.save(
+      new Colectivo(c.nombre, c.descripcion, c.ubicacion, c.tipoDeColectivo),
       c.idColectivo,
-      c.descripcion,
-      c.ubicacion,
-      c.tipoDeColectivo,
     );
-    for (const idProyecto of await db.idsProyectosDeColectivo(c.idColectivo)) {
-      colectivo.agregarProyecto(idProyecto);
-    }
-    await colectivoRepository.save(colectivo);
+  }
+
+  for (const p of datos.proyectos) {
+    await colectivoRepository.agregarProyecto(p.idColectivo, p.idProyecto);
   }
 
   for (const c of datos.colaboraciones) {
-    const proyecto = proyectosGuardados.find(
-      (p) => p.idProyecto === c.idProyecto,
-    );
+    const proyecto = await proyectoRepository.encontrarPorId(c.idProyecto);
     const colaborador = await colaboradorRepository.encontrarPorId(
       c.idColaborador,
     );

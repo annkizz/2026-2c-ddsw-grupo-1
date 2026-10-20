@@ -35,7 +35,7 @@ export class ColaboradorController {
 
   toPublicDTO(colaborador) {
     return {
-      idColaborador: colaborador.idColaborador,
+      id: String(colaborador._id),
       nombreFantasia: colaborador.nombreFantasia,
       usuarioGitHub: colaborador.usuarioGitHub,
       nombre: colaborador.nombre,

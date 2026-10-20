@@ -41,13 +41,13 @@ describe("ColaboradorService", () => {
     expect(creada.habilidades).toEqual(["Testing E2E con Cypress", "React"]);
   });
 
-  it("le asigna un id propio a la colaboradora", async () => {
+  it("no le asigna un id propio: lo genera la base al guardar", async () => {
     const creada = await service.crear({
       nombreFantasia: "ada",
       habilidades: ["React"],
     });
-    expect(typeof creada.idColaborador).toBe("string");
-    expect(creada.idColaborador.length).toBeGreaterThan(0);
+    expect(creada.idColaborador).toBeUndefined();
+    expect(creada.id).toBeUndefined();
   });
 
   it("permite crear sin presentacion ni pronombres (son opcionales)", async () => {
@@ -91,15 +91,11 @@ describe("ColaboradorService", () => {
   });
 
   it("obtiene todas y por id delegando en el repositorio", async () => {
-    colaboradorRepository.obtenerTodos.mockResolvedValue([
-      { idColaborador: "c1" },
-    ]);
-    colaboradorRepository.encontrarPorId.mockResolvedValue({
-      idColaborador: "c1",
-    });
+    colaboradorRepository.obtenerTodos.mockResolvedValue([{ _id: "c1" }]);
+    colaboradorRepository.encontrarPorId.mockResolvedValue({ _id: "c1" });
 
-    expect(await service.obtenerTodos()).toHaveLength(1);
-    expect(await service.obtenerPorId("c1")).toEqual({ idColaborador: "c1" });
+    expect(await service.obtenerTodos()).toEqual([{ _id: "c1" }]);
+    expect(await service.obtenerPorId("c1")).toEqual({ _id: "c1" });
     expect(colaboradorRepository.encontrarPorId).toHaveBeenCalledWith("c1");
   });
 });

@@ -41,9 +41,11 @@ export class MatchingService {
     }
 
     const yaAnotadas = new Set(
-      await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
-        idProyecto,
-      ),
+      (
+        await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
+          idProyecto,
+        )
+      ).map(String),
     );
 
     const candidatas = await this.colaboradorRepository.encontrarPorHabilidades([
@@ -52,7 +54,7 @@ export class MatchingService {
     ]);
 
     return candidatas
-      .filter((colaboradora) => !yaAnotadas.has(colaboradora.idColaborador))
+      .filter((colaboradora) => !yaAnotadas.has(String(colaboradora._id)))
       .map((colaboradora) => ({
         colaboradora,
         ...evaluarCoincidencia(perfil, colaboradora.habilidades),
@@ -60,7 +62,7 @@ export class MatchingService {
       .filter((r) => r.tieneCoincidencia)
       .map(({ colaboradora, ...coincidencia }) => ({
         // DTO publico, no se exponen nombre/apellido, colaboraciones ni medios de contacto.
-        idColaborador: colaboradora.idColaborador,
+        id: String(colaboradora._id),
         nombreFantasia: colaboradora.nombreFantasia,
         usuarioGitHub: colaboradora.usuarioGitHub,
         ...(colaboradora.pronombres?.length > 0 && {
@@ -85,17 +87,19 @@ export class MatchingService {
     }
 
     const yaAnotadas = new Set(
-      await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
-        idColaborador,
-      ),
+      (
+        await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
+          idColaborador,
+        )
+      ).map(String),
     );
 
     const abiertos = (await this.proyectoRepository.obtenerAbiertos()).filter(
-      (p) => !yaAnotadas.has(p.idProyecto),
+      (p) => !yaAnotadas.has(String(p._id)),
     );
 
     const perfiles = await this.perfilRepository.obtenerPorProyectos(
-      abiertos.map((p) => p.idProyecto),
+      abiertos.map((p) => p._id),
     );
     const perfilesPorProyecto = new Map();
     for (const perfil of perfiles) {
@@ -106,10 +110,10 @@ export class MatchingService {
 
     const resultados = abiertos.map((proyecto) => {
       const perfilesCompatibles = (
-        perfilesPorProyecto.get(proyecto.idProyecto) ?? []
+        perfilesPorProyecto.get(String(proyecto._id)) ?? []
       )
         .map((perfil) => ({
-          idPerfil: idDe(perfil),
+          id: idDe(perfil),
           descripcion: perfil.descripcion,
           compromiso: perfil.compromiso,
           ...evaluarCoincidencia(perfil, colaboradora.habilidades),
@@ -117,13 +121,13 @@ export class MatchingService {
         .filter((p) => p.tieneCoincidencia)
         .map(
           ({
-            idPerfil,
+            id,
             descripcion,
             compromiso,
             requeridasCoincidentes,
             opcionalesCoincidentes,
           }) => ({
-            idPerfil,
+            id,
             descripcion,
             compromiso,
             requeridasCoincidentes,
@@ -132,7 +136,7 @@ export class MatchingService {
         );
 
       return {
-        idProyecto: proyecto.idProyecto,
+        id: String(proyecto._id),
         titulo: proyecto.titulo,
         descripcion: proyecto.descripcion,
         perfilesCompatibles,

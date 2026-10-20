@@ -7,13 +7,15 @@ describe("ColectivoService", () => {
 
   beforeEach(() => {
     repository = {
-      save: jest.fn(async (colectivo) => colectivo),
+      save: jest.fn(async (colectivo) =>
+        Object.assign(colectivo, { _id: "col-nuevo" }),
+      ),
       obtenerTodos: jest.fn(async () => []),
     };
     service = new ColectivoService(repository);
   });
 
-  it("crea un colectivo con id propio y sin proyectos", async () => {
+  it("crea un colectivo con los datos recibidos y lo guarda", async () => {
     const creado = await service.crear({
       nombre: "Manos Solidarias",
       descripcion: "Voluntariado",
@@ -21,11 +23,10 @@ describe("ColectivoService", () => {
       ubicacion: { pais: "Argentina" },
     });
 
+    expect(creado.id).toBe("col-nuevo");
     expect(creado.nombre).toBe("Manos Solidarias");
     expect(creado.tipoDeColectivo).toBe("FUNDACIONES");
     expect(creado.ubicacion).toEqual({ pais: "Argentina" });
-    expect(creado.proyectos).toEqual([]);
-    expect(typeof creado.idColectivo).toBe("string");
     expect(repository.save).toHaveBeenCalledTimes(1);
   });
 
@@ -38,11 +39,14 @@ describe("ColectivoService", () => {
     expect(creado.ubicacion).toBeUndefined();
   });
 
-  it("devuelve todos los colectivos del repositorio", async () => {
+  it("devuelve todos los colectivos con el DTO publico", async () => {
     repository.obtenerTodos.mockResolvedValue([
-      { nombre: "A" },
-      { nombre: "B" },
+      { _id: "a", nombre: "A", proyectos: ["p-1"] },
+      { _id: "b", nombre: "B", proyectos: [] },
     ]);
-    expect(await service.obtenerTodos()).toHaveLength(2);
+    expect(await service.obtenerTodos()).toEqual([
+      { id: "a", nombre: "A", proyectos: ["p-1"] },
+      { id: "b", nombre: "B", proyectos: [] },
+    ]);
   });
 });

@@ -1,27 +1,23 @@
-import { Colaboracion } from "../domain/Colaboracion.js";
 import { ColaboracionModel } from "../schemas/colaboracionSchema.js";
-import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
 
 export class ColaboracionRepository {
-  constructor(
-    colaboracionModel = ColaboracionModel,
-    colaboradorModel = ColaboradorModel,
-  ) {
+  constructor(colaboracionModel = ColaboracionModel) {
     this.colaboracionModel = colaboracionModel;
-    this.colaboradorModel = colaboradorModel;
   }
 
   // distinct filtra x el campo plano idProyecto y devuelve idColaborador
-  obtenerIdsColaboradoresDeProyecto(idProyecto) {
-    return this.colaboracionModel
+  async obtenerIdsColaboradoresDeProyecto(idProyecto) {
+    const ids = await this.colaboracionModel
       .distinct("idColaborador", { idProyecto })
       .exec();
+    return ids.map((id) => id.toString());
   }
 
-  obtenerIdsProyectosDeColaborador(idColaborador) {
-    return this.colaboracionModel
+  async obtenerIdsProyectosDeColaborador(idColaborador) {
+    const ids = await this.colaboracionModel
       .distinct("idProyecto", { idColaborador })
       .exec();
+    return ids.map((id) => id.toString());
   }
 
   async existeColaboracion(idProyecto, idColaborador) {
@@ -32,40 +28,24 @@ export class ColaboracionRepository {
   }
 
   // colaboracion del proyecto y sus idColaborador 
-  async obtenerPorProyecto(idProyecto) {
-    const colaboraciones = await this.colaboracionModel
+  obtenerPorProyecto(idProyecto) {
+    return this.colaboracionModel
       .find({ idProyecto })
+      .populate("idColaborador")
       .exec();
-
-    const ids = [...new Set(colaboraciones.map((c) => c.idColaborador))];
-    const colaboradores = ids.length
-      ? await this.colaboradorModel.find({ idColaborador: { $in: ids } }).exec()
-      : [];
-    const colaboradoresPorId = new Map(
-      colaboradores.map((colaborador) => [
-        colaborador.idColaborador,
-        colaborador,
-      ]),
-    );
-
-    return colaboraciones.map((colaboracion) => ({
-      colaborador: colaboradoresPorId.get(colaboracion.idColaborador) ?? null,
-      fecha: colaboracion.fecha,
-      esAnonima: colaboracion.esAnonima ?? false,
-    }));
   }
 
   save(colaboracion) {
     return this.colaboracionModel
       .findOneAndUpdate(
         {
-          idProyecto: colaboracion.proyecto.idProyecto,
-          idColaborador: colaboracion.colaborador.idColaborador,
+          idProyecto: colaboracion.proyecto._id,
+          idColaborador: colaboracion.colaborador._id,
         },
         {
           $setOnInsert: {
-            idProyecto: colaboracion.proyecto.idProyecto,
-            idColaborador: colaboracion.colaborador.idColaborador,
+            idProyecto: colaboracion.proyecto._id,
+            idColaborador: colaboracion.colaborador._id,
             fecha: colaboracion.fecha,
             esAnonima: colaboracion.esAnonima,
           },
@@ -77,13 +57,12 @@ export class ColaboracionRepository {
           setDefaultsOnInsert: true,
         },
       )
-      .then((guardada) =>
-        new Colaboracion(
-          colaboracion.proyecto,
-          colaboracion.colaborador,
-          guardada.fecha,
-          guardada.esAnonima ?? colaboracion.esAnonima,
-        ),
-      );
+      .exec()
+      .then((guardada) => ({
+        idProyecto: guardada.idProyecto,
+        idColaborador: colaboracion.colaborador,
+        fecha: guardada.fecha,
+        esAnonima: guardada.esAnonima ?? colaboracion.esAnonima,
+      }));
   }
 }

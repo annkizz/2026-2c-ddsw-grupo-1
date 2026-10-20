@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import mongoose from "mongoose";
 import { ProyectoService } from "../../services/ProyectoService.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 import { Colectivo } from "../../domain/Colectivo.js";
@@ -10,18 +11,11 @@ import {
 import { idColaboradorSchema } from "../../controllers/ProyectoController.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
 
+// El _id lo genera Mongo: en el test se fija para poder comparar.
 const proyectoActivo = (extra = {}) =>
   Object.assign(
-    new Proyecto(
-      "Titulo",
-      "Desc",
-      [],
-      "ACTIVO",
-      new Date(),
-      "p-1",
-      null,
-      "col-1",
-    ),
+    new Proyecto("Titulo", "Desc", [], "ACTIVO", new Date(), null, "col-1"),
+    { _id: "p-1" },
     extra,
   );
 
@@ -38,9 +32,18 @@ describe("ProyectoService", () => {
   let colectivo;
 
   beforeEach(() => {
-    colectivo = new Colectivo("Colectivo", "col-1", "Desc", undefined, "ONG");
+    colectivo = Object.assign(
+      new Colectivo("Colectivo", "Desc", undefined, "ONG"),
+      {
+        _id: "col-1",
+      },
+    );
     proyectoRepository = {
-      save: jest.fn(async (proyecto) => proyecto),
+      // El repo real asigna el _id al insertar: el fake lo imita.
+      save: jest.fn(async (proyecto) => {
+        if (!proyecto._id) proyecto._id = "p-nuevo";
+        return proyecto;
+      }),
       encontrarPorId: jest.fn(async () => null),
       obtenerVencidos: jest.fn(async () => []),
     };
@@ -53,7 +56,7 @@ describe("ProyectoService", () => {
       encontrarPorId: jest.fn(async (id) =>
         id === "col-1" ? colectivo : null,
       ),
-      save: jest.fn(async (c) => c),
+      agregarProyecto: jest.fn(async () => undefined),
     };
     colaboradorService = { obtenerPorId: jest.fn(async () => null) };
     perfilRepository = { obtenerTodos: jest.fn(async () => []) };
@@ -75,21 +78,24 @@ describe("ProyectoService", () => {
         descripcion: "D",
       });
 
+      expect(creado.id).toBe("p-nuevo");
       expect(creado.estado).toBe("ACTIVO");
       expect(creado.perfiles).toEqual([]);
       expect(creado.idColectivo).toBe("col-1");
       expect(proyectoRepository.save).toHaveBeenCalledTimes(1);
     });
 
-    it("agrega el id del proyecto al colectivo y guarda el colectivo", async () => {
-      const creado = await service.crear({
+    it("agrega el id del proyecto al colectivo a través del repositorio", async () => {
+      await service.crear({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
       });
 
-      expect(colectivo.proyectos).toContain(creado.idProyecto);
-      expect(colectivoRepository.save).toHaveBeenCalledWith(colectivo);
+      expect(colectivoRepository.agregarProyecto).toHaveBeenCalledWith(
+        "col-1",
+        "p-nuevo",
+      );
     });
 
     it("falla si el colectivo no existe y no guarda nada", async () => {
@@ -164,7 +170,7 @@ describe("ProyectoService", () => {
       });
 
       expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
-      expect(resultado.idProyecto).toBe("p-1");
+      expect(resultado.id).toBe("p-1");
       expect(resultado.porcentajeConcrecion).toBe(40);
       expect(resultado.enlaceCodigoFuente).toBe(
         "https://github.com/colectivo/app",
@@ -216,11 +222,11 @@ describe("ProyectoService", () => {
 
   describe("cerrarProyectosVencidos", () => {
     it("cierra los vencidos y reporta los que fallaron", async () => {
-      const bueno = proyectoActivo({ idProyecto: "ok" });
-      const malo = proyectoActivo({ idProyecto: "falla" });
+      const bueno = proyectoActivo({ _id: "ok" });
+      const malo = proyectoActivo({ _id: "falla" });
       proyectoRepository.obtenerVencidos.mockResolvedValue([bueno, malo]);
       proyectoRepository.save.mockImplementation(async (p) => {
-        if (p.idProyecto === "falla") throw new Error("se cayo la base");
+        if (p._id === "falla") throw new Error("se cayo la base");
         return p;
       });
 
@@ -235,7 +241,7 @@ describe("ProyectoService", () => {
 
   describe("crearColaboracion (anotarse a un proyecto)", () => {
     const colaboradora = {
-      idColaborador: "c-1",
+      _id: "c-1",
       habilidades: ["Testing E2E con Cypress"],
     };
     const perfilTester = {
@@ -271,8 +277,9 @@ describe("ProyectoService", () => {
       proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
       colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
         {
-          colaborador: {
-            idColaborador: "c-1",
+          idProyecto: "p-1",
+          idColaborador: {
+            _id: "c-1",
             nombre: "Nombre privado",
             apellido: "Apellido privado",
           },
@@ -280,8 +287,9 @@ describe("ProyectoService", () => {
           esAnonima: true,
         },
         {
-          colaborador: {
-            idColaborador: "c-2",
+          idProyecto: "p-1",
+          idColaborador: {
+            _id: "c-2",
             nombreFantasia: "Colaboradora visible",
             usuarioGitHub: "visible-dev",
           },
@@ -302,7 +310,7 @@ describe("ProyectoService", () => {
         fecha,
         esAnonima: false,
         colaborador: {
-          idColaborador: "c-2",
+          id: "c-2",
           nombreFantasia: "Colaboradora visible",
           usuarioGitHub: "visible-dev",
           nombre: undefined,
@@ -348,7 +356,7 @@ describe("ProyectoService", () => {
 
     it("rechaza si no tiene ninguna habilidad requerida de ningun perfil", async () => {
       colaboradorService.obtenerPorId.mockResolvedValue({
-        idColaborador: "c-1",
+        _id: "c-1",
         habilidades: ["Jest"],
       });
       await expect(
@@ -386,13 +394,13 @@ describe("preferencia de anonimato de una colaboración", () => {
   it("usa false por defecto en Mongo y permite guardar true", () => {
     const fecha = new Date();
     const normal = new ColaboracionModel({
-      idProyecto: "p-1",
-      idColaborador: "c-1",
+      idProyecto: new mongoose.Types.ObjectId(),
+      idColaborador: new mongoose.Types.ObjectId(),
       fecha,
     });
     const anonima = new ColaboracionModel({
-      idProyecto: "p-1",
-      idColaborador: "c-2",
+      idProyecto: new mongoose.Types.ObjectId(),
+      idColaborador: new mongoose.Types.ObjectId(),
       fecha,
       esAnonima: true,
     });

@@ -1,4 +1,4 @@
-// se conecta a la base, arma los repo + el adaptador y ejecuta la insercion 
+// se conecta a la base, arma los repo + el adaptador y ejecuta la insercion
 
 import "dotenv/config";
 import mongoose from "mongoose";
@@ -36,7 +36,7 @@ try {
       `${resumen.colaboradoras} colaboradoras, ${resumen.colaboraciones} colaboraciones`,
   );
   console.log(
-    `El proyecto seed-proyecto-4 se cierra solo en ${minutosParaCierre} minutos.`,
+    `El proyecto "Laboratorio de pruebas" (a00000000000000000000004) se cierra solo en ${minutosParaCierre} minutos.`,
   );
 } finally {
   await mongoose.disconnect();

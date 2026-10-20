@@ -5,7 +5,6 @@ export class Proyecto {
     perfiles,
     estado,
     fechaInicio,
-    idProyecto,
     fechaLimiteCierre,
     idColectivo,
     porcentajeConcrecion,
@@ -17,7 +16,6 @@ export class Proyecto {
     this.estado = estado;
     this.perfiles = perfiles;
     this.fechaInicio = fechaInicio;
-    this.idProyecto = idProyecto;
     this.fechaLimiteCierre = fechaLimiteCierre;
     this.idColectivo = idColectivo;
     this.porcentajeConcrecion = porcentajeConcrecion;

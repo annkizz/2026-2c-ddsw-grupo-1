@@ -7,7 +7,6 @@ const crear = (fechaLimiteCierre = null, estado = "ACTIVO") =>
     [],
     estado,
     new Date(),
-    "p-1",
     fechaLimiteCierre,
     "col-1",
   );
@@ -69,7 +68,6 @@ describe("Dominio - Proyecto", () => {
         [],
         "ACTIVO",
         new Date(),
-        "p-1",
         null,
         "col-1",
         25,

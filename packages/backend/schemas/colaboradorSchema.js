@@ -4,7 +4,6 @@ import { medioDeContactoSchema } from "./medioDeContactoSchema.js";
 
 const colaboradorSchema = new mongoose.Schema(
   {
-    idColaborador: { type: String, required: true, unique: true, index: true },
     nombreFantasia: { type: String, trim: true },
     usuarioGitHub: { type: String, trim: true },
     nombre: { type: String, trim: true },

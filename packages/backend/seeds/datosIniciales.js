@@ -3,9 +3,7 @@
 //
 // TODOS los ids son fijos (incluidos los de perfiles y logros), asi las
 // requests de Postman se escriben una sola vez y no hay que copiar ids.
-// Los ids de Mongo son 24 caracteres hexadecimales: los perfiles usan una
-// secuencia predecible para facilitar las pruebas manuales.
-
+// ObjectId reales de Mongo: 24 caracteres hexadecimales.
 // datosIniciales: que datos (puros, sin base de datos)
 // ejecutarSeed: como interpretarlos (usa repo reales)
 //adaptadorDeSeed: operaciones q los repos no tienen
@@ -33,12 +31,12 @@ export function crearDatosIniciales({
     "Python",
     "Diseño UX/UI",
     "Accesibilidad web",
-    "Pruebas de carga con k6", // sólo la usa el proyecto laboratorio (seed-proyecto-4)
+    "Pruebas de carga con k6", // sólo la usa el proyecto laboratorio (a00000000000000000000004)
   ];
 
   const colectivos = [
     {
-      idColectivo: "seed-colectivo-1",
+      idColectivo: "c00000000000000000000001",
       nombre: "Fundación Manos Solidarias",
       descripcion:
         "Fundación que organiza turnos de voluntariado en hospitales.",
@@ -50,14 +48,14 @@ export function crearDatosIniciales({
       },
     },
     {
-      idColectivo: "seed-colectivo-2",
+      idColectivo: "c00000000000000000000002",
       nombre: "Asociación Vecinal Barrio Norte",
       descripcion: "Vecinas y vecinos que gestionan una despensa comunitaria.",
       tipoDeColectivo: "ASOCIACIONES_BARRIALES",
       ubicacion: { pais: "Argentina", provincia: "Córdoba", ciudad: "Córdoba" },
     },
     {
-      idColectivo: "seed-colectivo-3",
+      idColectivo: "c00000000000000000000003",
       nombre: "Datos para Todos",
       descripcion: "ONG que publica datos abiertos sobre acceso a alimentos.",
       tipoDeColectivo: "ONG",
@@ -67,8 +65,8 @@ export function crearDatosIniciales({
   const proyectos = [
     {
       // Matching: Tester -> Luna; Analista -> Martín. Sin colaboraciones.
-      idProyecto: "seed-proyecto-1",
-      idColectivo: "seed-colectivo-1",
+      idProyecto: "a00000000000000000000001",
+      idColectivo: "c00000000000000000000001",
       titulo: "Portal de turnos solidarios",
       descripcion: "Sitio para que voluntarias y voluntarios reserven turnos.",
       estado: "ACTIVO",
@@ -118,8 +116,8 @@ export function crearDatosIniciales({
     },
     {
       // Matching: Frontend -> Sofía (Nico ya colabora, de forma anónima).
-      idProyecto: "seed-proyecto-2",
-      idColectivo: "seed-colectivo-3",
+      idProyecto: "a00000000000000000000002",
+      idColectivo: "c00000000000000000000003",
       titulo: "Mapa de comedores comunitarios",
       descripcion: "Mapa interactivo y accesible de comedores de todo el país.",
       estado: "ACTIVO",
@@ -145,8 +143,8 @@ export function crearDatosIniciales({
     },
     {
       // FINALIZADO: buscar colaboradoras da 409, anotarse da 409, no se recomienda.
-      idProyecto: "seed-proyecto-3",
-      idColectivo: "seed-colectivo-2",
+      idProyecto: "a00000000000000000000003",
+      idColectivo: "c00000000000000000000002",
       titulo: "Inventario de donaciones",
       descripcion:
         "Sistema para registrar las donaciones que recibe la despensa.",
@@ -182,8 +180,8 @@ export function crearDatosIniciales({
       // LABORATORIO: se cierra solo `minutosParaCierre` minutos después de correr el
       // seed (cierre automático). Su habilidad es exclusiva, no interfiere con el
       // resto del matching. Al volver a correr el seed se reabre.
-      idProyecto: "seed-proyecto-4",
-      idColectivo: "seed-colectivo-1",
+      idProyecto: "a00000000000000000000004",
+      idColectivo: "c00000000000000000000001",
       titulo: "Laboratorio de pruebas",
       descripcion:
         "Proyecto para probar anotación, cierre programado y cierre automático.",
@@ -213,59 +211,59 @@ export function crearDatosIniciales({
   // Campos opcionales omitidos a propósito: pronombres, presentación, nombre, etc.
   const colaboradoras = [
     {
-      idColaborador: "seed-colaboradora-1",
+      idColaborador: "b00000000000000000000001",
       nombreFantasia: "Luna Código", // anónima
       presentacion: "QA con ganas de aportar a causas sociales.",
       pronombres: ["ella"],
       habilidades: ["Testing E2E con Cypress", "Uso de Soap UI", "Jest"],
     },
     {
-      idColaborador: "seed-colaboradora-2",
+      idColaborador: "b00000000000000000000002",
       usuarioGitHub: "dev-sofia", // con cuenta de GitHub
       pronombres: ["ella", "elle"],
       habilidades: ["React", "Diseño UX/UI", "Accesibilidad web"],
     },
     {
-      idColaborador: "seed-colaboradora-3",
+      idColaborador: "b00000000000000000000003",
       nombre: "Martín", // con nombre y apellido
       apellido: "Gómez",
       habilidades: ["Conocimientos de Pandas", "SQL", "Python"],
     },
     {
-      idColaborador: "seed-colaboradora-4",
+      idColaborador: "b00000000000000000000004",
       nombreFantasia: "Kodama", // sólo una habilidad OPCIONAL del Tester: no es candidata y no puede anotarse
       habilidades: ["Uso de Soap UI"],
     },
     {
-      idColaborador: "seed-colaboradora-5",
+      idColaborador: "b00000000000000000000005",
       usuarioGitHub: "nico-node", // ya colabora (p3 y p2): se excluye de esas búsquedas
       pronombres: ["él"],
       habilidades: ["Node.js", "MongoDB", "React"],
     },
     {
-      idColaborador: "seed-colaboradora-6",
+      idColaborador: "b00000000000000000000006",
       nombreFantasia: "Tomás", // ninguna habilidad requerida por algún perfil
       habilidades: ["Jest"],
     },
     {
-      idColaborador: "seed-colaboradora-7",
-      nombreFantasia: "Probadora", // candidata sólo del laboratorio (seed-proyecto-4)
+      idColaborador: "b00000000000000000000007",
+      nombreFantasia: "Probadora", // candidata sólo del laboratorio (a00000000000000000000004)
       habilidades: ["Pruebas de carga con k6"],
     },
   ];
 
   const colaboraciones = [
-    // Pública: GET /proyectos/seed-proyecto-3/colaboraciones muestra a Nico.
+    // Pública: GET /proyectos/a00000000000000000000003/colaboraciones muestra a Nico.
     {
-      idProyecto: "seed-proyecto-3",
-      idColaborador: "seed-colaboradora-5",
+      idProyecto: "a00000000000000000000003",
+      idColaborador: "b00000000000000000000005",
       fecha: enDias(-100),
       esAnonima: false,
     },
-    // Anónima: GET /proyectos/seed-proyecto-2/colaboraciones NO muestra quién es.
+    // Anónima: GET /proyectos/a00000000000000000000002/colaboraciones NO muestra quién es.
     {
-      idProyecto: "seed-proyecto-2",
-      idColaborador: "seed-colaboradora-5",
+      idProyecto: "a00000000000000000000002",
+      idColaborador: "b00000000000000000000005",
       fecha: enDias(-5),
       esAnonima: true,
     },

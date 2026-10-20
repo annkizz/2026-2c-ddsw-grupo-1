@@ -6,7 +6,6 @@ export class Colaborador {
     apellido,
     presentacion,
     pronombres,
-    idColaborador,
     habilidades,
     mediosDeContacto,
     aceptaMensajeria = false,
@@ -17,7 +16,6 @@ export class Colaborador {
     this.apellido = apellido;
     this.presentacion = presentacion;
     this.pronombres = pronombres;
-    this.idColaborador = idColaborador;
     this.habilidades = habilidades;
     this.colaboraciones = [];
     this.mediosDeContacto = mediosDeContacto ?? [];

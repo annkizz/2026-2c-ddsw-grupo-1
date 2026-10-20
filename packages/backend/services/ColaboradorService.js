@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Colaborador } from "../domain/Colaborador.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
 import {
@@ -17,7 +16,6 @@ export class ColaboradorService {
   }
 
   crear = async (datosColaborador) => {
-    // normaliza titulo x codigo 
     const codigos = [
       ...new Set(
         datosColaborador.habilidades.map((titulo) =>
@@ -51,7 +49,6 @@ export class ColaboradorService {
       datosColaborador.apellido,
       datosColaborador.presentacion,
       datosColaborador.pronombres ?? [],
-      randomUUID(),
       habilidades,
       datosColaborador.mediosDeContacto ?? [],
       datosColaborador.aceptaMensajeria ?? false,

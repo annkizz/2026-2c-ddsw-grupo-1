@@ -13,7 +13,6 @@ const ubicacionSchema = new mongoose.Schema(
 
 const colectivoSchema = new mongoose.Schema(
   {
-    idColectivo: { type: String, required: true, unique: true, index: true },
     nombre: { type: String, required: true, trim: true },
     descripcion: { type: String, required: true, trim: true },
     ubicacion: { type: ubicacionSchema, default: undefined },
@@ -22,7 +21,10 @@ const colectivoSchema = new mongoose.Schema(
       enum: Object.values(TipoColectivo),
       required: true,
     },
-    proyectos: { type: [String], default: [] },
+    proyectos: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Proyecto" }],
+      default: [],
+    },
   },
   { timestamps: true, collection: "colectivos" },
 );
