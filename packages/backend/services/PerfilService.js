@@ -15,20 +15,20 @@ export class PerfilService {
       (this.habilidadRepository = habilidadRepository));
   }
 
-  toDTO(perfil) {
-    return {
-      idPerfil: perfil.id,
-      idProyecto: perfil.proyecto,
-      descripcion: perfil.descripcion,
-      habilidadesRequeridas: perfil.habilidadesRequeridas,
-      habilidadesOpcionales: perfil.habilidadesOpcionales,
-      compromiso: {
-        tipoCompromiso: perfil.compromiso.tipoCompromiso,
-        horas: perfil.compromiso.horas,
-        tipoColaboracion: perfil.compromiso.tipoColaboracion,
-      },
-    };
-  }
+    toDTO (perfil) {
+        return {
+        id: perfil.id,
+        idProyecto: perfil.idProyecto,
+        descripcion: perfil.descripcion,
+        habilidadesRequeridas: perfil.habilidadesRequeridas,
+        habilidadesOpcionales: perfil.habilidadesOpcionales,
+        compromiso: {
+            tipoCompromiso: perfil.compromiso.tipoCompromiso,
+            horas: perfil.compromiso.horas,
+            tipoColaboracion: perfil.compromiso.tipoColaboracion
+        },
+        };
+    }
 
   async obtenerTodos(idProyecto) {
     await this.validarProyecto(idProyecto);
