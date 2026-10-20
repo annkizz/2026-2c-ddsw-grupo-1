@@ -8,13 +8,16 @@ export function iniciarCierreAutomatico(
 
   const tick = async () => {
     if (ejecutando) {
-      logger.log("Cierre automático: la corrida anterior sigue en curso, se omite esta");
+      logger.log(
+        "Cierre automático: la corrida anterior sigue en curso, se omite esta",
+      );
       return;
     }
 
     ejecutando = true;
     try {
-      const { cerrados, fallidos } = await proyectoService.cerrarProyectosVencidos();
+      const { cerrados, fallidos } =
+        await proyectoService.cerrarProyectosVencidos();
 
       if (cerrados.length > 0) {
         logger.log(`Cierre automático de proyectos: ${cerrados.join(", ")}`);

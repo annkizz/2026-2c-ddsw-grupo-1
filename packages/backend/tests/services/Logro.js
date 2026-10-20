@@ -77,18 +77,24 @@ describe("LogroService", () => {
 
       const resultado = await service.obtenerPorProyecto(ID_PROYECTO);
 
-      expect(logroRepository.obtenerPorProyecto).toHaveBeenCalledWith(ID_PROYECTO);
+      expect(logroRepository.obtenerPorProyecto).toHaveBeenCalledWith(
+        ID_PROYECTO,
+      );
       expect(resultado).toHaveLength(2);
       expect(resultado.map((l) => l.idLogro)).toEqual(["logro-1", "logro-2"]);
       expect(resultado[1].titulo).toBe("Repositorio público");
     });
 
     it("devuelve una lista vacía si el proyecto no tiene logros", async () => {
-      await expect(service.obtenerPorProyecto(ID_PROYECTO)).resolves.toEqual([]);
+      await expect(service.obtenerPorProyecto(ID_PROYECTO)).resolves.toEqual(
+        [],
+      );
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
-      await expect(service.obtenerPorProyecto("inexistente")).rejects.toMatchObject({
+      await expect(
+        service.obtenerPorProyecto("inexistente"),
+      ).rejects.toMatchObject({
         status: 404,
         codigo: "PROYECTO_NO_ENCONTRADO",
       });
@@ -102,7 +108,10 @@ describe("LogroService", () => {
 
       const resultado = await service.obtenerPorId(ID_PROYECTO, "logro-1");
 
-      expect(logroRepository.buscarPorId).toHaveBeenCalledWith(ID_PROYECTO, "logro-1");
+      expect(logroRepository.buscarPorId).toHaveBeenCalledWith(
+        ID_PROYECTO,
+        "logro-1",
+      );
       expect(resultado).toEqual({
         idLogro: "logro-1",
         idProyecto: ID_PROYECTO,
@@ -111,14 +120,18 @@ describe("LogroService", () => {
     });
 
     it("falla con LOGRO_NO_ENCONTRADO si el logro no existe", async () => {
-      await expect(service.obtenerPorId(ID_PROYECTO, "logro-x")).rejects.toMatchObject({
+      await expect(
+        service.obtenerPorId(ID_PROYECTO, "logro-x"),
+      ).rejects.toMatchObject({
         status: 404,
         codigo: "LOGRO_NO_ENCONTRADO",
       });
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
-      await expect(service.obtenerPorId("inexistente", "logro-1")).rejects.toMatchObject({
+      await expect(
+        service.obtenerPorId("inexistente", "logro-1"),
+      ).rejects.toMatchObject({
         codigo: "PROYECTO_NO_ENCONTRADO",
       });
       expect(logroRepository.buscarPorId).not.toHaveBeenCalled();
@@ -132,7 +145,11 @@ describe("LogroService", () => {
         logroGuardado({ titulo: "Versión 2" }),
       );
 
-      const resultado = await service.actualizar(ID_PROYECTO, "logro-1", datosNuevos);
+      const resultado = await service.actualizar(
+        ID_PROYECTO,
+        "logro-1",
+        datosNuevos,
+      );
 
       expect(logroRepository.actualizar).toHaveBeenCalledWith(
         ID_PROYECTO,
@@ -166,20 +183,29 @@ describe("LogroService", () => {
     it("elimina el logro si pertenece al proyecto", async () => {
       logroRepository.eliminar.mockResolvedValue(logroGuardado());
 
-      await expect(service.eliminar(ID_PROYECTO, "logro-1")).resolves.toBeUndefined();
+      await expect(
+        service.eliminar(ID_PROYECTO, "logro-1"),
+      ).resolves.toBeUndefined();
 
-      expect(logroRepository.eliminar).toHaveBeenCalledWith(ID_PROYECTO, "logro-1");
+      expect(logroRepository.eliminar).toHaveBeenCalledWith(
+        ID_PROYECTO,
+        "logro-1",
+      );
     });
 
     it("falla con LOGRO_NO_ENCONTRADO si el logro no existe o es de otro proyecto", async () => {
-      await expect(service.eliminar(ID_PROYECTO, "logro-x")).rejects.toMatchObject({
+      await expect(
+        service.eliminar(ID_PROYECTO, "logro-x"),
+      ).rejects.toMatchObject({
         status: 404,
         codigo: "LOGRO_NO_ENCONTRADO",
       });
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no elimina nada", async () => {
-      await expect(service.eliminar("inexistente", "logro-1")).rejects.toMatchObject({
+      await expect(
+        service.eliminar("inexistente", "logro-1"),
+      ).rejects.toMatchObject({
         codigo: "PROYECTO_NO_ENCONTRADO",
       });
       expect(logroRepository.eliminar).not.toHaveBeenCalled();

@@ -11,9 +11,8 @@ export class HabilidadService {
     const titulo = String(habilidadNueva?.titulo ?? "").trim();
     const descripcion = String(habilidadNueva?.descripcion ?? "");
 
-    const habilidadExistente = await this.habilidadRepository.encontrarPorTitulo(
-      titulo,
-    );
+    const habilidadExistente =
+      await this.habilidadRepository.encontrarPorTitulo(titulo);
     if (!habilidadExistente) {
       const habilidad = new HabilidadProyecto(titulo, descripcion);
       return await this.habilidadRepository.save(habilidad);

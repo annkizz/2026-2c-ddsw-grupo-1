@@ -5,7 +5,7 @@ export const logroSchema = z
   .object({
     titulo: z.string().min(1),
     descripcion: z.string().min(1),
-    fecha: z.coerce.date()
+    fecha: z.coerce.date(),
   })
   .strict();
 
@@ -19,7 +19,7 @@ export class LogroController {
     res.status(201).json(nuevo);
   };
 
-   obtenerPorProyecto = async (req, res) => {
+  obtenerPorProyecto = async (req, res) => {
     const logros = await this.logroService.obtenerPorProyecto(req.params.id);
     res.status(200).json(logros);
   };

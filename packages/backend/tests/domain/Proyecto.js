@@ -1,7 +1,15 @@
 import { Proyecto } from "../../domain/Proyecto.js";
 
 const crear = (fechaLimiteCierre = null, estado = "ACTIVO") =>
-  new Proyecto("Titulo", "Desc", [], estado, new Date(), "p-1", fechaLimiteCierre, "col-1");
+  new Proyecto(
+    "Titulo",
+    "Desc",
+    [],
+    estado,
+    new Date(),
+    fechaLimiteCierre,
+    "col-1",
+  );
 
 const enUnaHora = () => new Date(Date.now() + 60 * 60 * 1000);
 const haceUnaHora = () => new Date(Date.now() - 60 * 60 * 1000);
@@ -50,6 +58,53 @@ describe("Dominio - Proyecto", () => {
 
     it("no esta vencido si ya esta finalizado", () => {
       expect(crear(haceUnaHora(), "FINALIZADO").cierreVencido()).toBe(false);
+    });
+  });
+  describe("avance", () => {
+    it("guarda los datos de avance que recibe el constructor", () => {
+      const proyecto = new Proyecto(
+        "Titulo",
+        "Desc",
+        [],
+        "ACTIVO",
+        new Date(),
+        null,
+        "col-1",
+        25,
+        "https://sistema.com",
+        "https://github.com/colectivo/app",
+      );
+
+      expect(proyecto.porcentajeConcrecion).toBe(25);
+      expect(proyecto.enlaceSistema).toBe("https://sistema.com");
+      expect(proyecto.enlaceCodigoFuente).toBe(
+        "https://github.com/colectivo/app",
+      );
+    });
+
+    it("actualizarAvance modifica solo los datos que se le pasan", () => {
+      const proyecto = crear();
+      proyecto.actualizarAvance({
+        porcentajeConcrecion: 40,
+        enlaceSistema: "https://sistema.com",
+      });
+      proyecto.actualizarAvance({
+        enlaceCodigoFuente: "https://github.com/colectivo/app",
+      });
+
+      expect(proyecto.porcentajeConcrecion).toBe(40);
+      expect(proyecto.enlaceSistema).toBe("https://sistema.com");
+      expect(proyecto.enlaceCodigoFuente).toBe(
+        "https://github.com/colectivo/app",
+      );
+    });
+
+    it("permite volver el porcentaje a 0 sin confundirlo con un dato no indicado", () => {
+      const proyecto = crear();
+      proyecto.actualizarAvance({ porcentajeConcrecion: 40 });
+      proyecto.actualizarAvance({ porcentajeConcrecion: 0 });
+
+      expect(proyecto.porcentajeConcrecion).toBe(0);
     });
   });
 });

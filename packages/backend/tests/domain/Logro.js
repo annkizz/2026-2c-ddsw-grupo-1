@@ -12,7 +12,9 @@ describe("Dominio - Logro", () => {
     );
 
     expect(logro.titulo).toBe("Primer prototipo");
-    expect(logro.descripcion).toBe("Se publicó una versión navegable del sistema");
+    expect(logro.descripcion).toBe(
+      "Se publicó una versión navegable del sistema",
+    );
     expect(logro.fecha).toBe(fecha);
     expect(logro.proyecto).toBe("proyecto-1");
   });

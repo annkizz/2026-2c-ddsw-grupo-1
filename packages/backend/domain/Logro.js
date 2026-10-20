@@ -1,10 +1,5 @@
 export class Logro {
-   constructor(
-    titulo,
-    descripcion,
-    fecha,
-    proyecto
-  ) {
+  constructor(titulo, descripcion, fecha, proyecto) {
     this.titulo = titulo;
     this.descripcion = descripcion;
     this.fecha = fecha;

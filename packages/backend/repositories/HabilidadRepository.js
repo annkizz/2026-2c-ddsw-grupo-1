@@ -14,20 +14,31 @@ export class HabilidadRepository {
     return this.model.findOne({ codigo }).exec();
   }
 
+  encontrarPorCodigos(codigos) {
+    return this.model.find({ codigo: { $in: codigos } }).exec();
+  }
+
   save(unaHabilidad) {
     const titulo = String(unaHabilidad.titulo).trim(); // se muestra tal cual
     const codigo = normalizarHabilidad(titulo); // se compara por este
-    return this.model.findOneAndUpdate(
-      { codigo },
-      {
-        $set: {
-          titulo,
-          codigo,
-          descripcion: unaHabilidad.descripcion ?? "",
+    return this.model
+      .findOneAndUpdate(
+        { codigo },
+        {
+          $set: {
+            titulo,
+            codigo,
+            descripcion: unaHabilidad.descripcion ?? "",
+          },
         },
-      },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
-    ).exec();
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
   }
 }
 

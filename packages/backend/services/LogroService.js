@@ -18,14 +18,17 @@ export class LogroService {
       idProyecto: logro.proyecto,
       titulo: logro.titulo,
       descripcion: logro.descripcion,
-      fecha: logro.fecha
+      fecha: logro.fecha,
     };
   }
 
   async validarProyecto(idProyecto) {
     const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
     if (!proyecto) {
-      throw new NotFoundError("proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
     return proyecto;
   }

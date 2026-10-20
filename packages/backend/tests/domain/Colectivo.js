@@ -2,33 +2,30 @@ import { Colectivo } from "../../domain/Colectivo.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 
 describe("Dominio - Colectivo", () => {
-  const crear = () => new Colectivo("Nombre", "col-1", "Desc", undefined, "ONG");
+  const crear = () => new Colectivo("Nombre", "Desc", "Ubicacion", "ONG");
 
-  it("arranca sin proyectos", () => {
-    expect(crear().proyectos).toEqual([]);
-  });
+  // La lista de proyectos del colectivo ya no se arma en memoria: el repo la
+  // mantiene con $addToSet (ColectivoRepository.agregarProyecto).
 
-  it("agrega un proyecto por su id", () => {
+  it("guarda los datos con los que se creo", () => {
     const colectivo = crear();
-    colectivo.agregarProyecto("p-1");
-    expect(colectivo.proyectos).toEqual(["p-1"]);
-  });
 
-  it("agrega un proyecto recibido como objeto guardando solo su id", () => {
-    const colectivo = crear();
-    colectivo.agregarProyecto(new Proyecto("T", "D", [], "ACTIVO", new Date(), "p-2", null, "col-1"));
-    expect(colectivo.proyectos).toEqual(["p-2"]);
-  });
-
-  it("no repite un proyecto que ya tiene", () => {
-    const colectivo = crear();
-    colectivo.agregarProyecto("p-1");
-    colectivo.agregarProyecto("p-1");
-    expect(colectivo.proyectos).toEqual(["p-1"]);
+    expect(colectivo.nombre).toBe("Nombre");
+    expect(colectivo.descripcion).toBe("Desc");
+    expect(colectivo.ubicacion).toBe("Ubicacion");
+    expect(colectivo.tipoDeColectivo).toBe("ONG");
   });
 
   it("finalizar un proyecto lo cierra", () => {
-    const proyecto = new Proyecto("T", "D", [], "ACTIVO", new Date(), "p-1", null, "col-1");
+    const proyecto = new Proyecto(
+      "T",
+      "D",
+      [],
+      "ACTIVO",
+      new Date(),
+      null,
+      "col-1",
+    );
     crear().finalizar(proyecto);
     expect(proyecto.estaFinalizado()).toBe(true);
   });

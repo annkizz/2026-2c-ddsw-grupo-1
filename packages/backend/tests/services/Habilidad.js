@@ -22,7 +22,7 @@ describe("HabilidadService", () => {
     });
 
     expect(repository.save).toHaveBeenCalledTimes(1);
-    expect(creada.titulo).toBe("Testing E2E con Cypress"); 
+    expect(creada.titulo).toBe("Testing E2E con Cypress");
     expect(creada.descripcion).toBe("Pruebas de punta a punta");
   });
 
@@ -34,7 +34,9 @@ describe("HabilidadService", () => {
   it("rechaza una habilidad que ya existe y no la guarda", async () => {
     repository.encontrarPorTitulo.mockResolvedValue({ titulo: "React" });
 
-    await expect(service.crear({ titulo: "react" })).rejects.toThrow(ConflictError);
+    await expect(service.crear({ titulo: "react" })).rejects.toThrow(
+      ConflictError,
+    );
     await expect(service.crear({ titulo: "react" })).rejects.toMatchObject({
       codigo: "HABILIDAD_YA_EXISTE",
     });
@@ -42,7 +44,10 @@ describe("HabilidadService", () => {
   });
 
   it("devuelve todas las habilidades del repositorio", async () => {
-    repository.obtenerTodos.mockResolvedValue([{ titulo: "React" }, { titulo: "Jest" }]);
+    repository.obtenerTodos.mockResolvedValue([
+      { titulo: "React" },
+      { titulo: "Jest" },
+    ]);
     expect(await service.obtenerTodos()).toHaveLength(2);
   });
 });

@@ -21,9 +21,14 @@ export class PerfilRepository {
     return await this.model.find({ proyecto: idProyecto });
   }
 
+  async obtenerPorProyectos(idsProyectos) {
+    if (idsProyectos.length === 0) return [];
+    return await this.model.find({ proyecto: { $in: idsProyectos } });
+  }
+
   async buscarPorId(idPerfil) {
     if (!mongoose.isValidObjectId(idPerfil)) {
-        return null;
+      return null;
     }
     return await this.model.findById(idPerfil);
   }
@@ -34,9 +39,9 @@ export class PerfilRepository {
 
   async actualizar(idPerfil, datos) {
     return await this.model.findByIdAndUpdate(
-        idPerfil,
-        { $set: datos },
-        { new: true, runValidators: true },
+      idPerfil,
+      { $set: datos },
+      { new: true, runValidators: true },
     );
   }
 }
