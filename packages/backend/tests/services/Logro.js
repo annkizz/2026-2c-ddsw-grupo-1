@@ -33,9 +33,7 @@ describe("LogroService", () => {
       eliminar: jest.fn(async () => null),
     };
     proyectoRepository = {
-      encontrarPorId: jest.fn((id) =>
-        id === ID_PROYECTO ? { idProyecto: id } : undefined,
-      ),
+      existe: jest.fn(async (id) => id === ID_PROYECTO),
     };
     service = new LogroService(logroRepository, proyectoRepository);
   });

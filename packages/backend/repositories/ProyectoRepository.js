@@ -23,6 +23,11 @@ export class ProyectoRepository {
     return await this.proyectoModel.findById(id).exec();
   }
 
+  async existe(idProyecto) {
+    const resultado = await this.proyectoModel.exists({ idProyecto }).exec();
+    return resultado !== null;
+  }
+
   agregarPerfil(idProyecto, id) {
     return this.proyectoModel
       .updateOne({ _id: idProyecto }, { $addToSet: { perfiles: id } })
