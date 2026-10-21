@@ -1,31 +1,38 @@
 import { normalizarHabilidad } from "../repositories/HabilidadRepository.js";
 
-const sinRepetidas = (habilidades = []) => {
-  const vistas = new Map();
-  for (const titulo of habilidades) {
+const sinRepetidas = (habilidades = []) =>
+  habilidades.reduce((vistas, titulo) => {
     const codigo = normalizarHabilidad(titulo);
     if (codigo !== "" && !vistas.has(codigo)) {
       vistas.set(codigo, titulo);
     }
-  }
-  return vistas;
-};
+    return vistas;
+  }, new Map());
 
 export function evaluarCoincidencia(perfil, habilidadesPersona) {
-  const requeridas = sinRepetidas(perfil.habilidadesRequeridas);
-  const opcionales = sinRepetidas(perfil.habilidadesOpcionales);
-  for (const codigo of requeridas.keys()) opcionales.delete(codigo);
+  return crearEvaluadorCoincidencia(habilidadesPersona)(perfil);
+}
 
+export function crearEvaluadorCoincidencia(habilidadesPersona) {
   const tiene = new Set(sinRepetidas(habilidadesPersona).keys());
-  const coinciden = (mapa) =>
-    [...mapa].filter(([codigo]) => tiene.has(codigo)).map(([, t]) => t);
+  return (perfil) => {
+    const requeridas = sinRepetidas(perfil.habilidadesRequeridas);
+    const opcionales = new Map(
+      [...sinRepetidas(perfil.habilidadesOpcionales)].filter(
+        ([codigo]) => !requeridas.has(codigo),
+      ),
+    );
 
-  const requeridasCoincidentes = coinciden(requeridas);
-  const opcionalesCoincidentes = coinciden(opcionales);
+    const coinciden = (mapa) =>
+      [...mapa].filter(([codigo]) => tiene.has(codigo)).map(([, t]) => t);
 
-  return {
-    tieneCoincidencia: requeridasCoincidentes.length > 0,
-    requeridasCoincidentes,
-    opcionalesCoincidentes,
+    const requeridasCoincidentes = coinciden(requeridas);
+    const opcionalesCoincidentes = coinciden(opcionales);
+
+    return {
+      tieneCoincidencia: requeridasCoincidentes.length > 0,
+      requeridasCoincidentes,
+      opcionalesCoincidentes,
+    };
   };
 }

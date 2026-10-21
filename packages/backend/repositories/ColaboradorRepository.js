@@ -15,9 +15,12 @@ export class ColaboradorRepository {
     return await this.model.findById(id).exec();
   }
 
-  async encontrarPorHabilidades(titulos) {
+  async encontrarPorHabilidadesRequeridas(titulos) {
     if (titulos.length === 0) return [];
-    return await this.model.find({ habilidades: { $in: titulos } }).exec();
+    return this.model
+      .find({ habilidades: { $in: titulos } })
+      .select("_id nombreFantasia usuarioGitHub pronombres presentacion habilidades")
+      .exec();
   }
 
   save(unColaborador, id = unColaborador._id) {
@@ -25,17 +28,15 @@ export class ColaboradorRepository {
       .findOneAndUpdate(
         { _id: id ?? new mongoose.Types.ObjectId() },
         {
-          $set: {
-            nombreFantasia: unColaborador.nombreFantasia,
-            usuarioGitHub: unColaborador.usuarioGitHub,
-            nombre: unColaborador.nombre,
-            apellido: unColaborador.apellido,
-            presentacion: unColaborador.presentacion,
-            pronombres: unColaborador.pronombres,
-            aceptaMensajeria: unColaborador.aceptaMensajeria,
-            habilidades: unColaborador.habilidades,
-            mediosDeContacto: unColaborador.mediosDeContacto,
-          },
+          nombreFantasia: unColaborador.nombreFantasia,
+          usuarioGitHub: unColaborador.usuarioGitHub,
+          nombre: unColaborador.nombre,
+          apellido: unColaborador.apellido,
+          presentacion: unColaborador.presentacion,
+          pronombres: unColaborador.pronombres,
+          aceptaMensajeria: unColaborador.aceptaMensajeria,
+          habilidades: unColaborador.habilidades,
+          mediosDeContacto: unColaborador.mediosDeContacto,
         },
         {
           upsert: true,

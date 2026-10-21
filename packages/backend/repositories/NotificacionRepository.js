@@ -25,9 +25,7 @@ export class NotificacionRepository {
     return this.model
       .findByIdAndUpdate(
         id,
-        {
-          $set: datos,
-        },
+        datos,
         {
           returnDocument: "after",
           runValidators: true,

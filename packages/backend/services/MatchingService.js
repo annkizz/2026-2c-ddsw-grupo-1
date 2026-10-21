@@ -1,5 +1,8 @@
 import { ConflictError, NotFoundError } from "../errors/AppError.js";
-import { evaluarCoincidencia } from "../domain/Matching.js";
+import {
+  crearEvaluadorCoincidencia,
+  evaluarCoincidencia,
+} from "../domain/Matching.js";
 
 const idDe = (documento) => String(documento.id ?? documento._id);
 
@@ -17,7 +20,7 @@ export class MatchingService {
   }
 
   // busqueda de potenciales colaboradoras segun perfil del proyecto
-  //las q estan anotadas al proyecto y las q comparten alguna habilidad del perfil
+  // excluye anotadas y exige las habilidades requeridas del perfil
 
   async buscarColaboradorasParaPerfil(idProyecto, id) {
     const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
@@ -48,10 +51,10 @@ export class MatchingService {
       ).map(String),
     );
 
-    const candidatas = await this.colaboradorRepository.encontrarPorHabilidades([
-      ...perfil.habilidadesRequeridas,
-      ...perfil.habilidadesOpcionales,
-    ]);
+    const candidatas =
+      await this.colaboradorRepository.encontrarPorHabilidadesRequeridas(
+        perfil.habilidadesRequeridas,
+      );
 
     return candidatas
       .filter((colaboradora) => !yaAnotadas.has(String(colaboradora._id)))
@@ -86,28 +89,27 @@ export class MatchingService {
       );
     }
 
-    const yaAnotadas = new Set(
-      (
-        await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
-          idColaborador,
-        )
-      ).map(String),
-    );
+    if (colaboradora.habilidades.length === 0) return [];
+    const yaAnotadas =
+      await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
+        idColaborador,
+      );
+    const abiertos =
+      await this.proyectoRepository.obtenerAbiertosParaMatching(yaAnotadas);
+    if (abiertos.length === 0) return [];
 
-    const abiertos = (await this.proyectoRepository.obtenerAbiertos()).filter(
-      (p) => !yaAnotadas.has(String(p._id)),
-    );
-
-    const perfiles = await this.perfilRepository.obtenerPorProyectos(
+    const perfiles = await this.perfilRepository.obtenerCompatiblesPorProyectos(
       abiertos.map((p) => p._id),
+      colaboradora.habilidades,
     );
-    const perfilesPorProyecto = new Map();
-    for (const perfil of perfiles) {
+    const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
+    const perfilesPorProyecto = perfiles.reduce((porProyecto, perfil) => {
       const idProyecto = String(perfil.idProyecto);
-      const ids = perfilesPorProyecto.get(idProyecto) ?? [];
-      ids.push(perfil);
-      perfilesPorProyecto.set(idProyecto, ids);
-    }
+      const delProyecto = porProyecto.get(idProyecto) ?? [];
+      delProyecto.push(perfil);
+      porProyecto.set(idProyecto, delProyecto);
+      return porProyecto;
+    }, new Map());
 
     const resultados = abiertos.map((proyecto) => {
       const perfilesCompatibles = (
@@ -117,7 +119,7 @@ export class MatchingService {
           id: idDe(perfil),
           descripcion: perfil.descripcion,
           compromiso: perfil.compromiso,
-          ...evaluarCoincidencia(perfil, colaboradora.habilidades),
+          ...evaluar(perfil),
         }))
         .filter((p) => p.tieneCoincidencia)
         .map(

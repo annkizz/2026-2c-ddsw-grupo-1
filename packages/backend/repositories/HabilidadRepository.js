@@ -25,11 +25,9 @@ export class HabilidadRepository {
       .findOneAndUpdate(
         { codigo },
         {
-          $set: {
-            titulo,
-            codigo,
-            descripcion: unaHabilidad.descripcion ?? "",
-          },
+          titulo,
+          codigo,
+          descripcion: unaHabilidad.descripcion ?? "",
         },
         {
           upsert: true,

@@ -314,3 +314,67 @@ describe("MatchingService sin N+1 (integración)", () => {
     }
   });
 });
+
+describe("MatchingService con al menos una habilidad requerida (integración)", () => {
+  const crearProyectoConPerfil = async (idProyecto, habilidadesRequeridas, habilidadesOpcionales) => {
+    await ProyectoModel.create({
+      _id: idProyecto,
+      idColectivo: new mongoose.Types.ObjectId(),
+      titulo: String(idProyecto),
+      descripcion: "proyecto con perfil",
+      estado: "ACTIVO",
+      fechaInicio: new Date(),
+    });
+    return PerfilModel.create({
+      idProyecto,
+      descripcion: "Perfil de prueba",
+      habilidadesRequeridas,
+      habilidadesOpcionales,
+      compromiso: {
+        tipoCompromiso: "SEMANALES",
+        horas: 5,
+        tipoColaboracion: "GRATUITA",
+      },
+    });
+  };
+
+  it("incluye a la colaboradora que tiene una de las habilidades requeridas", async () => {
+    const idProyecto = new mongoose.Types.ObjectId();
+    const idPerfil = await crearProyectoConPerfil(idProyecto, ["Svelte", "Rust"], []);
+    const idColaboradora = new mongoose.Types.ObjectId();
+    await ColaboradorModel.create({
+      _id: idColaboradora,
+      nombreFantasia: "Candidata parcial",
+      habilidades: ["Svelte"],
+    });
+
+    const resultado = await crearServicio().buscarColaboradorasParaPerfil(
+      idProyecto,
+      idPerfil._id,
+    );
+
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0]).toMatchObject({
+      id: String(idColaboradora),
+      requeridasCoincidentes: ["Svelte"],
+    });
+  });
+
+  it("excluye a la colaboradora que solo tiene habilidades opcionales", async () => {
+    const idProyecto = new mongoose.Types.ObjectId();
+    const idPerfil = await crearProyectoConPerfil(idProyecto, ["Svelte"], ["GraphQL"]);
+    const idColaboradora = new mongoose.Types.ObjectId();
+    await ColaboradorModel.create({
+      _id: idColaboradora,
+      nombreFantasia: "Candidata opcional",
+      habilidades: ["GraphQL"],
+    });
+
+    const resultado = await crearServicio().buscarColaboradorasParaPerfil(
+      idProyecto,
+      idPerfil._id,
+    );
+
+    expect(resultado).toEqual([]);
+  });
+});

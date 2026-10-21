@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { PerfilModel } from "../schemas/perfilSchema.js";
 
 export class PerfilRepository {
-  constructor() {
-    this.model = PerfilModel;
+  constructor(model = PerfilModel) {
+    this.model = model;
   }
 
   async save(perfil, idProyecto) {
@@ -21,9 +21,15 @@ export class PerfilRepository {
     return await this.model.find({ idProyecto });
   }
 
-  async obtenerPorProyectos(idsProyectos) {
-    if (idsProyectos.length === 0) return [];
-    return await this.model.find({ idProyecto: { $in: idsProyectos } });
+  async obtenerCompatiblesPorProyectos(idsProyectos, habilidades) {
+    if (idsProyectos.length === 0 || habilidades.length === 0) return [];
+    return this.model
+      .find({
+        idProyecto: { $in: idsProyectos },
+        habilidadesRequeridas: { $in: habilidades },
+      })
+      .select("_id idProyecto descripcion compromiso habilidadesRequeridas habilidadesOpcionales")
+      .exec();
   }
 
   async buscarPorId(id) {
@@ -40,7 +46,7 @@ export class PerfilRepository {
   async actualizar(id, datos) {
     return await this.model.findByIdAndUpdate(
       id,
-      { $set: datos },
+      datos,
       { new: true, runValidators: true },
     );
   }

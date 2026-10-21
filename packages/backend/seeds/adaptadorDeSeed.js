@@ -15,7 +15,7 @@ export function crearAdaptadorDeSeed() {
     guardarPerfil({ id, ...datos }) {
       return PerfilModel.findOneAndUpdate(
         { _id: id },
-        { $set: datos },
+        datos,
         {
           upsert: true,
           returnDocument: "after",
@@ -27,7 +27,7 @@ export function crearAdaptadorDeSeed() {
     guardarLogro({ id, ...datos }) {
       return LogroModel.findOneAndUpdate(
         { _id: id },
-        { $set: datos },
+        datos,
         {
           upsert: true,
           returnDocument: "after",
