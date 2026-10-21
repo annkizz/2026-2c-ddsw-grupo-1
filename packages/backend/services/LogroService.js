@@ -14,20 +14,22 @@ export class LogroService {
 
   toDTO(logro) {
     return {
-      idLogro: logro.id,
-      idProyecto: logro.proyecto,
+      id: String(logro.id ?? logro._id),
+      idProyecto: String(logro.idProyecto),
       titulo: logro.titulo,
       descripcion: logro.descripcion,
-      fecha: logro.fecha
+      fecha: logro.fecha,
     };
   }
 
   async validarProyecto(idProyecto) {
-    const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
-    if (!proyecto) {
-      throw new NotFoundError("proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    const existe = await this.proyectoRepository.existe(idProyecto);
+    if (!existe) {
+      throw new NotFoundError(
+        "proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
-    return proyecto;
   }
 
   async crear(idProyecto, datosLogro) {

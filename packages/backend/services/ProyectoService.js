@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Estado } from "../domain/Estado.js";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
@@ -13,6 +12,7 @@ import {
 import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
+import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 
 export class ProyectoService {
   constructor(
@@ -20,19 +20,21 @@ export class ProyectoService {
     habilidadRepository = new HabilidadRepository(),
     colaboradorService = new ColaboradorService(),
     colectivoRepository = new ColectivoRepository(),
+    colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
     this.colaboradorService = colaboradorService;
     this.colectivoRepository = colectivoRepository;
+    this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
   }
 
   crear = async (datosProyecto) => {
     const colectivo = await this.colectivoRepository.encontrarPorId(
-    datosProyecto.idColectivo,
-  );
+      datosProyecto.idColectivo,
+    );
 
     if (!colectivo) {
       throw new NotFoundError(
@@ -52,16 +54,36 @@ export class ProyectoService {
       [], // perfiles
       Estado.ACTIVO,
       new Date(),
-      randomUUID(),
       fechaLimiteCierre,
-      colectivo.idColectivo,
+      colectivo._id,
+      0,
+      null,
+      null,
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
-    colectivo.agregarProyecto(proyecto.idProyecto);
-    await this.colectivoRepository.save(colectivo);
-    return proyectoGuardado;
+    await this.colectivoRepository.agregarProyecto(
+      colectivo._id,
+      proyectoGuardado._id,
+    );
+    return this.toDTO(proyectoGuardado);
   };
+
+  toDTO(proyecto) {
+    return {
+      id: String(proyecto._id),
+      titulo: proyecto.titulo,
+      descripcion: proyecto.descripcion,
+      estado: proyecto.estado,
+      fechaInicio: proyecto.fechaInicio,
+      fechaLimiteCierre: proyecto.fechaLimiteCierre,
+      idColectivo: String(proyecto.idColectivo),
+      perfiles: (proyecto.perfiles ?? []).map((perfil) => String(perfil)),
+      porcentajeConcrecion: proyecto.porcentajeConcrecion,
+      enlaceSistema: proyecto.enlaceSistema,
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+    };
+  }
 
   validarFechaLimite(fechaLimiteCierre, ahora = new Date()) {
     if (fechaLimiteCierre <= ahora) {
@@ -84,7 +106,8 @@ export class ProyectoService {
 
     this.validarFechaLimite(fechaLimite);
     proyecto.programarCierre(fechaLimite);
-    return await this.proyectoRepository.save(proyecto);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    return this.toDTO(guardado);
   }
 
   async cerrarSiVencido(proyecto, ahora = new Date()) {
@@ -121,10 +144,10 @@ export class ProyectoService {
     for (const proyecto of vencidos) {
       try {
         await this.finalizar(proyecto);
-        cerrados.push(proyecto.idProyecto);
+        cerrados.push(String(proyecto._id));
       } catch (error) {
         fallidos.push({
-          idProyecto: proyecto.idProyecto,
+          idProyecto: String(proyecto._id),
           error: error.message,
         });
       }
@@ -133,40 +156,34 @@ export class ProyectoService {
     return { cerrados, fallidos };
   }
 
-  obtenerTodos() {
-    return this.proyectoRepository.obtenerTodos();
+  async obtenerTodos() {
+    const proyectos = await this.proyectoRepository.obtenerTodos();
+    return proyectos.map((proyecto) => this.toDTO(proyecto));
   }
 
   obtenerProyectoPorId(id) {
     return this.proyectoRepository.encontrarPorId(id);
   }
 
-  obtenerTodasColaboraciones = () => {
-    return this.proyectoRepository.obtenerTodasColaboraciones();
-  };
-
-  toContribucionPublica(colaboracion) {
-    const esAnonima = colaboracion.esAnonima ?? false;
+  toContribucionPublica({
+    idProyecto,
+    idColaborador,
+    fecha,
+    esAnonima = false,
+  }) {
     const contribucion = {
-      idProyecto: colaboracion.proyecto?.idProyecto,
-      fecha: colaboracion.fecha,
+      idProyecto: String(idProyecto),
+      fecha,
       esAnonima,
     };
 
-    if (!esAnonima && colaboracion.colaborador) {
-      const {
-        idColaborador,
-        nombreFantasia,
-        usuarioGitHub,
-        nombre,
-        apellido,
-      } = colaboracion.colaborador;
+    if (!esAnonima && idColaborador) {
       contribucion.colaborador = {
-        idColaborador,
-        nombreFantasia,
-        usuarioGitHub,
-        nombre,
-        apellido,
+        id: String(idColaborador._id),
+        nombreFantasia: idColaborador.nombreFantasia,
+        usuarioGitHub: idColaborador.usuarioGitHub,
+        nombre: idColaborador.nombre,
+        apellido: idColaborador.apellido,
       };
     }
 
@@ -176,30 +193,21 @@ export class ProyectoService {
   obtenerColaboracionesPublicas = async (idProyecto) => {
     await this.buscarProyectoOFallar(idProyecto);
     const colaboraciones =
-      await this.proyectoRepository.obtenerColaboracionesPorProyecto(idProyecto);
+      await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
     return colaboraciones.map((colaboracion) =>
-      this.toContribucionPublica({ ...colaboracion, proyecto: { idProyecto } }),
+      this.toContribucionPublica(colaboracion),
     );
   };
 
-  obtenerColaboracionPorIdProyecto = async (proyectoId) => {
-    const colaboraciones = await this.obtenerTodasColaboraciones();
-    return colaboraciones.find((c) => c.proyecto?.idProyecto === proyectoId);
-  };
-
-  colaboradorPerteneceAProyecto = async (proyectoId, colaboradorId) => {
-    const colaboraciones = await this.obtenerTodasColaboraciones();
-    return colaboraciones.some(
-      (colaboracion) =>
-        colaboracion.proyecto?.idProyecto === proyectoId &&
-        colaboracion.colaborador?.idColaborador === colaboradorId,
+  colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
+    return this.colaboracionRepository.existeColaboracion(
+      proyectoId,
+      colaboradorId,
     );
   };
 
   verificarHabilidades = async (proyecto, colaborador) => {
-    const perfiles = await this.perfilRepository.obtenerTodos(
-      proyecto.idProyecto,
-    );
+    const perfiles = await this.perfilRepository.obtenerTodos(proyecto._id);
     return perfiles.some(
       (perfil) =>
         evaluarCoincidencia(perfil, colaborador.habilidades).tieneCoincidencia,
@@ -214,7 +222,8 @@ export class ProyectoService {
       );
     }
 
-    const colaborador = await this.colaboradorService.obtenerPorId(colaboradorId);
+    const colaborador =
+      await this.colaboradorService.obtenerPorId(colaboradorId);
 
     if (!colaborador) {
       throw new NotFoundError(
@@ -223,7 +232,7 @@ export class ProyectoService {
       );
     }
 
-    if (await this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)) {
+    if (await this.colaboradorPerteneceAProyecto(proyecto._id, colaboradorId)) {
       throw new ConflictError(
         "La colaboradora ya está anotada en este proyecto",
         "COLABORACION_YA_EXISTENTE",
@@ -243,11 +252,35 @@ export class ProyectoService {
       new Date().toISOString(),
       esAnonima,
     );
-    return await this.proyectoRepository.saveColaboracion(nuevaColaboracion);
+    return await this.colaboracionRepository.save(nuevaColaboracion);
   }
 
   async cerrarProyecto(idProyecto) {
     const proyecto = await this.buscarProyectoOFallar(idProyecto);
-    return await this.finalizar(proyecto);
+    return this.toDTO(await this.finalizar(proyecto));
+  }
+
+  async actualizarAvance(idProyecto, datosAvance) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (Object.keys(datosAvance).length === 0) {
+      throw new BadRequestError(
+        "indicá al menos un dato de avance",
+        "AVANCE_VACIO",
+      );
+    }
+
+    proyecto.actualizarAvance(datosAvance);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    return this.toAvanceDTO(guardado);
+  }
+
+  toAvanceDTO(proyecto) {
+    return {
+      id: String(proyecto._id),
+      porcentajeConcrecion: proyecto.porcentajeConcrecion,
+      enlaceSistema: proyecto.enlaceSistema,
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+    };
   }
 }

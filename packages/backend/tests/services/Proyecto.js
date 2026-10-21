@@ -1,13 +1,23 @@
 import { jest } from "@jest/globals";
+import mongoose from "mongoose";
 import { ProyectoService } from "../../services/ProyectoService.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 import { Colectivo } from "../../domain/Colectivo.js";
-import { BadRequestError, ConflictError, NotFoundError } from "../../errors/AppError.js";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from "../../errors/AppError.js";
 import { idColaboradorSchema } from "../../controllers/ProyectoController.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
 
+// El _id lo genera Mongo: en el test se fija para poder comparar.
 const proyectoActivo = (extra = {}) =>
-  Object.assign(new Proyecto("Titulo", "Desc", [], "ACTIVO", new Date(), "p-1", null, "col-1"), extra);
+  Object.assign(
+    new Proyecto("Titulo", "Desc", [], "ACTIVO", new Date(), null, "col-1"),
+    { _id: "p-1" },
+    extra,
+  );
 
 const enUnaHora = () => new Date(Date.now() + 60 * 60 * 1000);
 const haceUnaHora = () => new Date(Date.now() - 60 * 60 * 1000);
@@ -17,22 +27,36 @@ describe("ProyectoService", () => {
   let colectivoRepository;
   let colaboradorService;
   let perfilRepository;
+  let colaboracionRepository;
   let service;
   let colectivo;
 
   beforeEach(() => {
-    colectivo = new Colectivo("Colectivo", "col-1", "Desc", undefined, "ONG");
+    colectivo = Object.assign(
+      new Colectivo("Colectivo", "Desc", undefined, "ONG"),
+      {
+        _id: "col-1",
+      },
+    );
     proyectoRepository = {
-      save: jest.fn(async (proyecto) => proyecto),
+      // El repo real asigna el _id al insertar: el fake lo imita.
+      save: jest.fn(async (proyecto) => {
+        if (!proyecto._id) proyecto._id = "p-nuevo";
+        return proyecto;
+      }),
       encontrarPorId: jest.fn(async () => null),
-      obtenerTodasColaboraciones: jest.fn(async () => []),
-      obtenerColaboracionesPorProyecto: jest.fn(async () => []),
-      saveColaboracion: jest.fn(async (colaboracion) => colaboracion),
       obtenerVencidos: jest.fn(async () => []),
     };
+    colaboracionRepository = {
+      obtenerPorProyecto: jest.fn(async () => []),
+      existeColaboracion: jest.fn(async () => false),
+      save: jest.fn(async (colaboracion) => colaboracion),
+    };
     colectivoRepository = {
-      encontrarPorId: jest.fn(async (id) => (id === "col-1" ? colectivo : null)),
-      save: jest.fn(async (c) => c),
+      encontrarPorId: jest.fn(async (id) =>
+        id === "col-1" ? colectivo : null,
+      ),
+      agregarProyecto: jest.fn(async () => undefined),
     };
     colaboradorService = { obtenerPorId: jest.fn(async () => null) };
     perfilRepository = { obtenerTodos: jest.fn(async () => []) };
@@ -41,25 +65,37 @@ describe("ProyectoService", () => {
       {},
       colaboradorService,
       colectivoRepository,
+      colaboracionRepository,
       perfilRepository,
     );
   });
 
   describe("crear", () => {
     it("crea un proyecto activo, sin perfiles, ligado a su colectivo", async () => {
-      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
 
+      expect(creado.id).toBe("p-nuevo");
       expect(creado.estado).toBe("ACTIVO");
       expect(creado.perfiles).toEqual([]);
       expect(creado.idColectivo).toBe("col-1");
       expect(proyectoRepository.save).toHaveBeenCalledTimes(1);
     });
 
-    it("agrega el id del proyecto al colectivo y guarda el colectivo", async () => {
-      const creado = await service.crear({ idColectivo: "col-1", titulo: "T", descripcion: "D" });
+    it("agrega el id del proyecto al colectivo a través del repositorio", async () => {
+      await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
 
-      expect(colectivo.proyectos).toContain(creado.idProyecto);
-      expect(colectivoRepository.save).toHaveBeenCalledWith(colectivo);
+      expect(colectivoRepository.agregarProyecto).toHaveBeenCalledWith(
+        "col-1",
+        "p-nuevo",
+      );
     });
 
     it("falla si el colectivo no existe y no guarda nada", async () => {
@@ -91,6 +127,18 @@ describe("ProyectoService", () => {
       });
       expect(creado.fechaLimiteCierre).toEqual(fecha);
     });
+
+    it("deja el proyecto nuevo en 0% y sin enlaces", async () => {
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
+
+      expect(creado.porcentajeConcrecion).toBe(0);
+      expect(creado.enlaceSistema).toBeNull();
+      expect(creado.enlaceCodigoFuente).toBeNull();
+    });
   });
 
   describe("cerrarProyecto", () => {
@@ -105,7 +153,48 @@ describe("ProyectoService", () => {
     });
 
     it("falla si el proyecto no existe", async () => {
-      await expect(service.cerrarProyecto("nope")).rejects.toThrow(NotFoundError);
+      await expect(service.cerrarProyecto("nope")).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+  });
+
+  describe("actualizarAvance", () => {
+    it("actualiza el avance, lo guarda y devuelve el DTO", async () => {
+      const proyecto = proyectoActivo();
+      proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
+
+      const resultado = await service.actualizarAvance("p-1", {
+        porcentajeConcrecion: 40,
+        enlaceCodigoFuente: "https://github.com/colectivo/app",
+      });
+
+      expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
+      expect(resultado.id).toBe("p-1");
+      expect(resultado.porcentajeConcrecion).toBe(40);
+      expect(resultado.enlaceCodigoFuente).toBe(
+        "https://github.com/colectivo/app",
+      );
+    });
+
+    it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
+      await expect(
+        service.actualizarAvance("nope", { porcentajeConcrecion: 10 }),
+      ).rejects.toMatchObject({
+        status: 404,
+        codigo: "PROYECTO_NO_ENCONTRADO",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("falla con AVANCE_VACIO si no se indica ningún dato", async () => {
+      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
+
+      await expect(service.actualizarAvance("p-1", {})).rejects.toMatchObject({
+        status: 400,
+        codigo: "AVANCE_VACIO",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
   });
 
@@ -122,30 +211,39 @@ describe("ProyectoService", () => {
     });
 
     it("no permite programar el cierre de un proyecto finalizado", async () => {
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo({ estado: "FINALIZADO" }));
-      await expect(service.programarCierre("p-1", enUnaHora())).rejects.toThrow(ConflictError);
+      proyectoRepository.encontrarPorId.mockResolvedValue(
+        proyectoActivo({ estado: "FINALIZADO" }),
+      );
+      await expect(service.programarCierre("p-1", enUnaHora())).rejects.toThrow(
+        ConflictError,
+      );
     });
   });
 
   describe("cerrarProyectosVencidos", () => {
     it("cierra los vencidos y reporta los que fallaron", async () => {
-      const bueno = proyectoActivo({ idProyecto: "ok" });
-      const malo = proyectoActivo({ idProyecto: "falla" });
+      const bueno = proyectoActivo({ _id: "ok" });
+      const malo = proyectoActivo({ _id: "falla" });
       proyectoRepository.obtenerVencidos.mockResolvedValue([bueno, malo]);
       proyectoRepository.save.mockImplementation(async (p) => {
-        if (p.idProyecto === "falla") throw new Error("se cayo la base");
+        if (p._id === "falla") throw new Error("se cayo la base");
         return p;
       });
 
       const resultado = await service.cerrarProyectosVencidos();
 
       expect(resultado.cerrados).toEqual(["ok"]);
-      expect(resultado.fallidos).toEqual([{ idProyecto: "falla", error: "se cayo la base" }]);
+      expect(resultado.fallidos).toEqual([
+        { idProyecto: "falla", error: "se cayo la base" },
+      ]);
     });
   });
 
   describe("crearColaboracion (anotarse a un proyecto)", () => {
-    const colaboradora = { idColaborador: "c-1", habilidades: ["Testing E2E con Cypress"] };
+    const colaboradora = {
+      _id: "c-1",
+      habilidades: ["Testing E2E con Cypress"],
+    };
     const perfilTester = {
       habilidadesRequeridas: ["testing e2e con cypress"],
       habilidadesOpcionales: [],
@@ -160,8 +258,8 @@ describe("ProyectoService", () => {
       const proyecto = proyectoActivo();
       await service.crearColaboracion(proyecto, "c-1");
 
-      expect(proyectoRepository.saveColaboracion).toHaveBeenCalledTimes(1);
-      const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
+      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
+      const guardada = colaboracionRepository.save.mock.calls[0][0];
       expect(guardada.proyecto).toBe(proyecto);
       expect(guardada.colaborador).toBe(colaboradora);
       expect(guardada.esAnonima).toBe(false);
@@ -170,17 +268,18 @@ describe("ProyectoService", () => {
     it("registra la preferencia de contribución anónima", async () => {
       await service.crearColaboracion(proyectoActivo(), "c-1", true);
 
-      const guardada = proyectoRepository.saveColaboracion.mock.calls[0][0];
+      const guardada = colaboracionRepository.save.mock.calls[0][0];
       expect(guardada.esAnonima).toBe(true);
     });
 
     it("publica la contribución sin identidad cuando es anónima", async () => {
       const fecha = new Date();
       proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
-      proyectoRepository.obtenerColaboracionesPorProyecto.mockResolvedValue([
+      colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
         {
-          colaborador: {
-            idColaborador: "c-1",
+          idProyecto: "p-1",
+          idColaborador: {
+            _id: "c-1",
             nombre: "Nombre privado",
             apellido: "Apellido privado",
           },
@@ -188,8 +287,9 @@ describe("ProyectoService", () => {
           esAnonima: true,
         },
         {
-          colaborador: {
-            idColaborador: "c-2",
+          idProyecto: "p-1",
+          idColaborador: {
+            _id: "c-2",
             nombreFantasia: "Colaboradora visible",
             usuarioGitHub: "visible-dev",
           },
@@ -210,7 +310,7 @@ describe("ProyectoService", () => {
         fecha,
         esAnonima: false,
         colaborador: {
-          idColaborador: "c-2",
+          id: "c-2",
           nombreFantasia: "Colaboradora visible",
           usuarioGitHub: "visible-dev",
           nombre: undefined,
@@ -221,45 +321,57 @@ describe("ProyectoService", () => {
 
     it("rechaza anotarse a un proyecto finalizado", async () => {
       const proyecto = proyectoActivo({ estado: "FINALIZADO" });
-      await expect(service.crearColaboracion(proyecto, "c-1")).rejects.toMatchObject({
+      await expect(
+        service.crearColaboracion(proyecto, "c-1"),
+      ).rejects.toMatchObject({
         codigo: "PROYECTO_FINALIZADO",
       });
-      expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
+      expect(colaboracionRepository.save).not.toHaveBeenCalled();
     });
 
     it("falla si la colaboradora no existe", async () => {
       colaboradorService.obtenerPorId.mockResolvedValue(null);
-      await expect(service.crearColaboracion(proyectoActivo(), "x")).rejects.toThrow(NotFoundError);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "x"),
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("rechaza anotarla dos veces en el mismo proyecto", async () => {
-      proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "c-1" } },
-      ]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toMatchObject({
+      colaboracionRepository.existeColaboracion.mockResolvedValue(true);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toMatchObject({
         codigo: "COLABORACION_YA_EXISTENTE",
       });
     });
 
-    it("detecta el duplicado aunque haya otras colaboraciones antes en el proyecto", async () => {
-      proyectoRepository.obtenerTodasColaboraciones.mockResolvedValue([
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "otra" } },
-        { proyecto: { idProyecto: "p-1" }, colaborador: { idColaborador: "c-1" } },
-      ]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toThrow(ConflictError);
+    it("pregunta por la colaboración exacta en vez de traer todas", async () => {
+      await service.crearColaboracion(proyectoActivo(), "c-1");
+
+      expect(colaboracionRepository.existeColaboracion).toHaveBeenCalledWith(
+        "p-1",
+        "c-1",
+      );
     });
 
     it("rechaza si no tiene ninguna habilidad requerida de ningun perfil", async () => {
-      colaboradorService.obtenerPorId.mockResolvedValue({ idColaborador: "c-1", habilidades: ["Jest"] });
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toMatchObject({
+      colaboradorService.obtenerPorId.mockResolvedValue({
+        _id: "c-1",
+        habilidades: ["Jest"],
+      });
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toMatchObject({
         codigo: "HABILIDADES_INSUFICIENTES",
       });
-      expect(proyectoRepository.saveColaboracion).not.toHaveBeenCalled();
+      expect(colaboracionRepository.save).not.toHaveBeenCalled();
     });
 
     it("rechaza si el proyecto no tiene perfiles", async () => {
       perfilRepository.obtenerTodos.mockResolvedValue([]);
-      await expect(service.crearColaboracion(proyectoActivo(), "c-1")).rejects.toThrow(BadRequestError);
+      await expect(
+        service.crearColaboracion(proyectoActivo(), "c-1"),
+      ).rejects.toThrow(BadRequestError);
     });
   });
 });
@@ -282,13 +394,13 @@ describe("preferencia de anonimato de una colaboración", () => {
   it("usa false por defecto en Mongo y permite guardar true", () => {
     const fecha = new Date();
     const normal = new ColaboracionModel({
-      idProyecto: "p-1",
-      idColaborador: "c-1",
+      idProyecto: new mongoose.Types.ObjectId(),
+      idColaborador: new mongoose.Types.ObjectId(),
       fecha,
     });
     const anonima = new ColaboracionModel({
-      idProyecto: "p-1",
-      idColaborador: "c-2",
+      idProyecto: new mongoose.Types.ObjectId(),
+      idColaborador: new mongoose.Types.ObjectId(),
       fecha,
       esAnonima: true,
     });

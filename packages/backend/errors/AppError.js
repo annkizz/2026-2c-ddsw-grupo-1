@@ -29,6 +29,13 @@ export class ConflictError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message, codigo) {
+    super(message, codigo);
+    this.status = 403;
+  }
+}
+
 export class UnprocessableEntityError extends AppError {
   constructor(message, codigo) {
     super(message, codigo);

@@ -11,14 +11,14 @@ export class LogroRepository {
   }
 
   async obtenerPorProyecto(idProyecto) {
-    return await this.model.find({ proyecto: idProyecto });
+    return await this.model.find({ idProyecto: idProyecto });
   }
 
   async buscarPorId(idProyecto, idLogro) {
     if (!mongoose.isValidObjectId(idLogro)) {
       return null;
     }
-    return await this.model.findOne({ _id: idLogro, proyecto: idProyecto });
+    return await this.model.findOne({ _id: idLogro, idProyecto });
   }
 
   async actualizar(idProyecto, idLogro, datos) {
@@ -26,7 +26,7 @@ export class LogroRepository {
       return null;
     }
     return await this.model.findOneAndUpdate(
-      { _id: idLogro, proyecto: idProyecto },
+      { _id: idLogro, idProyecto },
       datos,
       { returnDocument: "after", runValidators: true },
     );
@@ -38,7 +38,7 @@ export class LogroRepository {
     }
     return await this.model.findOneAndDelete({
       _id: idLogro,
-      proyecto: idProyecto,
+      idProyecto,
     });
   }
 }

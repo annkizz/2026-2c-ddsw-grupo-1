@@ -12,7 +12,13 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "testMatch": ["**/tests/**/*.js"]
+    "testMatch": [
+      "**/tests/**/*.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/integration/utils/"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -31,6 +37,7 @@
   "type": "module",
   "devDependencies": {
     "cross-env": "^10.1.0",
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "mongodb-memory-server": "^11.3.0"
   }
 }

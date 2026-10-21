@@ -5,16 +5,17 @@ import { TipoColaboracion } from "../domain/TipoColaboracion.js";
 
 const perfilSchema = new mongoose.Schema(
   {
-    proyecto: { 
-        type: String, 
-        required: true, 
-        index: true 
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Proyecto",
+      required: true,
+      index: true,
     },
 
-    descripcion: { 
-        type: String, 
-        required: true, 
-        trim: true 
+    descripcion: {
+      type: String,
+      required: true,
+      trim: true,
     },
 
     habilidadesRequeridas: {
@@ -25,10 +26,11 @@ const perfilSchema = new mongoose.Schema(
       },
     },
 
-    habilidadesOpcionales: { 
-        type: [String], 
-        default: [] },
-    
+    habilidadesOpcionales: {
+      type: [String],
+      default: [],
+    },
+
     compromiso: {
       tipoCompromiso: {
         type: String,
@@ -43,10 +45,8 @@ const perfilSchema = new mongoose.Schema(
         required: true,
       },
     },
-
   },
-  { timestamps: true, 
-    collection: "perfiles" },
+  { timestamps: true, collection: "perfiles" },
 );
 
 perfilSchema.loadClass(Perfil);

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { logroSchema } from "../../controllers/LogroController.js";
 
 const logroValido = () => ({
@@ -23,11 +24,14 @@ describe("Validaciones - logroSchema (zod)", () => {
     expect(logroSchema.safeParse(datos).success).toBe(true);
   });
 
-  it.each(["titulo", "descripcion", "fecha"])("rechaza un logro sin %s", (campo) => {
-    const datos = logroValido();
-    delete datos[campo];
-    expect(logroSchema.safeParse(datos).success).toBe(false);
-  });
+  it.each(["titulo", "descripcion", "fecha"])(
+    "rechaza un logro sin %s",
+    (campo) => {
+      const datos = logroValido();
+      delete datos[campo];
+      expect(logroSchema.safeParse(datos).success).toBe(false);
+    },
+  );
 
   it("rechaza título vacío", () => {
     const datos = { ...logroValido(), titulo: "" };
@@ -44,8 +48,8 @@ describe("Validaciones - logroSchema (zod)", () => {
     expect(logroSchema.safeParse(datos).success).toBe(false);
   });
 
-  it("rechaza que el cliente mande el proyecto en el body (strict)", () => {
-    const datos = { ...logroValido(), proyecto: "proyecto-1" };
+  it("rechaza que el cliente mande el id del proyecto en el body (strict)", () => {
+    const datos = { ...logroValido(), idProyecto: "proyecto-1" };
     expect(logroSchema.safeParse(datos).success).toBe(false);
   });
 });
