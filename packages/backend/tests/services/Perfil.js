@@ -46,9 +46,7 @@ describe("PerfilService", () => {
       eliminar: jest.fn(async () => undefined),
     };
     proyectoRepository = {
-      encontrarPorId: jest.fn((id) =>
-        id === ID_PROYECTO ? { idProyecto: id, perfiles: [] } : undefined,
-      ),
+      existe: jest.fn((id) => id === ID_PROYECTO),
       agregarPerfil: jest.fn(async () => undefined),
       quitarPerfil: jest.fn(async () => undefined),
     };
