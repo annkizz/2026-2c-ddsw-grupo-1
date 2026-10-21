@@ -31,7 +31,8 @@ export class ColaboracionRepository {
   obtenerPorProyecto(idProyecto) {
     return this.colaboracionModel
       .find({ idProyecto })
-      .populate("idColaborador")
+      .select("idProyecto idColaborador fecha esAnonima")
+      .populate("idColaborador", "nombreFantasia usuarioGitHub nombre apellido")
       .exec();
   }
 

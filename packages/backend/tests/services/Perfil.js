@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { PerfilService } from "../../services/PerfilService.js";
 import { NotFoundError } from "../../errors/AppError.js";
 
@@ -18,7 +18,7 @@ const datosPerfil = () => ({
 // simula un documento tal como lo devuelve el repositorio
 const perfilGuardado = (extra = {}) => ({
   id: "perfil-1",
-  proyecto: ID_PROYECTO,
+  idProyecto: ID_PROYECTO,
   ...datosPerfil(),
   ...extra,
 });
@@ -33,14 +33,14 @@ describe("PerfilService", () => {
     perfilRepository = {
       save: jest.fn(async (perfil, idProyecto) => ({
         id: "perfil-1",
-        proyecto: idProyecto,
+        idProyecto,
         ...perfil,
       })),
       obtenerTodos: jest.fn(async () => []),
       buscarPorId: jest.fn(async () => null),
       actualizar: jest.fn(async (id, datos) => ({
         id,
-        proyecto: ID_PROYECTO,
+        idProyecto: ID_PROYECTO,
         ...datos,
       })),
       eliminar: jest.fn(async () => undefined),
@@ -53,7 +53,15 @@ describe("PerfilService", () => {
       quitarPerfil: jest.fn(async () => undefined),
     };
     habilidadRepository = {
-      encontrarPorTitulo: jest.fn((titulo) => ({ titulo })),
+      encontrarPorCodigos: jest.fn(async (codigos) =>
+        [
+          {
+            codigo: "testing_e2e_con_cypress",
+            titulo: "Testing E2E con Cypress",
+          },
+          { codigo: "uso_de_soap_ui", titulo: "Uso de Soap UI" },
+        ].filter((habilidad) => codigos.includes(habilidad.codigo)),
+      ),
     };
     service = new PerfilService(
       perfilRepository,
@@ -77,7 +85,7 @@ describe("PerfilService", () => {
         ID_PROYECTO,
       );
       expect(resultado).toEqual({
-        idPerfil: "perfil-1",
+        id: "perfil-1",
         idProyecto: ID_PROYECTO,
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
@@ -95,14 +103,12 @@ describe("PerfilService", () => {
       );
     });
 
-    it("verifica cada habilidad requerida y opcional contra el repositorio de habilidades", async () => {
+    it("verifica todas las habilidades en una consulta al repositorio", async () => {
       await service.crear(ID_PROYECTO, datosPerfil());
 
-      expect(habilidadRepository.encontrarPorTitulo).toHaveBeenCalledWith(
-        "Testing E2E con Cypress",
-      );
-      expect(habilidadRepository.encontrarPorTitulo).toHaveBeenCalledWith(
-        "Uso de Soap UI",
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledTimes(1);
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith(
+        ["testing_e2e_con_cypress", "uso_de_soap_ui"],
       );
     });
 
@@ -125,8 +131,10 @@ describe("PerfilService", () => {
     });
 
     it("falla con HABILIDAD_NO_ENCONTRADA si una habilidad requerida no existe", async () => {
-      habilidadRepository.encontrarPorTitulo.mockImplementation((titulo) =>
-        titulo === "Testing E2E con Cypress" ? undefined : { titulo },
+      habilidadRepository.encontrarPorCodigos.mockImplementation((codigos) =>
+        codigos.includes("testing_e2e_con_cypress")
+          ? [{ codigo: "uso_de_soap_ui", titulo: "Uso de Soap UI" }]
+          : [],
       );
 
       const promesa = service.crear(ID_PROYECTO, datosPerfil());
@@ -139,8 +147,15 @@ describe("PerfilService", () => {
     });
 
     it("falla con HABILIDAD_NO_ENCONTRADA si una habilidad opcional no existe", async () => {
-      habilidadRepository.encontrarPorTitulo.mockImplementation((titulo) =>
-        titulo === "Uso de Soap UI" ? undefined : { titulo },
+      habilidadRepository.encontrarPorCodigos.mockImplementation((codigos) =>
+        codigos.includes("testing_e2e_con_cypress")
+          ? [
+              {
+                codigo: "testing_e2e_con_cypress",
+                titulo: "Testing E2E con Cypress",
+              },
+            ]
+          : [],
       );
 
       await expect(
@@ -152,9 +167,12 @@ describe("PerfilService", () => {
     });
 
     it("guarda el título de la habilidad tal como está cargado, no como lo escribió el usuario", async () => {
-      habilidadRepository.encontrarPorTitulo.mockImplementation(() => ({
-        titulo: "testingE2EConCypress",
-      }));
+      habilidadRepository.encontrarPorCodigos.mockResolvedValue([
+        {
+          codigo: "testing_e2e_con_cypress",
+          titulo: "testingE2EConCypress",
+        },
+      ]);
       const datos = { ...datosPerfil(), habilidadesOpcionales: [] };
 
       await service.crear(ID_PROYECTO, datos);
@@ -176,7 +194,7 @@ describe("PerfilService", () => {
 
       expect(perfilRepository.obtenerTodos).toHaveBeenCalledWith(ID_PROYECTO);
       expect(resultado).toHaveLength(2);
-      expect(resultado.map((p) => p.idPerfil)).toEqual([
+      expect(resultado.map((p) => p.id)).toEqual([
         "perfil-1",
         "perfil-2",
       ]);
@@ -204,7 +222,7 @@ describe("PerfilService", () => {
 
       expect(perfilRepository.buscarPorId).toHaveBeenCalledWith("perfil-1");
       expect(resultado).toEqual({
-        idPerfil: "perfil-1",
+        id: "perfil-1",
         idProyecto: ID_PROYECTO,
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
@@ -224,7 +242,7 @@ describe("PerfilService", () => {
 
     it("falla con PERFIL_NO_ENCONTRADO si el perfil es de otro proyecto", async () => {
       perfilRepository.buscarPorId.mockResolvedValue(
-        perfilGuardado({ proyecto: "otro-proyecto" }),
+        perfilGuardado({ idProyecto: "otro-proyecto" }),
       );
 
       await expect(
@@ -273,7 +291,7 @@ describe("PerfilService", () => {
         nuevosDatos(),
       );
       expect(resultado).toEqual({
-        idPerfil: "perfil-1",
+        id: "perfil-1",
         idProyecto: ID_PROYECTO,
         ...nuevosDatos(),
       });
@@ -286,24 +304,25 @@ describe("PerfilService", () => {
       expect(proyectoRepository.quitarPerfil).not.toHaveBeenCalled();
     });
 
-    it("verifica cada habilidad contra el repositorio de habilidades", async () => {
+    it("verifica todas las habilidades en una consulta al repositorio", async () => {
       await service.actualizar(ID_PROYECTO, "perfil-1", {
         ...nuevosDatos(),
         habilidadesOpcionales: ["Uso de Soap UI"],
       });
 
-      expect(habilidadRepository.encontrarPorTitulo).toHaveBeenCalledWith(
-        "Testing E2E con Cypress",
-      );
-      expect(habilidadRepository.encontrarPorTitulo).toHaveBeenCalledWith(
-        "Uso de Soap UI",
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledTimes(1);
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith(
+        ["testing_e2e_con_cypress", "uso_de_soap_ui"],
       );
     });
 
     it("guarda el título de la habilidad tal como está cargado, no como lo escribió el usuario", async () => {
-      habilidadRepository.encontrarPorTitulo.mockImplementation(() => ({
-        titulo: "testingE2EConCypress",
-      }));
+      habilidadRepository.encontrarPorCodigos.mockResolvedValue([
+        {
+          codigo: "testing_e2e_con_cypress",
+          titulo: "testingE2EConCypress",
+        },
+      ]);
 
       await service.actualizar(ID_PROYECTO, "perfil-1", nuevosDatos());
 
@@ -313,8 +332,8 @@ describe("PerfilService", () => {
     });
 
     it("falla con HABILIDAD_NO_ENCONTRADA si una habilidad no existe y no actualiza nada", async () => {
-      habilidadRepository.encontrarPorTitulo.mockImplementation(
-        () => undefined,
+      habilidadRepository.encontrarPorCodigos.mockResolvedValue(
+        [],
       );
 
       await expect(
@@ -339,7 +358,7 @@ describe("PerfilService", () => {
 
     it("falla con PERFIL_NO_ENCONTRADO si el perfil es de otro proyecto", async () => {
       perfilRepository.buscarPorId.mockResolvedValue(
-        perfilGuardado({ proyecto: "otro-proyecto" }),
+        perfilGuardado({ idProyecto: "otro-proyecto" }),
       );
 
       await expect(
@@ -392,7 +411,7 @@ describe("PerfilService", () => {
 
     it("falla con PERFIL_NO_ENCONTRADO si el perfil es de otro proyecto", async () => {
       perfilRepository.buscarPorId.mockResolvedValue(
-        perfilGuardado({ proyecto: "otro-proyecto" }),
+        perfilGuardado({ idProyecto: "otro-proyecto" }),
       );
 
       await expect(

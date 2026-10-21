@@ -32,23 +32,23 @@ export async function ejecutarSeed(
         c.pronombres ?? [],
         c.habilidades,
       ),
-      c.idColaborador,
+      c.id,
     );
   }
 
-  const idsProyectosSeed = datos.proyectos.map((p) => p.idProyecto);
+  const idsProyectosSeed = datos.proyectos.map((p) => p.id);
   await db.borrarDatosDeProyectos(idsProyectosSeed);
 
   for (const p of datos.proyectos) {
     for (const perfil of p.perfiles) {
-      await db.guardarPerfil({ ...perfil, proyecto: p.idProyecto });
+      await db.guardarPerfil({ ...perfil, idProyecto: p.id });
     }
 
     await proyectoRepository.save(
       new Proyecto(
         p.titulo,
         p.descripcion,
-        p.perfiles.map((perfil) => perfil.idPerfil),
+        p.perfiles.map((perfil) => perfil.id),
         p.estado,
         p.fechaInicio,
         p.fechaLimiteCierre,
@@ -57,23 +57,23 @@ export async function ejecutarSeed(
         p.enlaceSistema,
         p.enlaceCodigoFuente,
       ),
-      p.idProyecto,
+      p.id,
     );
 
     for (const logro of p.logros) {
-      await db.guardarLogro({ ...logro, proyecto: p.idProyecto });
+      await db.guardarLogro({ ...logro, idProyecto: p.id });
     }
   }
 
   for (const c of datos.colectivos) {
     await colectivoRepository.save(
       new Colectivo(c.nombre, c.descripcion, c.ubicacion, c.tipoDeColectivo),
-      c.idColectivo,
+      c.id,
     );
   }
 
   for (const p of datos.proyectos) {
-    await colectivoRepository.agregarProyecto(p.idColectivo, p.idProyecto);
+    await colectivoRepository.agregarProyecto(p.idColectivo, p.id);
   }
 
   for (const c of datos.colaboraciones) {

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Notificacion } from "../domain/Notificacion.js";
 import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
@@ -21,11 +20,11 @@ export class NotificacionService {
 
   toDTO(notificacion) {
     return {
-      idNotificacion: notificacion.idNotificacion,
+      id: String(notificacion.id ?? notificacion._id),
       fecha: notificacion.fecha,
       contenido: notificacion.contenido,
-      idColectivo: notificacion.idColectivo,
-      idColaborador: notificacion.idColaborador,
+      idColectivo: String(notificacion.idColectivo),
+      idColaborador: String(notificacion.idColaborador),
       envios: (notificacion.envios ?? []).map(
         ({ tipoDeContacto, estado, detalle }) => ({
           tipoDeContacto,
@@ -74,14 +73,14 @@ export class NotificacionService {
     }
 
     const notificacion = new Notificacion({
-      idNotificacion: randomUUID(),
       contenido,
-      idColectivo: colectivo.idColectivo,
-      idColaborador: colaboradora.idColaborador,
+      idColectivo: colectivo._id,
+      idColaborador: colaboradora._id,
     });
 
     // el mensaje interno queda guardado aunque falle (o se corte) el envío externo
-    await this.notificacionRepository.save(notificacion);
+    const guardadaInicial = await this.notificacionRepository.save(notificacion);
+    notificacion.id = guardadaInicial.id ?? guardadaInicial._id;
 
     const mensaje = this.construirMensaje(colectivo, contenido);
     const envios = await Promise.all(
@@ -116,9 +115,9 @@ export class NotificacionService {
     return notificaciones.map((n) => this.toDTO(n));
   }
 
-  async obtenerPorId(idNotificacion) {
+  async obtenerPorId(id) {
     const notificacion =
-      await this.notificacionRepository.encontrarPorId(idNotificacion);
+      await this.notificacionRepository.encontrarPorId(id);
     if (!notificacion) {
       throw new NotFoundError(
         "la notificación no existe",

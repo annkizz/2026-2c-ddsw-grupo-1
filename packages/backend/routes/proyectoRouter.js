@@ -19,7 +19,7 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     );
 
   router
-    .route("/:id/colaboraciones")
+    .route("/:idProyecto/colaboraciones")
     .get((req, res) =>
       proyectoController.obtenerColaboracionesPublicas(req, res),
     )
@@ -28,22 +28,22 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     );
 
   router
-    .route("/:id/cierre")
+    .route("/:idProyecto/cierre")
     .patch((req, res) => proyectoController.cerrarProyecto(req, res));
 
   router
-    .route("/:id/cierre-programado")
+    .route("/:idProyecto/cierre-programado")
     .patch(validate(cierreProgramadoSchema), (req, res) =>
       proyectoController.programarCierre(req, res),
     );
 
   router
-    .route("/:id/avance")
+    .route("/:idProyecto/avance")
     .patch(validate(avanceSchema), (req, res) =>
       proyectoController.actualizarAvance(req, res),
     );
 
-  router.use("/:id/perfiles", crearPerfilRouter(perfilController));
+  router.use("/:idProyecto/perfiles", crearPerfilRouter(perfilController));
 
   return router;
 }

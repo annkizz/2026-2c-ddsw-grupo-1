@@ -4,10 +4,10 @@ export class MatchingController {
   }
 
   buscarColaboradoras = async (req, res) => {
-    const { id, idPerfil } = req.params;
+    const { idProyecto, id } = req.params;
     const resultados = await this.matchingService.buscarColaboradorasParaPerfil(
+      idProyecto,
       id,
-      idPerfil,
     );
     res.status(200).json(resultados);
   };

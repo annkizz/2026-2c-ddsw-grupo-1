@@ -1,3 +1,5 @@
+import { describe, expect, it } from "@jest/globals";
+import mongoose from "mongoose";
 import { NotificacionModel } from "../../schemas/notificacionSchema.js";
 import { ColaboradorModel } from "../../schemas/colaboradorSchema.js";
 import { EstadoEnvio } from "../../domain/EstadoEnvio.js";
@@ -5,11 +7,10 @@ import { EstadoEnvio } from "../../domain/EstadoEnvio.js";
 describe("esquemas de persistencia de mensajería", () => {
   it("registra notificaciones en una colección propia con los campos persistidos", async () => {
     const notificacion = new NotificacionModel({
-      idNotificacion: "notification-1",
       fecha: new Date(),
       contenido: "Mensaje de prueba",
-      idColectivo: "colectivo-1",
-      idColaborador: "colaboradora-1",
+      idColectivo: "c00000000000000000000001",
+      idColaborador: "b00000000000000000000001",
       envios: [
         {
           tipoDeContacto: "EMAIL",
@@ -20,6 +21,13 @@ describe("esquemas de persistencia de mensajería", () => {
     });
 
     expect(NotificacionModel.collection.collectionName).toBe("notificaciones");
+    expect(mongoose.isObjectIdOrHexString(notificacion._id)).toBe(true);
+    expect(mongoose.isObjectIdOrHexString(notificacion.idColectivo)).toBe(
+      true,
+    );
+    expect(mongoose.isObjectIdOrHexString(notificacion.idColaborador)).toBe(
+      true,
+    );
     await expect(notificacion.validate()).resolves.toBeUndefined();
     expect(notificacion.envios[0].toObject()).toEqual({
       tipoDeContacto: "EMAIL",
@@ -30,7 +38,6 @@ describe("esquemas de persistencia de mensajería", () => {
 
   it("requiere consentimiento de mensajería y lo desactiva por defecto", async () => {
     const colaboradora = new ColaboradorModel({
-      idColaborador: "colaboradora-1",
       habilidades: ["React"],
     });
 

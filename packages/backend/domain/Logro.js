@@ -1,8 +1,8 @@
 export class Logro {
-  constructor(titulo, descripcion, fecha, proyecto) {
+  constructor(titulo, descripcion, fecha, idProyecto) {
     this.titulo = titulo;
     this.descripcion = descripcion;
     this.fecha = fecha;
-    this.proyecto = proyecto;
+    this.idProyecto = idProyecto;
   }
 }

@@ -23,15 +23,15 @@ export class ProyectoRepository {
     return await this.proyectoModel.findById(id).exec();
   }
 
-  agregarPerfil(idProyecto, idPerfil) {
+  agregarPerfil(idProyecto, id) {
     return this.proyectoModel
-      .updateOne({ _id: idProyecto }, { $addToSet: { perfiles: idPerfil } })
+      .updateOne({ _id: idProyecto }, { $addToSet: { perfiles: id } })
       .exec();
   }
 
-  quitarPerfil(idProyecto, idPerfil) {
+  quitarPerfil(idProyecto, id) {
     return this.proyectoModel
-      .updateOne({ _id: idProyecto }, { $pull: { perfiles: idPerfil } })
+      .updateOne({ _id: idProyecto }, { $pull: { perfiles: id } })
       .exec();
   }
 

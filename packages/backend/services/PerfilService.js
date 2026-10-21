@@ -1,8 +1,11 @@
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
-import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
+import {
+  HabilidadRepository,
+  normalizarHabilidad,
+} from "../repositories/HabilidadRepository.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { NotFoundError } from "../errors/AppError.js";
-import { Perfil } from "../domain/Perfil.js"; // ← nuevo
+import { Perfil } from "../domain/Perfil.js";
 
 export class PerfilService {
   constructor(
@@ -10,25 +13,25 @@ export class PerfilService {
     proyectoRepository = new ProyectoRepository(),
     habilidadRepository = new HabilidadRepository(),
   ) {
-    ((this.perfilRepository = perfilRepository),
-      (this.proyectoRepository = proyectoRepository),
-      (this.habilidadRepository = habilidadRepository));
+    this.perfilRepository = perfilRepository;
+    this.proyectoRepository = proyectoRepository;
+    this.habilidadRepository = habilidadRepository;
   }
 
-    toDTO (perfil) {
-        return {
-        id: perfil.id,
-        idProyecto: perfil.idProyecto,
-        descripcion: perfil.descripcion,
-        habilidadesRequeridas: perfil.habilidadesRequeridas,
-        habilidadesOpcionales: perfil.habilidadesOpcionales,
-        compromiso: {
-            tipoCompromiso: perfil.compromiso.tipoCompromiso,
-            horas: perfil.compromiso.horas,
-            tipoColaboracion: perfil.compromiso.tipoColaboracion
-        },
-        };
-    }
+  toDTO(perfil) {
+    return {
+      id: String(perfil.id ?? perfil._id),
+      idProyecto: String(perfil.idProyecto),
+      descripcion: perfil.descripcion,
+      habilidadesRequeridas: [...perfil.habilidadesRequeridas],
+      habilidadesOpcionales: [...perfil.habilidadesOpcionales],
+      compromiso: {
+        tipoCompromiso: perfil.compromiso.tipoCompromiso,
+        horas: perfil.compromiso.horas,
+        tipoColaboracion: perfil.compromiso.tipoColaboracion,
+      },
+    };
+  }
 
   async obtenerTodos(idProyecto) {
     await this.validarProyecto(idProyecto);
@@ -39,12 +42,14 @@ export class PerfilService {
   async crear(idProyecto, datos) {
     await this.validarProyecto(idProyecto);
 
-    const requeridas = await this.validarHabilidades(
-      datos.habilidadesRequeridas,
-    );
-    const opcionales = await this.validarHabilidades(
-      datos.habilidadesOpcionales,
-    );
+    const habilidadesRequeridas = datos.habilidadesRequeridas;
+    const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
+    const habilidades = await this.validarHabilidades([
+      ...habilidadesRequeridas,
+      ...habilidadesOpcionales,
+    ]);
+    const requeridas = habilidades.slice(0, habilidadesRequeridas.length);
+    const opcionales = habilidades.slice(habilidadesRequeridas.length);
 
     const perfilNuevo = new Perfil(
       datos.descripcion,
@@ -62,31 +67,33 @@ export class PerfilService {
     return this.toDTO(guardado);
   }
 
-  async obtenerPerfilDelProyecto(idProyecto, idPerfil) {
+  async obtenerPerfilDelProyecto(idProyecto, id) {
     await this.validarProyecto(idProyecto);
-    const perfil = await this.perfilRepository.buscarPorId(idPerfil);
-    if (!perfil || perfil.proyecto !== idProyecto) {
+    const perfil = await this.perfilRepository.buscarPorId(id);
+    if (!perfil || String(perfil.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
     }
     return perfil;
   }
 
-  async obtenerPorId(idProyecto, idPerfil) {
-    const perfil = await this.obtenerPerfilDelProyecto(idProyecto, idPerfil);
+  async obtenerPorId(idProyecto, id) {
+    const perfil = await this.obtenerPerfilDelProyecto(idProyecto, id);
     return this.toDTO(perfil);
   }
 
-  async actualizar(idProyecto, idPerfil, datos) {
-    await this.obtenerPerfilDelProyecto(idProyecto, idPerfil);
+  async actualizar(idProyecto, id, datos) {
+    await this.obtenerPerfilDelProyecto(idProyecto, id);
 
-    const requeridas = await this.validarHabilidades(
-      datos.habilidadesRequeridas,
-    );
-    const opcionales = await this.validarHabilidades(
-      datos.habilidadesOpcionales,
-    );
+    const habilidadesRequeridas = datos.habilidadesRequeridas;
+    const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
+    const habilidades = await this.validarHabilidades([
+      ...habilidadesRequeridas,
+      ...habilidadesOpcionales,
+    ]);
+    const requeridas = habilidades.slice(0, habilidadesRequeridas.length);
+    const opcionales = habilidades.slice(habilidadesRequeridas.length);
 
-    const actualizado = await this.perfilRepository.actualizar(idPerfil, {
+    const actualizado = await this.perfilRepository.actualizar(id, {
       descripcion: datos.descripcion,
       habilidadesRequeridas: requeridas.map((h) => h.titulo),
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
@@ -95,10 +102,10 @@ export class PerfilService {
     return this.toDTO(actualizado);
   }
 
-  async eliminar(idProyecto, idPerfil) {
-    await this.obtenerPerfilDelProyecto(idProyecto, idPerfil);
-    await this.perfilRepository.eliminar(idPerfil);
-    await this.proyectoRepository.quitarPerfil(idProyecto, idPerfil);
+  async eliminar(idProyecto, id) {
+    await this.obtenerPerfilDelProyecto(idProyecto, id);
+    await this.perfilRepository.eliminar(id);
+    await this.proyectoRepository.quitarPerfil(idProyecto, id);
   }
 
   async validarProyecto(idProyecto) {
@@ -113,18 +120,27 @@ export class PerfilService {
   }
 
   async validarHabilidades(titulos = []) {
-    return Promise.all(
-      titulos.map(async (titulo) => {
-        const habilidad =
-          await this.habilidadRepository.encontrarPorTitulo(titulo);
-        if (!habilidad) {
-          throw new NotFoundError(
-            `la habilidad ${titulo} no existe`,
-            "HABILIDAD_NO_ENCONTRADA",
-          );
-        }
-        return habilidad;
-      }),
+    if (titulos.length === 0) return [];
+
+    const codigos = [
+      ...new Set(titulos.map((titulo) => normalizarHabilidad(titulo))),
+    ];
+    const habilidades = await this.habilidadRepository.encontrarPorCodigos(
+      codigos,
     );
+    const habilidadesPorCodigo = new Map(
+      habilidades.map((habilidad) => [habilidad.codigo, habilidad]),
+    );
+
+    return titulos.map((titulo) => {
+      const habilidad = habilidadesPorCodigo.get(normalizarHabilidad(titulo));
+      if (!habilidad) {
+        throw new NotFoundError(
+          `la habilidad ${titulo} no existe`,
+          "HABILIDAD_NO_ENCONTRADA",
+        );
+      }
+      return habilidad;
+    });
   }
 }

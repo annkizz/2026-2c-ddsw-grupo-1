@@ -5,8 +5,9 @@ import { TipoColaboracion } from "../domain/TipoColaboracion.js";
 
 const perfilSchema = new mongoose.Schema(
   {
-    proyecto: {
-      type: String,
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Proyecto",
       required: true,
       index: true,
     },

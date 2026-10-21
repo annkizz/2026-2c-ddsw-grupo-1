@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { LogroService } from "../../services/LogroService.js";
 import { NotFoundError } from "../../errors/AppError.js";
 
@@ -14,7 +14,7 @@ const datosLogro = () => ({
 // simula un documento tal como lo devuelve el repositorio
 const logroGuardado = (extra = {}) => ({
   id: "logro-1",
-  proyecto: ID_PROYECTO,
+  idProyecto: ID_PROYECTO,
   ...datosLogro(),
   ...extra,
 });
@@ -47,10 +47,10 @@ describe("LogroService", () => {
       expect(logroRepository.save).toHaveBeenCalledTimes(1);
       expect(logroRepository.save).toHaveBeenCalledWith({
         ...datosLogro(),
-        proyecto: ID_PROYECTO,
+        idProyecto: ID_PROYECTO,
       });
       expect(resultado).toEqual({
-        idLogro: "logro-1",
+        id: "logro-1",
         idProyecto: ID_PROYECTO,
         ...datosLogro(),
       });
@@ -81,7 +81,7 @@ describe("LogroService", () => {
         ID_PROYECTO,
       );
       expect(resultado).toHaveLength(2);
-      expect(resultado.map((l) => l.idLogro)).toEqual(["logro-1", "logro-2"]);
+      expect(resultado.map((l) => l.id)).toEqual(["logro-1", "logro-2"]);
       expect(resultado[1].titulo).toBe("Repositorio público");
     });
 
@@ -113,7 +113,7 @@ describe("LogroService", () => {
         "logro-1",
       );
       expect(resultado).toEqual({
-        idLogro: "logro-1",
+        id: "logro-1",
         idProyecto: ID_PROYECTO,
         ...datosLogro(),
       });
@@ -156,7 +156,7 @@ describe("LogroService", () => {
         "logro-1",
         datosNuevos,
       );
-      expect(resultado.idLogro).toBe("logro-1");
+      expect(resultado.id).toBe("logro-1");
       expect(resultado.titulo).toBe("Versión 2");
     });
 
