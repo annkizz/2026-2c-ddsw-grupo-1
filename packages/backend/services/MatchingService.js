@@ -19,7 +19,7 @@ export class MatchingService {
   // busqueda de potenciales colaboradoras segun perfil del proyecto
   //las q estan anotadas al proyecto y las q comparten alguna habilidad del perfil
 
-  async buscarColaboradorasParaPerfil(idProyecto, idPerfil) {
+  async buscarColaboradorasParaPerfil(idProyecto, id) {
     const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
     if (!proyecto) {
       throw new NotFoundError(
@@ -28,8 +28,8 @@ export class MatchingService {
       );
     }
 
-    const perfil = await this.perfilRepository.buscarPorId(idPerfil);
-    if (!perfil || perfil.proyecto !== idProyecto) {
+    const perfil = await this.perfilRepository.buscarPorId(id);
+    if (!perfil || String(perfil.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError("Perfil no encontrado", "PERFIL_NO_ENCONTRADO");
     }
 
@@ -103,9 +103,10 @@ export class MatchingService {
     );
     const perfilesPorProyecto = new Map();
     for (const perfil of perfiles) {
-      const ids = perfilesPorProyecto.get(perfil.proyecto) ?? [];
+      const idProyecto = String(perfil.idProyecto);
+      const ids = perfilesPorProyecto.get(idProyecto) ?? [];
       ids.push(perfil);
-      perfilesPorProyecto.set(perfil.proyecto, ids);
+      perfilesPorProyecto.set(idProyecto, ids);
     }
 
     const resultados = abiertos.map((proyecto) => {

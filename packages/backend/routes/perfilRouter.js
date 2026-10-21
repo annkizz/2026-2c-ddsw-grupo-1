@@ -13,7 +13,7 @@ export function crearPerfilRouter(perfilController) {
     );
 
   router
-    .route("/:idPerfil")
+    .route("/:id")
     .delete((req, res) => perfilController.eliminar(req, res))
     .put(validate(perfilSchema), (req, res) =>
       perfilController.actualizar(req, res),

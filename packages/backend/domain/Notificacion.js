@@ -1,13 +1,13 @@
 export class Notificacion {
   constructor({
-    idNotificacion,
+    id,
     fecha = new Date(),
     contenido,
     idColectivo,
     idColaborador,
     envios = [],
   }) {
-    this.idNotificacion = idNotificacion;
+    this.id = id;
     this.fecha = fecha;
     this.contenido = contenido;
     this.idColectivo = idColectivo;

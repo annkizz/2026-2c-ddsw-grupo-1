@@ -117,20 +117,20 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/perfiles/{idPerfil}/colaboradoras": {
+    "/proyectos/{idProyecto}/perfiles/{id}/colaboradoras": {
       get: {
         summary:
           "Busca colaboradoras candidatas para un perfil específico de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
             description: "ID del proyecto",
           },
           {
-            name: "idPerfil",
+            name: "id",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -147,7 +147,7 @@ const swaggerSpec = {
                   items: {
                     type: "object",
                     properties: {
-                      idColaborador: { type: "string" },
+                      id: { type: "string" },
                       nombreFantasia: { type: "string" },
                       usuarioGitHub: { type: "string" },
                       pronombres: {
@@ -202,7 +202,7 @@ const swaggerSpec = {
                   items: {
                     type: "object",
                     properties: {
-                      idProyecto: { type: "string" },
+                      id: { type: "string" },
                       titulo: { type: "string" },
                       descripcion: { type: "string" },
                       perfilesCompatibles: {
@@ -210,7 +210,7 @@ const swaggerSpec = {
                         items: {
                           type: "object",
                           properties: {
-                            idPerfil: { type: "string" },
+                            id: { type: "string" },
                             descripcion: { type: "string" },
                             compromiso: {
                               type: "object",
@@ -239,12 +239,12 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/perfiles": {
+    "/proyectos/{idProyecto}/perfiles": {
       get: {
         summary: "Obtiene los perfiles de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -270,7 +270,7 @@ const swaggerSpec = {
         summary: "Crea un perfil dentro de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -301,19 +301,19 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/perfiles/{idPerfil}": {
+    "/proyectos/{idProyecto}/perfiles/{id}": {
       get: {
         summary: "Obtiene un perfil de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
             description: "Id del proyecto",
           },
           {
-            name: "idPerfil",
+            name: "id",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -336,14 +336,14 @@ const swaggerSpec = {
         summary: "Actualiza un perfil de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
             description: "Id del proyecto",
           },
           {
-            name: "idPerfil",
+            name: "id",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -377,14 +377,14 @@ const swaggerSpec = {
         summary: "Elimina un perfil de un proyecto",
         parameters: [
           {
-            name: "id",
+            name: "idProyecto",
             in: "path",
             required: true,
             schema: { type: "string" },
             description: "Id del proyecto",
           },
           {
-            name: "idPerfil",
+            name: "id",
             in: "path",
             required: true,
             schema: { type: "string" },
@@ -510,7 +510,10 @@ const swaggerSpec = {
                 type: "object",
                 required: ["idColectivo", "titulo", "descripcion"],
                 properties: {
-                  idColectivo: { type: "string", example: "a1b2c3d4-..." },
+                  idColectivo: {
+                    type: "string",
+                    example: "c00000000000000000000001",
+                  },
                   titulo: {
                     type: "string",
                     example: "Desarrollo de plataforma web",
@@ -539,13 +542,13 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/colaboraciones": {
+    "/proyectos/{idProyecto}/colaboraciones": {
       get: {
         summary: "Obtiene las contribuciones públicas de un proyecto",
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
             description: "ID del proyecto",
@@ -571,7 +574,7 @@ const swaggerSpec = {
                         description:
                           "Solo se incluye cuando la contribución no es anónima",
                         properties: {
-                          idColaborador: { type: "string" },
+                          id: { type: "string" },
                           nombreFantasia: { type: "string" },
                           usuarioGitHub: { type: "string" },
                           nombre: { type: "string" },
@@ -593,7 +596,7 @@ const swaggerSpec = {
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
             description: "ID del proyecto",
@@ -607,7 +610,10 @@ const swaggerSpec = {
                 type: "object",
                 required: ["idColaborador"],
                 properties: {
-                  idColaborador: { type: "string", example: "a1b2c3d4-..." },
+                  idColaborador: {
+                    type: "string",
+                    example: "b00000000000000000000001",
+                  },
                   esAnonima: {
                     type: "boolean",
                     default: false,
@@ -632,13 +638,13 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/cierre": {
+    "/proyectos/{idProyecto}/cierre": {
       patch: {
         summary: "Cierra un proyecto",
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
             description: "ID del proyecto",
@@ -650,13 +656,13 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/cierre-programado": {
+    "/proyectos/{idProyecto}/cierre-programado": {
       patch: {
         summary: "Programa la fecha límite de cierre automático de un proyecto",
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
             description: "ID del proyecto",
@@ -697,7 +703,7 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/avance": {
+    "/proyectos/{idProyecto}/avance": {
       patch: {
         summary: "Actualiza el avance de un proyecto",
         description:
@@ -705,7 +711,7 @@ const swaggerSpec = {
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
@@ -761,13 +767,13 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/logros": {
+    "/proyectos/{idProyecto}/logros": {
       get: {
         summary: "Lista los logros de un proyecto",
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
@@ -792,7 +798,7 @@ const swaggerSpec = {
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
@@ -819,19 +825,19 @@ const swaggerSpec = {
         },
       },
     },
-    "/proyectos/{id}/logros/{idLogro}": {
+    "/proyectos/{idProyecto}/logros/{id}": {
       get: {
         summary: "Obtiene un logro de un proyecto",
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
           {
             in: "path",
-            name: "idLogro",
+            name: "id",
             required: true,
             schema: { type: "string" },
           },
@@ -853,13 +859,13 @@ const swaggerSpec = {
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
           {
             in: "path",
-            name: "idLogro",
+            name: "id",
             required: true,
             schema: { type: "string" },
           },
@@ -890,13 +896,13 @@ const swaggerSpec = {
         parameters: [
           {
             in: "path",
-            name: "id",
+            name: "idProyecto",
             required: true,
             schema: { type: "string" },
           },
           {
             in: "path",
-            name: "idLogro",
+            name: "id",
             required: true,
             schema: { type: "string" },
           },
@@ -918,14 +924,14 @@ const swaggerSpec = {
             name: "idColectivo",
             required: false,
             schema: { type: "string" },
-            example: "seed-colectivo-1",
+            example: "c00000000000000000000001",
           },
           {
             in: "query",
             name: "idColaborador",
             required: false,
             schema: { type: "string" },
-            example: "seed-colaboradora-1",
+            example: "b00000000000000000000001",
           },
         ],
         responses: {
@@ -963,8 +969,8 @@ const swaggerSpec = {
                 $ref: "#/components/schemas/CrearNotificacion",
               },
               example: {
-                idColectivo: "seed-colectivo-1",
-                idColaborador: "seed-colaboradora-1",
+                idColectivo: "c00000000000000000000001",
+                idColaborador: "b00000000000000000000001",
                 contenido: "Hola, queremos colaborar.",
               },
             },
@@ -978,11 +984,11 @@ const swaggerSpec = {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Notificacion" },
                 example: {
-                  idNotificacion: "8f09d4b5-4eb3-4fc0-a72a-150c916339d2",
+                  id: "8f09d4b54eb34fc0a72a150",
                   fecha: "2026-10-15T04:20:00.000Z",
                   contenido: "Hola, queremos colaborar.",
-                  idColectivo: "seed-colectivo-1",
-                  idColaborador: "seed-colaboradora-1",
+                  idColectivo: "c00000000000000000000001",
+                  idColaborador: "b00000000000000000000001",
                   envios: [
                     {
                       tipoDeContacto: "EMAIL",
@@ -1095,7 +1101,7 @@ const swaggerSpec = {
       Perfil: {
         type: "object",
         required: [
-          "idPerfil",
+          "id",
           "idProyecto",
           "descripcion",
           "habilidadesRequeridas",
@@ -1103,8 +1109,8 @@ const swaggerSpec = {
           "compromiso",
         ],
         properties: {
-          idPerfil: { type: "string", description: "ObjectId de MongoDB" },
-          idProyecto: { type: "string" },
+          id: { type: "string", description: "ObjectId de MongoDB" },
+          idProyecto: { type: "string", description: "ObjectId de MongoDB" },
           descripcion: { type: "string" },
           habilidadesRequeridas: {
             type: "array",
@@ -1144,10 +1150,10 @@ const swaggerSpec = {
       },
       Logro: {
         type: "object",
-        required: ["idLogro", "idProyecto", "titulo", "descripcion", "fecha"],
+        required: ["id", "idProyecto", "titulo", "descripcion", "fecha"],
         properties: {
-          idLogro: { type: "string", description: "ObjectId de MongoDB" },
-          idProyecto: { type: "string" },
+          id: { type: "string", description: "ObjectId de MongoDB" },
+          idProyecto: { type: "string", description: "ObjectId de MongoDB" },
           titulo: { type: "string" },
           descripcion: { type: "string" },
           fecha: { type: "string", format: "date-time" },
@@ -1160,12 +1166,12 @@ const swaggerSpec = {
           idColectivo: {
             type: "string",
             description: "ID del colectivo emisor",
-            example: "seed-colectivo-1",
+            example: "c00000000000000000000001",
           },
           idColaborador: {
             type: "string",
             description: "ID de la colaboradora destinataria",
-            example: "seed-colaboradora-1",
+            example: "b00000000000000000000001",
           },
           contenido: {
             type: "string",
@@ -1178,7 +1184,7 @@ const swaggerSpec = {
       Notificacion: {
         type: "object",
         required: [
-          "idNotificacion",
+          "id",
           "fecha",
           "contenido",
           "idColectivo",
@@ -1186,11 +1192,11 @@ const swaggerSpec = {
           "envios",
         ],
         properties: {
-          idNotificacion: { type: "string", format: "uuid" },
+          id: { type: "string", description: "ObjectId de MongoDB" },
           fecha: { type: "string", format: "date-time" },
           contenido: { type: "string" },
-          idColectivo: { type: "string" },
-          idColaborador: { type: "string" },
+          idColectivo: { type: "string", description: "ObjectId de MongoDB" },
+          idColaborador: { type: "string", description: "ObjectId de MongoDB" },
           envios: {
             type: "array",
             items: { $ref: "#/components/schemas/ResultadoEnvio" },

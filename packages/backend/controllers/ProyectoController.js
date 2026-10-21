@@ -52,20 +52,22 @@ export class ProyectoController {
 
   obtenerColaboracionesPublicas = async (req, res) => {
     const colaboraciones =
-      await this.proyectoService.obtenerColaboracionesPublicas(req.params.id);
+      await this.proyectoService.obtenerColaboracionesPublicas(
+        req.params.idProyecto,
+      );
     res.status(200).json(colaboraciones);
   };
 
   async programarCierre(req, res) {
     const proyecto = await this.proyectoService.programarCierre(
-      req.params.id,
+      req.params.idProyecto,
       req.body.fechaLimiteCierre,
     );
     res.status(200).json(proyecto);
   }
 
   async crearColaboracion(req, res) {
-    const proyectoId = req.params.id;
+    const proyectoId = req.params.idProyecto;
     const proyectoExistente =
       await this.proyectoService.obtenerProyectoPorId(proyectoId);
 
@@ -101,14 +103,14 @@ export class ProyectoController {
 
   async actualizarAvance(req, res) {
     const avance = await this.proyectoService.actualizarAvance(
-      req.params.id,
+      req.params.idProyecto,
       req.body,
     );
     res.status(200).json(avance);
   }
 
   async cerrarProyecto(req, res) {
-    const proyectoId = req.params.id;
+    const proyectoId = req.params.idProyecto;
     const proyectoExistente =
       await this.proyectoService.obtenerProyectoPorId(proyectoId);
 

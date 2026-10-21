@@ -1,8 +1,12 @@
-import { jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { NotificacionService } from "../../services/NotificacionService.js";
 import { NotificadorExterno } from "../../services/notificadores/NotificadorExterno.js";
 import { EstadoEnvio } from "../../domain/EstadoEnvio.js";
 import { TipoDeContacto } from "../../domain/TipoDeContacto.js";
+
+const ID_NOTIFICACION = "8f09d4b54eb34fc0a72a150";
+const ID_COLECTIVO = "c00000000000000000000001";
+const ID_COLABORADORA = "b00000000000000000000001";
 
 describe("NotificacionService", () => {
   let notificacionRepository;
@@ -14,16 +18,19 @@ describe("NotificacionService", () => {
   let colaboradora;
 
   beforeEach(() => {
-    colectivo = { idColectivo: "colectivo-1", nombre: "Fundación" };
+    colectivo = { _id: ID_COLECTIVO, nombre: "Fundación" };
     colaboradora = {
-      idColaborador: "colaboradora-1",
+      _id: ID_COLABORADORA,
       aceptaMensajeria: true,
       mediosDeContacto: [
         { tipoDeContacto: "EMAIL", contacto: "privado@example.org" },
       ],
     };
     notificacionRepository = {
-      save: jest.fn(async (notificacion) => notificacion),
+      save: jest.fn(async (notificacion) => ({
+        ...notificacion,
+        id: notificacion.id ?? ID_NOTIFICACION,
+      })),
       obtenerTodos: jest.fn(async () => []),
       encontrarPorId: jest.fn(async () => null),
     };
@@ -50,12 +57,15 @@ describe("NotificacionService", () => {
 
   it("guarda el mensaje y registra el resultado de cada medio sin exponer su destino", async () => {
     const resultado = await service.crear({
-      idColectivo: colectivo.idColectivo,
-      idColaborador: colaboradora.idColaborador,
+      idColectivo: colectivo._id,
+      idColaborador: colaboradora._id,
       contenido: "Hola, queremos contactarte.",
     });
 
     expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
+    expect(notificacionRepository.save.mock.invocationCallOrder[0]).toBeLessThan(
+      notificadorExterno.enviar.mock.invocationCallOrder[0],
+    );
     expect(notificadorExterno.enviar).toHaveBeenCalledWith(
       colaboradora.mediosDeContacto[0],
       expect.objectContaining({
@@ -63,6 +73,11 @@ describe("NotificacionService", () => {
         texto: expect.stringContaining("Hola, queremos contactarte."),
       }),
     );
+    expect(resultado).toMatchObject({
+      id: ID_NOTIFICACION,
+      idColectivo: ID_COLECTIVO,
+      idColaborador: ID_COLABORADORA,
+    });
     expect(resultado.envios).toEqual([
       {
         tipoDeContacto: "EMAIL",
@@ -81,8 +96,8 @@ describe("NotificacionService", () => {
 
     try {
       const resultado = await service.crear({
-        idColectivo: colectivo.idColectivo,
-        idColaborador: colaboradora.idColaborador,
+        idColectivo: colectivo._id,
+        idColaborador: colaboradora._id,
         contenido: "Hola, queremos contactarte.",
       });
 
@@ -101,8 +116,8 @@ describe("NotificacionService", () => {
 
     await expect(
       service.crear({
-        idColectivo: colectivo.idColectivo,
-        idColaborador: colaboradora.idColaborador,
+        idColectivo: colectivo._id,
+        idColaborador: colaboradora._id,
         contenido: "Hola, queremos contactarte.",
       }),
     ).rejects.toMatchObject({
@@ -118,8 +133,8 @@ describe("NotificacionService", () => {
     colectivoRepository.encontrarPorId.mockResolvedValue(null);
     await expect(
       service.crear({
-        idColectivo: colectivo.idColectivo,
-        idColaborador: colaboradora.idColaborador,
+        idColectivo: colectivo._id,
+        idColaborador: colaboradora._id,
         contenido: "Hola, queremos contactarte.",
       }),
     ).rejects.toMatchObject({ status: 404, codigo: "COLECTIVO_NO_ENCONTRADO" });
@@ -129,8 +144,8 @@ describe("NotificacionService", () => {
     colaboradorRepository.encontrarPorId.mockResolvedValue(null);
     await expect(
       service.crear({
-        idColectivo: colectivo.idColectivo,
-        idColaborador: colaboradora.idColaborador,
+        idColectivo: colectivo._id,
+        idColaborador: colaboradora._id,
         contenido: "Hola, queremos contactarte.",
       }),
     ).rejects.toMatchObject({
@@ -143,10 +158,10 @@ describe("NotificacionService", () => {
   it("filtra notificaciones por IDs permitidos", async () => {
     notificacionRepository.obtenerTodos.mockResolvedValue([]);
 
-    await service.obtenerTodos({ idColaborador: "colaboradora-1" });
+    await service.obtenerTodos({ idColaborador: ID_COLABORADORA });
 
     expect(notificacionRepository.obtenerTodos).toHaveBeenCalledWith({
-      idColaborador: "colaboradora-1",
+      idColaborador: ID_COLABORADORA,
     });
   });
 

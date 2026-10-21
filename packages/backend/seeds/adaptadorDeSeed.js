@@ -8,13 +8,13 @@ import { ColaboracionModel } from "../schemas/colaboracionSchema.js";
 export function crearAdaptadorDeSeed() {
   return {
     async borrarDatosDeProyectos(idsProyecto) {
-      await PerfilModel.deleteMany({ proyecto: { $in: idsProyecto } });
-      await LogroModel.deleteMany({ proyecto: { $in: idsProyecto } });
+      await PerfilModel.deleteMany({ idProyecto: { $in: idsProyecto } });
+      await LogroModel.deleteMany({ idProyecto: { $in: idsProyecto } });
       await ColaboracionModel.deleteMany({ idProyecto: { $in: idsProyecto } });
     },
-    guardarPerfil({ idPerfil, ...datos }) {
+    guardarPerfil({ id, ...datos }) {
       return PerfilModel.findOneAndUpdate(
-        { _id: idPerfil },
+        { _id: id },
         { $set: datos },
         {
           upsert: true,
@@ -24,9 +24,9 @@ export function crearAdaptadorDeSeed() {
         },
       );
     },
-    guardarLogro({ idLogro, ...datos }) {
+    guardarLogro({ id, ...datos }) {
       return LogroModel.findOneAndUpdate(
-        { _id: idLogro },
+        { _id: id },
         { $set: datos },
         {
           upsert: true,
@@ -37,7 +37,7 @@ export function crearAdaptadorDeSeed() {
       );
     },
     idsProyectosDeColectivo(idColectivo) {
-      return ProyectoModel.distinct("idProyecto", { idColectivo });
+      return ProyectoModel.distinct("_id", { idColectivo });
     },
   };
 }

@@ -18,11 +18,20 @@ const envioSchema = new mongoose.Schema(
 
 const notificacionSchema = new mongoose.Schema(
   {
-    idNotificacion: { type: String, required: true, unique: true, index: true },
     fecha: { type: Date, required: true, default: Date.now },
     contenido: { type: String, required: true, trim: true },
-    idColectivo: { type: String, required: true, trim: true, index: true },
-    idColaborador: { type: String, required: true, trim: true, index: true },
+    idColectivo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Colectivo",
+      required: true,
+      index: true,
+    },
+    idColaborador: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Colaborador",
+      required: true,
+      index: true,
+    },
     envios: { type: [envioSchema], default: [] },
   },
   { timestamps: true, collection: "notificaciones" },

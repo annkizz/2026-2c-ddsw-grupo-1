@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { NotificacionModel } from "../schemas/notificacionSchema.js";
 
 export class NotificacionRepository {
@@ -10,28 +11,26 @@ export class NotificacionRepository {
     return this.model.find(filtro).sort({ fecha: -1 }).exec();
   }
 
-  encontrarPorId(idNotificacion) {
-    return this.model.findOne({ idNotificacion }).exec();
+  encontrarPorId(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return this.model.findById(id).exec();
   }
 
-  save(unaNotificacion) {
+  save(notificacion) {
+    const { id, ...datos } = notificacion;
+    if (!id) {
+      return new this.model(datos).save();
+    }
+
     return this.model
-      .findOneAndUpdate(
-        { idNotificacion: unaNotificacion.idNotificacion },
+      .findByIdAndUpdate(
+        id,
         {
-          $set: {
-            fecha: unaNotificacion.fecha,
-            contenido: unaNotificacion.contenido,
-            idColectivo: unaNotificacion.idColectivo,
-            idColaborador: unaNotificacion.idColaborador,
-            envios: unaNotificacion.envios,
-          },
+          $set: datos,
         },
         {
-          upsert: true,
           returnDocument: "after",
           runValidators: true,
-          setDefaultsOnInsert: true,
         },
       )
       .exec();

@@ -6,7 +6,12 @@ const logroSchema = new mongoose.Schema(
     titulo: { type: String, required: true, trim: true },
     descripcion: { type: String, required: true, trim: true },
     fecha: { type: Date, required: true },
-    proyecto: { type: String, required: true, index: true },
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Proyecto",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true, collection: "logros" },
 );

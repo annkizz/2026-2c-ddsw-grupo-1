@@ -1,16 +1,18 @@
 import { z } from "zod";
 
+const objectIdSchema = z.string().trim().regex(/^[\da-f]{24}$/i);
+
 export const notificacionSchema = z
   .object({
     contenido: z.string().trim().min(4),
-    idColectivo: z.string().trim().min(1),
-    idColaborador: z.string().trim().min(1),
+    idColectivo: objectIdSchema,
+    idColaborador: objectIdSchema,
   })
   .strict();
 
 export const notificacionFiltroSchema = z
   .object({
-    idColectivo: z.string().trim().min(1).optional(),
-    idColaborador: z.string().trim().min(1).optional(),
+    idColectivo: objectIdSchema.optional(),
+    idColaborador: objectIdSchema.optional(),
   })
   .strict();

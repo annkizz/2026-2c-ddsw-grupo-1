@@ -36,7 +36,7 @@ export function crearDatosIniciales({
 
   const colectivos = [
     {
-      idColectivo: "c00000000000000000000001",
+      id: "c00000000000000000000001",
       nombre: "Fundación Manos Solidarias",
       descripcion:
         "Fundación que organiza turnos de voluntariado en hospitales.",
@@ -48,14 +48,14 @@ export function crearDatosIniciales({
       },
     },
     {
-      idColectivo: "c00000000000000000000002",
+      id: "c00000000000000000000002",
       nombre: "Asociación Vecinal Barrio Norte",
       descripcion: "Vecinas y vecinos que gestionan una despensa comunitaria.",
       tipoDeColectivo: "ASOCIACIONES_BARRIALES",
       ubicacion: { pais: "Argentina", provincia: "Córdoba", ciudad: "Córdoba" },
     },
     {
-      idColectivo: "c00000000000000000000003",
+      id: "c00000000000000000000003",
       nombre: "Datos para Todos",
       descripcion: "ONG que publica datos abiertos sobre acceso a alimentos.",
       tipoDeColectivo: "ONG",
@@ -65,7 +65,7 @@ export function crearDatosIniciales({
   const proyectos = [
     {
       // Matching: Tester -> Luna; Analista -> Martín. Sin colaboraciones.
-      idProyecto: "a00000000000000000000001",
+      id: "a00000000000000000000001",
       idColectivo: "c00000000000000000000001",
       titulo: "Portal de turnos solidarios",
       descripcion: "Sitio para que voluntarias y voluntarios reserven turnos.",
@@ -77,7 +77,7 @@ export function crearDatosIniciales({
       enlaceCodigoFuente: null,
       perfiles: [
         {
-          idPerfil: "000000000000000000000001",
+          id: "000000000000000000000001",
           descripcion: "Tester",
           habilidadesRequeridas: ["Testing E2E con Cypress"],
           habilidadesOpcionales: ["Uso de Soap UI"],
@@ -88,7 +88,7 @@ export function crearDatosIniciales({
           },
         },
         {
-          idPerfil: "000000000000000000000002",
+          id: "000000000000000000000002",
           descripcion: "Analista de Datos",
           habilidadesRequeridas: ["Conocimientos de Pandas"],
           habilidadesOpcionales: ["SQL"],
@@ -101,13 +101,13 @@ export function crearDatosIniciales({
       ],
       logros: [
         {
-          idLogro: "5eed00000000000000000101",
+          id: "5eed00000000000000000101",
           titulo: "Prototipo navegable",
           descripcion: "Mockups aprobados por el colectivo.",
           fecha: enDias(-20),
         },
         {
-          idLogro: "5eed00000000000000000102",
+          id: "5eed00000000000000000102",
           titulo: "Reserva de turnos en línea",
           descripcion: "Primera versión funcional del flujo de reserva.",
           fecha: enDias(-5),
@@ -116,7 +116,7 @@ export function crearDatosIniciales({
     },
     {
       // Matching: Frontend -> Sofía (Nico ya colabora, de forma anónima).
-      idProyecto: "a00000000000000000000002",
+      id: "a00000000000000000000002",
       idColectivo: "c00000000000000000000003",
       titulo: "Mapa de comedores comunitarios",
       descripcion: "Mapa interactivo y accesible de comedores de todo el país.",
@@ -128,7 +128,7 @@ export function crearDatosIniciales({
       enlaceCodigoFuente: null,
       perfiles: [
         {
-          idPerfil: "000000000000000000000003",
+          id: "000000000000000000000003",
           descripcion: "Desarrollo frontend",
           habilidadesRequeridas: ["React"],
           habilidadesOpcionales: ["Accesibilidad web", "Diseño UX/UI"],
@@ -143,7 +143,7 @@ export function crearDatosIniciales({
     },
     {
       // FINALIZADO: buscar colaboradoras da 409, anotarse da 409, no se recomienda.
-      idProyecto: "a00000000000000000000003",
+      id: "a00000000000000000000003",
       idColectivo: "c00000000000000000000002",
       titulo: "Inventario de donaciones",
       descripcion:
@@ -156,7 +156,7 @@ export function crearDatosIniciales({
       enlaceCodigoFuente: null,
       perfiles: [
         {
-          idPerfil: "000000000000000000000004",
+          id: "000000000000000000000004",
           descripcion: "Desarrollo backend",
           habilidadesRequeridas: ["Node.js"],
           habilidadesOpcionales: ["MongoDB"],
@@ -169,7 +169,7 @@ export function crearDatosIniciales({
       ],
       logros: [
         {
-          idLogro: "5eed00000000000000000103",
+          id: "5eed00000000000000000103",
           titulo: "Entrega final",
           descripcion: "Sistema en uso por la despensa.",
           fecha: enDias(-25),
@@ -180,7 +180,7 @@ export function crearDatosIniciales({
       // LABORATORIO: se cierra solo `minutosParaCierre` minutos después de correr el
       // seed (cierre automático). Su habilidad es exclusiva, no interfiere con el
       // resto del matching. Al volver a correr el seed se reabre.
-      idProyecto: "a00000000000000000000004",
+      id: "a00000000000000000000004",
       idColectivo: "c00000000000000000000001",
       titulo: "Laboratorio de pruebas",
       descripcion:
@@ -193,7 +193,7 @@ export function crearDatosIniciales({
       enlaceCodigoFuente: null,
       perfiles: [
         {
-          idPerfil: "000000000000000000000005",
+          id: "000000000000000000000005",
           descripcion: "Tester de carga",
           habilidadesRequeridas: ["Pruebas de carga con k6"],
           habilidadesOpcionales: ["Jest"],
@@ -211,42 +211,42 @@ export function crearDatosIniciales({
   // Campos opcionales omitidos a propósito: pronombres, presentación, nombre, etc.
   const colaboradoras = [
     {
-      idColaborador: "b00000000000000000000001",
+      id: "b00000000000000000000001",
       nombreFantasia: "Luna Código", // anónima
       presentacion: "QA con ganas de aportar a causas sociales.",
       pronombres: ["ella"],
       habilidades: ["Testing E2E con Cypress", "Uso de Soap UI", "Jest"],
     },
     {
-      idColaborador: "b00000000000000000000002",
+      id: "b00000000000000000000002",
       usuarioGitHub: "dev-sofia", // con cuenta de GitHub
       pronombres: ["ella", "elle"],
       habilidades: ["React", "Diseño UX/UI", "Accesibilidad web"],
     },
     {
-      idColaborador: "b00000000000000000000003",
+      id: "b00000000000000000000003",
       nombre: "Martín", // con nombre y apellido
       apellido: "Gómez",
       habilidades: ["Conocimientos de Pandas", "SQL", "Python"],
     },
     {
-      idColaborador: "b00000000000000000000004",
+      id: "b00000000000000000000004",
       nombreFantasia: "Kodama", // sólo una habilidad OPCIONAL del Tester: no es candidata y no puede anotarse
       habilidades: ["Uso de Soap UI"],
     },
     {
-      idColaborador: "b00000000000000000000005",
+      id: "b00000000000000000000005",
       usuarioGitHub: "nico-node", // ya colabora (p3 y p2): se excluye de esas búsquedas
       pronombres: ["él"],
       habilidades: ["Node.js", "MongoDB", "React"],
     },
     {
-      idColaborador: "b00000000000000000000006",
+      id: "b00000000000000000000006",
       nombreFantasia: "Tomás", // ninguna habilidad requerida por algún perfil
       habilidades: ["Jest"],
     },
     {
-      idColaborador: "b00000000000000000000007",
+      id: "b00000000000000000000007",
       nombreFantasia: "Probadora", // candidata sólo del laboratorio (a00000000000000000000004)
       habilidades: ["Pruebas de carga con k6"],
     },

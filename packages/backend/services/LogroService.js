@@ -14,8 +14,8 @@ export class LogroService {
 
   toDTO(logro) {
     return {
-      idLogro: logro.id,
-      idProyecto: logro.proyecto,
+      id: String(logro.id ?? logro._id),
+      idProyecto: String(logro.idProyecto),
       titulo: logro.titulo,
       descripcion: logro.descripcion,
       fecha: logro.fecha,
