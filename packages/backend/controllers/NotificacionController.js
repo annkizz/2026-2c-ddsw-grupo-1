@@ -1,6 +1,6 @@
 import { NotificacionService } from "../services/NotificacionService.js";
 import { BadRequestError } from "../errors/AppError.js";
-import { notificacionFiltroSchema } from "../schemas/zod/notificacionSchema.js";
+import { notificacionFiltroSchema, notificacionPaginasSchema } from "../schemas/zod/notificacionSchema.js";
 
 export class NotificacionController {
   constructor(notificacionService = new NotificacionService()) {
@@ -26,6 +26,23 @@ export class NotificacionController {
     );
     res.status(200).json(notificaciones);
   };
+ 
+  obtenerTodosPaginado = async (req, res) => {
+    const pag = req.query.pag;
+    const limite = req.query.limite;
+    /*
+    if (!resultado.success) {
+      throw new BadRequestError(
+        "No se le enviaron los datos necesarios",
+        "PAGINA_INVALIDA",
+      );
+    }*/
+
+    const notificaciones = await this.notificacionService.obtenerTodosPaginado(
+      pag, limite,
+    );
+    res.status(200).json(notificaciones);
+  };  
 
   obtenerPorId = async (req, res) => {
     const notificacion = await this.notificacionService.obtenerPorId(

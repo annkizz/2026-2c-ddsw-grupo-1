@@ -7,7 +7,8 @@ export function crearNotificacionRouter(notificacionController) {
 
   router
     .route("/")
-    .get((req, res) => notificacionController.obtenerTodos(req, res))
+    //.get((req, res) => notificacionController.obtenerTodos(req, res))
+    .get((req, res) => notificacionController.obtenerTodosPaginado(req, res))
     .post(validate(notificacionSchema), (req, res) =>
       notificacionController.crear(req, res),
     );

@@ -16,3 +16,10 @@ export const notificacionFiltroSchema = z
     idColaborador: objectIdSchema.optional(),
   })
   .strict();
+
+export const notificacionPaginasSchema = z
+  .object({
+    pag: z.number().positive(),
+    limite: z.number().positive(), 
+  })
+  .strict();

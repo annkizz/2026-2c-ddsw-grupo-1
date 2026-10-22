@@ -115,6 +115,17 @@ export class NotificacionService {
     return notificaciones.map((n) => this.toDTO(n));
   }
 
+  async obtenerTodosPaginado(pag, limite) {
+    const resultado =
+      await this.notificacionRepository.obternerTodosPaginado(pag, limite);
+
+    const notificacionesDto = resultado.notificaciones.map((n) => this.toDTO(n));
+    return {
+        ...resultado,
+        notificaciones: notificacionesDto
+    };
+  }
+
   async obtenerPorId(id) {
     const notificacion =
       await this.notificacionRepository.encontrarPorId(id);
