@@ -28,7 +28,9 @@ export class PerfilRepository {
         idProyecto: { $in: idsProyectos },
         habilidadesRequeridas: { $in: habilidades },
       })
-      .select("_id idProyecto descripcion compromiso habilidadesRequeridas habilidadesOpcionales")
+      .select(
+        "_id idProyecto descripcion compromiso habilidadesRequeridas habilidadesOpcionales",
+      )
       .exec();
   }
 
@@ -44,10 +46,9 @@ export class PerfilRepository {
   }
 
   async actualizar(id, datos) {
-    return await this.model.findByIdAndUpdate(
-      id,
-      datos,
-      { new: true, runValidators: true },
-    );
+    return await this.model.findByIdAndUpdate(id, datos, {
+      new: true,
+      runValidators: true,
+    });
   }
 }

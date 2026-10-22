@@ -19,7 +19,9 @@ export class ColaboradorRepository {
     if (titulos.length === 0) return [];
     return this.model
       .find({ habilidades: { $in: titulos } })
-      .select("_id nombreFantasia usuarioGitHub pronombres presentacion habilidades")
+      .select(
+        "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades",
+      )
       .exec();
   }
 

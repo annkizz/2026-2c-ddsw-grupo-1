@@ -83,7 +83,7 @@ export class ProyectoController {
 
     if (!resultado.success) {
       throw new BadRequestError(
-        "los datos ingresados son invalidos :(",
+        "los datos ingresados son invalidos",
         "DATOS_COLABORACION_INVALIDOS",
       );
     }

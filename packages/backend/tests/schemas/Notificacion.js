@@ -22,9 +22,7 @@ describe("esquemas de persistencia de mensajería", () => {
 
     expect(NotificacionModel.collection.collectionName).toBe("notificaciones");
     expect(mongoose.isObjectIdOrHexString(notificacion._id)).toBe(true);
-    expect(mongoose.isObjectIdOrHexString(notificacion.idColectivo)).toBe(
-      true,
-    );
+    expect(mongoose.isObjectIdOrHexString(notificacion.idColectivo)).toBe(true);
     expect(mongoose.isObjectIdOrHexString(notificacion.idColaborador)).toBe(
       true,
     );

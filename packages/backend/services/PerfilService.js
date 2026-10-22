@@ -124,9 +124,8 @@ export class PerfilService {
     const codigos = [
       ...new Set(titulos.map((titulo) => normalizarHabilidad(titulo))),
     ];
-    const habilidades = await this.habilidadRepository.encontrarPorCodigos(
-      codigos,
-    );
+    const habilidades =
+      await this.habilidadRepository.encontrarPorCodigos(codigos);
     const habilidadesPorCodigo = new Map(
       habilidades.map((habilidad) => [habilidad.codigo, habilidad]),
     );

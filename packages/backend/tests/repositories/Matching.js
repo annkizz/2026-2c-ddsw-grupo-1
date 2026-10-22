@@ -20,7 +20,8 @@ describe("consultas de matching", () => {
     const model = crearModelo();
     await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"]);
     expect(model.find).toHaveBeenCalledWith({
-      estado: { $ne: Estado.FINALIZADO }, _id: { $nin: ["p1"] },
+      estado: { $ne: Estado.FINALIZADO },
+      _id: { $nin: ["p1"] },
     });
     expect(model.query.select).toHaveBeenCalledWith("_id titulo descripcion");
     expect(model.query.sort).toHaveBeenCalledWith({ fechaInicio: -1 });
@@ -29,7 +30,10 @@ describe("consultas de matching", () => {
 
   it("filtra perfiles del conjunto candidato con alguna requerida en las habilidades", async () => {
     const model = crearModelo();
-    await new PerfilRepository(model).obtenerCompatiblesPorProyectos(["p1"], ["React", "SQL"]);
+    await new PerfilRepository(model).obtenerCompatiblesPorProyectos(
+      ["p1"],
+      ["React", "SQL"],
+    );
     expect(model.find).toHaveBeenCalledWith({
       idProyecto: { $in: ["p1"] },
       habilidadesRequeridas: { $in: ["React", "SQL"] },
@@ -43,15 +47,24 @@ describe("consultas de matching", () => {
   it("no consulta perfiles para conjuntos vacios", async () => {
     const model = crearModelo();
     const repository = new PerfilRepository(model);
-    await expect(repository.obtenerCompatiblesPorProyectos([], ["React"])).resolves.toEqual([]);
-    await expect(repository.obtenerCompatiblesPorProyectos(["p1"], [])).resolves.toEqual([]);
+    await expect(
+      repository.obtenerCompatiblesPorProyectos([], ["React"]),
+    ).resolves.toEqual([]);
+    await expect(
+      repository.obtenerCompatiblesPorProyectos(["p1"], []),
+    ).resolves.toEqual([]);
     expect(model.find).not.toHaveBeenCalled();
   });
 
   it("busca candidatas con alguna de las habilidades requeridas sin seleccionar datos privados", async () => {
     const model = crearModelo();
-    await new ColaboradorRepository(model).encontrarPorHabilidadesRequeridas(["React", "SQL"]);
-    expect(model.find).toHaveBeenCalledWith({ habilidades: { $in: ["React", "SQL"] } });
+    await new ColaboradorRepository(model).encontrarPorHabilidadesRequeridas([
+      "React",
+      "SQL",
+    ]);
+    expect(model.find).toHaveBeenCalledWith({
+      habilidades: { $in: ["React", "SQL"] },
+    });
     expect(model.query.select).toHaveBeenCalledWith(
       "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades",
     );
@@ -60,11 +73,16 @@ describe("consultas de matching", () => {
 
   it("no busca candidatas si no hay requeridas", async () => {
     const model = crearModelo();
-    await expect(new ColaboradorRepository(model).encontrarPorHabilidadesRequeridas([])).resolves.toEqual([]);
+    await expect(
+      new ColaboradorRepository(model).encontrarPorHabilidadesRequeridas([]),
+    ).resolves.toEqual([]);
     expect(model.find).not.toHaveBeenCalled();
   });
 
   it("declara un indice para buscar habilidades de las candidatas", () => {
-    expect(ColaboradorModel.schema.indexes()).toContainEqual([{ habilidades: 1 }, {}]);
+    expect(ColaboradorModel.schema.indexes()).toContainEqual([
+      { habilidades: 1 },
+      {},
+    ]);
   });
 });

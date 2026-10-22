@@ -316,7 +316,11 @@ describe("MatchingService sin N+1 (integración)", () => {
 });
 
 describe("MatchingService con al menos una habilidad requerida (integración)", () => {
-  const crearProyectoConPerfil = async (idProyecto, habilidadesRequeridas, habilidadesOpcionales) => {
+  const crearProyectoConPerfil = async (
+    idProyecto,
+    habilidadesRequeridas,
+    habilidadesOpcionales,
+  ) => {
     await ProyectoModel.create({
       _id: idProyecto,
       idColectivo: new mongoose.Types.ObjectId(),
@@ -340,7 +344,11 @@ describe("MatchingService con al menos una habilidad requerida (integración)", 
 
   it("incluye a la colaboradora que tiene una de las habilidades requeridas", async () => {
     const idProyecto = new mongoose.Types.ObjectId();
-    const idPerfil = await crearProyectoConPerfil(idProyecto, ["Svelte", "Rust"], []);
+    const idPerfil = await crearProyectoConPerfil(
+      idProyecto,
+      ["Svelte", "Rust"],
+      [],
+    );
     const idColaboradora = new mongoose.Types.ObjectId();
     await ColaboradorModel.create({
       _id: idColaboradora,
@@ -362,7 +370,11 @@ describe("MatchingService con al menos una habilidad requerida (integración)", 
 
   it("excluye a la colaboradora que solo tiene habilidades opcionales", async () => {
     const idProyecto = new mongoose.Types.ObjectId();
-    const idPerfil = await crearProyectoConPerfil(idProyecto, ["Svelte"], ["GraphQL"]);
+    const idPerfil = await crearProyectoConPerfil(
+      idProyecto,
+      ["Svelte"],
+      ["GraphQL"],
+    );
     const idColaboradora = new mongoose.Types.ObjectId();
     await ColaboradorModel.create({
       _id: idColaboradora,

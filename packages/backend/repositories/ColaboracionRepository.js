@@ -27,7 +27,7 @@ export class ColaboracionRepository {
     return encontrada !== null;
   }
 
-  // colaboracion del proyecto y sus idColaborador 
+  // colaboracion del proyecto y sus idColaborador
   obtenerPorProyecto(idProyecto) {
     return this.colaboracionModel
       .find({ idProyecto })

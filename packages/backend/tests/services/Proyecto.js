@@ -368,12 +368,15 @@ describe("ProyectoService", () => {
     });
 
     it("acepta una coincidencia parcial porque alcanza con una habilidad requerida", async () => {
-      perfilRepository.obtenerTodos.mockResolvedValue([{
-        habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
-        habilidadesOpcionales: ["Jest"],
-      }]);
+      perfilRepository.obtenerTodos.mockResolvedValue([
+        {
+          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
+          habilidadesOpcionales: ["Jest"],
+        },
+      ]);
       colaboradorService.obtenerPorId.mockResolvedValue({
-        _id: "c-1", habilidades: ["Testing E2E con Cypress", "Jest"],
+        _id: "c-1",
+        habilidades: ["Testing E2E con Cypress", "Jest"],
       });
       await service.crearColaboracion(proyectoActivo(), "c-1");
       expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
@@ -382,10 +385,14 @@ describe("ProyectoService", () => {
     it("acepta cuando cumple un perfil aunque no cumpla otro", async () => {
       perfilRepository.obtenerTodos.mockResolvedValue([
         { habilidadesRequeridas: ["Java"], habilidadesOpcionales: [] },
-        { habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"], habilidadesOpcionales: ["Jest"] },
+        {
+          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
+          habilidadesOpcionales: ["Jest"],
+        },
       ]);
       colaboradorService.obtenerPorId.mockResolvedValue({
-        _id: "c-1", habilidades: ["Testing E2E con Cypress", "SQL"],
+        _id: "c-1",
+        habilidades: ["Testing E2E con Cypress", "SQL"],
       });
       await service.crearColaboracion(proyectoActivo(), "c-1");
       expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);

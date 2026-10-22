@@ -60,18 +60,21 @@ describe("MatchingService", () => {
         ],
       },
     ]);
-    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith([]);
-    expect(perfilRepository.obtenerCompatiblesPorProyectos).toHaveBeenCalledWith(
-      [idProyecto],
-      ["React"],
+    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(
+      [],
     );
+    expect(
+      perfilRepository.obtenerCompatiblesPorProyectos,
+    ).toHaveBeenCalledWith([idProyecto], ["React"]);
   });
 });
 
 describe("MatchingService con al menos una habilidad requerida", () => {
   it("pasa las exclusiones a Mongo y conserva los proyectos con un perfil compatible", async () => {
     const colaboradorRepository = {
-      encontrarPorId: jest.fn().mockResolvedValue({ habilidades: ["React", "SQL"] }),
+      encontrarPorId: jest
+        .fn()
+        .mockResolvedValue({ habilidades: ["React", "SQL"] }),
     };
     const proyectoRepository = {
       obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([
@@ -82,13 +85,18 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     const perfilRepository = {
       obtenerCompatiblesPorProyectos: jest.fn().mockResolvedValue([
         {
-          _id: "f1", idProyecto: "p1", descripcion: "Completo",
-          habilidadesRequeridas: ["React", "SQL"], habilidadesOpcionales: ["Jest"],
+          _id: "f1",
+          idProyecto: "p1",
+          descripcion: "Completo",
+          habilidadesRequeridas: ["React", "SQL"],
+          habilidadesOpcionales: ["Jest"],
           compromiso: { horas: 5 },
         },
         {
-          _id: "f2", idProyecto: "p2",
-          habilidadesRequeridas: ["React", "Java"], habilidadesOpcionales: [],
+          _id: "f2",
+          idProyecto: "p2",
+          habilidadesRequeridas: ["React", "Java"],
+          habilidadesOpcionales: [],
         },
       ]),
     };
@@ -96,79 +104,133 @@ describe("MatchingService con al menos una habilidad requerida", () => {
       obtenerIdsProyectosDeColaborador: jest.fn().mockResolvedValue(["p3"]),
     };
     const service = new MatchingService(
-      colaboradorRepository, proyectoRepository, perfilRepository, colaboracionRepository,
+      colaboradorRepository,
+      proyectoRepository,
+      perfilRepository,
+      colaboracionRepository,
     );
 
-    await expect(service.buscarProyectosParaColaboradora("c1")).resolves.toEqual([
+    await expect(
+      service.buscarProyectosParaColaboradora("c1"),
+    ).resolves.toEqual([
       {
-        id: "p1", titulo: "Compatible", descripcion: "D1",
-        perfilesCompatibles: [{
-          id: "f1", descripcion: "Completo", compromiso: { horas: 5 },
-          requeridasCoincidentes: ["React", "SQL"], opcionalesCoincidentes: [],
-        }],
+        id: "p1",
+        titulo: "Compatible",
+        descripcion: "D1",
+        perfilesCompatibles: [
+          {
+            id: "f1",
+            descripcion: "Completo",
+            compromiso: { horas: 5 },
+            requeridasCoincidentes: ["React", "SQL"],
+            opcionalesCoincidentes: [],
+          },
+        ],
       },
       {
-        id: "p2", titulo: "Incompatible", descripcion: "D2",
-        perfilesCompatibles: [{
-          id: "f2",
-          requeridasCoincidentes: ["React"], opcionalesCoincidentes: [],
-        }],
+        id: "p2",
+        titulo: "Incompatible",
+        descripcion: "D2",
+        perfilesCompatibles: [
+          {
+            id: "f2",
+            requeridasCoincidentes: ["React"],
+            opcionalesCoincidentes: [],
+          },
+        ],
       },
     ]);
-    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(["p3"]);
-    expect(perfilRepository.obtenerCompatiblesPorProyectos).toHaveBeenCalledWith(
-      ["p1", "p2"], ["React", "SQL"],
+    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(
+      ["p3"],
     );
-    expect(perfilRepository.obtenerCompatiblesPorProyectos).toHaveBeenCalledTimes(1);
+    expect(
+      perfilRepository.obtenerCompatiblesPorProyectos,
+    ).toHaveBeenCalledWith(["p1", "p2"], ["React", "SQL"]);
+    expect(
+      perfilRepository.obtenerCompatiblesPorProyectos,
+    ).toHaveBeenCalledTimes(1);
   });
 
   it("no consulta perfiles cuando no hay proyectos candidatos", async () => {
     const perfilRepository = { obtenerCompatiblesPorProyectos: jest.fn() };
     const service = new MatchingService(
-      { encontrarPorId: jest.fn().mockResolvedValue({ habilidades: ["React"] }) },
+      {
+        encontrarPorId: jest.fn().mockResolvedValue({ habilidades: ["React"] }),
+      },
       { obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([]) },
       perfilRepository,
       { obtenerIdsProyectosDeColaborador: jest.fn().mockResolvedValue([]) },
     );
-    await expect(service.buscarProyectosParaColaboradora("c1")).resolves.toEqual([]);
-    expect(perfilRepository.obtenerCompatiblesPorProyectos).not.toHaveBeenCalled();
+    await expect(
+      service.buscarProyectosParaColaboradora("c1"),
+    ).resolves.toEqual([]);
+    expect(
+      perfilRepository.obtenerCompatiblesPorProyectos,
+    ).not.toHaveBeenCalled();
   });
 
   it("no busca proyectos si la persona no tiene habilidades", async () => {
     const proyectoRepository = { obtenerAbiertosParaMatching: jest.fn() };
     const service = new MatchingService(
       { encontrarPorId: jest.fn().mockResolvedValue({ habilidades: [] }) },
-      proyectoRepository, {}, {},
+      proyectoRepository,
+      {},
+      {},
     );
-    await expect(service.buscarProyectosParaColaboradora("c1")).resolves.toEqual([]);
-    expect(proyectoRepository.obtenerAbiertosParaMatching).not.toHaveBeenCalled();
+    await expect(
+      service.buscarProyectosParaColaboradora("c1"),
+    ).resolves.toEqual([]);
+    expect(
+      proyectoRepository.obtenerAbiertosParaMatching,
+    ).not.toHaveBeenCalled();
   });
 
   it("busca candidatas con alguna de las requeridas y excluye las ya anotadas", async () => {
     const colaboradorRepository = {
       encontrarPorHabilidadesRequeridas: jest.fn().mockResolvedValue([
-        { _id: "c1", habilidades: ["React", "SQL"], nombreFantasia: "Completa", mediosDeContacto: ["privado"] },
+        {
+          _id: "c1",
+          habilidades: ["React", "SQL"],
+          nombreFantasia: "Completa",
+          mediosDeContacto: ["privado"],
+        },
         { _id: "c2", habilidades: ["React", "Jest"] },
         { _id: "c3", habilidades: ["React", "SQL"] },
       ]),
     };
     const service = new MatchingService(
       colaboradorRepository,
-      { encontrarPorId: jest.fn().mockResolvedValue({ estaFinalizado: () => false }) },
-      { buscarPorId: jest.fn().mockResolvedValue({
-        idProyecto: "p1", habilidadesRequeridas: ["React", "SQL"], habilidadesOpcionales: ["Jest"],
-      }) },
-      { obtenerIdsColaboradoresDeProyecto: jest.fn().mockResolvedValue(["c3"]) },
+      {
+        encontrarPorId: jest
+          .fn()
+          .mockResolvedValue({ estaFinalizado: () => false }),
+      },
+      {
+        buscarPorId: jest.fn().mockResolvedValue({
+          idProyecto: "p1",
+          habilidadesRequeridas: ["React", "SQL"],
+          habilidadesOpcionales: ["Jest"],
+        }),
+      },
+      {
+        obtenerIdsColaboradoresDeProyecto: jest.fn().mockResolvedValue(["c3"]),
+      },
     );
     const resultados = await service.buscarColaboradorasParaPerfil("p1", "f1");
     expect(resultados).toHaveLength(2);
     expect(resultados[0]).toMatchObject({
-      id: "c1", tieneCoincidencia: true, requeridasCoincidentes: ["React", "SQL"],
+      id: "c1",
+      tieneCoincidencia: true,
+      requeridasCoincidentes: ["React", "SQL"],
     });
     expect(resultados[1]).toMatchObject({
-      id: "c2", tieneCoincidencia: true, requeridasCoincidentes: ["React"],
+      id: "c2",
+      tieneCoincidencia: true,
+      requeridasCoincidentes: ["React"],
     });
     expect(resultados[0]).not.toHaveProperty("mediosDeContacto");
-    expect(colaboradorRepository.encontrarPorHabilidadesRequeridas).toHaveBeenCalledWith(["React", "SQL"]);
+    expect(
+      colaboradorRepository.encontrarPorHabilidadesRequeridas,
+    ).toHaveBeenCalledWith(["React", "SQL"]);
   });
 });
