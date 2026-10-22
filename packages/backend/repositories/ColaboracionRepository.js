@@ -27,7 +27,7 @@ export class ColaboracionRepository {
     return encontrada !== null;
   }
 
-  // colaboracion del proyecto y sus idColaborador 
+  // colaboracion del proyecto y sus idColaborador
   obtenerPorProyecto(idProyecto) {
     return this.colaboracionModel
       .find({ idProyecto })
@@ -44,12 +44,12 @@ export class ColaboracionRepository {
           idColaborador: colaboracion.colaborador._id,
         },
         {
-          $setOnInsert: {
-            idProyecto: colaboracion.proyecto._id,
-            idColaborador: colaboracion.colaborador._id,
-            fecha: colaboracion.fecha,
-            esAnonima: colaboracion.esAnonima,
-          },
+          // Si la colaboracion ya existe se actualiza; el service bloquea el
+          // duplicado con 409 antes de llegar al repo.
+          idProyecto: colaboracion.proyecto._id,
+          idColaborador: colaboracion.colaborador._id,
+          fecha: colaboracion.fecha,
+          esAnonima: colaboracion.esAnonima,
         },
         {
           upsert: true,

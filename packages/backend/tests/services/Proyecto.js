@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import mongoose from "mongoose";
 import { ProyectoService } from "../../services/ProyectoService.js";
 import { Proyecto } from "../../domain/Proyecto.js";
@@ -365,6 +365,37 @@ describe("ProyectoService", () => {
         codigo: "HABILIDADES_INSUFICIENTES",
       });
       expect(colaboracionRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("acepta una coincidencia parcial porque alcanza con una habilidad requerida", async () => {
+      perfilRepository.obtenerTodos.mockResolvedValue([
+        {
+          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
+          habilidadesOpcionales: ["Jest"],
+        },
+      ]);
+      colaboradorService.obtenerPorId.mockResolvedValue({
+        _id: "c-1",
+        habilidades: ["Testing E2E con Cypress", "Jest"],
+      });
+      await service.crearColaboracion(proyectoActivo(), "c-1");
+      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it("acepta cuando cumple un perfil aunque no cumpla otro", async () => {
+      perfilRepository.obtenerTodos.mockResolvedValue([
+        { habilidadesRequeridas: ["Java"], habilidadesOpcionales: [] },
+        {
+          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
+          habilidadesOpcionales: ["Jest"],
+        },
+      ]);
+      colaboradorService.obtenerPorId.mockResolvedValue({
+        _id: "c-1",
+        habilidades: ["Testing E2E con Cypress", "SQL"],
+      });
+      await service.crearColaboracion(proyectoActivo(), "c-1");
+      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
     });
 
     it("rechaza si el proyecto no tiene perfiles", async () => {

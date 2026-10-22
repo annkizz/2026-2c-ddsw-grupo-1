@@ -14,7 +14,7 @@ let servidor = null;
 export async function conectarALaBaseDePrueba() {
   const uri =
     process.env.MONGODB_URI_TEST ?? (await levantarServidor()).getUri();
-    //si seteas MONGODB_URI_TEST dedicada sino embebida
+  //si seteas MONGODB_URI_TEST dedicada sino embebida
   await mongoose.connect(uri);
   await limpiarLaBase();
 }

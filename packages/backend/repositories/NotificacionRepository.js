@@ -23,16 +23,10 @@ export class NotificacionRepository {
     }
 
     return this.model
-      .findByIdAndUpdate(
-        id,
-        {
-          $set: datos,
-        },
-        {
-          returnDocument: "after",
-          runValidators: true,
-        },
-      )
+      .findByIdAndUpdate(id, datos, {
+        returnDocument: "after",
+        runValidators: true,
+      })
       .exec();
   }
 }

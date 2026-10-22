@@ -13,28 +13,20 @@ export function crearAdaptadorDeSeed() {
       await ColaboracionModel.deleteMany({ idProyecto: { $in: idsProyecto } });
     },
     guardarPerfil({ id, ...datos }) {
-      return PerfilModel.findOneAndUpdate(
-        { _id: id },
-        { $set: datos },
-        {
-          upsert: true,
-          returnDocument: "after",
-          runValidators: true,
-          setDefaultsOnInsert: true,
-        },
-      );
+      return PerfilModel.findOneAndUpdate({ _id: id }, datos, {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      });
     },
     guardarLogro({ id, ...datos }) {
-      return LogroModel.findOneAndUpdate(
-        { _id: id },
-        { $set: datos },
-        {
-          upsert: true,
-          returnDocument: "after",
-          runValidators: true,
-          setDefaultsOnInsert: true,
-        },
-      );
+      return LogroModel.findOneAndUpdate({ _id: id }, datos, {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      });
     },
     idsProyectosDeColectivo(idColectivo) {
       return ProyectoModel.distinct("_id", { idColectivo });

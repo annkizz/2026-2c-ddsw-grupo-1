@@ -43,8 +43,7 @@ describe("validaciones de notificaciones", () => {
     expect(
       notificacionFiltroSchema.safeParse({
         idColectivo: "c00000000000000000000001",
-      })
-        .success,
+      }).success,
     ).toBe(true);
     expect(notificacionFiltroSchema.safeParse({ $where: "true" }).success).toBe(
       false,

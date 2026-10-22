@@ -20,12 +20,10 @@ export class ColectivoRepository {
       .findOneAndUpdate(
         { _id: id ?? new mongoose.Types.ObjectId() },
         {
-          $set: {
-            nombre: unColectivo.nombre,
-            descripcion: unColectivo.descripcion,
-            ubicacion: unColectivo.ubicacion,
-            tipoDeColectivo: unColectivo.tipoDeColectivo,
-          },
+          nombre: unColectivo.nombre,
+          descripcion: unColectivo.descripcion,
+          ubicacion: unColectivo.ubicacion,
+          tipoDeColectivo: unColectivo.tipoDeColectivo,
         },
         {
           upsert: true,
