@@ -53,13 +53,11 @@ describe("NotificacionRepository", () => {
     expect(model.findByIdAndUpdate).toHaveBeenCalledWith(
       ID_NOTIFICACION,
       {
-        $set: {
-          fecha: notificacion.fecha,
-          contenido: notificacion.contenido,
-          idColectivo: ID_COLECTIVO,
-          idColaborador: ID_COLABORADORA,
-          envios: notificacion.envios,
-        },
+        fecha: notificacion.fecha,
+        contenido: notificacion.contenido,
+        idColectivo: ID_COLECTIVO,
+        idColaborador: ID_COLABORADORA,
+        envios: notificacion.envios,
       },
       {
         returnDocument: "after",

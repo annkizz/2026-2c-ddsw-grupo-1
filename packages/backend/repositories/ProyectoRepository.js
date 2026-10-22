@@ -11,9 +11,13 @@ export class ProyectoRepository {
     return this.proyectoModel.find().sort({ fechaInicio: -1 }).exec();
   }
 
-  obtenerAbiertos() {
+  obtenerAbiertosParaMatching(idsExcluidos) {
     return this.proyectoModel
-      .find({ estado: { $ne: Estado.FINALIZADO } })
+      .find({
+        estado: { $ne: Estado.FINALIZADO },
+        _id: { $nin: idsExcluidos },
+      })
+      .select("_id titulo descripcion")
       .sort({ fechaInicio: -1 })
       .exec();
   }
@@ -24,7 +28,8 @@ export class ProyectoRepository {
   }
 
   async existe(idProyecto) {
-    const resultado = await this.proyectoModel.exists({ idProyecto }).exec();
+    if (!mongoose.isValidObjectId(idProyecto)) return false;
+    const resultado = await this.proyectoModel.exists({ _id: idProyecto });
     return resultado !== null;
   }
 
@@ -54,18 +59,16 @@ export class ProyectoRepository {
       .findOneAndUpdate(
         { _id: id ?? new mongoose.Types.ObjectId() },
         {
-          $set: {
-            idColectivo: unProyecto.idColectivo,
-            titulo: unProyecto.titulo,
-            descripcion: unProyecto.descripcion,
-            perfiles: unProyecto.perfiles,
-            estado: unProyecto.estado,
-            fechaInicio: unProyecto.fechaInicio,
-            fechaLimiteCierre: unProyecto.fechaLimiteCierre,
-            porcentajeConcrecion: unProyecto.porcentajeConcrecion,
-            enlaceSistema: unProyecto.enlaceSistema,
-            enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
-          },
+          idColectivo: unProyecto.idColectivo,
+          titulo: unProyecto.titulo,
+          descripcion: unProyecto.descripcion,
+          perfiles: unProyecto.perfiles,
+          estado: unProyecto.estado,
+          fechaInicio: unProyecto.fechaInicio,
+          fechaLimiteCierre: unProyecto.fechaLimiteCierre,
+          porcentajeConcrecion: unProyecto.porcentajeConcrecion,
+          enlaceSistema: unProyecto.enlaceSistema,
+          enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
         },
         {
           upsert: true,

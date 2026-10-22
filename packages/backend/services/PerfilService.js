@@ -109,14 +109,13 @@ export class PerfilService {
   }
 
   async validarProyecto(idProyecto) {
-    const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
-    if (!proyecto) {
+    const existe = await this.proyectoRepository.existe(idProyecto);
+    if (!existe) {
       throw new NotFoundError(
         "proyecto no encontrado",
         "PROYECTO_NO_ENCONTRADO",
       );
     }
-    return proyecto; // ahora lo devuelve
   }
 
   async validarHabilidades(titulos = []) {
@@ -125,9 +124,8 @@ export class PerfilService {
     const codigos = [
       ...new Set(titulos.map((titulo) => normalizarHabilidad(titulo))),
     ];
-    const habilidades = await this.habilidadRepository.encontrarPorCodigos(
-      codigos,
-    );
+    const habilidades =
+      await this.habilidadRepository.encontrarPorCodigos(codigos);
     const habilidadesPorCodigo = new Map(
       habilidades.map((habilidad) => [habilidad.codigo, habilidad]),
     );

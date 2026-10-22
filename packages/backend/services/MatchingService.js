@@ -1,5 +1,8 @@
 import { ConflictError, NotFoundError } from "../errors/AppError.js";
-import { evaluarCoincidencia } from "../domain/Matching.js";
+import {
+  crearEvaluadorCoincidencia,
+  evaluarCoincidencia,
+} from "../domain/Matching.js";
 
 const idDe = (documento) => String(documento.id ?? documento._id);
 
@@ -17,7 +20,7 @@ export class MatchingService {
   }
 
   // busqueda de potenciales colaboradoras segun perfil del proyecto
-  //las q estan anotadas al proyecto y las q comparten alguna habilidad del perfil
+  // excluye anotadas y exige las habilidades requeridas del perfil
 
   async buscarColaboradorasParaPerfil(idProyecto, id) {
     const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
@@ -48,10 +51,10 @@ export class MatchingService {
       ).map(String),
     );
 
-    const candidatas = await this.colaboradorRepository.encontrarPorHabilidades([
-      ...perfil.habilidadesRequeridas,
-      ...perfil.habilidadesOpcionales,
-    ]);
+    const candidatas =
+      await this.colaboradorRepository.encontrarPorHabilidadesRequeridas(
+        perfil.habilidadesRequeridas,
+      );
 
     return candidatas
       .filter((colaboradora) => !yaAnotadas.has(String(colaboradora._id)))
@@ -74,7 +77,7 @@ export class MatchingService {
   }
 
   // busqueda de potenciales proyectos segun habilidades de colaboradora.
-  // proyectos donde esta anotada, proyectos abiertos y perfiles de esos 
+  // proyectos donde esta anotada, proyectos abiertos y perfiles de esos
 
   async buscarProyectosParaColaboradora(idColaborador) {
     const colaboradora =
@@ -86,64 +89,61 @@ export class MatchingService {
       );
     }
 
-    const yaAnotadas = new Set(
-      (
-        await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
-          idColaborador,
-        )
-      ).map(String),
-    );
+    if (colaboradora.habilidades.length === 0) return [];
+    const yaAnotadas =
+      await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
+        idColaborador,
+      );
+    const abiertos =
+      await this.proyectoRepository.obtenerAbiertosParaMatching(yaAnotadas);
+    if (abiertos.length === 0) return [];
 
-    const abiertos = (await this.proyectoRepository.obtenerAbiertos()).filter(
-      (p) => !yaAnotadas.has(String(p._id)),
-    );
-
-    const perfiles = await this.perfilRepository.obtenerPorProyectos(
+    const perfiles = await this.perfilRepository.obtenerCompatiblesPorProyectos(
       abiertos.map((p) => p._id),
+      colaboradora.habilidades,
     );
+    const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
     const perfilesPorProyecto = new Map();
+
     for (const perfil of perfiles) {
       const idProyecto = String(perfil.idProyecto);
-      const ids = perfilesPorProyecto.get(idProyecto) ?? [];
-      ids.push(perfil);
-      perfilesPorProyecto.set(idProyecto, ids);
+      let delProyecto = perfilesPorProyecto.get(idProyecto);
+      if (!delProyecto) {
+        delProyecto = [];
+        perfilesPorProyecto.set(idProyecto, delProyecto);
+      }
+      delProyecto.push(perfil);
     }
 
-    const resultados = abiertos.map((proyecto) => {
-      const perfilesCompatibles = (
-        perfilesPorProyecto.get(String(proyecto._id)) ?? []
-      )
-        .map((perfil) => ({
+    const resultados = [];
+    for (const proyecto of abiertos) {
+      const perfilesDelProyecto =
+        perfilesPorProyecto.get(String(proyecto._id)) ?? [];
+      const perfilesCompatibles = [];
+
+      for (const perfil of perfilesDelProyecto) {
+        const coincidencia = evaluar(perfil);
+        if (!coincidencia.tieneCoincidencia) continue;
+
+        perfilesCompatibles.push({
           id: idDe(perfil),
           descripcion: perfil.descripcion,
           compromiso: perfil.compromiso,
-          ...evaluarCoincidencia(perfil, colaboradora.habilidades),
-        }))
-        .filter((p) => p.tieneCoincidencia)
-        .map(
-          ({
-            id,
-            descripcion,
-            compromiso,
-            requeridasCoincidentes,
-            opcionalesCoincidentes,
-          }) => ({
-            id,
-            descripcion,
-            compromiso,
-            requeridasCoincidentes,
-            opcionalesCoincidentes,
-          }),
-        );
+          requeridasCoincidentes: coincidencia.requeridasCoincidentes,
+          opcionalesCoincidentes: coincidencia.opcionalesCoincidentes,
+        });
+      }
 
-      return {
-        id: String(proyecto._id),
-        titulo: proyecto.titulo,
-        descripcion: proyecto.descripcion,
-        perfilesCompatibles,
-      };
-    });
+      if (perfilesCompatibles.length > 0) {
+        resultados.push({
+          id: String(proyecto._id),
+          titulo: proyecto.titulo,
+          descripcion: proyecto.descripcion,
+          perfilesCompatibles,
+        });
+      }
+    }
 
-    return resultados.filter((r) => r.perfilesCompatibles.length > 0);
+    return resultados;
   }
 }

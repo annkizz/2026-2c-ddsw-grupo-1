@@ -3,9 +3,8 @@ import express from "express";
 export function crearMatchingRouter(matchingController) {
   const router = express.Router();
 
-  router.get(
-    "/proyectos/:idProyecto/perfiles/:id/colaboradoras",
-    (req, res) => matchingController.buscarColaboradoras(req, res),
+  router.get("/proyectos/:idProyecto/perfiles/:id/colaboradoras", (req, res) =>
+    matchingController.buscarColaboradoras(req, res),
   );
 
   router.get("/colaboradoras/:id/proyectos", (req, res) =>

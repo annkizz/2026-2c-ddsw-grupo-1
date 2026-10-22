@@ -79,7 +79,8 @@ export class NotificacionService {
     });
 
     // el mensaje interno queda guardado aunque falle (o se corte) el envío externo
-    const guardadaInicial = await this.notificacionRepository.save(notificacion);
+    const guardadaInicial =
+      await this.notificacionRepository.save(notificacion);
     notificacion.id = guardadaInicial.id ?? guardadaInicial._id;
 
     const mensaje = this.construirMensaje(colectivo, contenido);
@@ -127,8 +128,7 @@ export class NotificacionService {
   }
 
   async obtenerPorId(id) {
-    const notificacion =
-      await this.notificacionRepository.encontrarPorId(id);
+    const notificacion = await this.notificacionRepository.encontrarPorId(id);
     if (!notificacion) {
       throw new NotFoundError(
         "la notificación no existe",

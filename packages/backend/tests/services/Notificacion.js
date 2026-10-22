@@ -63,9 +63,9 @@ describe("NotificacionService", () => {
     });
 
     expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
-    expect(notificacionRepository.save.mock.invocationCallOrder[0]).toBeLessThan(
-      notificadorExterno.enviar.mock.invocationCallOrder[0],
-    );
+    expect(
+      notificacionRepository.save.mock.invocationCallOrder[0],
+    ).toBeLessThan(notificadorExterno.enviar.mock.invocationCallOrder[0]);
     expect(notificadorExterno.enviar).toHaveBeenCalledWith(
       colaboradora.mediosDeContacto[0],
       expect.objectContaining({

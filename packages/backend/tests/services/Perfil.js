@@ -46,9 +46,7 @@ describe("PerfilService", () => {
       eliminar: jest.fn(async () => undefined),
     };
     proyectoRepository = {
-      encontrarPorId: jest.fn((id) =>
-        id === ID_PROYECTO ? { idProyecto: id, perfiles: [] } : undefined,
-      ),
+      existe: jest.fn((id) => id === ID_PROYECTO),
       agregarPerfil: jest.fn(async () => undefined),
       quitarPerfil: jest.fn(async () => undefined),
     };
@@ -107,9 +105,10 @@ describe("PerfilService", () => {
       await service.crear(ID_PROYECTO, datosPerfil());
 
       expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledTimes(1);
-      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith(
-        ["testing_e2e_con_cypress", "uso_de_soap_ui"],
-      );
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith([
+        "testing_e2e_con_cypress",
+        "uso_de_soap_ui",
+      ]);
     });
 
     it("permite crear un perfil sin habilidades opcionales", async () => {
@@ -194,10 +193,7 @@ describe("PerfilService", () => {
 
       expect(perfilRepository.obtenerTodos).toHaveBeenCalledWith(ID_PROYECTO);
       expect(resultado).toHaveLength(2);
-      expect(resultado.map((p) => p.id)).toEqual([
-        "perfil-1",
-        "perfil-2",
-      ]);
+      expect(resultado.map((p) => p.id)).toEqual(["perfil-1", "perfil-2"]);
       expect(resultado[1].descripcion).toBe("Analista de Datos");
     });
 
@@ -311,9 +307,10 @@ describe("PerfilService", () => {
       });
 
       expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledTimes(1);
-      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith(
-        ["testing_e2e_con_cypress", "uso_de_soap_ui"],
-      );
+      expect(habilidadRepository.encontrarPorCodigos).toHaveBeenCalledWith([
+        "testing_e2e_con_cypress",
+        "uso_de_soap_ui",
+      ]);
     });
 
     it("guarda el título de la habilidad tal como está cargado, no como lo escribió el usuario", async () => {
@@ -332,9 +329,7 @@ describe("PerfilService", () => {
     });
 
     it("falla con HABILIDAD_NO_ENCONTRADA si una habilidad no existe y no actualiza nada", async () => {
-      habilidadRepository.encontrarPorCodigos.mockResolvedValue(
-        [],
-      );
+      habilidadRepository.encontrarPorCodigos.mockResolvedValue([]);
 
       await expect(
         service.actualizar(ID_PROYECTO, "perfil-1", nuevosDatos()),
