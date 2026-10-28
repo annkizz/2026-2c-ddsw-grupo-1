@@ -24,19 +24,26 @@ export class NotificacionRepository {
 
   }
 
-  encontrarPorId(id) {
+  buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return this.model.findById(id).exec();
   }
 
   save(notificacion) {
-    const { id, ...datos } = notificacion;
-    if (!id) {
+    const datos = {
+      fecha: notificacion.fecha,
+      contenido: notificacion.contenido,
+      idColectivo: notificacion.idColectivo,
+      idColaborador: notificacion.idColaborador,
+      envios: notificacion.envios,
+    };
+
+    if (!notificacion.id) {
       return new this.model(datos).save();
     }
 
     return this.model
-      .findByIdAndUpdate(id, datos, {
+      .findByIdAndUpdate(notificacion.id, datos, {
         returnDocument: "after",
         runValidators: true,
       })

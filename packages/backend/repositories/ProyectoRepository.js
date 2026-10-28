@@ -14,7 +14,7 @@ export class ProyectoRepository {
   obtenerAbiertosParaMatching(idsExcluidos) {
     return this.proyectoModel
       .find({
-        estado: { $ne: Estado.FINALIZADO },
+        estado: Estado.ACTIVO,
         _id: { $nin: idsExcluidos },
       })
       .select("_id titulo descripcion")
@@ -22,7 +22,7 @@ export class ProyectoRepository {
       .exec();
   }
 
-  async encontrarPorId(id) {
+  async buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return await this.proyectoModel.findById(id).exec();
   }
@@ -33,23 +33,36 @@ export class ProyectoRepository {
     return resultado !== null;
   }
 
-  agregarPerfil(idProyecto, id) {
-    return this.proyectoModel
-      .updateOne({ _id: idProyecto }, { $addToSet: { perfiles: id } })
-      .exec();
+  async agregarPerfil(idProyecto, id) {
+    const proyecto = await this.proyectoModel.findById(idProyecto).exec();
+    if (!proyecto) return null;
+
+    const yaAgregado = proyecto.perfiles.some(
+      (perfil) => String(perfil) === String(id),
+    );
+    if (!yaAgregado) {
+      proyecto.perfiles.push(id);
+      await proyecto.save();
+    }
+    return proyecto;
   }
 
-  quitarPerfil(idProyecto, id) {
-    return this.proyectoModel
-      .updateOne({ _id: idProyecto }, { $pull: { perfiles: id } })
-      .exec();
+  async quitarPerfil(idProyecto, id) {
+    const proyecto = await this.proyectoModel.findById(idProyecto).exec();
+    if (!proyecto) return null;
+
+    proyecto.perfiles = proyecto.perfiles.filter(
+      (perfil) => String(perfil) !== String(id),
+    );
+    await proyecto.save();
+    return proyecto;
   }
 
   obtenerVencidos(ahora = new Date()) {
     return this.proyectoModel
       .find({
-        estado: { $ne: Estado.FINALIZADO },
-        fechaLimiteCierre: { $ne: null, $lte: ahora },
+        estado: Estado.ACTIVO,
+        fechaLimiteCierre: { $lte: ahora },
       })
       .exec();
   }
@@ -72,7 +85,7 @@ export class ProyectoRepository {
         },
         {
           upsert: true,
-          new: true,
+          returnDocument: "after",
           runValidators: true,
           setDefaultsOnInsert: true,
         },

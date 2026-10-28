@@ -19,7 +19,7 @@ describe("ColaboradorService", () => {
     colaboradorRepository = {
       save: jest.fn(async (colaborador) => colaborador),
       obtenerTodos: jest.fn(async () => []),
-      encontrarPorId: jest.fn(async () => null),
+      buscarPorId: jest.fn(async () => null),
     };
     habilidadRepository = {
       encontrarPorCodigos: jest.fn(async (codigos) =>
@@ -92,10 +92,10 @@ describe("ColaboradorService", () => {
 
   it("obtiene todas y por id delegando en el repositorio", async () => {
     colaboradorRepository.obtenerTodos.mockResolvedValue([{ _id: "c1" }]);
-    colaboradorRepository.encontrarPorId.mockResolvedValue({ _id: "c1" });
+    colaboradorRepository.buscarPorId.mockResolvedValue({ _id: "c1" });
 
     expect(await service.obtenerTodos()).toEqual([{ _id: "c1" }]);
     expect(await service.obtenerPorId("c1")).toEqual({ _id: "c1" });
-    expect(colaboradorRepository.encontrarPorId).toHaveBeenCalledWith("c1");
+    expect(colaboradorRepository.buscarPorId).toHaveBeenCalledWith("c1");
   });
 });

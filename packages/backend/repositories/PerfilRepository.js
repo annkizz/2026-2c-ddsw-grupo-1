@@ -47,7 +47,7 @@ export class PerfilRepository {
 
   async actualizar(id, datos) {
     return await this.model.findByIdAndUpdate(id, datos, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
   }

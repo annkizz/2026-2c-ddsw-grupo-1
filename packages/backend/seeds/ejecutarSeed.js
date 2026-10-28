@@ -77,8 +77,8 @@ export async function ejecutarSeed(
   }
 
   for (const c of datos.colaboraciones) {
-    const proyecto = await proyectoRepository.encontrarPorId(c.idProyecto);
-    const colaborador = await colaboradorRepository.encontrarPorId(
+    const proyecto = await proyectoRepository.buscarPorId(c.idProyecto);
+    const colaborador = await colaboradorRepository.buscarPorId(
       c.idColaborador,
     );
     await colaboracionRepository.save(

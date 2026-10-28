@@ -10,7 +10,7 @@ export class ColaboradorRepository {
     return this.model.find().exec();
   }
 
-  async encontrarPorId(id) {
+  async buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return await this.model.findById(id).exec();
   }
@@ -42,7 +42,7 @@ export class ColaboradorRepository {
         },
         {
           upsert: true,
-          new: true,
+          returnDocument: "after",
           runValidators: true,
           setDefaultsOnInsert: true,
         },

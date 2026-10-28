@@ -16,21 +16,15 @@ export class ColaboradorService {
   }
 
   crear = async (datosColaborador) => {
-    const codigos = [
-      ...new Set(
-        datosColaborador.habilidades.map((titulo) =>
-          normalizarHabilidad(titulo),
-        ),
-      ),
-    ];
+    const codigos = datosColaborador.habilidades
+      .map((titulo) => normalizarHabilidad(titulo))
+      .filter((codigo, indice, todos) => todos.indexOf(codigo) === indice);
     const encontradas =
       await this.habilidadRepository.encontrarPorCodigos(codigos);
-    const porCodigo = new Map(
-      encontradas.map((habilidad) => [habilidad.codigo, habilidad]),
-    );
-
     const habilidades = datosColaborador.habilidades.map((tituloHabilidad) => {
-      const habilidad = porCodigo.get(normalizarHabilidad(tituloHabilidad));
+      const habilidad = encontradas.find(
+        (hab) => hab.codigo === normalizarHabilidad(tituloHabilidad),
+      );
 
       if (!habilidad) {
         throw new NotFoundError(
@@ -62,6 +56,6 @@ export class ColaboradorService {
   }
 
   obtenerPorId = (colaboradorId) => {
-    return this.colaboradorRepository.encontrarPorId(colaboradorId);
+    return this.colaboradorRepository.buscarPorId(colaboradorId);
   };
 }

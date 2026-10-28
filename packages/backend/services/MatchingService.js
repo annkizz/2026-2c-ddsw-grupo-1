@@ -23,7 +23,7 @@ export class MatchingService {
   // excluye anotadas y exige las habilidades requeridas del perfil
 
   async buscarColaboradorasParaPerfil(idProyecto, id) {
-    const proyecto = await this.proyectoRepository.encontrarPorId(idProyecto);
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
     if (!proyecto) {
       throw new NotFoundError(
         "Proyecto no encontrado",
@@ -43,13 +43,11 @@ export class MatchingService {
       );
     }
 
-    const yaAnotadas = new Set(
-      (
-        await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
-          idProyecto,
-        )
-      ).map(String),
-    );
+    const yaAnotadas = (
+      await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
+        idProyecto,
+      )
+    ).map(String);
 
     const candidatas =
       await this.colaboradorRepository.encontrarPorHabilidadesRequeridas(
@@ -57,23 +55,31 @@ export class MatchingService {
       );
 
     return candidatas
-      .filter((colaboradora) => !yaAnotadas.has(String(colaboradora._id)))
+      .filter(
+        (colaboradora) => !yaAnotadas.includes(String(colaboradora._id)),
+      )
       .map((colaboradora) => ({
         colaboradora,
-        ...evaluarCoincidencia(perfil, colaboradora.habilidades),
+        evaluacion: evaluarCoincidencia(perfil, colaboradora.habilidades),
       }))
-      .filter((r) => r.tieneCoincidencia)
-      .map(({ colaboradora, ...coincidencia }) => ({
-        // DTO publico, no se exponen nombre/apellido, colaboraciones ni medios de contacto.
-        id: String(colaboradora._id),
-        nombreFantasia: colaboradora.nombreFantasia,
-        usuarioGitHub: colaboradora.usuarioGitHub,
-        ...(colaboradora.pronombres?.length > 0 && {
-          pronombres: colaboradora.pronombres,
-        }),
-        presentacion: colaboradora.presentacion,
-        ...coincidencia,
-      }));
+      .filter((sugerencia) => sugerencia.evaluacion.tieneCoincidencia)
+      .map((sugerencia) => {
+        const { colaboradora, evaluacion } = sugerencia;
+        const dto = {
+          // DTO publico, no se exponen nombre/apellido, colaboraciones ni medios de contacto.
+          id: String(colaboradora._id),
+          nombreFantasia: colaboradora.nombreFantasia,
+          usuarioGitHub: colaboradora.usuarioGitHub,
+          presentacion: colaboradora.presentacion,
+          tieneCoincidencia: evaluacion.tieneCoincidencia,
+          requeridasCoincidentes: evaluacion.requeridasCoincidentes,
+          opcionalesCoincidentes: evaluacion.opcionalesCoincidentes,
+        };
+        if (colaboradora.pronombres?.length > 0) {
+          dto.pronombres = colaboradora.pronombres;
+        }
+        return dto;
+      });
   }
 
   // busqueda de potenciales proyectos segun habilidades de colaboradora.
@@ -81,7 +87,7 @@ export class MatchingService {
 
   async buscarProyectosParaColaboradora(idColaborador) {
     const colaboradora =
-      await this.colaboradorRepository.encontrarPorId(idColaborador);
+      await this.colaboradorRepository.buscarPorId(idColaborador);
     if (!colaboradora) {
       throw new NotFoundError(
         "La colaboradora no existe",
@@ -103,22 +109,12 @@ export class MatchingService {
       colaboradora.habilidades,
     );
     const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
-    const perfilesPorProyecto = new Map();
-
-    for (const perfil of perfiles) {
-      const idProyecto = String(perfil.idProyecto);
-      let delProyecto = perfilesPorProyecto.get(idProyecto);
-      if (!delProyecto) {
-        delProyecto = [];
-        perfilesPorProyecto.set(idProyecto, delProyecto);
-      }
-      delProyecto.push(perfil);
-    }
 
     const resultados = [];
     for (const proyecto of abiertos) {
-      const perfilesDelProyecto =
-        perfilesPorProyecto.get(String(proyecto._id)) ?? [];
+      const perfilesDelProyecto = perfiles.filter(
+        (perfil) => String(perfil.idProyecto) === String(proyecto._id),
+      );
       const perfilesCompatibles = [];
 
       for (const perfil of perfilesDelProyecto) {

@@ -32,13 +32,13 @@ describe("NotificacionService", () => {
         id: notificacion.id ?? ID_NOTIFICACION,
       })),
       obtenerTodos: jest.fn(async () => []),
-      encontrarPorId: jest.fn(async () => null),
+      buscarPorId: jest.fn(async () => null),
     };
     colectivoRepository = {
-      encontrarPorId: jest.fn(async () => colectivo),
+      buscarPorId: jest.fn(async () => colectivo),
     };
     colaboradorRepository = {
-      encontrarPorId: jest.fn(async () => colaboradora),
+      buscarPorId: jest.fn(async () => colaboradora),
     };
     notificadorExterno = {
       enviar: jest.fn(async (medio) => ({
@@ -130,7 +130,7 @@ describe("NotificacionService", () => {
   });
 
   it("valida colectivo y colaboradora antes de guardar", async () => {
-    colectivoRepository.encontrarPorId.mockResolvedValue(null);
+    colectivoRepository.buscarPorId.mockResolvedValue(null);
     await expect(
       service.crear({
         idColectivo: colectivo._id,
@@ -140,8 +140,8 @@ describe("NotificacionService", () => {
     ).rejects.toMatchObject({ status: 404, codigo: "COLECTIVO_NO_ENCONTRADO" });
     expect(notificacionRepository.save).not.toHaveBeenCalled();
 
-    colectivoRepository.encontrarPorId.mockResolvedValue(colectivo);
-    colaboradorRepository.encontrarPorId.mockResolvedValue(null);
+    colectivoRepository.buscarPorId.mockResolvedValue(colectivo);
+    colaboradorRepository.buscarPorId.mockResolvedValue(null);
     await expect(
       service.crear({
         idColectivo: colectivo._id,

@@ -23,8 +23,8 @@ export class PerfilService {
       id: String(perfil.id ?? perfil._id),
       idProyecto: String(perfil.idProyecto),
       descripcion: perfil.descripcion,
-      habilidadesRequeridas: [...perfil.habilidadesRequeridas],
-      habilidadesOpcionales: [...perfil.habilidadesOpcionales],
+      habilidadesRequeridas: perfil.habilidadesRequeridas.slice(),
+      habilidadesOpcionales: perfil.habilidadesOpcionales.slice(),
       compromiso: {
         tipoCompromiso: perfil.compromiso.tipoCompromiso,
         horas: perfil.compromiso.horas,
@@ -44,10 +44,9 @@ export class PerfilService {
 
     const habilidadesRequeridas = datos.habilidadesRequeridas;
     const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
-    const habilidades = await this.validarHabilidades([
-      ...habilidadesRequeridas,
-      ...habilidadesOpcionales,
-    ]);
+    const habilidades = await this.validarHabilidades(
+      habilidadesRequeridas.concat(habilidadesOpcionales),
+    );
     const requeridas = habilidades.slice(0, habilidadesRequeridas.length);
     const opcionales = habilidades.slice(habilidadesRequeridas.length);
 
@@ -86,10 +85,9 @@ export class PerfilService {
 
     const habilidadesRequeridas = datos.habilidadesRequeridas;
     const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
-    const habilidades = await this.validarHabilidades([
-      ...habilidadesRequeridas,
-      ...habilidadesOpcionales,
-    ]);
+    const habilidades = await this.validarHabilidades(
+      habilidadesRequeridas.concat(habilidadesOpcionales),
+    );
     const requeridas = habilidades.slice(0, habilidadesRequeridas.length);
     const opcionales = habilidades.slice(habilidadesRequeridas.length);
 
@@ -121,17 +119,15 @@ export class PerfilService {
   async validarHabilidades(titulos = []) {
     if (titulos.length === 0) return [];
 
-    const codigos = [
-      ...new Set(titulos.map((titulo) => normalizarHabilidad(titulo))),
-    ];
+    const codigos = titulos
+      .map((titulo) => normalizarHabilidad(titulo))
+      .filter((codigo, indice, todos) => todos.indexOf(codigo) === indice);
     const habilidades =
       await this.habilidadRepository.encontrarPorCodigos(codigos);
-    const habilidadesPorCodigo = new Map(
-      habilidades.map((habilidad) => [habilidad.codigo, habilidad]),
-    );
-
     return titulos.map((titulo) => {
-      const habilidad = habilidadesPorCodigo.get(normalizarHabilidad(titulo));
+      const habilidad = habilidades.find(
+        (hab) => hab.codigo === normalizarHabilidad(titulo),
+      );
       if (!habilidad) {
         throw new NotFoundError(
           `la habilidad ${titulo} no existe`,

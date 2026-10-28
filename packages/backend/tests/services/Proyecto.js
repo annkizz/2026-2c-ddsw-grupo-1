@@ -44,7 +44,7 @@ describe("ProyectoService", () => {
         if (!proyecto._id) proyecto._id = "p-nuevo";
         return proyecto;
       }),
-      encontrarPorId: jest.fn(async () => null),
+      buscarPorId: jest.fn(async () => null),
       obtenerVencidos: jest.fn(async () => []),
     };
     colaboracionRepository = {
@@ -53,7 +53,7 @@ describe("ProyectoService", () => {
       save: jest.fn(async (colaboracion) => colaboracion),
     };
     colectivoRepository = {
-      encontrarPorId: jest.fn(async (id) =>
+      buscarPorId: jest.fn(async (id) =>
         id === "col-1" ? colectivo : null,
       ),
       agregarProyecto: jest.fn(async () => undefined),
@@ -144,7 +144,7 @@ describe("ProyectoService", () => {
   describe("cerrarProyecto", () => {
     it("finaliza el proyecto y lo guarda", async () => {
       const proyecto = proyectoActivo();
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
+      proyectoRepository.buscarPorId.mockResolvedValue(proyecto);
 
       const cerrado = await service.cerrarProyecto("p-1");
 
@@ -162,7 +162,7 @@ describe("ProyectoService", () => {
   describe("actualizarAvance", () => {
     it("actualiza el avance, lo guarda y devuelve el DTO", async () => {
       const proyecto = proyectoActivo();
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
+      proyectoRepository.buscarPorId.mockResolvedValue(proyecto);
 
       const resultado = await service.actualizarAvance("p-1", {
         porcentajeConcrecion: 40,
@@ -188,7 +188,7 @@ describe("ProyectoService", () => {
     });
 
     it("falla con AVANCE_VACIO si no se indica ningún dato", async () => {
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
 
       await expect(service.actualizarAvance("p-1", {})).rejects.toMatchObject({
         status: 400,
@@ -201,7 +201,7 @@ describe("ProyectoService", () => {
   describe("programarCierre", () => {
     it("programa la fecha y guarda", async () => {
       const proyecto = proyectoActivo();
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyecto);
+      proyectoRepository.buscarPorId.mockResolvedValue(proyecto);
       const fecha = enUnaHora();
 
       const resultado = await service.programarCierre("p-1", fecha);
@@ -211,7 +211,7 @@ describe("ProyectoService", () => {
     });
 
     it("no permite programar el cierre de un proyecto finalizado", async () => {
-      proyectoRepository.encontrarPorId.mockResolvedValue(
+      proyectoRepository.buscarPorId.mockResolvedValue(
         proyectoActivo({ estado: "FINALIZADO" }),
       );
       await expect(service.programarCierre("p-1", enUnaHora())).rejects.toThrow(
@@ -274,7 +274,7 @@ describe("ProyectoService", () => {
 
     it("publica la contribución sin identidad cuando es anónima", async () => {
       const fecha = new Date();
-      proyectoRepository.encontrarPorId.mockResolvedValue(proyectoActivo());
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
       colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
         {
           idProyecto: "p-1",

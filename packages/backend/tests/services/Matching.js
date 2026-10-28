@@ -21,7 +21,7 @@ describe("MatchingService", () => {
       compromiso: { tipoCompromiso: "MENSUALES", horas: 5 },
     };
     const colaboradorRepository = {
-      encontrarPorId: jest.fn(async () => ({
+      buscarPorId: jest.fn(async () => ({
         _id: idColaboradora,
         habilidades: ["React"],
       })),
@@ -72,7 +72,7 @@ describe("MatchingService", () => {
 describe("MatchingService con al menos una habilidad requerida", () => {
   it("pasa las exclusiones a Mongo y conserva los proyectos con un perfil compatible", async () => {
     const colaboradorRepository = {
-      encontrarPorId: jest
+      buscarPorId: jest
         .fn()
         .mockResolvedValue({ habilidades: ["React", "SQL"] }),
     };
@@ -155,7 +155,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     const perfilRepository = { obtenerCompatiblesPorProyectos: jest.fn() };
     const service = new MatchingService(
       {
-        encontrarPorId: jest.fn().mockResolvedValue({ habilidades: ["React"] }),
+        buscarPorId: jest.fn().mockResolvedValue({ habilidades: ["React"] }),
       },
       { obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([]) },
       perfilRepository,
@@ -172,7 +172,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
   it("no busca proyectos si la persona no tiene habilidades", async () => {
     const proyectoRepository = { obtenerAbiertosParaMatching: jest.fn() };
     const service = new MatchingService(
-      { encontrarPorId: jest.fn().mockResolvedValue({ habilidades: [] }) },
+      { buscarPorId: jest.fn().mockResolvedValue({ habilidades: [] }) },
       proyectoRepository,
       {},
       {},
@@ -201,7 +201,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     const service = new MatchingService(
       colaboradorRepository,
       {
-        encontrarPorId: jest
+        buscarPorId: jest
           .fn()
           .mockResolvedValue({ estaFinalizado: () => false }),
       },

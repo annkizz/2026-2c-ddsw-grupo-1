@@ -32,7 +32,7 @@ export class ProyectoService {
   }
 
   crear = async (datosProyecto) => {
-    const colectivo = await this.colectivoRepository.encontrarPorId(
+    const colectivo = await this.colectivoRepository.buscarPorId(
       datosProyecto.idColectivo,
     );
 
@@ -162,7 +162,7 @@ export class ProyectoService {
   }
 
   obtenerProyectoPorId(id) {
-    return this.proyectoRepository.encontrarPorId(id);
+    return this.proyectoRepository.buscarPorId(id);
   }
 
   toContribucionPublica({

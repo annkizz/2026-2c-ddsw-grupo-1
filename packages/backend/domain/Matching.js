@@ -1,38 +1,40 @@
 import { normalizarHabilidad } from "../repositories/HabilidadRepository.js";
 
-const sinRepetidas = (habilidades = []) =>
-  habilidades.reduce((vistas, titulo) => {
+const sinRepetidas = (habilidades = []) => {
+  const unicas = [];
+  for (const titulo of habilidades) {
     const codigo = normalizarHabilidad(titulo);
-    if (codigo !== "" && !vistas.has(codigo)) {
-      vistas.set(codigo, titulo);
+    const repetida = unicas.some((guardada) => guardada.codigo === codigo);
+    if (codigo !== "" && !repetida) {
+      unicas.push({ codigo, titulo });
     }
-    return vistas;
-  }, new Map());
+  }
+  return unicas;
+};
 
 export function evaluarCoincidencia(perfil, habilidadesPersona) {
   return crearEvaluadorCoincidencia(habilidadesPersona)(perfil);
 }
 
 export function crearEvaluadorCoincidencia(habilidadesPersona) {
-  const tiene = new Set(sinRepetidas(habilidadesPersona).keys());
+  const tiene = sinRepetidas(habilidadesPersona).map((una) => una.codigo);
+
   return (perfil) => {
     const requeridas = sinRepetidas(perfil.habilidadesRequeridas);
-    const opcionales = new Map(
-      [...sinRepetidas(perfil.habilidadesOpcionales)].filter(
-        ([codigo]) => !requeridas.has(codigo),
-      ),
+    const yaRequeridas = requeridas.map((guardada) => guardada.codigo);
+    const opcionales = sinRepetidas(perfil.habilidadesOpcionales).filter(
+      (una) => !yaRequeridas.includes(una.codigo),
     );
 
-    const coinciden = (mapa) =>
-      [...mapa].filter(([codigo]) => tiene.has(codigo)).map(([, t]) => t);
-
-    const requeridasCoincidentes = coinciden(requeridas);
-    const opcionalesCoincidentes = coinciden(opcionales);
+    const coinciden = (lista) =>
+      lista
+        .filter((una) => tiene.includes(una.codigo))
+        .map((una) => una.titulo);
 
     return {
-      tieneCoincidencia: requeridasCoincidentes.length > 0,
-      requeridasCoincidentes,
-      opcionalesCoincidentes,
+      tieneCoincidencia: coinciden(requeridas).length > 0,
+      requeridasCoincidentes: coinciden(requeridas),
+      opcionalesCoincidentes: coinciden(opcionales),
     };
   };
 }

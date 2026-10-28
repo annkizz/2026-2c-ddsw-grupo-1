@@ -10,7 +10,7 @@ export class ColectivoRepository {
     return this.model.find().exec();
   }
 
-  async encontrarPorId(id) {
+  async buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return await this.model.findById(id).exec();
   }
@@ -27,7 +27,7 @@ export class ColectivoRepository {
         },
         {
           upsert: true,
-          new: true,
+          returnDocument: "after",
           runValidators: true,
           setDefaultsOnInsert: true,
         },
@@ -35,9 +35,17 @@ export class ColectivoRepository {
       .exec();
   }
 
-  agregarProyecto(idColectivo, idProyecto) {
-    return this.model
-      .updateOne({ _id: idColectivo }, { $addToSet: { proyectos: idProyecto } })
-      .exec();
+  async agregarProyecto(idColectivo, idProyecto) {
+    const colectivo = await this.model.findById(idColectivo).exec();
+    if (!colectivo) return null;
+
+    const yaAgregado = colectivo.proyectos.some(
+      (proyecto) => String(proyecto) === String(idProyecto),
+    );
+    if (!yaAgregado) {
+      colectivo.proyectos.push(idProyecto);
+      await colectivo.save();
+    }
+    return colectivo;
   }
 }

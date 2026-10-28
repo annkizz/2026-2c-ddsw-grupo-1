@@ -20,7 +20,7 @@ describe("consultas de matching", () => {
     const model = crearModelo();
     await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"]);
     expect(model.find).toHaveBeenCalledWith({
-      estado: { $ne: Estado.FINALIZADO },
+      estado: Estado.ACTIVO,
       _id: { $nin: ["p1"] },
     });
     expect(model.query.select).toHaveBeenCalledWith("_id titulo descripcion");

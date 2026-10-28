@@ -26,11 +26,13 @@ export class NotificacionService {
       idColectivo: String(notificacion.idColectivo),
       idColaborador: String(notificacion.idColaborador),
       envios: (notificacion.envios ?? []).map(
-        ({ tipoDeContacto, estado, detalle }) => ({
-          tipoDeContacto,
-          estado,
-          ...(detalle && { detalle }),
-        }),
+        ({ tipoDeContacto, estado, detalle }) => {
+          const envio = { tipoDeContacto, estado };
+          if (detalle) {
+            envio.detalle = detalle;
+          }
+          return envio;
+        },
       ),
     };
   }
@@ -48,7 +50,7 @@ export class NotificacionService {
     const { idColectivo, idColaborador, contenido } = datosNotificacion;
 
     const colectivo =
-      await this.colectivoRepository.encontrarPorId(idColectivo);
+      await this.colectivoRepository.buscarPorId(idColectivo);
     if (!colectivo) {
       throw new NotFoundError(
         "el colectivo no existe",
@@ -57,7 +59,7 @@ export class NotificacionService {
     }
 
     const colaboradora =
-      await this.colaboradorRepository.encontrarPorId(idColaborador);
+      await this.colaboradorRepository.buscarPorId(idColaborador);
     if (!colaboradora) {
       throw new NotFoundError(
         "la colaboradora no existe",
@@ -91,7 +93,8 @@ export class NotificacionService {
             medio,
             mensaje,
           );
-          return { ...resultado, tipoDeContacto: medio.tipoDeContacto };
+          resultado.tipoDeContacto = medio.tipoDeContacto;
+          return resultado;
         } catch (error) {
           console.error(
             `Falló el envío de notificación por ${medio.tipoDeContacto} (${error.name}).`,
@@ -128,7 +131,7 @@ export class NotificacionService {
   }
 
   async obtenerPorId(id) {
-    const notificacion = await this.notificacionRepository.encontrarPorId(id);
+    const notificacion = await this.notificacionRepository.buscarPorId(id);
     if (!notificacion) {
       throw new NotFoundError(
         "la notificación no existe",
