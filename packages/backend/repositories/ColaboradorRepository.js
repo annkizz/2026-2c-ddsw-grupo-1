@@ -1,30 +1,52 @@
+import mongoose from "mongoose";
+import { ColaboradorModel } from "../schemas/colaboradorSchema.js";
+
 export class ColaboradorRepository {
-  constructor() {
-    this.colaboradores = [];
+  constructor(model = ColaboradorModel) {
+    this.model = model;
   }
 
   obtenerTodos() {
-    return this.colaboradores;
+    return this.model.find().exec();
   }
 
-  encontrarPorId(idColaborador) {
-    return this.colaboradores.find(
-      (colaborador) => colaborador.idColaborador === idColaborador,
-    );
+  async buscarPorId(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return await this.model.findById(id).exec();
   }
 
-  save(unColaborador) {
-    const indice = this.colaboradores.findIndex(
-      (colaborador) =>
-        this.colaboradores.idColaborador === unColaborador.idColaborador,
-    );
+  async encontrarPorHabilidadesRequeridas(titulos) {
+    if (titulos.length === 0) return [];
+    return this.model
+      .find({ habilidades: { $in: titulos } })
+      .select(
+        "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades",
+      )
+      .exec();
+  }
 
-    if (indice === -1) {
-      this.colaboradores.push(unColaborador);
-      return unColaborador;
-    }
-
-    this.colaboradores[indice] = unColaborador;
-    return unColaborador;
+  save(unColaborador, id = unColaborador._id) {
+    return this.model
+      .findOneAndUpdate(
+        { _id: id ?? new mongoose.Types.ObjectId() },
+        {
+          nombreFantasia: unColaborador.nombreFantasia,
+          usuarioGitHub: unColaborador.usuarioGitHub,
+          nombre: unColaborador.nombre,
+          apellido: unColaborador.apellido,
+          presentacion: unColaborador.presentacion,
+          pronombres: unColaborador.pronombres,
+          aceptaMensajeria: unColaborador.aceptaMensajeria,
+          habilidades: unColaborador.habilidades,
+          mediosDeContacto: unColaborador.mediosDeContacto,
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
   }
 }

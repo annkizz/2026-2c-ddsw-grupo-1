@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Colaborador } from "../domain/Colaborador.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
 import {
@@ -16,11 +15,15 @@ export class ColaboradorService {
     this.habilidadRepository = habilidadRepository;
   }
 
-  crear = (datosColaborador) => {
+  crear = async (datosColaborador) => {
+    const codigos = datosColaborador.habilidades
+      .map((titulo) => normalizarHabilidad(titulo))
+      .filter((codigo, indice, todos) => todos.indexOf(codigo) === indice);
+    const encontradas =
+      await this.habilidadRepository.encontrarPorCodigos(codigos);
     const habilidades = datosColaborador.habilidades.map((tituloHabilidad) => {
-      const habilidadTituloNormalizado = normalizarHabilidad(tituloHabilidad);
-      const habilidad = this.habilidadRepository.encontrarPorTitulo(
-        habilidadTituloNormalizado,
+      const habilidad = encontradas.find(
+        (hab) => hab.codigo === normalizarHabilidad(tituloHabilidad),
       );
 
       if (!habilidad) {
@@ -30,7 +33,7 @@ export class ColaboradorService {
         );
       }
 
-      return habilidad;
+      return habilidad.titulo;
     });
 
     const colaborador = new Colaborador(
@@ -39,19 +42,20 @@ export class ColaboradorService {
       datosColaborador.nombre,
       datosColaborador.apellido,
       datosColaborador.presentacion,
-      datosColaborador.pronombres,
-      randomUUID(),
+      datosColaborador.pronombres ?? [],
       habilidades,
+      datosColaborador.mediosDeContacto ?? [],
+      datosColaborador.aceptaMensajeria ?? false,
     );
 
-    return this.colaboradorRepository.save(colaborador);
+    return await this.colaboradorRepository.save(colaborador);
   };
 
-  obtenerTodos() {
-    return this.colaboradorRepository.obtenerTodos();
+  async obtenerTodos() {
+    return await this.colaboradorRepository.obtenerTodos();
   }
 
   obtenerPorId = (colaboradorId) => {
-    return this.obtenerTodos().find((c) => c.idColaborador == colaboradorId);
+    return this.colaboradorRepository.buscarPorId(colaboradorId);
   };
 }

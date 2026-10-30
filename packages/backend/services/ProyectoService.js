@@ -1,13 +1,9 @@
-import { randomUUID } from "node:crypto";
-import { Compromiso } from "../domain/Compromiso.js";
 import { Estado } from "../domain/Estado.js";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
-import {
-  HabilidadRepository,
-  normalizarHabilidad,
-} from "../repositories/HabilidadRepository.js";
+import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
+import { evaluarCoincidencia } from "../domain/Matching.js";
 import {
   BadRequestError,
   ConflictError,
@@ -15,6 +11,8 @@ import {
 } from "../errors/AppError.js";
 import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
+import { PerfilRepository } from "../repositories/PerfilRepository.js";
+import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 
 export class ProyectoService {
   constructor(
@@ -22,77 +20,106 @@ export class ProyectoService {
     habilidadRepository = new HabilidadRepository(),
     colaboradorService = new ColaboradorService(),
     colectivoRepository = new ColectivoRepository(),
+    colaboracionRepository = new ColaboracionRepository(),
+    perfilRepository = new PerfilRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
     this.colaboradorService = colaboradorService;
     this.colectivoRepository = colectivoRepository;
+    this.colaboracionRepository = colaboracionRepository;
+    this.perfilRepository = perfilRepository;
   }
 
-  crear = (datosProyecto) => {
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
+  crear = async (datosProyecto) => {
+    const colectivo = await this.colectivoRepository.buscarPorId(
+      datosProyecto.idColectivo,
+    );
 
-      if (!colectivo) {
-        throw new NotFoundError(
-          "el colectivo no existe",
-          "COLECTIVO_NO_ENCONTRADO",
-        );
-      }
+    if (!colectivo) {
+      throw new NotFoundError(
+        "el colectivo no existe",
+        "COLECTIVO_NO_ENCONTRADO",
+      );
     }
 
-    const habilidades = datosProyecto.habilidades.map((tituloHabilidad) => {
-      const habilidad =
-        this.habilidadRepository.encontrarPorTitulo(tituloHabilidad);
-
-      if (!habilidad) {
-        throw new NotFoundError(
-          "la habilidad ${tituloHabilidad} no existe",
-          "HABILIDAD_NO_ENCONTRADA",
-        );
-      }
-
-      return habilidad;
-    });
-
-    const compromiso = new Compromiso(
-      datosProyecto.compromiso.tipoCompromiso,
-      datosProyecto.compromiso.horas,
-    );
+    const fechaLimiteCierre = datosProyecto.fechaLimiteCierre ?? null;
+    if (fechaLimiteCierre !== null) {
+      this.validarFechaLimite(fechaLimiteCierre);
+    }
 
     const proyecto = new Proyecto(
       datosProyecto.titulo,
       datosProyecto.descripcion,
-      habilidades,
-      compromiso,
-      datosProyecto.modalidadColaboracion,
+      [], // perfiles
       Estado.ACTIVO,
       new Date(),
-      randomUUID(),
+      fechaLimiteCierre,
+      colectivo._id,
+      0,
+      null,
+      null,
     );
 
-    if (this.colectivoRepository) {
-      const colectivo = this.colectivoRepository.encontrarPorId(
-        datosProyecto.idColectivo,
-      );
-      colectivo.agregarProyecto(proyecto);
-    }
-
-    return this.proyectoRepository.save(proyecto);
+    const proyectoGuardado = await this.proyectoRepository.save(proyecto);
+    await this.colectivoRepository.agregarProyecto(
+      colectivo._id,
+      proyectoGuardado._id,
+    );
+    return this.toDTO(proyectoGuardado);
   };
 
-  obtenerTodos() {
-    return this.proyectoRepository.obtenerTodos();
+  toDTO(proyecto) {
+    return {
+      id: String(proyecto._id),
+      titulo: proyecto.titulo,
+      descripcion: proyecto.descripcion,
+      estado: proyecto.estado,
+      fechaInicio: proyecto.fechaInicio,
+      fechaLimiteCierre: proyecto.fechaLimiteCierre,
+      idColectivo: String(proyecto.idColectivo),
+      perfiles: (proyecto.perfiles ?? []).map((perfil) => String(perfil)),
+      porcentajeConcrecion: proyecto.porcentajeConcrecion,
+      enlaceSistema: proyecto.enlaceSistema,
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+    };
   }
 
-  obtenerProyectoPorId(id) {
-    return this.obtenerTodos().find((p) => p.idProyecto === id);
+  validarFechaLimite(fechaLimiteCierre, ahora = new Date()) {
+    if (fechaLimiteCierre <= ahora) {
+      throw new BadRequestError(
+        "La fecha límite de cierre debe ser futura",
+        "FECHA_LIMITE_INVALIDA",
+      );
+    }
   }
 
-  cerrarProyecto(idProyecto) {
-    const proyecto = this.obtenerProyectoPorId(idProyecto);
+  async programarCierre(idProyecto, fechaLimite) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (proyecto.estaFinalizado()) {
+      throw new ConflictError(
+        "No se puede programar el cierre de un proyecto finalizado",
+        "PROYECTO_FINALIZADO",
+      );
+    }
+
+    this.validarFechaLimite(fechaLimite);
+    proyecto.programarCierre(fechaLimite);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    return this.toDTO(guardado);
+  }
+
+  async cerrarSiVencido(proyecto, ahora = new Date()) {
+    if (!proyecto.cierreVencido(ahora)) {
+      return false;
+    }
+    await this.finalizar(proyecto);
+    return true;
+  }
+
+  async buscarProyectoOFallar(idProyecto) {
+    const proyecto = await this.obtenerProyectoPorId(idProyecto);
 
     if (!proyecto) {
       throw new NotFoundError(
@@ -100,46 +127,94 @@ export class ProyectoService {
         "PROYECTO_NO_ENCONTRADO",
       );
     }
-
-    proyecto.cerrar();
     return proyecto;
   }
 
-  obtenerTodasColaboraciones = () => {
-    return this.proyectoRepository.obtenerTodasColaboraciones();
-  };
+  async finalizar(proyecto) {
+    // falta implementar lo de la 3era entrega: rechazar las postulaciones pendientes del proyecto
+    proyecto.cerrar();
+    return await this.proyectoRepository.save(proyecto);
+  }
 
-  obtenerColaboracionPorIdProyecto = (proyectoId) => {
-    if (this.obtenerTodasColaboraciones) {
-      return this.obtenerTodasColaboraciones().find(
-        (c) => c.proyecto.idProyecto === proyectoId,
-      );
+  async cerrarProyectosVencidos(ahora = new Date()) {
+    const vencidos = await this.proyectoRepository.obtenerVencidos(ahora);
+    const cerrados = [];
+    const fallidos = [];
+
+    for (const proyecto of vencidos) {
+      try {
+        await this.finalizar(proyecto);
+        cerrados.push(String(proyecto._id));
+      } catch (error) {
+        fallidos.push({
+          idProyecto: String(proyecto._id),
+          error: error.message,
+        });
+      }
     }
 
-    return undefined;
+    return { cerrados, fallidos };
+  }
+
+  async obtenerTodos() {
+    const proyectos = await this.proyectoRepository.obtenerTodos();
+    return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  obtenerProyectoPorId(id) {
+    return this.proyectoRepository.buscarPorId(id);
+  }
+
+  toContribucionPublica({
+    idProyecto,
+    idColaborador,
+    fecha,
+    esAnonima = false,
+  }) {
+    const contribucion = {
+      idProyecto: String(idProyecto),
+      fecha,
+      esAnonima,
+    };
+
+    if (!esAnonima && idColaborador) {
+      contribucion.colaborador = {
+        id: String(idColaborador._id),
+        nombreFantasia: idColaborador.nombreFantasia,
+        usuarioGitHub: idColaborador.usuarioGitHub,
+        nombre: idColaborador.nombre,
+        apellido: idColaborador.apellido,
+      };
+    }
+
+    return contribucion;
+  }
+
+  obtenerColaboracionesPublicas = async (idProyecto) => {
+    await this.buscarProyectoOFallar(idProyecto);
+    const colaboraciones =
+      await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
+    return colaboraciones.map((colaboracion) =>
+      this.toContribucionPublica(colaboracion),
+    );
   };
 
   colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
-    const colaboracion = this.obtenerColaboracionPorIdProyecto(proyectoId);
-    return (
-      colaboracion && colaboracion.colaborador.idColaborador === colaboradorId
+    return this.colaboracionRepository.existeColaboracion(
+      proyectoId,
+      colaboradorId,
     );
   };
 
-  verificarHabilidades = (proyecto, colaborador) => {
-    const habilidadesNecesarias = proyecto.habilidades.map((h) =>
-      normalizarHabilidad(h.titulo),
-    );
-    const habilidadesColaborador = colaborador.habilidades.map((h) =>
-      normalizarHabilidad(h.titulo),
-    );
-
-    return habilidadesNecesarias.some((habilidad) =>
-      habilidadesColaborador.includes(habilidad),
+  verificarHabilidades = async (proyecto, colaborador) => {
+    const perfiles = await this.perfilRepository.obtenerTodos(proyecto._id);
+    return perfiles.some(
+      (perfil) =>
+        evaluarCoincidencia(perfil, colaborador.habilidades).tieneCoincidencia,
     );
   };
 
-  crearColaboracion(proyecto, colaboradorId) {
+  async crearColaboracion(proyecto, colaboradorId, esAnonima = false) {
     if (proyecto.estaFinalizado()) {
       throw new ConflictError(
         "No se puede anotar a un proyecto finalizado",
@@ -147,7 +222,8 @@ export class ProyectoService {
       );
     }
 
-    const colaborador = this.colaboradorService.obtenerPorId(colaboradorId);
+    const colaborador =
+      await this.colaboradorService.obtenerPorId(colaboradorId);
 
     if (!colaborador) {
       throw new NotFoundError(
@@ -156,16 +232,14 @@ export class ProyectoService {
       );
     }
 
-    if (
-      this.colaboradorPerteneceAProyecto(proyecto.idProyecto, colaboradorId)
-    ) {
+    if (await this.colaboradorPerteneceAProyecto(proyecto._id, colaboradorId)) {
       throw new ConflictError(
         "La colaboradora ya está anotada en este proyecto",
         "COLABORACION_YA_EXISTENTE",
       );
     }
 
-    if (!this.verificarHabilidades(proyecto, colaborador)) {
+    if (!(await this.verificarHabilidades(proyecto, colaborador))) {
       throw new BadRequestError(
         "La colaboradora no cumple con las habilidades requeridas",
         "HABILIDADES_INSUFICIENTES",
@@ -176,8 +250,37 @@ export class ProyectoService {
       proyecto,
       colaborador,
       new Date().toISOString(),
+      esAnonima,
     );
-    this.proyectoRepository.saveColaboracion(nuevaColaboracion);
-    return nuevaColaboracion;
+    return await this.colaboracionRepository.save(nuevaColaboracion);
+  }
+
+  async cerrarProyecto(idProyecto) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+    return this.toDTO(await this.finalizar(proyecto));
+  }
+
+  async actualizarAvance(idProyecto, datosAvance) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (Object.keys(datosAvance).length === 0) {
+      throw new BadRequestError(
+        "indicá al menos un dato de avance",
+        "AVANCE_VACIO",
+      );
+    }
+
+    proyecto.actualizarAvance(datosAvance);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    return this.toAvanceDTO(guardado);
+  }
+
+  toAvanceDTO(proyecto) {
+    return {
+      id: String(proyecto._id),
+      porcentajeConcrecion: proyecto.porcentajeConcrecion,
+      enlaceSistema: proyecto.enlaceSistema,
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+    };
   }
 }

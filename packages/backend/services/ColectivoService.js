@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Colectivo } from "../domain/Colectivo.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 
@@ -7,18 +6,31 @@ export class ColectivoService {
     this.colectivoRepository = colectivoRepository;
   }
 
-  crear = (datosColectivo) => {
+  toDTO(colectivo) {
+    return {
+      id: String(colectivo._id),
+      nombre: colectivo.nombre,
+      descripcion: colectivo.descripcion,
+      tipoDeColectivo: colectivo.tipoDeColectivo,
+      ubicacion: colectivo.ubicacion,
+      proyectos: (colectivo.proyectos ?? []).map((proyecto) =>
+        String(proyecto),
+      ),
+    };
+  }
+
+  crear = async (datosColectivo) => {
     const colectivo = new Colectivo(
       datosColectivo.nombre,
-      randomUUID(),
       datosColectivo.descripcion,
       datosColectivo.ubicacion,
       datosColectivo.tipoDeColectivo,
     );
-    return this.colectivoRepository.save(colectivo);
+    return this.toDTO(await this.colectivoRepository.save(colectivo));
   };
 
-  obtenerTodos() {
-    return this.colectivoRepository.obtenerTodos();
+  async obtenerTodos() {
+    const colectivos = await this.colectivoRepository.obtenerTodos();
+    return colectivos.map((colectivo) => this.toDTO(colectivo));
   }
 }
