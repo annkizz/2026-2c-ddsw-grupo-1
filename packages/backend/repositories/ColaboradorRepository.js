@@ -15,6 +15,10 @@ export class ColaboradorRepository {
     return await this.model.findById(id).exec();
   }
 
+  buscarPorUsuario(idUsuario) {
+    return this.model.findOne({ usuario: idUsuario }).exec();
+  }
+
   async encontrarPorHabilidadesRequeridas(titulos) {
     if (titulos.length === 0) return [];
     return this.model
@@ -39,6 +43,7 @@ export class ColaboradorRepository {
           aceptaMensajeria: unColaborador.aceptaMensajeria,
           habilidades: unColaborador.habilidades,
           mediosDeContacto: unColaborador.mediosDeContacto,
+          usuario: unColaborador.usuario,
         },
         {
           upsert: true,

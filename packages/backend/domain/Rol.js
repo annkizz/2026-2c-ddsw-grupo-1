@@ -1,0 +1,4 @@
+export const Rol = {
+  COLECTIVO: "COLECTIVO",
+  COLABORADOR: "COLABORADOR",
+};

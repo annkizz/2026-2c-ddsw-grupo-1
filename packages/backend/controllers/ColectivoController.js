@@ -27,8 +27,25 @@ export class ColectivoController {
   }
 
   async crear(req, res) {
-    const colectivoNuevo = await this.colectivoService.crear(req.body);
+    const colectivoNuevo = await this.colectivoService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(colectivoNuevo);
+  }
+
+  async actualizar(req, res) {
+    const colectivo = await this.colectivoService.actualizar(
+      req.params.id,
+      req.body,
+      req.usuario,
+    );
+    res.status(200).json(colectivo);
+  }
+
+  async obtenerPorId(req, res) {
+    const colectivo = await this.colectivoService.obtenerPorId(req.params.id);
+    res.status(200).json(colectivo);
   }
 
   async obtenerTodos(req, res) {

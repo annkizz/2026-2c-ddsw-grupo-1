@@ -31,20 +31,48 @@ import { NotificacionRepository } from "../repositories/NotificacionRepository.j
 import { NotificacionService } from "../services/NotificacionService.js";
 import { NotificacionController } from "../controllers/NotificacionController.js";
 import { crearNotificacionRouter } from "./notificacionRouter.js";
+import { UsuarioRepository } from "../repositories/UsuarioRepository.js";
+import { UsuarioService } from "../services/UsuarioService.js";
+import { UsuarioController } from "../controllers/UsuarioController.js";
+import { crearUsuarioRouter } from "./usuarioRouter.js";
+import {
+  crearAutenticar,
+  crearVerificadorLogto,
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
+const usuarioRepository = new UsuarioRepository();
+const autenticar = crearAutenticar(usuarioRepository, crearVerificadorLogto());
+// consultar es publico; crear, modificar o borrar requiere haber iniciado sesion
+const autenticarSiModifica = (req, res, next) =>
+  ["GET", "HEAD", "OPTIONS"].includes(req.method)
+    ? next()
+    : autenticar(req, res, next);
+
 const habilidadRepository = new HabilidadRepository();
 const habilidadService = new HabilidadService(habilidadRepository);
 const habilidadController = new HabilidadController(habilidadService);
 
 const colectivoRepository = new ColectivoRepository();
-const colectivoService = new ColectivoService(colectivoRepository);
+const colaboradorRepository = new ColaboradorRepository();
+const usuarioService = new UsuarioService(
+  usuarioRepository,
+  colectivoRepository,
+  colaboradorRepository,
+);
+const usuarioController = new UsuarioController(usuarioService);
+
+const colectivoService = new ColectivoService(
+  colectivoRepository,
+  usuarioService,
+);
 const colectivoController = new ColectivoController(colectivoService);
 
-const colaboradorRepository = new ColaboradorRepository();
 const colaboradorService = new ColaboradorService(
   colaboradorRepository,
   habilidadRepository,
+  usuarioService,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
@@ -88,15 +116,33 @@ const matchingService = new MatchingService(
 );
 const matchingController = new MatchingController(matchingService);
 
-router.use("/habilidades", crearHabilidadRouter(habilidadController));
+router.use("/me", crearUsuarioRouter(usuarioController, autenticar));
+router.use(
+  "/habilidades",
+  autenticarSiModifica,
+  crearHabilidadRouter(habilidadController),
+);
+// una sola vez para todo /proyectos (lo usan el router de proyectos y el de logros)
+router.use("/proyectos", autenticarSiModifica);
 router.use(
   "/proyectos",
   crearProyectoRouter(proyectoController, perfilController),
 );
-router.use("/colectivos", crearColectivoRouter(colectivoController));
-router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
+router.use(
+  "/colectivos",
+  crearColectivoRouter(colectivoController, autenticar),
+);
+router.use(
+  "/colaboradoras",
+  crearColaboradorRouter(colaboradorController, autenticar),
+);
 router.use("/proyectos", crearLogroRouter(logroController));
-router.use("/notificaciones", crearNotificacionRouter(notificacionController));
+// los mensajes internos son siempre privados
+router.use(
+  "/notificaciones",
+  autenticar,
+  crearNotificacionRouter(notificacionController),
+);
 router.use(crearMatchingRouter(matchingController));
 
 export default router;
