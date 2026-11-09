@@ -46,6 +46,7 @@ export function crearDatosIniciales({
         provincia: "Buenos Aires",
         ciudad: "Lomas de Zamora",
       },
+      etiquetas: ["Salud", "Voluntariado", "Accesibilidad Web"],
     },
     {
       id: "c00000000000000000000002",
@@ -53,12 +54,14 @@ export function crearDatosIniciales({
       descripcion: "Vecinas y vecinos que gestionan una despensa comunitaria.",
       tipoDeColectivo: "ASOCIACIONES_BARRIALES",
       ubicacion: { pais: "Argentina", provincia: "Córdoba", ciudad: "Córdoba" },
+      etiquetas: ["Alimentos", "Comunidad"],
     },
     {
       id: "c00000000000000000000003",
       nombre: "Datos para Todos",
       descripcion: "ONG que publica datos abiertos sobre acceso a alimentos.",
       tipoDeColectivo: "ONG",
+      etiquetas: ["Datos Abiertos", "Accesibilidad Web"],
     },
   ];
 
@@ -69,6 +72,7 @@ export function crearDatosIniciales({
       idColectivo: "c00000000000000000000001",
       titulo: "Portal de turnos solidarios",
       descripcion: "Sitio para que voluntarias y voluntarios reserven turnos.",
+      etiquetas: ["Salud", "Voluntariado", "Turnos"],
       estado: "ACTIVO",
       fechaInicio: enDias(-30),
       fechaLimiteCierre: null,
@@ -120,6 +124,7 @@ export function crearDatosIniciales({
       idColectivo: "c00000000000000000000003",
       titulo: "Mapa de comedores comunitarios",
       descripcion: "Mapa interactivo y accesible de comedores de todo el país.",
+      etiquetas: ["Alimentos", "Accesibilidad Web", "Datos Abiertos"],
       estado: "ACTIVO",
       fechaInicio: enDias(-10),
       fechaLimiteCierre: enDias(60),
@@ -148,6 +153,7 @@ export function crearDatosIniciales({
       titulo: "Inventario de donaciones",
       descripcion:
         "Sistema para registrar las donaciones que recibe la despensa.",
+      etiquetas: ["Alimentos", "Comunidad"],
       estado: "FINALIZADO",
       fechaInicio: enDias(-120),
       fechaLimiteCierre: enDias(-20),

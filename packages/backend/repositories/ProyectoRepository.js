@@ -7,8 +7,17 @@ export class ProyectoRepository {
     this.proyectoModel = proyectoModel;
   }
 
-  obtenerTodos() {
-    return this.proyectoModel.find().sort({ fechaInicio: -1 }).exec();
+  obtenerTodos(filtros = {}) {
+    const query = {};
+    // se filtra en la base, no se trae todo para memoria 
+    if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
+      if (filtros.etiquetas.length === 1) {
+        query.etiquetas = filtros.etiquetas[0];
+      } else {
+        query.etiquetas = { $in: filtros.etiquetas };
+      }
+    }
+    return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
   }
 
   obtenerAbiertosParaMatching(idsExcluidos) {
@@ -82,6 +91,7 @@ export class ProyectoRepository {
           porcentajeConcrecion: unProyecto.porcentajeConcrecion,
           enlaceSistema: unProyecto.enlaceSistema,
           enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
+          etiquetas: unProyecto.etiquetas ?? [],
         },
         {
           upsert: true,

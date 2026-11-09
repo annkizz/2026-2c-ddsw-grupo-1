@@ -4,6 +4,7 @@ import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { evaluarCoincidencia } from "../domain/Matching.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
 import {
   BadRequestError,
   ConflictError,
@@ -59,6 +60,7 @@ export class ProyectoService {
       0,
       null,
       null,
+      normalizarEtiquetas(datosProyecto.etiquetas),
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -82,6 +84,7 @@ export class ProyectoService {
       porcentajeConcrecion: proyecto.porcentajeConcrecion,
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+      etiquetas: proyecto.etiquetas ?? [],
     };
   }
 
@@ -156,8 +159,17 @@ export class ProyectoService {
     return { cerrados, fallidos };
   }
 
-  async obtenerTodos() {
-    const proyectos = await this.proyectoRepository.obtenerTodos();
+  async obtenerTodos(filtros = {}) {
+    const filtrosNormalizados = { ...filtros };
+    if (filtrosNormalizados.etiquetas !== undefined) {
+      filtrosNormalizados.etiquetas = normalizarEtiquetas(
+        filtrosNormalizados.etiquetas,
+      );
+    }
+
+    const proyectos = await this.proyectoRepository.obtenerTodos(
+      filtrosNormalizados,
+    );
     return proyectos.map((proyecto) => this.toDTO(proyecto));
   }
 

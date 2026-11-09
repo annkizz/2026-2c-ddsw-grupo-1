@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
+import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
@@ -11,6 +12,11 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
+      // req 34: lista opcional etiquetas
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
   })
   .strict();
 
@@ -46,7 +52,13 @@ export class ProyectoController {
   };
 
   obtenerTodos = async (req, res) => {
-    const proyectos = await this.proyectoService.obtenerTodos();
+const valores = req.query.etiqueta;
+    let lista = [];
+    if (valores !== undefined) {
+      lista = Array.isArray(valores) ? valores : [valores];
+    }
+    const filtros = lista.length > 0 ? { etiquetas: lista } : {};
+    const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
   };
 

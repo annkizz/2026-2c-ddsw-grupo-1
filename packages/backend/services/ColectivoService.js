@@ -1,5 +1,6 @@
 import { Colectivo } from "../domain/Colectivo.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
 
 export class ColectivoService {
   constructor(colectivoRepository = new ColectivoRepository()) {
@@ -13,6 +14,7 @@ export class ColectivoService {
       descripcion: colectivo.descripcion,
       tipoDeColectivo: colectivo.tipoDeColectivo,
       ubicacion: colectivo.ubicacion,
+      etiquetas: colectivo.etiquetas ?? [],
       proyectos: (colectivo.proyectos ?? []).map((proyecto) =>
         String(proyecto),
       ),
@@ -25,12 +27,22 @@ export class ColectivoService {
       datosColectivo.descripcion,
       datosColectivo.ubicacion,
       datosColectivo.tipoDeColectivo,
+      normalizarEtiquetas(datosColectivo.etiquetas),
     );
     return this.toDTO(await this.colectivoRepository.save(colectivo));
   };
 
-  async obtenerTodos() {
-    const colectivos = await this.colectivoRepository.obtenerTodos();
+  async obtenerTodos(filtros = {}) {
+    const filtrosNormalizados = { ...filtros };
+    if (filtrosNormalizados.etiquetas !== undefined) {
+      filtrosNormalizados.etiquetas = normalizarEtiquetas(
+        filtrosNormalizados.etiquetas,
+      );
+    }
+
+    const colectivos = await this.colectivoRepository.obtenerTodos(
+      filtrosNormalizados,
+    );
     return colectivos.map((colectivo) => this.toDTO(colectivo));
   }
 }

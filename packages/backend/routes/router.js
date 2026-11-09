@@ -22,6 +22,10 @@ import { PerfilService } from "../services/PerfilService.js";
 import { MatchingController } from "../controllers/MatchingController.js";
 import { MatchingService } from "../services/MatchingService.js";
 import { crearMatchingRouter } from "./matchingRouter.js";
+import { EtiquetaRepository } from "../repositories/EtiquetaRepository.js";
+import { EtiquetaController } from "../controllers/EtiquetaController.js";
+import { EtiquetaService } from "../services/EtiquetaService.js";
+import { crearEtiquetasRouter } from "./etiquetasRouter.js";
 export { proyectoService };
 import { LogroRepository } from "../repositories/LogroRepository.js";
 import { LogroService } from "../services/LogroService.js";
@@ -88,6 +92,10 @@ const matchingService = new MatchingService(
 );
 const matchingController = new MatchingController(matchingService);
 
+const etiquetaRepository = new EtiquetaRepository();
+const etiquetaService = new EtiquetaService(etiquetaRepository);
+const etiquetaController = new EtiquetaController(etiquetaService);
+
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
 router.use(
   "/proyectos",
@@ -97,6 +105,7 @@ router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
 router.use("/proyectos", crearLogroRouter(logroController));
 router.use("/notificaciones", crearNotificacionRouter(notificacionController));
+router.use("/etiquetas", crearEtiquetasRouter(etiquetaController));
 router.use(crearMatchingRouter(matchingController));
 
 export default router;

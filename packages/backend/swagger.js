@@ -17,6 +17,18 @@ const swaggerSpec = {
     "/colectivos": {
       get: {
         summary: "Obtiene todos los colectivos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los colectivos que tengan al menos una de las etiquetas especificadas.",
+          },
+        ],
         responses: {
           200: {
             description: "Lista de colectivos",
@@ -58,6 +70,14 @@ const swaggerSpec = {
                       ciudad: { type: "string" },
                     },
                   },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Alimentos"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
+                  },
                 },
               },
             },
@@ -69,6 +89,27 @@ const swaggerSpec = {
           },
           400: {
             description: "Datos inválidos",
+          },
+        },
+      },
+    },
+    "/etiquetas": {
+      get: {
+        summary: "Lista todas las etiquetas en uso (req 34)",
+        description:
+          "Devuelve listado de las etiquetas en uso de proyectos y colectivos, ordenadas y sin duplicados",
+        responses: {
+          200: {
+            description: "Lista de codigos de etiquetas",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { type: "string" },
+                  example: ["accesibilidad_web", "alimentos", "salud"],
+                },
+              },
+            },
           },
         },
       },
@@ -500,6 +541,18 @@ const swaggerSpec = {
     "/proyectos": {
       get: {
         summary: "Obtiene todos los proyectos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los proyectos que tengan al menos una de las etiquetas especificadas.",
+          },
+        ],
         responses: {
           200: { description: "Lista de proyectos" },
         },
@@ -530,6 +583,14 @@ const swaggerSpec = {
                     type: "string",
                     format: "date-time",
                     description: "Opcional; debe ser futura.",
+                  },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Salud"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
                   },
                 },
                 additionalProperties: false,

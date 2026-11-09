@@ -6,8 +6,16 @@ export class ColectivoRepository {
     this.model = model;
   }
 
-  obtenerTodos() {
-    return this.model.find().exec();
+  obtenerTodos(filtros = {}) {
+    const query = {};
+    if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
+      if (filtros.etiquetas.length === 1) {
+        query.etiquetas = filtros.etiquetas[0];
+      } else {
+        query.etiquetas = { $in: filtros.etiquetas };
+      }
+    }
+    return this.model.find(query).exec();
   }
 
   async buscarPorId(id) {
@@ -24,6 +32,7 @@ export class ColectivoRepository {
           descripcion: unColectivo.descripcion,
           ubicacion: unColectivo.ubicacion,
           tipoDeColectivo: unColectivo.tipoDeColectivo,
+          etiquetas: unColectivo.etiquetas ?? [],
         },
         {
           upsert: true,

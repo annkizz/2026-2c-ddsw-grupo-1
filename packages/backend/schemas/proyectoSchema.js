@@ -22,6 +22,7 @@ const proyectoSchema = new mongoose.Schema(
     porcentajeConcrecion: { type: Number, default: 0, min: 0, max: 100 },
     enlaceSistema: { type: String, default: null },
     enlaceCodigoFuente: { type: String, default: null },
+    etiquetas: { type: [String], default: [] },
   },
   { timestamps: true, collection: "proyectos" },
 );

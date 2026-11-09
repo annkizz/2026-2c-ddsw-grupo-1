@@ -10,6 +10,7 @@ export class Proyecto {
     porcentajeConcrecion,
     enlaceSistema,
     enlaceCodigoFuente,
+    etiquetas = [],
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -21,6 +22,7 @@ export class Proyecto {
     this.porcentajeConcrecion = porcentajeConcrecion;
     this.enlaceSistema = enlaceSistema;
     this.enlaceCodigoFuente = enlaceCodigoFuente;
+    this.etiquetas = etiquetas ?? [];
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;

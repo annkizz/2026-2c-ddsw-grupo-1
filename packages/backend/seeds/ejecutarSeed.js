@@ -3,6 +3,7 @@ import { Colectivo } from "../domain/Colectivo.js";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Colaborador } from "../domain/Colaborador.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
 
 //recibe los datos iniciales y los inserta usando repo real
 
@@ -56,6 +57,7 @@ export async function ejecutarSeed(
         p.porcentajeConcrecion,
         p.enlaceSistema,
         p.enlaceCodigoFuente,
+        normalizarEtiquetas(p.etiquetas), // req 34
       ),
       p.id,
     );
@@ -67,7 +69,13 @@ export async function ejecutarSeed(
 
   for (const c of datos.colectivos) {
     await colectivoRepository.save(
-      new Colectivo(c.nombre, c.descripcion, c.ubicacion, c.tipoDeColectivo),
+      new Colectivo(
+        c.nombre,
+        c.descripcion,
+        c.ubicacion,
+        c.tipoDeColectivo,
+        normalizarEtiquetas(c.etiquetas), // req 34
+      ),
       c.id,
     );
   }
