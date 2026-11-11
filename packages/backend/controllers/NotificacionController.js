@@ -44,6 +44,16 @@ export class NotificacionController {
     res.status(200).json(notificaciones);
   };  
 
+  obtenerTodosPorColaboradora = async (req, res) => {
+    const pag = req.query.pag;
+    const limite = req.query.limite;
+    const idColaboradora = req.params.id;
+
+    const notificaciones = await this.notificacionService.obtenerTodosPorColaboradora(idColaboradora,pag, limite);
+    
+    res.status(200).json(notificaciones);    
+  }
+
   obtenerPorId = async (req, res) => {
     const notificacion = await this.notificacionService.obtenerPorId(
       req.params.id,

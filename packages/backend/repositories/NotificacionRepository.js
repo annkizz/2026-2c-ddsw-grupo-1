@@ -24,6 +24,21 @@ export class NotificacionRepository {
 
   }
 
+  async obtenerTodosPorColaboradora(id, pag, limite){
+
+    const skipN = (pag - 1) * limite;
+
+    // Query que incluye notificaciones paginadas + dato del total de notificaciones del Colaborador
+
+    const [notificaciones, total] = await Promise.all([
+          this.model.find({ idColaborador: id }).sort({fecha:-1}).select('-envios').skip(skipN).limit(limite).exec(),
+          this.model.countDocuments({idColaborador: id}),
+          ]);
+
+    return {idColaboradora: id, notificaciones, total, pag, totalPags: Math.ceil(total/limite)} ;
+
+  }
+
   buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return this.model.findById(id).exec();

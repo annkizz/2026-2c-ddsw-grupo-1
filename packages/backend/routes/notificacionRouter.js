@@ -16,6 +16,10 @@ export function crearNotificacionRouter(notificacionController) {
   router
     .route("/:id")
     .get((req, res) => notificacionController.obtenerPorId(req, res));
+  
+  router
+    .route("/colaboradora/:id")
+    .get((req,res) => notificacionController.obtenerTodosPorColaboradora(req,res));
 
   return router;
 }

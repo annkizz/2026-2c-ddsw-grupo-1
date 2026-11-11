@@ -49,17 +49,17 @@ export class NotificacionService {
   async crear(datosNotificacion) {
     const { idColectivo, idColaborador, contenido } = datosNotificacion;
 
-    const colectivo =
-      await this.colectivoRepository.buscarPorId(idColectivo);
+    const colectivo = await this.colectivoRepository.buscarPorId(idColectivo);
+
     if (!colectivo) {
       throw new NotFoundError(
-        "el colectivo no existe",
+        "El colectivo no existe",
         "COLECTIVO_NO_ENCONTRADO",
       );
     }
 
-    const colaboradora =
-      await this.colaboradorRepository.buscarPorId(idColaborador);
+    const colaboradora = await this.colaboradorRepository.buscarPorId(idColaborador);
+
     if (!colaboradora) {
       throw new NotFoundError(
         "la colaboradora no existe",
@@ -80,12 +80,12 @@ export class NotificacionService {
       idColaborador: colaboradora._id,
     });
 
-    // el mensaje interno queda guardado aunque falle (o se corte) el envío externo
-    const guardadaInicial =
-      await this.notificacionRepository.save(notificacion);
-    notificacion.id = guardadaInicial.id ?? guardadaInicial._id;
+    // El mensaje interno se guarda para notificación interna, luego se procede con el envío externo (Que puede fallar)
+    const saveInicial = await this.notificacionRepository.save(notificacion);
+    notificacion.id = saveInicial.id ?? saveInicial._id;
 
     const mensaje = this.construirMensaje(colectivo, contenido);
+
     const envios = await Promise.all(
       (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
         try {
@@ -126,8 +126,27 @@ export class NotificacionService {
     const notificacionesDto = resultado.notificaciones.map((n) => this.toDTO(n));
     return {
         ...resultado,
-        notificaciones: notificacionesDto
+        
     };
+  }
+
+  async obtenerTodosPorColaboradora(idColaboradora, pag, limite){
+    
+    const colaboradora = await this.colaboradorRepository.buscarPorId(idColaboradora);
+
+    if (!colaboradora) {
+      throw new NotFoundError(
+        "La colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+
+    const resultado = await this.notificacionRepository.obtenerTodosPorColaboradora(idColaboradora, pag, limite);
+    const notificacionesDto = resultado.notificaciones.map((n) => this.toDTO(n));
+    return {
+      ...resultado,
+      notificaciones: notificacionesDto
+    }
   }
 
   async obtenerPorId(id) {
