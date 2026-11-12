@@ -45,8 +45,8 @@ export class NotificacionController {
   };  
 
   obtenerTodosPorColaboradora = async (req, res) => {
-    const pag = req.query.pag;
-    const limite = req.query.limite;
+    const pag = Number(req.query.pag) || 1;
+    const limite = Number(req.query.limite) || 10; // Default
     const idColaboradora = req.params.id;
 
     const notificaciones = await this.notificacionService.obtenerTodosPorColaboradora(idColaboradora,pag, limite);
