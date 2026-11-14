@@ -1,6 +1,11 @@
 import { Proyecto } from "../../domain/Proyecto.js";
 
-const crear = (fechaLimiteCierre = null, estado = "ACTIVO") =>
+const crear = (
+  fechaLimiteCierre = null,
+  estado = "ACTIVO",
+  busquedaAbierta = true,
+  fechaLimiteBusqueda = null,
+) =>
   new Proyecto(
     "Titulo",
     "Desc",
@@ -9,6 +14,11 @@ const crear = (fechaLimiteCierre = null, estado = "ACTIVO") =>
     new Date(),
     fechaLimiteCierre,
     "col-1",
+    undefined,
+    undefined,
+    undefined,
+    busquedaAbierta,
+    fechaLimiteBusqueda,
   );
 
 const enUnaHora = () => new Date(Date.now() + 60 * 60 * 1000);
@@ -31,6 +41,30 @@ describe("Dominio - Proyecto", () => {
 
   it("no puede aceptar colaboradoras si esta finalizado", () => {
     expect(() => crear(null, "FINALIZADO").aceptarColaborador()).toThrow();
+  });
+
+  describe("búsqueda de colaboraciones", () => {
+    it("está abierta sin límite de fecha", () => {
+      expect(crear().busquedaDeColaboracionesAbierta()).toBe(true);
+    });
+
+    it("está cerrada cuando se indica que no está abierta", () => {
+      expect(
+        crear(null, "ACTIVO", false).busquedaDeColaboracionesAbierta(),
+      ).toBe(false);
+    });
+
+    it("se cierra cuando pasó la fecha límite", () => {
+      expect(
+        crear(null, "ACTIVO", true, haceUnaHora()).busquedaDeColaboracionesAbierta(),
+      ).toBe(false);
+    });
+
+    it("sigue abierta antes de la fecha límite", () => {
+      expect(
+        crear(null, "ACTIVO", true, enUnaHora()).busquedaDeColaboracionesAbierta(),
+      ).toBe(true);
+    });
   });
 
   describe("cierre programado", () => {

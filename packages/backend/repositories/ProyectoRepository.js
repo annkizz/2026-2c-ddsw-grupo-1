@@ -79,6 +79,8 @@ export class ProyectoRepository {
           estado: unProyecto.estado,
           fechaInicio: unProyecto.fechaInicio,
           fechaLimiteCierre: unProyecto.fechaLimiteCierre,
+          busquedaAbierta: unProyecto.busquedaAbierta,
+          fechaLimiteBusqueda: unProyecto.fechaLimiteBusqueda,
           porcentajeConcrecion: unProyecto.porcentajeConcrecion,
           enlaceSistema: unProyecto.enlaceSistema,
           enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,

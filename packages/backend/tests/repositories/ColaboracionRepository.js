@@ -19,12 +19,35 @@ describe("ColaboracionRepository", () => {
 
     expect(model.find).toHaveBeenCalledWith({ idProyecto });
     expect(select).toHaveBeenCalledWith(
-      "idProyecto idColaborador fecha esAnonima",
+      "idProyecto idPerfil idColaborador fecha esAnonima",
     );
     expect(populate).toHaveBeenCalledWith(
       "idColaborador",
       "nombreFantasia usuarioGitHub nombre apellido",
     );
     expect(exec).toHaveBeenCalledTimes(1);
+  });
+
+  it("conecta la colaboración creada con su postulación aceptada", async () => {
+    const colaboracion = {
+      proyecto: { _id: "proyecto-1" },
+      perfil: { _id: "perfil-1" },
+      postulacion: { _id: "postulacion-1" },
+      colaborador: { _id: "colaboradora-1" },
+      fecha: new Date(),
+      esAnonima: false,
+    };
+    const model = { create: jest.fn(async (datos) => datos) };
+
+    await new ColaboracionRepository(model).crearDesdePostulacion(colaboracion);
+
+    expect(model.create).toHaveBeenCalledWith({
+      idProyecto: "proyecto-1",
+      idPerfil: "perfil-1",
+      idPostulacion: "postulacion-1",
+      idColaborador: "colaboradora-1",
+      fecha: colaboracion.fecha,
+      esAnonima: false,
+    });
   });
 });

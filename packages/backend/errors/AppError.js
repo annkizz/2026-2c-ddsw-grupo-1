@@ -36,6 +36,13 @@ export class ForbiddenError extends AppError {
   }
 }
 
+export class UnauthorizedError extends AppError {
+  constructor(message, codigo) {
+    super(message, codigo);
+    this.status = 401;
+  }
+}
+
 export class UnprocessableEntityError extends AppError {
   constructor(message, codigo) {
     super(message, codigo);

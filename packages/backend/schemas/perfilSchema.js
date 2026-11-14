@@ -31,6 +31,8 @@ const perfilSchema = new mongoose.Schema(
       default: [],
     },
 
+    limiteColaboraciones: { type: Number, min: 1, default: null },
+
     compromiso: {
       tipoCompromiso: {
         type: String,

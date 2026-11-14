@@ -13,6 +13,7 @@ export class PerfilRepository {
       habilidadesRequeridas: perfil.habilidadesRequeridas,
       habilidadesOpcionales: perfil.habilidadesOpcionales,
       compromiso: perfil.compromiso,
+      limiteColaboraciones: perfil.limiteColaboraciones,
     });
     return await documento.save();
   }

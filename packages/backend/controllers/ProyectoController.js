@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
@@ -11,13 +10,8 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
-  })
-  .strict();
-
-export const idColaboradorSchema = z
-  .object({
-    idColaborador: z.string().trim().min(1),
-    esAnonima: z.boolean().default(false),
+    busquedaAbierta: z.boolean().optional(),
+    fechaLimiteBusqueda: z.coerce.date().nullable().optional(),
   })
   .strict();
 
@@ -64,41 +58,6 @@ export class ProyectoController {
       req.body.fechaLimiteCierre,
     );
     res.status(200).json(proyecto);
-  }
-
-  async crearColaboracion(req, res) {
-    const proyectoId = req.params.idProyecto;
-    const proyectoExistente =
-      await this.proyectoService.obtenerProyectoPorId(proyectoId);
-
-    if (!proyectoExistente) {
-      throw new NotFoundError(
-        "Proyecto no encontrado",
-        "PROYECTO_NO_ENCONTRADO",
-      );
-    }
-
-    const body = req.body;
-    const resultado = idColaboradorSchema.safeParse(body);
-
-    if (!resultado.success) {
-      throw new BadRequestError(
-        "los datos ingresados son invalidos",
-        "DATOS_COLABORACION_INVALIDOS",
-      );
-    }
-
-    const colaboradorId = resultado.data.idColaborador;
-    const { esAnonima } = resultado.data;
-    const colaboracion = await this.proyectoService.crearColaboracion(
-      proyectoExistente,
-      colaboradorId,
-      esAnonima,
-    );
-
-    res
-      .status(201)
-      .json(this.proyectoService.toContribucionPublica(colaboracion));
   }
 
   async actualizarAvance(req, res) {

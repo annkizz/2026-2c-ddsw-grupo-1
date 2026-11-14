@@ -42,7 +42,6 @@ export class MatchingService {
         "PROYECTO_FINALIZADO",
       );
     }
-
     const yaAnotadas = (
       await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
         idProyecto,
@@ -55,9 +54,7 @@ export class MatchingService {
       );
 
     return candidatas
-      .filter(
-        (colaboradora) => !yaAnotadas.includes(String(colaboradora._id)),
-      )
+      .filter((colaboradora) => !yaAnotadas.includes(String(colaboradora._id)))
       .map((colaboradora) => ({
         colaboradora,
         evaluacion: evaluarCoincidencia(perfil, colaboradora.habilidades),

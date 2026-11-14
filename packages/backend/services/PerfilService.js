@@ -25,6 +25,7 @@ export class PerfilService {
       descripcion: perfil.descripcion,
       habilidadesRequeridas: perfil.habilidadesRequeridas.slice(),
       habilidadesOpcionales: perfil.habilidadesOpcionales.slice(),
+      limiteColaboraciones: perfil.limiteColaboraciones ?? null,
       compromiso: {
         tipoCompromiso: perfil.compromiso.tipoCompromiso,
         horas: perfil.compromiso.horas,
@@ -55,6 +56,7 @@ export class PerfilService {
       requeridas.map((h) => h.titulo),
       opcionales.map((h) => h.titulo),
       datos.compromiso,
+      datos.limiteColaboraciones ?? null,
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -96,7 +98,11 @@ export class PerfilService {
       habilidadesRequeridas: requeridas.map((h) => h.titulo),
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
       compromiso: datos.compromiso,
+      limiteColaboraciones: datos.limiteColaboraciones ?? null,
     });
+    if (!actualizado) {
+      throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
+    }
     return this.toDTO(actualizado);
   }
 

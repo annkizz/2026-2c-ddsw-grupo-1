@@ -31,7 +31,7 @@ export class ColaboracionRepository {
   obtenerPorProyecto(idProyecto) {
     return this.colaboracionModel
       .find({ idProyecto })
-      .select("idProyecto idColaborador fecha esAnonima")
+      .select("idProyecto idPerfil idColaborador fecha esAnonima")
       .populate("idColaborador", "nombreFantasia usuarioGitHub nombre apellido")
       .exec();
   }
@@ -47,6 +47,8 @@ export class ColaboracionRepository {
           // Si la colaboracion ya existe se actualiza; el service bloquea el
           // duplicado con 409 antes de llegar al repo.
           idProyecto: colaboracion.proyecto._id,
+          idPerfil: colaboracion.perfil?._id ?? null,
+          idPostulacion: colaboracion.postulacion?._id ?? null,
           idColaborador: colaboracion.colaborador._id,
           fecha: colaboracion.fecha,
           esAnonima: colaboracion.esAnonima,
@@ -61,9 +63,31 @@ export class ColaboracionRepository {
       .exec()
       .then((guardada) => ({
         idProyecto: guardada.idProyecto,
+        idPerfil: guardada.idPerfil,
         idColaborador: colaboracion.colaborador,
         fecha: guardada.fecha,
         esAnonima: guardada.esAnonima ?? colaboracion.esAnonima,
       }));
+  }
+
+  crearDesdePostulacion(colaboracion) {
+    return this.colaboracionModel.create({
+      idProyecto: colaboracion.proyecto._id,
+      idPerfil: colaboracion.perfil._id,
+      idPostulacion: colaboracion.postulacion._id,
+      idColaborador: colaboracion.colaborador._id,
+      fecha: colaboracion.fecha,
+      esAnonima: colaboracion.esAnonima,
+    });
+  }
+
+  async contarPorPerfil(idPerfil) {
+    return this.colaboracionModel.countDocuments({ idPerfil });
+  }
+
+  darDeBaja(idProyecto, idColaborador) {
+    return this.colaboracionModel
+      .findOneAndDelete({ idProyecto, idColaborador })
+      .exec();
   }
 }

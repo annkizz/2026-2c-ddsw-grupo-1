@@ -79,6 +79,7 @@ describe("PerfilService", () => {
           habilidadesRequeridas: ["Testing E2E con Cypress"],
           habilidadesOpcionales: ["Uso de Soap UI"],
           compromiso: datosPerfil().compromiso,
+          limiteColaboraciones: null,
         },
         ID_PROYECTO,
       );
@@ -88,6 +89,7 @@ describe("PerfilService", () => {
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
         habilidadesOpcionales: ["Uso de Soap UI"],
+        limiteColaboraciones: null,
         compromiso: datosPerfil().compromiso,
       });
     });
@@ -223,6 +225,7 @@ describe("PerfilService", () => {
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
         habilidadesOpcionales: ["Uso de Soap UI"],
+        limiteColaboraciones: null,
         compromiso: datosPerfil().compromiso,
       });
     });
@@ -269,6 +272,7 @@ describe("PerfilService", () => {
         horas: 10,
         tipoColaboracion: "INCENTIVO",
       },
+      limiteColaboraciones: null,
     });
 
     beforeEach(() => {
@@ -291,6 +295,18 @@ describe("PerfilService", () => {
         idProyecto: ID_PROYECTO,
         ...nuevosDatos(),
       });
+    });
+
+    it("actualiza el límite sin agregar restricciones sobre las colaboraciones existentes", async () => {
+      await service.actualizar(ID_PROYECTO, "perfil-1", {
+        ...nuevosDatos(),
+        limiteColaboraciones: 2,
+      });
+
+      expect(perfilRepository.actualizar).toHaveBeenCalledWith(
+        "perfil-1",
+        expect.objectContaining({ limiteColaboraciones: 2 }),
+      );
     });
 
     it("no modifica la lista de perfiles del proyecto", async () => {

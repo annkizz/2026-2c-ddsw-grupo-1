@@ -4,10 +4,12 @@ export class Perfil {
     habilidadesRequeridas,
     habilidadesOpcionales,
     compromiso,
+    limiteColaboraciones = null,
   ) {
     ((this.descripcion = descripcion),
       (this.habilidadesRequeridas = habilidadesRequeridas),
       (this.habilidadesOpcionales = habilidadesOpcionales),
-      (this.compromiso = compromiso));
+      (this.compromiso = compromiso),
+      (this.limiteColaboraciones = limiteColaboraciones));
   }
 }

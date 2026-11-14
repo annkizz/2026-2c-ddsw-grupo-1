@@ -31,6 +31,9 @@ import { NotificacionRepository } from "../repositories/NotificacionRepository.j
 import { NotificacionService } from "../services/NotificacionService.js";
 import { NotificacionController } from "../controllers/NotificacionController.js";
 import { crearNotificacionRouter } from "./notificacionRouter.js";
+import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
+import { PostulacionService } from "../services/PostulacionService.js";
+import { PostulacionController } from "../controllers/PostulacionController.js";
 
 const router = express.Router();
 const habilidadRepository = new HabilidadRepository();
@@ -50,23 +53,32 @@ const colaboradorController = new ColaboradorController(colaboradorService);
 
 const proyectoRepository = new ProyectoRepository();
 const colaboracionRepository = new ColaboracionRepository();
+const postulacionRepository = new PostulacionRepository();
+const perfilRepository = new PerfilRepository();
 
 const proyectoService = new ProyectoService(
   proyectoRepository,
   habilidadRepository,
-  colaboradorService,
   colectivoRepository,
   colaboracionRepository,
+  perfilRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
-const perfilRepository = new PerfilRepository();
 const perfilService = new PerfilService(
   perfilRepository,
   proyectoRepository,
   habilidadRepository,
 );
 const perfilController = new PerfilController(perfilService);
+const postulacionService = new PostulacionService(
+  proyectoRepository,
+  perfilRepository,
+  colaboradorService,
+  colaboracionRepository,
+  postulacionRepository,
+);
+const postulacionController = new PostulacionController(postulacionService);
 
 const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository);
@@ -91,7 +103,11 @@ const matchingController = new MatchingController(matchingService);
 router.use("/habilidades", crearHabilidadRouter(habilidadController));
 router.use(
   "/proyectos",
-  crearProyectoRouter(proyectoController, perfilController),
+  crearProyectoRouter(
+    proyectoController,
+    perfilController,
+    postulacionController,
+  ),
 );
 router.use("/colectivos", crearColectivoRouter(colectivoController));
 router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));

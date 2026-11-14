@@ -1,15 +1,12 @@
 import { Estado } from "../domain/Estado.js";
 import { Proyecto } from "../domain/Proyecto.js";
-import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
-import { evaluarCoincidencia } from "../domain/Matching.js";
 import {
   BadRequestError,
   ConflictError,
   NotFoundError,
 } from "../errors/AppError.js";
-import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
@@ -18,14 +15,12 @@ export class ProyectoService {
   constructor(
     proyectoRepository = new ProyectoRepository(),
     habilidadRepository = new HabilidadRepository(),
-    colaboradorService = new ColaboradorService(),
     colectivoRepository = new ColectivoRepository(),
     colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
-    this.colaboradorService = colaboradorService;
     this.colectivoRepository = colectivoRepository;
     this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
@@ -59,6 +54,8 @@ export class ProyectoService {
       0,
       null,
       null,
+      datosProyecto.busquedaAbierta ?? true,
+      datosProyecto.fechaLimiteBusqueda ?? null,
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -77,6 +74,8 @@ export class ProyectoService {
       estado: proyecto.estado,
       fechaInicio: proyecto.fechaInicio,
       fechaLimiteCierre: proyecto.fechaLimiteCierre,
+      busquedaAbierta: proyecto.busquedaAbierta ?? true,
+      fechaLimiteBusqueda: proyecto.fechaLimiteBusqueda ?? null,
       idColectivo: String(proyecto.idColectivo),
       perfiles: (proyecto.perfiles ?? []).map((perfil) => String(perfil)),
       porcentajeConcrecion: proyecto.porcentajeConcrecion,
@@ -131,9 +130,8 @@ export class ProyectoService {
   }
 
   async finalizar(proyecto) {
-    // falta implementar lo de la 3era entrega: rechazar las postulaciones pendientes del proyecto
     proyecto.cerrar();
-    return await this.proyectoRepository.save(proyecto);
+    return this.proyectoRepository.save(proyecto);
   }
 
   async cerrarProyectosVencidos(ahora = new Date()) {
@@ -167,12 +165,14 @@ export class ProyectoService {
 
   toContribucionPublica({
     idProyecto,
+    idPerfil,
     idColaborador,
     fecha,
     esAnonima = false,
   }) {
     const contribucion = {
       idProyecto: String(idProyecto),
+      idPerfil: idPerfil ? String(idPerfil) : null,
       fecha,
       esAnonima,
     };
@@ -198,62 +198,6 @@ export class ProyectoService {
       this.toContribucionPublica(colaboracion),
     );
   };
-
-  colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
-    return this.colaboracionRepository.existeColaboracion(
-      proyectoId,
-      colaboradorId,
-    );
-  };
-
-  verificarHabilidades = async (proyecto, colaborador) => {
-    const perfiles = await this.perfilRepository.obtenerTodos(proyecto._id);
-    return perfiles.some(
-      (perfil) =>
-        evaluarCoincidencia(perfil, colaborador.habilidades).tieneCoincidencia,
-    );
-  };
-
-  async crearColaboracion(proyecto, colaboradorId, esAnonima = false) {
-    if (proyecto.estaFinalizado()) {
-      throw new ConflictError(
-        "No se puede anotar a un proyecto finalizado",
-        "PROYECTO_FINALIZADO",
-      );
-    }
-
-    const colaborador =
-      await this.colaboradorService.obtenerPorId(colaboradorId);
-
-    if (!colaborador) {
-      throw new NotFoundError(
-        "La colaboradora no existe",
-        "COLABORADORA_NO_ENCONTRADA",
-      );
-    }
-
-    if (await this.colaboradorPerteneceAProyecto(proyecto._id, colaboradorId)) {
-      throw new ConflictError(
-        "La colaboradora ya está anotada en este proyecto",
-        "COLABORACION_YA_EXISTENTE",
-      );
-    }
-
-    if (!(await this.verificarHabilidades(proyecto, colaborador))) {
-      throw new BadRequestError(
-        "La colaboradora no cumple con las habilidades requeridas",
-        "HABILIDADES_INSUFICIENTES",
-      );
-    }
-
-    const nuevaColaboracion = new Colaboracion(
-      proyecto,
-      colaborador,
-      new Date().toISOString(),
-      esAnonima,
-    );
-    return await this.colaboracionRepository.save(nuevaColaboracion);
-  }
 
   async cerrarProyecto(idProyecto) {
     const proyecto = await this.buscarProyectoOFallar(idProyecto);
