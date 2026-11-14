@@ -128,6 +128,65 @@ describe("ProyectoService", () => {
       expect(creado.fechaLimiteCierre).toEqual(fecha);
     });
 
+    it("por defecto la búsqueda queda cerrada y sin fecha límite", async () => {
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+      });
+
+      expect(creado.busquedaAbierta).toBe(false);
+      expect(creado.fechaLimiteBusqueda).toBeNull();
+      expect(creado.busquedaVigente).toBe(false);
+    });
+
+    it("crea el proyecto con la búsqueda abierta hasta una fecha futura", async () => {
+      const fecha = enUnaHora();
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+        busquedaAbierta: true,
+        fechaLimiteBusqueda: fecha,
+      });
+
+      expect(creado.busquedaAbierta).toBe(true);
+      expect(creado.fechaLimiteBusqueda).toEqual(fecha);
+      expect(creado.busquedaVigente).toBe(true);
+    });
+
+    it("rechaza una fecha límite de búsqueda que ya pasó y no guarda nada", async () => {
+      await expect(
+        service.crear({
+          idColectivo: "col-1",
+          titulo: "T",
+          descripcion: "D",
+          busquedaAbierta: true,
+          fechaLimiteBusqueda: haceUnaHora(),
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+        codigo: "FECHA_LIMITE_BUSQUEDA_INVALIDA",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("rechaza una fecha límite de búsqueda si la búsqueda no está abierta", async () => {
+      await expect(
+        service.crear({
+          idColectivo: "col-1",
+          titulo: "T",
+          descripcion: "D",
+          busquedaAbierta: false,
+          fechaLimiteBusqueda: enUnaHora(),
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+        codigo: "BUSQUEDA_CERRADA_CON_FECHA",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
     it("deja el proyecto nuevo en 0% y sin enlaces", async () => {
       const creado = await service.crear({
         idColectivo: "col-1",
@@ -195,6 +254,152 @@ describe("ProyectoService", () => {
         codigo: "AVANCE_VACIO",
       });
       expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("obtenerPorId", () => {
+    it("devuelve el proyecto como DTO", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+
+      const resultado = await service.obtenerPorId("p-1");
+
+      expect(proyectoRepository.buscarPorId).toHaveBeenCalledWith("p-1");
+      expect(resultado.id).toBe("p-1");
+      expect(resultado.titulo).toBe("Titulo");
+      expect(resultado.estado).toBe("ACTIVO");
+    });
+
+    it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
+      await expect(service.obtenerPorId("nope")).rejects.toMatchObject({
+        status: 404,
+        codigo: "PROYECTO_NO_ENCONTRADO",
+      });
+    });
+  });
+
+  describe("actualizar", () => {
+    it("cambia título y descripción, guarda y devuelve el DTO", async () => {
+      const proyecto = proyectoActivo();
+      proyectoRepository.buscarPorId.mockResolvedValue(proyecto);
+
+      const resultado = await service.actualizar("p-1", {
+        titulo: "Nuevo título",
+        descripcion: "Nueva descripción",
+      });
+
+      expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
+      expect(resultado.titulo).toBe("Nuevo título");
+      expect(resultado.descripcion).toBe("Nueva descripción");
+    });
+
+    it("no modifica el colectivo ni el estado", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+
+      const resultado = await service.actualizar("p-1", {
+        titulo: "T",
+        descripcion: "D",
+      });
+
+      expect(resultado.idColectivo).toBe("col-1");
+      expect(resultado.estado).toBe("ACTIVO");
+    });
+
+    it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
+      await expect(
+        service.actualizar("nope", { titulo: "T", descripcion: "D" }),
+      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("configurarBusqueda", () => {
+    it("abre la búsqueda hasta una fecha futura y guarda", async () => {
+      const proyecto = proyectoActivo();
+      proyectoRepository.buscarPorId.mockResolvedValue(proyecto);
+      const fecha = enUnaHora();
+
+      const resultado = await service.configurarBusqueda("p-1", {
+        busquedaAbierta: true,
+        fechaLimiteBusqueda: fecha,
+      });
+
+      expect(proyectoRepository.save).toHaveBeenCalledWith(proyecto);
+      expect(resultado.busquedaAbierta).toBe(true);
+      expect(resultado.fechaLimiteBusqueda).toEqual(fecha);
+      expect(resultado.busquedaVigente).toBe(true);
+    });
+
+    it("abre la búsqueda sin fecha límite", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+
+      const resultado = await service.configurarBusqueda("p-1", {
+        busquedaAbierta: true,
+      });
+
+      expect(resultado.busquedaAbierta).toBe(true);
+      expect(resultado.fechaLimiteBusqueda).toBeNull();
+      expect(resultado.busquedaVigente).toBe(true);
+    });
+
+    it("al cerrar la búsqueda se borra la fecha límite", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(
+        proyectoActivo({ busquedaAbierta: true, fechaLimiteBusqueda: enUnaHora() }),
+      );
+
+      const resultado = await service.configurarBusqueda("p-1", {
+        busquedaAbierta: false,
+      });
+
+      expect(resultado.busquedaAbierta).toBe(false);
+      expect(resultado.fechaLimiteBusqueda).toBeNull();
+      expect(resultado.busquedaVigente).toBe(false);
+    });
+
+    it("no permite configurar la búsqueda de un proyecto finalizado", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(
+        proyectoActivo({ estado: "FINALIZADO" }),
+      );
+
+      await expect(
+        service.configurarBusqueda("p-1", { busquedaAbierta: true }),
+      ).rejects.toMatchObject({ status: 409, codigo: "PROYECTO_FINALIZADO" });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("rechaza una fecha límite que ya pasó", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+
+      await expect(
+        service.configurarBusqueda("p-1", {
+          busquedaAbierta: true,
+          fechaLimiteBusqueda: haceUnaHora(),
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+        codigo: "FECHA_LIMITE_BUSQUEDA_INVALIDA",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("rechaza una fecha límite si la búsqueda no está abierta", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+
+      await expect(
+        service.configurarBusqueda("p-1", {
+          busquedaAbierta: false,
+          fechaLimiteBusqueda: enUnaHora(),
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+        codigo: "BUSQUEDA_CERRADA_CON_FECHA",
+      });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
+      await expect(
+        service.configurarBusqueda("nope", { busquedaAbierta: true }),
+      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
     });
   });
 

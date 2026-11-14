@@ -82,6 +82,8 @@ export class ProyectoRepository {
           porcentajeConcrecion: unProyecto.porcentajeConcrecion,
           enlaceSistema: unProyecto.enlaceSistema,
           enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
+          busquedaAbierta: unProyecto.busquedaAbierta,
+          fechaLimiteBusqueda: unProyecto.fechaLimiteBusqueda,
         },
         {
           upsert: true,

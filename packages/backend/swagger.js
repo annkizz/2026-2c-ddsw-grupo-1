@@ -531,6 +531,18 @@ const swaggerSpec = {
                     format: "date-time",
                     description: "Opcional; debe ser futura.",
                   },
+                   busquedaAbierta: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "Opcional. Indica si la búsqueda de colaboraciones está abierta.",
+                  },
+                  fechaLimiteBusqueda: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Opcional. Debe ser futura y solo se puede indicar con busquedaAbierta en true.",
+                  },
                 },
                 additionalProperties: false,
               },
@@ -921,6 +933,107 @@ const swaggerSpec = {
         },
       },
     },
+        "/proyectos/{idProyecto}": {
+      get: {
+        summary: "Obtiene el detalle de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: { description: "Detalle del proyecto, con su avance y el estado de la búsqueda" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+      put: {
+        summary: "Edita el título y la descripción de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["titulo", "descripcion"],
+                properties: {
+                  titulo: { type: "string", example: "Portal de turnos solidarios" },
+                  descripcion: {
+                    type: "string",
+                    example: "Sitio para que voluntarias y voluntarios reserven turnos.",
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Proyecto actualizado" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+    },
+    "/proyectos/{idProyecto}/busqueda": {
+      put: {
+        summary: "Configura la búsqueda de colaboraciones de un proyecto",
+        description:
+          "Reemplaza la configuración completa. Al cerrar la búsqueda se borra la fecha límite.",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["busquedaAbierta"],
+                properties: {
+                  busquedaAbierta: { type: "boolean", example: true },
+                  fechaLimiteBusqueda: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Opcional. Debe ser futura y requiere busquedaAbierta en true.",
+                    example: "2026-12-31T23:59:59Z",
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Búsqueda configurada; devuelve el proyecto actualizado" },
+          400: {
+            description:
+              "Datos inválidos, fecha no futura, o fecha indicada con la búsqueda cerrada",
+          },
+          404: { description: "Proyecto no encontrado" },
+          409: { description: "El proyecto está finalizado" },
+        },
+      },
+    },
     "/notificaciones": {
       get: {
         summary: "Lista notificaciones",
@@ -1103,6 +1216,13 @@ const swaggerSpec = {
             },
             additionalProperties: false,
           },
+          limiteColaboraciones: {
+            type: "integer",
+            minimum: 1,
+            description:
+              "Máximo de colaboraciones que se necesitan para este perfil. Si no se indica, no hay límite.",
+            example: 2,
+          },
         },
         additionalProperties: false,
       },
@@ -1129,6 +1249,14 @@ const swaggerSpec = {
             items: { type: "string" },
           },
           compromiso: { $ref: "#/components/schemas/Compromiso" },
+           limiteColaboraciones: {
+            type: "integer",
+            minimum: 1,
+            nullable: true,
+            description:
+              "Máximo de colaboraciones que se necesitan para este perfil. null significa sin límite.",
+            example: 2,
+          },
         },
       },
       Compromiso: {

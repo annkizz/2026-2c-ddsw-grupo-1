@@ -48,6 +48,12 @@ export class ProyectoService {
       this.validarFechaLimite(fechaLimiteCierre);
     }
 
+    const busquedaAbierta = datosProyecto.busquedaAbierta ?? false;
+    
+    const fechaLimiteBusqueda = datosProyecto.fechaLimiteBusqueda ?? null;
+    
+    this.validarBusqueda(busquedaAbierta, fechaLimiteBusqueda);
+
     const proyecto = new Proyecto(
       datosProyecto.titulo,
       datosProyecto.descripcion,
@@ -59,6 +65,8 @@ export class ProyectoService {
       0,
       null,
       null,
+      busquedaAbierta,
+      fechaLimiteBusqueda
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -82,6 +90,9 @@ export class ProyectoService {
       porcentajeConcrecion: proyecto.porcentajeConcrecion,
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+      busquedaAbierta: proyecto.busquedaAbierta ?? false,
+      fechaLimiteBusqueda: proyecto.fechaLimiteBusqueda ?? null,
+      busquedaVigente: proyecto.busquedaVigente(),
     };
   }
 
@@ -282,5 +293,47 @@ export class ProyectoService {
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
     };
+  }
+    validarBusqueda(busquedaAbierta, fechaLimiteBusqueda, ahora = new Date()) {
+    if (fechaLimiteBusqueda === null) return;
+    if (!busquedaAbierta) {
+      throw new BadRequestError(
+        "No se puede indicar una fecha límite si la búsqueda no está abierta",
+        "BUSQUEDA_CERRADA_CON_FECHA",
+      );
+    }
+    if (fechaLimiteBusqueda <= ahora) {
+      throw new BadRequestError(
+        "La fecha límite de la búsqueda debe ser futura",
+        "FECHA_LIMITE_BUSQUEDA_INVALIDA",
+      );
+    }
+  }
+
+  async obtenerPorId(idProyecto) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+    return this.toDTO(proyecto);
+  }
+
+  async actualizar(idProyecto, datos) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+    proyecto.editarDatos(datos);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
+  }
+
+  async configurarBusqueda(idProyecto, { busquedaAbierta, fechaLimiteBusqueda }) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (proyecto.estaFinalizado()) {
+      throw new ConflictError(
+        "No se puede configurar la búsqueda de un proyecto finalizado",
+        "PROYECTO_FINALIZADO",
+      );
+    }
+
+    const fechaLimite = fechaLimiteBusqueda ?? null;
+    this.validarBusqueda(busquedaAbierta, fechaLimite);
+    proyecto.configurarBusqueda(busquedaAbierta, fechaLimite);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 }

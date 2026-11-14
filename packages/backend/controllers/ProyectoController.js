@@ -11,6 +11,8 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
+    busquedaAbierta: z.boolean().optional(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
   })
   .strict();
 
@@ -32,6 +34,20 @@ export const avanceSchema = z
     porcentajeConcrecion: z.number().min(0).max(100).optional(),
     enlaceSistema: z.url({ protocol: /^https?$/ }).optional(),
     enlaceCodigoFuente: z.url({ protocol: /^https?$/ }).optional(),
+  })
+  .strict();
+
+  export const proyectoEdicionSchema = z
+  .object({
+    titulo: z.string().trim().min(1),
+    descripcion: z.string().trim().min(1),
+  })
+  .strict();
+
+export const busquedaSchema = z
+  .object({
+    busquedaAbierta: z.boolean(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
   })
   .strict();
 
@@ -124,5 +140,28 @@ export class ProyectoController {
     const proyectoCerrado =
       await this.proyectoService.cerrarProyecto(proyectoId);
     res.status(200).json(proyectoCerrado);
+  }
+
+  async obtenerPorId(req, res) {
+    const proyecto = await this.proyectoService.obtenerPorId(
+      req.params.idProyecto,
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async actualizar(req, res) {
+    const proyecto = await this.proyectoService.actualizar(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async configurarBusqueda(req, res) {
+    const proyecto = await this.proyectoService.configurarBusqueda(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
   }
 }
