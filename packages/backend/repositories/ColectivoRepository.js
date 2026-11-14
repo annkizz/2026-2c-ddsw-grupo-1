@@ -19,8 +19,12 @@ export class ColectivoRepository {
   }
 
   async buscarPorId(id) {
-    if (!mongoose.isValidObjectId(id)) return null;
+    if (!this.esIdValido(id)) return null;
     return await this.model.findById(id).exec();
+  }
+
+  esIdValido(id) {
+    return mongoose.isValidObjectId(id);
   }
 
   save(unColectivo, id = unColectivo._id) {

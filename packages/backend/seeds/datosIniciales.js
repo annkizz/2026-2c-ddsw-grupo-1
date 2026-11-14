@@ -73,6 +73,7 @@ export function crearDatosIniciales({
       titulo: "Portal de turnos solidarios",
       descripcion: "Sitio para que voluntarias y voluntarios reserven turnos.",
       etiquetas: ["Salud", "Voluntariado", "Turnos"],
+      // req 15: sin ubicacion propia; hereda Buenos Aires de su colectivo.
       estado: "ACTIVO",
       fechaInicio: enDias(-30),
       fechaLimiteCierre: null,
@@ -125,6 +126,8 @@ export function crearDatosIniciales({
       titulo: "Mapa de comedores comunitarios",
       descripcion: "Mapa interactivo y accesible de comedores de todo el país.",
       etiquetas: ["Alimentos", "Accesibilidad Web", "Datos Abiertos"],
+      // req 15: ubicacion propia (su colectivo no tiene): Mendoza.
+      ubicacion: { provincia: "Mendoza", ciudad: "Godoy Cruz" },
       estado: "ACTIVO",
       fechaInicio: enDias(-10),
       fechaLimiteCierre: enDias(60),
@@ -154,6 +157,7 @@ export function crearDatosIniciales({
       descripcion:
         "Sistema para registrar las donaciones que recibe la despensa.",
       etiquetas: ["Alimentos", "Comunidad"],
+      // req 15: sin ubicacion propia; hereda Córdoba de su colectivo.
       estado: "FINALIZADO",
       fechaInicio: enDias(-120),
       fechaLimiteCierre: enDias(-20),
@@ -191,6 +195,9 @@ export function crearDatosIniciales({
       titulo: "Laboratorio de pruebas",
       descripcion:
         "Proyecto para probar anotación, cierre programado y cierre automático.",
+      // req 15: ubicacion propia distinta a la del colectivo (Buenos Aires):
+      // el mapa cuenta al proyecto en Mendoza, no al colectivo.
+      ubicacion: { provincia: "Mendoza", ciudad: "Mendoza" },
       estado: "ACTIVO",
       fechaInicio: enDias(-1),
       fechaLimiteCierre: enMinutos(minutosParaCierre),

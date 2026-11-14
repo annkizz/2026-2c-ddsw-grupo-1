@@ -12,10 +12,18 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
-      // req 34: lista opcional etiquetas
+    // req 34: lista opcional etiquetas
     etiquetas: z
       .array(z.string().min(1).max(ETIQUETA_MAX))
       .max(ETIQUETAS_MAX)
+      .optional(),
+    // req 15
+    ubicacion: z
+      .object({
+        provincia: z.string().trim().min(1),
+        ciudad: z.string().trim().min(1).optional(),
+      })
+      .strict()
       .optional(),
   })
   .strict();
@@ -41,6 +49,12 @@ export const avanceSchema = z
   })
   .strict();
 
+const primerValor = (valor) => (Array.isArray(valor) ? valor[0] : valor);
+const valoresComoLista = (valor) => {
+  if (valor === undefined) return [];
+  return Array.isArray(valor) ? valor : [valor];
+};
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
@@ -52,14 +66,28 @@ export class ProyectoController {
   };
 
   obtenerTodos = async (req, res) => {
-const valores = req.query.etiqueta;
-    let lista = [];
-    if (valores !== undefined) {
-      lista = Array.isArray(valores) ? valores : [valores];
+    const etiquetas = valoresComoLista(req.query.etiqueta);
+    const filtros = etiquetas.length > 0 ? { etiquetas } : {};
+    if (req.query.provincia !== undefined) {
+      filtros.provincia = primerValor(req.query.provincia);
     }
-    const filtros = lista.length > 0 ? { etiquetas: lista } : {};
+    if (req.query.estado !== undefined) {
+      filtros.estado = primerValor(req.query.estado);
+    }
+    if (req.query.idColectivo !== undefined) {
+      filtros.idColectivo = primerValor(req.query.idColectivo);
+    }
+    if (req.query.habilidad !== undefined) {
+      filtros.habilidades = valoresComoLista(req.query.habilidad);
+    }
     const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
+  };
+
+  obtenerUbicaciones = async (req, res) => {
+    const nivel = primerValor(req.query.nivel);
+    const ubicaciones = await this.proyectoService.obtenerUbicaciones(nivel);
+    res.status(200).json(ubicaciones);
   };
 
   obtenerColaboracionesPublicas = async (req, res) => {

@@ -17,6 +17,16 @@ export class PerfilRepository {
     return await documento.save();
   }
 
+  async obtenerProyectosPorHabilidades(habilidades) {
+    if (habilidades.length === 0) return [];
+    return await this.model.distinct("idProyecto", {
+      $or: [
+        { habilidadesRequeridas: { $in: habilidades } },
+        { habilidadesOpcionales: { $in: habilidades } },
+      ],
+    });
+  }
+
   async obtenerTodos(idProyecto) {
     return await this.model.find({ idProyecto });
   }

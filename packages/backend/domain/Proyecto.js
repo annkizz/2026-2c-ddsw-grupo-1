@@ -11,6 +11,7 @@ export class Proyecto {
     enlaceSistema,
     enlaceCodigoFuente,
     etiquetas = [],
+    ubicacion = null,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -23,6 +24,7 @@ export class Proyecto {
     this.enlaceSistema = enlaceSistema;
     this.enlaceCodigoFuente = enlaceCodigoFuente;
     this.etiquetas = etiquetas ?? [];
+    this.ubicacion = ubicacion ?? null;
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;

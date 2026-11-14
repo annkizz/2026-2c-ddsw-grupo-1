@@ -19,6 +19,10 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     );
 
   router
+    .route("/ubicaciones")
+    .get((req, res) => proyectoController.obtenerUbicaciones(req, res));
+
+  router
     .route("/:idProyecto/colaboraciones")
     .get((req, res) =>
       proyectoController.obtenerColaboracionesPublicas(req, res),

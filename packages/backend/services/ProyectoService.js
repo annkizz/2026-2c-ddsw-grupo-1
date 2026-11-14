@@ -6,6 +6,12 @@ import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { evaluarCoincidencia } from "../domain/Matching.js";
 import { normalizarEtiquetas } from "../domain/etiquetas.js";
 import {
+  construirUbicacionDeProyecto,
+  normalizarProvincia,
+  PAIS_ARGENTINA,
+  ubicacionHeredadaDeColectivo,
+} from "../domain/provincias.js";
+import {
   BadRequestError,
   ConflictError,
   NotFoundError,
@@ -14,6 +20,9 @@ import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+
+const NIVELES_MAPA = new Set(["provincia", "pais"]);
+const ESTADOS_VALIDOS = new Set(Object.values(Estado));
 
 export class ProyectoService {
   constructor(
@@ -49,6 +58,19 @@ export class ProyectoService {
       this.validarFechaLimite(fechaLimiteCierre);
     }
 
+    let ubicacion;
+    if (datosProyecto.ubicacion === undefined) {
+      ubicacion = ubicacionHeredadaDeColectivo(colectivo);
+    } else {
+      ubicacion = construirUbicacionDeProyecto(datosProyecto.ubicacion);
+      if (ubicacion === null) {
+        throw new BadRequestError(
+          "la provincia ingresada no es válida",
+          "PROVINCIA_INVALIDA",
+        );
+      }
+    }
+
     const proyecto = new Proyecto(
       datosProyecto.titulo,
       datosProyecto.descripcion,
@@ -61,6 +83,7 @@ export class ProyectoService {
       null,
       null,
       normalizarEtiquetas(datosProyecto.etiquetas),
+      ubicacion,
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -85,6 +108,7 @@ export class ProyectoService {
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
       etiquetas: proyecto.etiquetas ?? [],
+      ubicacion: proyecto.ubicacion ?? null,
     };
   }
 
@@ -166,11 +190,142 @@ export class ProyectoService {
         filtrosNormalizados.etiquetas,
       );
     }
+    if (filtrosNormalizados.provincia !== undefined) {
+      const provincia = normalizarProvincia(filtrosNormalizados.provincia);
+      if (provincia === null) {
+        throw new BadRequestError(
+          "la provincia ingresada no es válida",
+          "PROVINCIA_INVALIDA",
+        );
+      }
+      filtrosNormalizados.provincia = provincia.codigoProvincia;
+    }
+    if (filtrosNormalizados.estado !== undefined) {
+      const estado = String(filtrosNormalizados.estado).trim().toUpperCase();
+      if (!ESTADOS_VALIDOS.has(estado)) {
+        throw new BadRequestError(
+          "el estado ingresado no es válido",
+          "ESTADO_INVALIDO",
+        );
+      }
+      filtrosNormalizados.estado = estado;
+    }
+    if (filtrosNormalizados.idColectivo !== undefined) {
+      const idColectivo = String(filtrosNormalizados.idColectivo).trim();
+      if (!this.colectivoRepository.esIdValido(idColectivo)) {
+        throw new BadRequestError(
+          "el colectivo ingresado no es válido",
+          "COLECTIVO_INVALIDO",
+        );
+      }
+      filtrosNormalizados.idColectivo = idColectivo;
+    }
+    if (filtrosNormalizados.habilidades !== undefined) {
+  
+      const habilidades = (
+        Array.isArray(filtrosNormalizados.habilidades)
+          ? filtrosNormalizados.habilidades
+          : [filtrosNormalizados.habilidades]
+      )
+        .map((habilidad) => String(habilidad).trim())
+        .filter((habilidad) => habilidad !== "");
+
+      delete filtrosNormalizados.habilidades;
+      if (habilidades.length > 0) {
+        const idsProyectos =
+          await this.perfilRepository.obtenerProyectosPorHabilidades(
+            habilidades,
+          );
+        if (idsProyectos.length === 0) return [];
+        filtrosNormalizados.idsProyectos = idsProyectos;
+      }
+    }
 
     const proyectos = await this.proyectoRepository.obtenerTodos(
       filtrosNormalizados,
     );
     return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  async obtenerUbicaciones(nivel = "provincia") {
+    if (!NIVELES_MAPA.has(nivel)) {
+      throw new BadRequestError(
+        "el nivel del mapa no es válido",
+        "NIVEL_MAPA_INVALIDO",
+      );
+    }
+
+    const proyectos = await this.proyectoRepository.obtenerActivosParaMapa();
+    const grupos = new Map();
+
+    for (const proyecto of proyectos) {
+      const region = this.regionDeUbicacion(proyecto.ubicacion, nivel);
+      if (region === null) {
+        continue;
+      }
+
+      let grupo = grupos.get(region.codigo);
+      if (grupo === undefined) {
+        grupo = {
+          nivel,
+          codigo: region.codigo,
+          nombre: region.nombre,
+          cantidad: 0,
+          proyectos: [],
+        };
+        grupos.set(region.codigo, grupo);
+      }
+
+      const colectivo = proyecto.idColectivo;
+      grupo.cantidad += 1;
+      grupo.proyectos.push({
+        id: String(proyecto._id),
+        titulo: proyecto.titulo,
+        ciudad: proyecto.ubicacion.ciudad ?? null,
+        colectivo: {
+          id: colectivo ? String(colectivo._id ?? colectivo) : null,
+          nombre: colectivo?.nombre ?? null,
+        },
+      });
+    }
+
+    const resultado = [...grupos.values()];
+    resultado.sort((a, b) => {
+      if (b.cantidad !== a.cantidad) {
+        return b.cantidad - a.cantidad;
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    return resultado;
+  }
+
+  regionDeUbicacion(ubicacion, nivel) {
+    if (!ubicacion) {
+      return null;
+    }
+
+    if (nivel === "pais") {
+      const codigo =
+        ubicacion.codigoPais ??
+        (ubicacion.codigoProvincia ? PAIS_ARGENTINA.codigoPais : null);
+      if (!codigo) {
+        return null;
+      }
+      return {
+        codigo,
+        nombre: ubicacion.nombrePais ?? PAIS_ARGENTINA.nombrePais,
+      };
+    }
+
+    if (!ubicacion.codigoProvincia) {
+      return null;
+    }
+
+    return {
+      codigo: ubicacion.codigoProvincia,
+      nombre: ubicacion.nombreProvincia ?? ubicacion.codigoProvincia,
+    };
   }
 
   obtenerProyectoPorId(id) {

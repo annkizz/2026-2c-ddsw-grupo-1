@@ -17,7 +17,31 @@ export class ProyectoRepository {
         query.etiquetas = { $in: filtros.etiquetas };
       }
     }
+    if (filtros.provincia !== undefined && filtros.provincia !== null) {
+      query["ubicacion.codigoProvincia"] = filtros.provincia;
+    }
+
+    if (filtros.idsProyectos !== undefined && filtros.idsProyectos !== null) {
+      query._id = { $in: filtros.idsProyectos };
+    }
+
+    if (filtros.idColectivo !== undefined && filtros.idColectivo !== null) {
+      query.idColectivo = filtros.idColectivo;
+    }
+
+    if (filtros.estado !== undefined && filtros.estado !== null) {
+      query.estado = filtros.estado;
+    }
     return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
+  }
+
+  obtenerActivosParaMapa() {
+    return this.proyectoModel
+      .find({ estado: Estado.ACTIVO })
+      .select("titulo ubicacion idColectivo")
+      .populate("idColectivo", "nombre")
+      .sort({ fechaInicio: -1 })
+      .exec();
   }
 
   obtenerAbiertosParaMatching(idsExcluidos) {
@@ -92,6 +116,7 @@ export class ProyectoRepository {
           enlaceSistema: unProyecto.enlaceSistema,
           enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
           etiquetas: unProyecto.etiquetas ?? [],
+          ubicacion: unProyecto.ubicacion ?? null,
         },
         {
           upsert: true,
