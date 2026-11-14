@@ -25,6 +25,13 @@ const colectivoSchema = new mongoose.Schema(
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Proyecto" }],
       default: [],
     },
+    // cuenta duena del perfil (los colectivos del seed no tienen)
+    usuario: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Usuario",
+      unique: true,
+      sparse: true,
+    },
   },
   { timestamps: true, collection: "colectivos" },
 );

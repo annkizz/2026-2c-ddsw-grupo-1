@@ -82,7 +82,7 @@ export async function ejecutarSeed(
       c.idColaborador,
     );
     await colaboracionRepository.save(
-      new Colaboracion(proyecto, colaborador, c.fecha, c.esAnonima),
+      new Colaboracion(proyecto, colaborador, null, c.fecha, c.esAnonima),
     );
   }
 

@@ -300,22 +300,14 @@ describe("ProyectoService", () => {
 
 describe("preferencia de anonimato de una postulación", () => {
   it("acepta la preferencia y la deja desactivada si se omite", () => {
-    expect(crearPostulacionSchema.parse({ idColaborador: "c-1" })).toEqual({
-      idColaborador: "c-1",
-      esAnonima: false,
-    });
+    expect(crearPostulacionSchema.parse({})).toEqual({ esAnonima: false });
     expect(
-      crearPostulacionSchema.parse({
-        idColaborador: "c-1",
-        esAnonima: true,
-      }),
-    ).toEqual({ idColaborador: "c-1", esAnonima: true });
-    expect(
-      crearPostulacionSchema.safeParse({
-        idColaborador: "c-1",
-        esAnonima: "true",
-      }).success,
-    ).toBe(false);
+      crearPostulacionSchema.parse({ esAnonima: true }),
+    ).toEqual({ esAnonima: true });
+    expect(crearPostulacionSchema.safeParse({ idColaborador: "c-1" }).success)
+      .toBe(false);
+    expect(crearPostulacionSchema.safeParse({ esAnonima: "true" }).success)
+      .toBe(false);
   });
 
   it("usa false por defecto en Mongo y permite guardar true", () => {

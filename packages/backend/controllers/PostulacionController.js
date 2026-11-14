@@ -4,7 +4,6 @@ import { PostulacionService } from "../services/PostulacionService.js";
 
 export const crearPostulacionSchema = z
   .object({
-    idColaborador: z.string().trim().min(1),
     esAnonima: z.boolean().default(false),
   })
   .strict();
@@ -24,7 +23,6 @@ export class PostulacionController {
     const postulacion = await this.postulacionService.crear(
       req.params.idProyecto,
       req.params.idPerfil,
-      req.body.idColaborador,
       req.body.esAnonima,
       req.auth,
     );

@@ -15,6 +15,10 @@ export class ColectivoRepository {
     return await this.model.findById(id).exec();
   }
 
+  buscarPorUsuario(idUsuario) {
+    return this.model.findOne({ usuario: idUsuario }).exec();
+  }
+
   save(unColectivo, id = unColectivo._id) {
     return this.model
       .findOneAndUpdate(
@@ -24,6 +28,7 @@ export class ColectivoRepository {
           descripcion: unColectivo.descripcion,
           ubicacion: unColectivo.ubicacion,
           tipoDeColectivo: unColectivo.tipoDeColectivo,
+          usuario: unColectivo.usuario,
         },
         {
           upsert: true,

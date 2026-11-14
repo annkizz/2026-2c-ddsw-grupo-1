@@ -48,16 +48,22 @@ Esto instalará todas las dependencias para la raíz y para los paquetes `fronte
 
 ### 2\. Configuración de Variables de Entorno
 
-Crea un archivo `.env` en el directorio `packages/backend`. Puedes usar el archivo `.env.example` como plantilla.
+Crea un archivo `.env` en el directorio `packages/backend` para ejecutar la API directamente. Usa `packages/backend/.env.example` como plantilla. Si ejecutás con Docker Compose, el archivo `.env` va en la raíz y podés partir de `.env.example`.
 
 ```
 # packages/backend/.env
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 SERVER_PORT=3001
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=codigo_a_voluntad
+LOGTO_JWKS_URL=https://v0v3qk.logto.app/oidc/jwks
+LOGTO_ISSUER=https://v0v3qk.logto.app/oidc
+LOGTO_AUDIENCE=https://api.codigoavoluntad.com
 ```
 
 - **`ALLOWED_ORIGINS`**: Define los orígenes permitidos para las solicitudes CORS. Asegurate de incluir la URL donde se ejecuta tu frontend (por defecto, `http://localhost:3000` para Create React App). Cuando se haga el despliegue en nube acá se deberá incluir la URL donde se desplegó el frontend.
-- **`SERVER_PORT`**: El puerto en el que se ejecutará el servidor backend (ej. `8000`).
+- **`SERVER_PORT`**: El puerto en el que se ejecutará el servidor backend (por defecto, `3001` en desarrollo local).
+- **`LOGTO_JWKS_URL`, `LOGTO_ISSUER`, `LOGTO_AUDIENCE`**: Configuración de la API de Logto. `LOGTO_AUDIENCE` debe coincidir con el recurso configurado en `REACT_APP_LOGTO_RESOURCES`. Son necesarias para verificar tokens en las rutas privadas; no subir archivos `.env`.
 
 ### 3\. Ejecución de la Aplicación
 
@@ -88,3 +94,12 @@ Para iniciar el backend en modo `dev` y el frontend simultáneamente, usá:
 ```bash
 npm run start:dev
 ```
+
+### Probar postulaciones con Postman
+
+En las rutas privadas, enviá el **access token** de Logto como `Authorization: Bearer <token>` y usá la audiencia configurada en `LOGTO_AUDIENCE`.
+
+1. `GET /me` crea o devuelve la cuenta local. Antes de registrar un perfil, `rol` e IDs de perfil son nulos.
+2. Registrá el perfil con `POST /colectivos` o `POST /colaboradoras`, usando el mismo token.
+3. Con una cuenta `COLABORADOR`, creá una postulación con `POST /proyectos/{idProyecto}/perfiles/{idPerfil}/postulaciones`. El body puede ser `{ "esAnonima": false }`; **no** envíes `idColaborador`, porque el backend lo obtiene del perfil vinculado a la cuenta.
+4. Con el token del colectivo dueño, consultá `GET /proyectos/{idProyecto}/postulaciones` y resolvé con `PATCH /proyectos/{idProyecto}/postulaciones/{idPostulacion}` y `{"decision":"ACEPTADA"}` o `{"decision":"RECHAZADA"}`.

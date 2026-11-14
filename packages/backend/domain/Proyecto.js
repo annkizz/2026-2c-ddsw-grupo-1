@@ -78,4 +78,11 @@ export class Proyecto {
       this.enlaceCodigoFuente = enlaceCodigoFuente;
     }
   }
+
+  aceptaPostulaciones(ahora = new Date()) {
+    return (
+      !this.estaFinalizado() &&
+      this.busquedaDeColaboracionesAbierta(ahora)
+    );
+  }
 }

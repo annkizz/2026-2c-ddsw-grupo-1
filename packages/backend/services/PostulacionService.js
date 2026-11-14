@@ -57,11 +57,8 @@ export class PostulacionService {
     }
   }
 
-  validarColaboradora(actor, idColaborador) {
-    if (
-      actor?.rol !== "COLABORADORA" ||
-      String(actor.id) !== String(idColaborador)
-    ) {
+  validarColaboradora(actor) {
+    if (actor?.rol !== "COLABORADORA" || !actor.id) {
       throw new ForbiddenError(
         "Solo se puede postular la colaboradora autenticada",
         "ACCESO_POSTULACION_DENEGADO",
@@ -93,8 +90,9 @@ export class PostulacionService {
     );
   }
 
-  async crear(idProyecto, idPerfil, idColaborador, esAnonima = false, actor) {
-    this.validarColaboradora(actor, idColaborador);
+  async crear(idProyecto, idPerfil, esAnonima = false, actor) {
+    const idColaborador = actor?.id;
+    this.validarColaboradora(actor);
     const { proyecto, perfil } = await this.buscarProyectoYPerfil(
       idProyecto,
       idPerfil,
@@ -288,9 +286,9 @@ export class PostulacionService {
         new Colaboracion(
           proyecto,
           colaborador,
+          perfil,
           new Date(),
           postulacion.esAnonima,
-          perfil,
           postulacion,
         ),
       );

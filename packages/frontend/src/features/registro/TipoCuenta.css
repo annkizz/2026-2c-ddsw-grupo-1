@@ -1,0 +1,46 @@
+.tipo-cuenta-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tipo-cuenta-titulo h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.tipo-cuenta-sub {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.tipo-cuenta-opcion {
+  margin-bottom: 12px;
+}
+
+.tipo-cuenta-contenido {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px;
+  color: var(--navy);
+}
+
+.tipo-cuenta-contenido > div {
+  flex: 1;
+}
+
+.tipo-cuenta-contenido strong {
+  display: block;
+  color: var(--ink);
+}
+
+.tipo-cuenta-contenido small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.tipo-cuenta-contenido svg {
+  font-size: 22px;
+  flex: none;
+}

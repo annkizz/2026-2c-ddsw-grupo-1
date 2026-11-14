@@ -6,10 +6,18 @@ export class Perfil {
     compromiso,
     limiteColaboraciones = null,
   ) {
-    ((this.descripcion = descripcion),
-      (this.habilidadesRequeridas = habilidadesRequeridas),
-      (this.habilidadesOpcionales = habilidadesOpcionales),
-      (this.compromiso = compromiso),
-      (this.limiteColaboraciones = limiteColaboraciones));
+    this.descripcion = descripcion;
+    this.habilidadesRequeridas = habilidadesRequeridas;
+    this.habilidadesOpcionales = habilidadesOpcionales;
+    this.compromiso = compromiso;
+    this.limiteColaboraciones = limiteColaboraciones;
+  }
+
+  tieneLimite() {
+    return this.limiteColaboraciones !== null;
+  }
+
+  tieneVacantes(colaboracionesActivas) {
+    return !this.tieneLimite() || colaboracionesActivas < this.limiteColaboraciones;
   }
 }

@@ -12,6 +12,8 @@ export function crearProyectoRouter(
   proyectoController,
   perfilController,
   postulacionController,
+  autenticar,
+  contextoPostulaciones,
 ) {
   const router = express.Router();
 
@@ -44,7 +46,14 @@ export function crearProyectoRouter(
       proyectoController.actualizarAvance(req, res),
     );
 
-  router.use("/:idProyecto", crearPostulacionRouter(postulacionController));
+  router.use(
+    "/:idProyecto",
+    crearPostulacionRouter(
+      postulacionController,
+      autenticar,
+      contextoPostulaciones,
+    ),
+  );
   router.use("/:idProyecto/perfiles", crearPerfilRouter(perfilController));
 
   return router;

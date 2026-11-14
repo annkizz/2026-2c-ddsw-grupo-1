@@ -9,6 +9,9 @@ x-api-env: &api-env # variables que comparten la API y el seed
   MONGODB_URI: mongodb://${MONGO_USER:?Falta MONGO_USER en .env}:${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}@mongo:27017
   MONGODB_DB_NAME: ${MONGODB_DB_NAME:-codigo_a_voluntad}
   ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-} # vacio = cualquier origen (ok mientras no haya frontend desplegado)
+  LOGTO_JWKS_URL: ${LOGTO_JWKS_URL:-}
+  LOGTO_ISSUER: ${LOGTO_ISSUER:-}
+  LOGTO_AUDIENCE: ${LOGTO_AUDIENCE:-}
 
 services:
   mongo:

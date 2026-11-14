@@ -1,3 +1,5 @@
+import { agregarDocumentacionDeAuth } from "./swaggerAuth.js";
+
 const swaggerDefinition = {
   openapi: "3.0.0",
   info: {
@@ -617,7 +619,7 @@ const swaggerSpec = {
       post: {
         summary: "Crea una postulación pendiente a un perfil del proyecto",
         description:
-          "Requiere sesión autenticada como COLABORADORA; la identidad debe coincidir con idColaborador.",
+          "Requiere sesión autenticada como COLABORADOR. La identidad se obtiene del perfil asociado a la cuenta.",
         parameters: [
           {
             in: "path",
@@ -638,9 +640,7 @@ const swaggerSpec = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["idColaborador"],
                 properties: {
-                  idColaborador: { type: "string" },
                   esAnonima: { type: "boolean", default: false },
                 },
                 additionalProperties: false,
@@ -652,17 +652,20 @@ const swaggerSpec = {
           201: { description: "Postulación creada en estado PENDIENTE" },
           400: { description: "Datos inválidos" },
           401: { description: "Sesión no autenticada" },
-          403: { description: "La identidad autenticada no es la postulante" },
+          403: {
+            description: "El usuario no tiene un perfil de colaborador registrado",
+          },
           404: { description: "Proyecto, perfil o colaboradora no encontrada" },
           409: {
             description:
-              "Búsqueda cerrada, proyecto finalizado, incompatibilidad o postulación duplicada",
+              "Búsqueda cerrada, proyecto finalizado, postulación duplicada, colaboración existente o límite alcanzado",
           },
         },
       },
     },
     "/proyectos/{idProyecto}/postulaciones": {
       get: {
+        security: [{ bearerAuth: [] }],
         summary: "Lista las postulaciones de un proyecto",
         description:
           "Requiere sesión autenticada como COLECTIVO dueño del proyecto. Las postulaciones pendientes y rechazadas no incluyen identidad. Los datos de la colaboradora solo se incluyen después de aceptar.",
@@ -1402,5 +1405,7 @@ const swaggerSpec = {
     },
   },
 };
+
+agregarDocumentacionDeAuth(swaggerSpec);
 
 export default swaggerSpec;

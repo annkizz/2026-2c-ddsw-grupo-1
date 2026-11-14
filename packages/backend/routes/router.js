@@ -34,20 +34,51 @@ import { crearNotificacionRouter } from "./notificacionRouter.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { PostulacionService } from "../services/PostulacionService.js";
 import { PostulacionController } from "../controllers/PostulacionController.js";
+import { UsuarioRepository } from "../repositories/UsuarioRepository.js";
+import { UsuarioService } from "../services/UsuarioService.js";
+import { UsuarioController } from "../controllers/UsuarioController.js";
+import { crearUsuarioRouter } from "./usuarioRouter.js";
+import {
+  crearAutenticar,
+  crearVerificadorLogto,
+} from "../middlewares/authMiddleware.js";
+import { crearContextoPostulaciones } from "../middlewares/postulacionContext.js";
 
 const router = express.Router();
+
+const usuarioRepository = new UsuarioRepository();
+const autenticar = crearAutenticar(usuarioRepository, crearVerificadorLogto());
+// consultar es publico; crear, modificar o borrar requiere haber iniciado sesion
+const autenticarSiModifica = (req, res, next) =>
+  ["GET", "HEAD", "OPTIONS"].includes(req.method)
+    ? next()
+    : autenticar(req, res, next);
+const autenticarSiNecesario = (req, res, next) =>
+  req.usuario ? next() : autenticar(req, res, next);
+
 const habilidadRepository = new HabilidadRepository();
 const habilidadService = new HabilidadService(habilidadRepository);
 const habilidadController = new HabilidadController(habilidadService);
 
 const colectivoRepository = new ColectivoRepository();
-const colectivoService = new ColectivoService(colectivoRepository);
+const colaboradorRepository = new ColaboradorRepository();
+const usuarioService = new UsuarioService(
+  usuarioRepository,
+  colectivoRepository,
+  colaboradorRepository,
+);
+const usuarioController = new UsuarioController(usuarioService);
+
+const colectivoService = new ColectivoService(
+  colectivoRepository,
+  usuarioService,
+);
 const colectivoController = new ColectivoController(colectivoService);
 
-const colaboradorRepository = new ColaboradorRepository();
 const colaboradorService = new ColaboradorService(
   colaboradorRepository,
   habilidadRepository,
+  usuarioService,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
@@ -79,6 +110,7 @@ const postulacionService = new PostulacionService(
   postulacionRepository,
 );
 const postulacionController = new PostulacionController(postulacionService);
+const contextoPostulaciones = crearContextoPostulaciones(usuarioService);
 
 const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository);
@@ -100,19 +132,39 @@ const matchingService = new MatchingService(
 );
 const matchingController = new MatchingController(matchingService);
 
-router.use("/habilidades", crearHabilidadRouter(habilidadController));
+router.use("/me", crearUsuarioRouter(usuarioController, autenticar));
+router.use(
+  "/habilidades",
+  autenticarSiModifica,
+  crearHabilidadRouter(habilidadController),
+);
+// una sola vez para todo /proyectos (lo usan el router de proyectos y el de logros)
+router.use("/proyectos", autenticarSiModifica);
 router.use(
   "/proyectos",
   crearProyectoRouter(
     proyectoController,
     perfilController,
     postulacionController,
+    autenticarSiNecesario,
+    contextoPostulaciones,
   ),
 );
-router.use("/colectivos", crearColectivoRouter(colectivoController));
-router.use("/colaboradoras", crearColaboradorRouter(colaboradorController));
+router.use(
+  "/colectivos",
+  crearColectivoRouter(colectivoController, autenticar),
+);
+router.use(
+  "/colaboradoras",
+  crearColaboradorRouter(colaboradorController, autenticar),
+);
 router.use("/proyectos", crearLogroRouter(logroController));
-router.use("/notificaciones", crearNotificacionRouter(notificacionController));
+// los mensajes internos son siempre privados
+router.use(
+  "/notificaciones",
+  autenticar,
+  crearNotificacionRouter(notificacionController),
+);
 router.use(crearMatchingRouter(matchingController));
 
 export default router;

@@ -53,6 +53,9 @@ MONGO_PASSWORD=admin1234
 MONGODB_DB_NAME=codigo_a_voluntad
 API_PORT=3000
 ALLOWED_ORIGINS=
+LOGTO_JWKS_URL=https://<tenant>.logto.app/oidc/jwks
+LOGTO_ISSUER=https://<tenant>.logto.app/oidc
+LOGTO_AUDIENCE=https://api.codigoavoluntad.com
 EOF
 ```
 
@@ -64,6 +67,7 @@ EOF
 | `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                                                                                                         |
 | `API_PORT`                      | Puerto de la VM por el que se accede a la API.                                                                                                                                      |
 | `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. Vacío = cualquiera. Postman y Swagger no lo necesitan; solo importa cuando haya un frontend en otro origen. |
+| `LOGTO_JWKS_URL`, `LOGTO_ISSUER`, `LOGTO_AUDIENCE` | Validación de tokens Logto para las rutas privadas. La audiencia debe coincidir con el recurso configurado en la app frontend. |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
