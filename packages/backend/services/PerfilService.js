@@ -30,6 +30,7 @@ export class PerfilService {
         horas: perfil.compromiso.horas,
         tipoColaboracion: perfil.compromiso.tipoColaboracion,
       },
+      limiteColaboraciones: perfil.limiteColaboraciones ?? null
     };
   }
 
@@ -55,6 +56,7 @@ export class PerfilService {
       requeridas.map((h) => h.titulo),
       opcionales.map((h) => h.titulo),
       datos.compromiso,
+      datos.limiteColaboraciones ?? null
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -96,6 +98,7 @@ export class PerfilService {
       habilidadesRequeridas: requeridas.map((h) => h.titulo),
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
       compromiso: datos.compromiso,
+      limiteColaboraciones: datos.limiteColaboraciones ?? null,
     });
     return this.toDTO(actualizado);
   }

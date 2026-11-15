@@ -1,3 +1,4 @@
+import request from "supertest";
 import mongoose from "mongoose";
 import {
   afterAll,
@@ -16,6 +17,7 @@ import { ProyectoModel } from "../../schemas/proyectoSchema.js";
 import { ColaboradorModel } from "../../schemas/colaboradorSchema.js";
 import { PerfilModel } from "../../schemas/perfilSchema.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
+import { crearAppDeMatching } from "./utils/buildApp.js";
 import {
   conectarALaBaseDePrueba,
   desconectarDeLaBaseDePrueba,
@@ -55,6 +57,8 @@ const crearServicio = () =>
     new ColaboracionRepository(),
   );
 
+let app;
+
 beforeAll(async () => {
   await conectarALaBaseDePrueba();
 
@@ -64,6 +68,14 @@ beforeAll(async () => {
     PerfilModel.init(),
     ColaboracionModel.init(),
   ]);
+
+  // misma mini app que usa MatchingHttp.js, pero con los repos REALES
+  app = crearAppDeMatching(
+    new ColaboradorRepository(),
+    new ProyectoRepository(),
+    new PerfilRepository(),
+    new ColaboracionRepository(),
+  );
 });
 
 afterAll(async () => {
@@ -75,6 +87,9 @@ beforeEach(async () => {
   await limpiarLaBase();
   await sembrarDatosIniciales();
 });
+// con repo real 
+// sin supertest: service + repos reales + mongo real (embebido) + seed
+//llama al service directo, no pasa por HTTP: muestra q las queries funcionan
 
 describe("MatchingService.buscarColaboradorasParaPerfil (integración sobre la seed)", () => {
   it("encuentra a la única candidata del perfil Tester (Luna)", async () => {
@@ -388,5 +403,83 @@ describe("MatchingService con al menos una habilidad requerida (integración)", 
     );
 
     expect(resultado).toEqual([]);
+  });
+});
+// con supertest
+//todo real pero la peticion entra por HTTP: ruta → controller → service → repos → Mongo
+describe("Matching API - fusión HTTP sobre la seed", () => {
+  it("recomienda a Luna el perfil Tester del portal de turnos", async () => {
+    const response = await request(app).get(`/colaboradoras/${LUNA}/proyectos`);
+
+    expect(response.status).toBe(200);
+    const portal = response.body.find((p) => p.id === PROYECTO_TURNOS);
+    expect(portal.titulo).toBe("Portal de turnos solidarios");
+    expect(portal.perfilesCompatibles).toMatchObject([
+      {
+        descripcion: "Tester",
+        requeridasCoincidentes: ["Testing E2E con Cypress"],
+      },
+    ]);
+  });
+
+  it("recomienda a Sofía el perfil frontend del mapa de comedores", async () => {
+    const response = await request(app).get(`/colaboradoras/${SOFIA}/proyectos`);
+
+    expect(response.status).toBe(200);
+    const mapa = response.body.find((p) => p.id === PROYECTO_MAPA);
+    expect(mapa.titulo).toBe("Mapa de comedores comunitarios");
+    expect(mapa.perfilesCompatibles[0].descripcion).toBe("Desarrollo frontend");
+  });
+
+  it("no recomienda nada a Nico: ya colabora y sus habilidades no calzan en lo que queda", async () => {
+    const response = await request(app).get(`/colaboradoras/${NICO}/proyectos`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+
+  it("el buscador de candidatas del Tester incluye a Luna y excluye a Kodama", async () => {
+    const response = await request(app).get(
+      `/proyectos/${PROYECTO_TURNOS}/perfiles/${PERFIL_TESTER}/colaboradoras`,
+    );
+
+    expect(response.status).toBe(200);
+    const ids = response.body.map((candidata) => candidata.id);
+    expect(ids).toContain(LUNA);
+    // Kodama solo cumple una habilidad OPCIONAL del perfil: no es candidata
+    expect(ids).not.toContain(KODAMA);
+    // reglas de privacidad del matching también a nivel JSON
+    for (const candidata of response.body) {
+      expect(candidata).not.toHaveProperty("mediosDeContacto");
+      expect(candidata).not.toHaveProperty("nombre");
+      expect(candidata).not.toHaveProperty("apellido");
+    }
+  });
+
+  it("responde 409 al pedir candidatas de un proyecto finalizado", async () => {
+    const response = await request(app).get(
+      `/proyectos/${PROYECTO_INVENTARIO}/perfiles/${PERFIL_BACKEND}/colaboradoras`,
+    );
+
+    expect(response.status).toBe(409);
+    expect(response.body.codigo).toBe("PROYECTO_FINALIZADO");
+  });
+
+  it("responde 404 si la colaboradora no existe en la base", async () => {
+    const response = await request(app).get(
+      "/colaboradoras/b00000000000000000000099/proyectos",
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body.codigo).toBe("COLABORADORA_NO_ENCONTRADA");
+  });
+
+  it("responde 404 si el perfil no es del proyecto pedido", async () => {
+    const response = await request(app).get(
+      `/proyectos/${PROYECTO_MAPA}/perfiles/${PERFIL_TESTER}/colaboradoras`,
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body.codigo).toBe("PERFIL_NO_ENCONTRADO");
   });
 });

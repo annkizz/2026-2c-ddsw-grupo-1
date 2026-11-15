@@ -19,6 +19,18 @@ const swaggerSpec = {
     "/colectivos": {
       get: {
         summary: "Obtiene todos los colectivos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los colectivos que tengan al menos una de las etiquetas especificadas.",
+          },
+        ],
         responses: {
           200: {
             description: "Lista de colectivos",
@@ -60,6 +72,14 @@ const swaggerSpec = {
                       ciudad: { type: "string" },
                     },
                   },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Alimentos"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
+                  },
                 },
               },
             },
@@ -71,6 +91,27 @@ const swaggerSpec = {
           },
           400: {
             description: "Datos inválidos",
+          },
+        },
+      },
+    },
+    "/etiquetas": {
+      get: {
+        summary: "Lista todas las etiquetas en uso (req 34)",
+        description:
+          "Devuelve listado de las etiquetas en uso de proyectos y colectivos, ordenadas y sin duplicados",
+        responses: {
+          200: {
+            description: "Lista de codigos de etiquetas",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { type: "string" },
+                  example: ["accesibilidad_web", "alimentos", "salud"],
+                },
+              },
+            },
           },
         },
       },
@@ -502,6 +543,55 @@ const swaggerSpec = {
     "/proyectos": {
       get: {
         summary: "Obtiene todos los proyectos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los proyectos que tengan al menos una de las etiquetas especificadas.",
+          },
+          {
+            name: "provincia",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas.",
+          },
+          {
+            name: "estado",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["ACTIVO", "FINALIZADO"],
+            },
+            description:
+              "Búsquedas: opcional. Filtra por estado. La pantalla de búsqueda de proyectos envía ACTIVO; sin este parámetro se devuelven todos.",
+          },
+          {
+            name: "idColectivo",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se combina con etiqueta, provincia, habilidad y estado.",
+          },
+          {
+            name: "habilidad",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "Búsquedas: opcional. Filtra proyectos que tengan al menos un perfil con alguna de las habilidades indicadas (requeridas u opcionales). Se manda el título de la habilidad.",
+          },
+        ],
         responses: {
           200: { description: "Lista de proyectos" },
         },
@@ -533,6 +623,42 @@ const swaggerSpec = {
                     format: "date-time",
                     description: "Opcional; debe ser futura.",
                   },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Salud"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
+                  },
+                  ubicacion: {
+                    type: "object",
+                    description:
+                      "req 15: opcional. Si no se envia, se hereda la ubicacion del colectivo; si el colectivo tampoco tiene, el proyecto queda sin ubicacion.",
+                    properties: {
+                      provincia: {
+                        type: "string",
+                        example: "Cordoba",
+                        description:
+                          "Nombre o alias de provincia (se normaliza a codigo ISO 3166-2:AR en la respuesta). La ubicacion guardada incluye ademas codigoPais/nombrePais para que el mapa pueda agrupar por pais.",
+                      },
+                      ciudad: { type: "string", example: "Córdoba" },
+                    },
+                    required: ["provincia"],
+                    additionalProperties: false,
+                  },
+                  busquedaAbierta: {
+                    type: "boolean",
+                    default: false,
+                    description:
+                      "Opcional. Indica si la búsqueda de colaboraciones está abierta.",
+                  },
+                  fechaLimiteBusqueda: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Opcional. Debe ser futura y solo se puede indicar con busquedaAbierta en true.",
+                  },
                 },
                 additionalProperties: false,
               },
@@ -544,6 +670,77 @@ const swaggerSpec = {
           400: { description: "Datos inválidos o faltan campos obligatorios" },
           404: {
             description: "El colectivo no existe",
+          },
+        },
+      },
+    },
+    "/proyectos/ubicaciones": {
+      get: {
+        summary: "Distribucion de proyectos activos por region (req 15)",
+        description:
+          "Devuelve los proyectos activos que cuentan con ubicacion agrupados por provincia (nivel=provincia, default) o por pais (nivel=pais), con la cantidad de cada grupo y el detalle (titulo, ciudad y colectivo) para el listado del mapa. Los proyectos finalizados no se incluyen. Ordenado por cantidad descendente y luego por nombre.",
+        parameters: [
+          {
+            in: "query",
+            name: "nivel",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["provincia", "pais"],
+              default: "provincia",
+            },
+            description:
+              "Region por la que se agrupa. provincia usa codigoProvincia; pais usa codigoPais.",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Regiones con proyectos",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      nivel: {
+                        type: "string",
+                        enum: ["provincia", "pais"],
+                        example: "provincia",
+                      },
+                      codigo: { type: "string", example: "AR-M" },
+                      nombre: { type: "string", example: "Mendoza" },
+                      cantidad: { type: "integer", example: 2 },
+                      proyectos: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            id: { type: "string" },
+                            titulo: { type: "string" },
+                            ciudad: {
+                              type: "string",
+                              nullable: true,
+                              example: "Godoy Cruz",
+                            },
+                            colectivo: {
+                              type: "object",
+                              properties: {
+                                id: { type: "string" },
+                                nombre: { type: "string" },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "El nivel del mapa no es valido",
           },
         },
       },
@@ -923,6 +1120,107 @@ const swaggerSpec = {
         },
       },
     },
+        "/proyectos/{idProyecto}": {
+      get: {
+        summary: "Obtiene el detalle de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        responses: {
+          200: { description: "Detalle del proyecto, con su avance y el estado de la búsqueda" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+      put: {
+        summary: "Edita el título y la descripción de un proyecto",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["titulo", "descripcion"],
+                properties: {
+                  titulo: { type: "string", example: "Portal de turnos solidarios" },
+                  descripcion: {
+                    type: "string",
+                    example: "Sitio para que voluntarias y voluntarios reserven turnos.",
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Proyecto actualizado" },
+          400: { description: "Datos inválidos" },
+          404: { description: "Proyecto no encontrado" },
+        },
+      },
+    },
+    "/proyectos/{idProyecto}/busqueda": {
+      put: {
+        summary: "Configura la búsqueda de colaboraciones de un proyecto",
+        description:
+          "Reemplaza la configuración completa. Al cerrar la búsqueda se borra la fecha límite.",
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+            description: "ID del proyecto",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["busquedaAbierta"],
+                properties: {
+                  busquedaAbierta: { type: "boolean", example: true },
+                  fechaLimiteBusqueda: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Opcional. Debe ser futura y requiere busquedaAbierta en true.",
+                    example: "2026-12-31T23:59:59Z",
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Búsqueda configurada; devuelve el proyecto actualizado" },
+          400: {
+            description:
+              "Datos inválidos, fecha no futura, o fecha indicada con la búsqueda cerrada",
+          },
+          404: { description: "Proyecto no encontrado" },
+          409: { description: "El proyecto está finalizado" },
+        },
+      },
+    },
     "/notificaciones": {
       get: {
         summary: "Lista notificaciones",
@@ -1105,6 +1403,13 @@ const swaggerSpec = {
             },
             additionalProperties: false,
           },
+          limiteColaboraciones: {
+            type: "integer",
+            minimum: 1,
+            description:
+              "Máximo de colaboraciones que se necesitan para este perfil. Si no se indica, no hay límite.",
+            example: 2,
+          },
         },
         additionalProperties: false,
       },
@@ -1131,6 +1436,14 @@ const swaggerSpec = {
             items: { type: "string" },
           },
           compromiso: { $ref: "#/components/schemas/Compromiso" },
+           limiteColaboraciones: {
+            type: "integer",
+            minimum: 1,
+            nullable: true,
+            description:
+              "Máximo de colaboraciones que se necesitan para este perfil. null significa sin límite.",
+            example: 2,
+          },
         },
       },
       Compromiso: {

@@ -20,6 +20,7 @@ export class ColectivoService {
       descripcion: colectivo.descripcion,
       tipoDeColectivo: colectivo.tipoDeColectivo,
       ubicacion: colectivo.ubicacion,
+      etiquetas: colectivo.etiquetas ?? [],
       proyectos: (colectivo.proyectos ?? []).map((proyecto) =>
         String(proyecto),
       ),
@@ -32,6 +33,7 @@ export class ColectivoService {
       datosColectivo.descripcion,
       datosColectivo.ubicacion,
       datosColectivo.tipoDeColectivo,
+      normalizarEtiquetas(datosColectivo.etiquetas),
     );
   }
 
@@ -68,12 +70,17 @@ export class ColectivoService {
     );
   };
 
-  async obtenerPorId(idColectivo) {
-    return this.toDTO(await this.buscarOFallar(idColectivo));
-  }
+  async obtenerTodos(filtros = {}) {
+    const filtrosNormalizados = { ...filtros };
+    if (filtrosNormalizados.etiquetas !== undefined) {
+      filtrosNormalizados.etiquetas = normalizarEtiquetas(
+        filtrosNormalizados.etiquetas,
+      );
+    }
 
-  async obtenerTodos() {
-    const colectivos = await this.colectivoRepository.obtenerTodos();
+    const colectivos = await this.colectivoRepository.obtenerTodos(
+      filtrosNormalizados,
+    );
     return colectivos.map((colectivo) => this.toDTO(colectivo));
   }
 

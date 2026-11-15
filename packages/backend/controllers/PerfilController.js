@@ -11,6 +11,7 @@ export const perfilSchema = z
       horas: z.int().min(1),
       tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]),
     }),
+    limiteColaboraciones: z.int().min(1).optional(),
   })
   .strict();
 

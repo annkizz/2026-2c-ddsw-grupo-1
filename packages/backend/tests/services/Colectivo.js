@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { BadRequestError } from "../../errors/AppError.js";
 import { ColectivoService } from "../../services/ColectivoService.js";
 
 describe("ColectivoService", () => {
@@ -39,14 +40,44 @@ describe("ColectivoService", () => {
     expect(creado.ubicacion).toBeUndefined();
   });
 
+  it("carga etiquetas normalizadas al crear (req 34)", async () => {
+    const creado = await service.crear({
+      nombre: "Manos Solidarias",
+      descripcion: "Voluntariado",
+      tipoDeColectivo: "FUNDACIONES",
+      etiquetas: ["Accesibilidad Web", "accesibilidad_web", "Niños y Jóvenes"],
+    });
+
+    expect(creado.etiquetas).toEqual([
+      "accesibilidad_web",
+      "ninos_y_jovenes",
+    ]);
+  });
+
+  it("rechaza mas de 10 etiquetas", async () => {
+    const demasiadasEtiquetas = [];
+    for (let i = 0; i < 11; i++) {
+      demasiadasEtiquetas.push(`etiqueta ${i}`);
+    }
+
+    await expect(
+      service.crear({
+        nombre: "Manos Solidarias",
+        descripcion: "Voluntariado",
+        tipoDeColectivo: "FUNDACIONES",
+        etiquetas: demasiadasEtiquetas,
+      }),
+    ).rejects.toThrow(BadRequestError);
+  });
+
   it("devuelve todos los colectivos con el DTO publico", async () => {
     repository.obtenerTodos.mockResolvedValue([
-      { _id: "a", nombre: "A", proyectos: ["p-1"] },
-      { _id: "b", nombre: "B", proyectos: [] },
+      { _id: "a", nombre: "A", proyectos: ["p-1"], etiquetas: [] },
+      { _id: "b", nombre: "B", proyectos: [], etiquetas: [] },
     ]);
     expect(await service.obtenerTodos()).toEqual([
-      { id: "a", nombre: "A", proyectos: ["p-1"] },
-      { id: "b", nombre: "B", proyectos: [] },
+      { id: "a", nombre: "A", proyectos: ["p-1"], etiquetas: [] },
+      { id: "b", nombre: "B", proyectos: [], etiquetas: [] },
     ]);
   });
 });

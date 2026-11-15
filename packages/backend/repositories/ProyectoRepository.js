@@ -7,8 +7,41 @@ export class ProyectoRepository {
     this.proyectoModel = proyectoModel;
   }
 
-  obtenerTodos() {
-    return this.proyectoModel.find().sort({ fechaInicio: -1 }).exec();
+  obtenerTodos(filtros = {}) {
+    const query = {};
+    // se filtra en la base, no se trae todo para memoria 
+    if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
+      if (filtros.etiquetas.length === 1) {
+        query.etiquetas = filtros.etiquetas[0];
+      } else {
+        query.etiquetas = { $in: filtros.etiquetas };
+      }
+    }
+    if (filtros.provincia !== undefined && filtros.provincia !== null) {
+      query["ubicacion.codigoProvincia"] = filtros.provincia;
+    }
+
+    if (filtros.idsProyectos !== undefined && filtros.idsProyectos !== null) {
+      query._id = { $in: filtros.idsProyectos };
+    }
+
+    if (filtros.idColectivo !== undefined && filtros.idColectivo !== null) {
+      query.idColectivo = filtros.idColectivo;
+    }
+
+    if (filtros.estado !== undefined && filtros.estado !== null) {
+      query.estado = filtros.estado;
+    }
+    return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
+  }
+
+  obtenerActivosParaMapa() {
+    return this.proyectoModel
+      .find({ estado: Estado.ACTIVO })
+      .select("titulo ubicacion idColectivo")
+      .populate("idColectivo", "nombre")
+      .sort({ fechaInicio: -1 })
+      .exec();
   }
 
   obtenerAbiertosParaMatching(idsExcluidos) {
@@ -82,6 +115,10 @@ export class ProyectoRepository {
           porcentajeConcrecion: unProyecto.porcentajeConcrecion,
           enlaceSistema: unProyecto.enlaceSistema,
           enlaceCodigoFuente: unProyecto.enlaceCodigoFuente,
+          busquedaAbierta: unProyecto.busquedaAbierta,
+          fechaLimiteBusqueda: unProyecto.fechaLimiteBusqueda,
+          etiquetas: unProyecto.etiquetas,
+          ubicacion: unProyecto.ubicacion,
         },
         {
           upsert: true,
