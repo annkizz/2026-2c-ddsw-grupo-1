@@ -27,9 +27,15 @@ describe("Dominio - Perfil", () => {
     expect(perfil.compromiso.horas).toBe(5);
   });
 
-    it("guarda el límite de colaboraciones", () => {
-    const perfil = new Perfil("Tester",["Testing E2E con Cypress"],[],compromiso,2,);
-    
+  it("guarda el límite de colaboraciones", () => {
+    const perfil = new Perfil(
+      "Tester",
+      ["Testing E2E con Cypress"],
+      [],
+      compromiso,
+      2,
+    );
+
     expect(perfil.limiteColaboraciones).toBe(2);
   });
 

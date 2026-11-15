@@ -2,6 +2,17 @@ import mongoose from "mongoose";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Estado } from "../domain/Estado.js";
 
+const ubicacionSchema = new mongoose.Schema(
+  {
+    codigoPais: { type: String, trim: true },
+    nombrePais: { type: String, trim: true },
+    codigoProvincia: { type: String, trim: true },
+    nombreProvincia: { type: String, trim: true },
+    ciudad: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
 const proyectoSchema = new mongoose.Schema(
   {
     idColectivo: {
@@ -24,6 +35,8 @@ const proyectoSchema = new mongoose.Schema(
     enlaceCodigoFuente: { type: String, default: null },
     busquedaAbierta: { type: Boolean, default: false },
     fechaLimiteBusqueda: { type: Date, default: null },
+    etiquetas: { type: [String], default: [] },
+    ubicacion: { type: ubicacionSchema, default: null },
   },
   { timestamps: true, collection: "proyectos" },
 );

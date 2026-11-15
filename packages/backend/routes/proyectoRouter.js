@@ -21,6 +21,10 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     );
 
   router
+    .route("/ubicaciones")
+    .get((req, res) => proyectoController.obtenerUbicaciones(req, res));
+
+  router
     .route("/:idProyecto/colaboraciones")
     .get((req, res) =>
       proyectoController.obtenerColaboracionesPublicas(req, res),
@@ -45,14 +49,14 @@ export function crearProyectoRouter(proyectoController, perfilController) {
       proyectoController.actualizarAvance(req, res),
     );
 
-    router
+  router
     .route("/:idProyecto")
     .get((req, res) => proyectoController.obtenerPorId(req, res))
     .put(validate(proyectoEdicionSchema), (req, res) =>
       proyectoController.actualizar(req, res),
     );
 
-    router
+  router
     .route("/:idProyecto/busqueda")
     .put(validate(busquedaSchema), (req, res) =>
       proyectoController.configurarBusqueda(req, res),

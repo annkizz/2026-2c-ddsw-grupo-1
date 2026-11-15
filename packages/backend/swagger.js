@@ -17,6 +17,18 @@ const swaggerSpec = {
     "/colectivos": {
       get: {
         summary: "Obtiene todos los colectivos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los colectivos que tengan al menos una de las etiquetas especificadas.",
+          },
+        ],
         responses: {
           200: {
             description: "Lista de colectivos",
@@ -58,6 +70,14 @@ const swaggerSpec = {
                       ciudad: { type: "string" },
                     },
                   },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Alimentos"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
+                  },
                 },
               },
             },
@@ -69,6 +89,27 @@ const swaggerSpec = {
           },
           400: {
             description: "Datos inválidos",
+          },
+        },
+      },
+    },
+    "/etiquetas": {
+      get: {
+        summary: "Lista todas las etiquetas en uso (req 34)",
+        description:
+          "Devuelve listado de las etiquetas en uso de proyectos y colectivos, ordenadas y sin duplicados",
+        responses: {
+          200: {
+            description: "Lista de codigos de etiquetas",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { type: "string" },
+                  example: ["accesibilidad_web", "alimentos", "salud"],
+                },
+              },
+            },
           },
         },
       },
@@ -500,6 +541,55 @@ const swaggerSpec = {
     "/proyectos": {
       get: {
         summary: "Obtiene todos los proyectos",
+        parameters: [
+          {
+            name: "etiqueta",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "req 34: opcional. Filtra resultados x etiqueta. Permite buscar varias etiquetas al mismo tiempo y devuelve los proyectos que tengan al menos una de las etiquetas especificadas.",
+          },
+          {
+            name: "provincia",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas.",
+          },
+          {
+            name: "estado",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["ACTIVO", "FINALIZADO"],
+            },
+            description:
+              "Búsquedas: opcional. Filtra por estado. La pantalla de búsqueda de proyectos envía ACTIVO; sin este parámetro se devuelven todos.",
+          },
+          {
+            name: "idColectivo",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se combina con etiqueta, provincia, habilidad y estado.",
+          },
+          {
+            name: "habilidad",
+            in: "query",
+            required: false,
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
+            description:
+              "Búsquedas: opcional. Filtra proyectos que tengan al menos un perfil con alguna de las habilidades indicadas (requeridas u opcionales). Se manda el título de la habilidad.",
+          },
+        ],
         responses: {
           200: { description: "Lista de proyectos" },
         },
@@ -531,7 +621,31 @@ const swaggerSpec = {
                     format: "date-time",
                     description: "Opcional; debe ser futura.",
                   },
-                   busquedaAbierta: {
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Salud"],
+                    description:
+                      "req 34: Lista de etiquetas pesonalizadas (max 10, de 1 a 30 caracteres c/u). Normalizadas y sin duplicados",
+                  },
+                  ubicacion: {
+                    type: "object",
+                    description:
+                      "req 15: opcional. Si no se envia, se hereda la ubicacion del colectivo; si el colectivo tampoco tiene, el proyecto queda sin ubicacion.",
+                    properties: {
+                      provincia: {
+                        type: "string",
+                        example: "Cordoba",
+                        description:
+                          "Nombre o alias de provincia (se normaliza a codigo ISO 3166-2:AR en la respuesta). La ubicacion guardada incluye ademas codigoPais/nombrePais para que el mapa pueda agrupar por pais.",
+                      },
+                      ciudad: { type: "string", example: "Córdoba" },
+                    },
+                    required: ["provincia"],
+                    additionalProperties: false,
+                  },
+                  busquedaAbierta: {
                     type: "boolean",
                     default: false,
                     description:
@@ -554,6 +668,77 @@ const swaggerSpec = {
           400: { description: "Datos inválidos o faltan campos obligatorios" },
           404: {
             description: "El colectivo no existe",
+          },
+        },
+      },
+    },
+    "/proyectos/ubicaciones": {
+      get: {
+        summary: "Distribucion de proyectos activos por region (req 15)",
+        description:
+          "Devuelve los proyectos activos que cuentan con ubicacion agrupados por provincia (nivel=provincia, default) o por pais (nivel=pais), con la cantidad de cada grupo y el detalle (titulo, ciudad y colectivo) para el listado del mapa. Los proyectos finalizados no se incluyen. Ordenado por cantidad descendente y luego por nombre.",
+        parameters: [
+          {
+            in: "query",
+            name: "nivel",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["provincia", "pais"],
+              default: "provincia",
+            },
+            description:
+              "Region por la que se agrupa. provincia usa codigoProvincia; pais usa codigoPais.",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Regiones con proyectos",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      nivel: {
+                        type: "string",
+                        enum: ["provincia", "pais"],
+                        example: "provincia",
+                      },
+                      codigo: { type: "string", example: "AR-M" },
+                      nombre: { type: "string", example: "Mendoza" },
+                      cantidad: { type: "integer", example: 2 },
+                      proyectos: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            id: { type: "string" },
+                            titulo: { type: "string" },
+                            ciudad: {
+                              type: "string",
+                              nullable: true,
+                              example: "Godoy Cruz",
+                            },
+                            colectivo: {
+                              type: "object",
+                              properties: {
+                                id: { type: "string" },
+                                nombre: { type: "string" },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "El nivel del mapa no es valido",
           },
         },
       },

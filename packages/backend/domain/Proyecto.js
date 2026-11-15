@@ -11,7 +11,9 @@ export class Proyecto {
     enlaceSistema,
     enlaceCodigoFuente,
     busquedaAbierta,
-    fechaLimiteBusqueda
+    fechaLimiteBusqueda,
+    etiquetas,
+    ubicacion,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -25,6 +27,8 @@ export class Proyecto {
     this.enlaceCodigoFuente = enlaceCodigoFuente;
     this.busquedaAbierta = busquedaAbierta;
     this.fechaLimiteBusqueda = fechaLimiteBusqueda;
+    this.etiquetas = etiquetas ?? [];
+    this.ubicacion = ubicacion ?? null;
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;
@@ -71,15 +75,16 @@ export class Proyecto {
       this.enlaceCodigoFuente = enlaceCodigoFuente;
     }
   }
-    editarDatos({ titulo, descripcion }) {
+
+  editarDatos({ titulo, descripcion }) {
     this.titulo = titulo;
     this.descripcion = descripcion;
-  } 
+  }
 
   configurarBusqueda(busquedaAbierta, fechaLimiteBusqueda = null) {
     this.busquedaAbierta = busquedaAbierta;
     this.fechaLimiteBusqueda = busquedaAbierta ? fechaLimiteBusqueda : null;
-      // busquedaAbierta true -> this.fechaLimiteBusqueda = fechaLimiteBusqueda;, si es false es NULL
+    // busquedaAbierta true -> this.fechaLimiteBusqueda = fechaLimiteBusqueda; si es false, null
   }
 
   busquedaVigente(ahora = new Date()) {

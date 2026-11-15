@@ -21,6 +21,7 @@ const colectivoSchema = new mongoose.Schema(
       enum: Object.values(TipoColectivo),
       required: true,
     },
+    etiquetas: { type: [String], default: [] },
     proyectos: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Proyecto" }],
       default: [],

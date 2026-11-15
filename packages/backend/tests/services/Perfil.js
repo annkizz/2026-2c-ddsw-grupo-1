@@ -312,12 +312,13 @@ describe("PerfilService", () => {
 
       expect(perfilRepository.actualizar).toHaveBeenCalledWith(
         "perfil-1",
-        nuevosDatos(),
+        { ...nuevosDatos(), limiteColaboraciones: null },
       );
       expect(resultado).toEqual({
         id: "perfil-1",
         idProyecto: ID_PROYECTO,
         ...nuevosDatos(),
+        limiteColaboraciones: null,
       });
     });
 

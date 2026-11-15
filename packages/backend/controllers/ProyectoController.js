@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
+import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
+const fechaLimiteBusquedaSchema = z.coerce.date();
 
 export const proyectoSchema = z
   .object({
@@ -13,6 +15,19 @@ export const proyectoSchema = z
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
     busquedaAbierta: z.boolean().optional(),
     fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
+    // req 34: lista opcional etiquetas
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
+    // req 15
+    ubicacion: z
+      .object({
+        provincia: z.string().trim().min(1),
+        ciudad: z.string().trim().min(1).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -37,7 +52,13 @@ export const avanceSchema = z
   })
   .strict();
 
-  export const proyectoEdicionSchema = z
+const primerValor = (valor) => (Array.isArray(valor) ? valor[0] : valor);
+const valoresComoLista = (valor) => {
+  if (valor === undefined) return [];
+  return Array.isArray(valor) ? valor : [valor];
+};
+
+export const proyectoEdicionSchema = z
   .object({
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
@@ -62,8 +83,28 @@ export class ProyectoController {
   };
 
   obtenerTodos = async (req, res) => {
-    const proyectos = await this.proyectoService.obtenerTodos();
+    const etiquetas = valoresComoLista(req.query.etiqueta);
+    const filtros = etiquetas.length > 0 ? { etiquetas } : {};
+    if (req.query.provincia !== undefined) {
+      filtros.provincia = primerValor(req.query.provincia);
+    }
+    if (req.query.estado !== undefined) {
+      filtros.estado = primerValor(req.query.estado);
+    }
+    if (req.query.idColectivo !== undefined) {
+      filtros.idColectivo = primerValor(req.query.idColectivo);
+    }
+    if (req.query.habilidad !== undefined) {
+      filtros.habilidades = valoresComoLista(req.query.habilidad);
+    }
+    const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
+  };
+
+  obtenerUbicaciones = async (req, res) => {
+    const nivel = primerValor(req.query.nivel);
+    const ubicaciones = await this.proyectoService.obtenerUbicaciones(nivel);
+    res.status(200).json(ubicaciones);
   };
 
   obtenerColaboracionesPublicas = async (req, res) => {
