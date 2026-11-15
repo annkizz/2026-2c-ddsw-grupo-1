@@ -13,11 +13,12 @@ import RegistroColaboradora from './features/registro/RegistroColaboradora.jsx';
 import CuentaCreada from './features/registro/CuentaCreada.jsx';
 import ListaProyectos from './features/proyectos/ListaProyectos.jsx';
 import DetalleProyecto from './features/proyectos/DetalleProyecto.jsx';
-import NuevoProyecto from './features/proyectos/NuevoProyecto.jsx';
 import PerfilColaboradora from './features/colaboradoras/PerfilColaboradora.jsx';
 import PerfilColectivo from './features/colectivos/PerfilColectivo.jsx';
 import Notificaciones from './features/notificaciones/Notificaciones.jsx';
 import MiPerfil from './features/perfil/MiPerfil.jsx';
+import FormularioProyecto from './features/proyectos/FormularioProyecto.jsx';
+import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
 
 const theme = createTheme({
   palette: {
@@ -71,15 +72,35 @@ function App() {
                 <Route path="/perfil" element={<RequiereAuth><MiPerfil /></RequiereAuth>} />
                 <Route path="/notificaciones" element={<RequiereAuth><Notificaciones /></RequiereAuth>} />
                 <Route
-                  path="/proyectos/nuevo"
-                  element={
-                    <RequiereAuth>
-                      <RequiereRol roles={['COLECTIVO']}>
-                        <NuevoProyecto />
-                      </RequiereRol>
-                    </RequiereAuth>
-                  }
-                />
+                    path="/proyectos/nuevo"
+                    element={
+                      <RequiereAuth>
+                        <RequiereRol roles={['COLECTIVO']}>
+                          <FormularioProyecto />
+                        </RequiereRol>
+                      </RequiereAuth>
+                    }
+                  />
+                  <Route
+                    path="/proyectos/:id/editar"
+                    element={
+                      <RequiereAuth>
+                        <RequiereRol roles={['COLECTIVO']}>
+                          <FormularioProyecto />
+                        </RequiereRol>
+                      </RequiereAuth>
+                    }
+                  />
+                  <Route
+                    path="/proyectos/:id/perfiles"
+                    element={
+                      <RequiereAuth>
+                        <RequiereRol roles={['COLECTIVO']}>
+                          <PerfilesProyecto />
+                        </RequiereRol>
+                      </RequiereAuth>
+                    }
+                  />
               </Route>
             </Routes>
           </ThemeProvider>

@@ -61,3 +61,27 @@ export const obtenerCandidatas = async (idProyecto, idPerfil) => {
   const response = await api.get(`/proyectos/${idProyecto}/perfiles/${idPerfil}/colaboradoras`);
   return response.data;
 };
+
+export const obtenerProyectoPorId = async (idProyecto) => {
+  const response = await api.get(`/proyectos/${idProyecto}`);
+  return response.data;
+};
+
+export const actualizarProyecto = async (token, idProyecto, proyecto) => {
+  const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
+  return response.data;
+};
+export const configurarBusqueda = async (token, idProyecto, datos) => {
+  const response = await api.put(`/proyectos/${idProyecto}/busqueda`, datos, conToken(token));
+  return response.data;
+};
+
+export const programarCierre = async (token, idProyecto, fechaLimiteCierre) => {
+  const response = await api.patch(`/proyectos/${idProyecto}/cierre-programado`, { fechaLimiteCierre }, conToken(token));
+  return response.data;
+};
+
+export const actualizarAvance = async (token, idProyecto, datos) => {
+  const response = await api.patch(`/proyectos/${idProyecto}/avance`, datos, conToken(token));
+  return response.data;
+};
