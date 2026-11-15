@@ -6,12 +6,12 @@ export const perfilSchema = z
     descripcion: z.string().min(1),
     habilidadesRequeridas: z.array(z.string()).min(1),
     habilidadesOpcionales: z.array(z.string()).default([]), // si no pone nada, el array es vacio
+    limiteColaboraciones: z.int().min(1).nullable().default(null),
     compromiso: z.object({
       tipoCompromiso: z.enum(["TOTALES", "MENSUALES", "SEMANALES"]),
       horas: z.int().min(1),
       tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]),
     }),
-    limiteColaboraciones: z.int().min(1).optional(),
   })
   .strict();
 

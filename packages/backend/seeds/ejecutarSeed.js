@@ -68,6 +68,8 @@ export async function ejecutarSeed(
         p.porcentajeConcrecion,
         p.enlaceSistema,
         p.enlaceCodigoFuente,
+        p.busquedaAbierta ?? false,
+        p.fechaLimiteBusqueda ?? null,
         normalizarEtiquetas(p.etiquetas), // req 34
         // req 15: ubicacion propia o heredada del colectivo
         p.ubicacion !== undefined
@@ -105,7 +107,7 @@ export async function ejecutarSeed(
       c.idColaborador,
     );
     await colaboracionRepository.save(
-      new Colaboracion(proyecto, colaborador, c.fecha, c.esAnonima),
+      new Colaboracion(proyecto, colaborador, null, c.fecha, c.esAnonima),
     );
   }
 

@@ -43,6 +43,9 @@ import {
   crearAutenticar,
   crearVerificadorLogto,
 } from "../middlewares/authMiddleware.js";
+import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
+import { PostulacionService } from "../services/PostulacionService.js";
+import { PostulacionController } from "../controllers/PostulacionController.js";
 
 const router = express.Router();
 
@@ -53,6 +56,8 @@ const autenticarSiModifica = (req, res, next) =>
   ["GET", "HEAD", "OPTIONS"].includes(req.method)
     ? next()
     : autenticar(req, res, next);
+const autenticarSiNecesario = (req, res, next) =>
+  req.usuario ? next() : autenticar(req, res, next);
 
 const habilidadRepository = new HabilidadRepository();
 const habilidadService = new HabilidadService(habilidadRepository);
@@ -82,6 +87,8 @@ const colaboradorController = new ColaboradorController(colaboradorService);
 
 const proyectoRepository = new ProyectoRepository();
 const colaboracionRepository = new ColaboracionRepository();
+const postulacionRepository = new PostulacionRepository();
+const perfilRepository = new PerfilRepository();
 
 const proyectoService = new ProyectoService(
   proyectoRepository,
@@ -89,16 +96,27 @@ const proyectoService = new ProyectoService(
   colaboradorService,
   colectivoRepository,
   colaboracionRepository,
+  perfilRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
-const perfilRepository = new PerfilRepository();
 const perfilService = new PerfilService(
   perfilRepository,
   proyectoRepository,
   habilidadRepository,
 );
 const perfilController = new PerfilController(perfilService);
+const postulacionService = new PostulacionService(
+  proyectoRepository,
+  perfilRepository,
+  colaboradorService,
+  colaboracionRepository,
+  postulacionRepository,
+);
+const postulacionController = new PostulacionController(
+  postulacionService,
+  usuarioService,
+);
 
 const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository);
@@ -130,7 +148,12 @@ router.use(
 router.use("/proyectos", autenticarSiModifica);
 router.use(
   "/proyectos",
-  crearProyectoRouter(proyectoController, perfilController),
+  crearProyectoRouter(
+    proyectoController,
+    perfilController,
+    postulacionController,
+    autenticarSiNecesario,
+  ),
 );
 router.use(
   "/colectivos",

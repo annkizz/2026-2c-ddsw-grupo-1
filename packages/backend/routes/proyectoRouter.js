@@ -2,15 +2,20 @@ import express from "express";
 import { validate } from "../middlewares/validate.js";
 import {
   proyectoSchema,
-  idColaboradorSchema,
   cierreProgramadoSchema,
   avanceSchema,
   proyectoEdicionSchema,
-  busquedaSchema
+  busquedaSchema,
 } from "../controllers/ProyectoController.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
+import { crearPostulacionRouter } from "./postulacionRouter.js";
 
-export function crearProyectoRouter(proyectoController, perfilController) {
+export function crearProyectoRouter(
+  proyectoController,
+  perfilController,
+  postulacionController,
+  autenticar,
+) {
   const router = express.Router();
 
   router
@@ -28,9 +33,6 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     .route("/:idProyecto/colaboraciones")
     .get((req, res) =>
       proyectoController.obtenerColaboracionesPublicas(req, res),
-    )
-    .post(validate(idColaboradorSchema), (req, res) =>
-      proyectoController.crearColaboracion(req, res),
     );
 
   router
@@ -61,6 +63,16 @@ export function crearProyectoRouter(proyectoController, perfilController) {
     .put(validate(busquedaSchema), (req, res) =>
       proyectoController.configurarBusqueda(req, res),
     );
+
+  if (postulacionController) {
+    router.use(
+      "/:idProyecto",
+      crearPostulacionRouter(
+        postulacionController,
+        autenticar,
+      ),
+    );
+  }
 
   router.use("/:idProyecto/perfiles", crearPerfilRouter(perfilController));
 

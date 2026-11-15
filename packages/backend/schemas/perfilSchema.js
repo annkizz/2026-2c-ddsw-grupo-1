@@ -31,6 +31,8 @@ const perfilSchema = new mongoose.Schema(
       default: [],
     },
 
+    limiteColaboraciones: { type: Number, min: 1, default: null },
+
     compromiso: {
       tipoCompromiso: {
         type: String,
@@ -43,15 +45,6 @@ const perfilSchema = new mongoose.Schema(
         type: String,
         enum: Object.values(TipoColaboracion),
         required: true,
-      },
-      limiteColaboraciones: {
-        type: Number,
-        default: null, // null = sin límite
-        min: 1,
-        validate: {
-          validator: (v) => v === null || Number.isInteger(v),
-          message: "El límite de colaboraciones debe ser un número entero.",
-        },
       },
     },
   },

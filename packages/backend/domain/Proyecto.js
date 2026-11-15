@@ -10,10 +10,10 @@ export class Proyecto {
     porcentajeConcrecion,
     enlaceSistema,
     enlaceCodigoFuente,
-    busquedaAbierta,
-    fechaLimiteBusqueda,
-    etiquetas,
-    ubicacion,
+    busquedaAbierta = true,
+    fechaLimiteBusqueda = null,
+    etiquetas = [],
+    ubicacion = null,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -38,6 +38,13 @@ export class Proyecto {
   }
   estaFinalizado() {
     return this.estado === "FINALIZADO";
+  }
+
+  busquedaDeColaboracionesAbierta(ahora = new Date()) {
+    return (
+      this.busquedaAbierta !== false &&
+      (!this.fechaLimiteBusqueda || this.fechaLimiteBusqueda > ahora)
+    );
   }
 
   aceptarColaborador() {
@@ -92,6 +99,12 @@ export class Proyecto {
       !this.estaFinalizado() &&
       this.busquedaAbierta === true &&
       (!this.fechaLimiteBusqueda || this.fechaLimiteBusqueda > ahora)
+    );
+  }
+
+  aceptaPostulaciones(ahora = new Date()) {
+    return (
+      !this.estaFinalizado() && this.busquedaDeColaboracionesAbierta(ahora)
     );
   }
 }

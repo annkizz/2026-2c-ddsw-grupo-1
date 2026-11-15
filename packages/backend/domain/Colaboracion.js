@@ -1,6 +1,11 @@
-// domain/Colaboracion.js
 export class Colaboracion {
-  constructor(proyecto, colaborador, perfil, fecha, esAnonima = false, postulacion = null, // null = colaboración directa
+  constructor(
+    proyecto,
+    colaborador,
+    perfil,
+    fecha,
+    esAnonima = false,
+    postulacion = null,
   ) {
     this.proyecto = proyecto;
     this.colaborador = colaborador;

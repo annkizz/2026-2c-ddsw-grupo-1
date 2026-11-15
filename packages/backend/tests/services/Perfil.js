@@ -297,6 +297,7 @@ describe("PerfilService", () => {
         horas: 10,
         tipoColaboracion: "INCENTIVO",
       },
+      limiteColaboraciones: null,
     });
 
     beforeEach(() => {
@@ -338,6 +339,18 @@ describe("PerfilService", () => {
       expect(
         perfilRepository.actualizar.mock.calls[0][1].limiteColaboraciones,
       ).toBeNull();
+    });
+
+    it("actualiza el límite sin agregar restricciones sobre las colaboraciones existentes", async () => {
+      await service.actualizar(ID_PROYECTO, "perfil-1", {
+        ...nuevosDatos(),
+        limiteColaboraciones: 2,
+      });
+
+      expect(perfilRepository.actualizar).toHaveBeenCalledWith(
+        "perfil-1",
+        expect.objectContaining({ limiteColaboraciones: 2 }),
+      );
     });
 
     it("no modifica la lista de perfiles del proyecto", async () => {

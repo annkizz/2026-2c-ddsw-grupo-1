@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
 import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
-const fechaLimiteBusquedaSchema = z.coerce.date();
+const fechaLimiteBusquedaSchema = z.coerce.date().nullable();
 
 export const proyectoSchema = z
   .object({
@@ -28,13 +27,6 @@ export const proyectoSchema = z
       })
       .strict()
       .optional(),
-  })
-  .strict();
-
-export const idColaboradorSchema = z
-  .object({
-    idColaborador: z.string().trim().min(1),
-    esAnonima: z.boolean().default(false),
   })
   .strict();
 
@@ -121,41 +113,6 @@ export class ProyectoController {
       req.body.fechaLimiteCierre,
     );
     res.status(200).json(proyecto);
-  }
-
-  async crearColaboracion(req, res) {
-    const proyectoId = req.params.idProyecto;
-    const proyectoExistente =
-      await this.proyectoService.obtenerProyectoPorId(proyectoId);
-
-    if (!proyectoExistente) {
-      throw new NotFoundError(
-        "Proyecto no encontrado",
-        "PROYECTO_NO_ENCONTRADO",
-      );
-    }
-
-    const body = req.body;
-    const resultado = idColaboradorSchema.safeParse(body);
-
-    if (!resultado.success) {
-      throw new BadRequestError(
-        "los datos ingresados son invalidos",
-        "DATOS_COLABORACION_INVALIDOS",
-      );
-    }
-
-    const colaboradorId = resultado.data.idColaborador;
-    const { esAnonima } = resultado.data;
-    const colaboracion = await this.proyectoService.crearColaboracion(
-      proyectoExistente,
-      colaboradorId,
-      esAnonima,
-    );
-
-    res
-      .status(201)
-      .json(this.proyectoService.toContribucionPublica(colaboracion));
   }
 
   async actualizarAvance(req, res) {

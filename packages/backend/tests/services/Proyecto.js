@@ -8,7 +8,7 @@ import {
   ConflictError,
   NotFoundError,
 } from "../../errors/AppError.js";
-import { idColaboradorSchema } from "../../controllers/ProyectoController.js";
+import { crearPostulacionSchema } from "../../controllers/PostulacionController.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
 
 // El _id lo genera Mongo: en el test se fija para poder comparar.
@@ -24,8 +24,8 @@ const haceUnaHora = () => new Date(Date.now() - 60 * 60 * 1000);
 
 describe("ProyectoService", () => {
   let proyectoRepository;
-  let colectivoRepository;
   let colaboradorService;
+  let colectivoRepository;
   let perfilRepository;
   let colaboracionRepository;
   let service;
@@ -49,10 +49,9 @@ describe("ProyectoService", () => {
       obtenerTodos: jest.fn(async () => []),
       obtenerActivosParaMapa: jest.fn(async () => []),
     };
+    colaboradorService = { obtenerPorId: jest.fn(async () => null) };
     colaboracionRepository = {
       obtenerPorProyecto: jest.fn(async () => []),
-      existeColaboracion: jest.fn(async () => false),
-      save: jest.fn(async (colaboracion) => colaboracion),
     };
     colectivoRepository = {
       buscarPorId: jest.fn(async (id) =>
@@ -61,7 +60,6 @@ describe("ProyectoService", () => {
       esIdValido: jest.fn((id) => mongoose.isValidObjectId(id)),
       agregarProyecto: jest.fn(async () => undefined),
     };
-    colaboradorService = { obtenerPorId: jest.fn(async () => null) };
     perfilRepository = {
       obtenerTodos: jest.fn(async () => []),
       obtenerProyectosPorHabilidades: jest.fn(async () => []),
@@ -88,7 +86,23 @@ describe("ProyectoService", () => {
       expect(creado.estado).toBe("ACTIVO");
       expect(creado.perfiles).toEqual([]);
       expect(creado.idColectivo).toBe("col-1");
+      expect(creado.busquedaAbierta).toBe(false);
+      expect(creado.fechaLimiteBusqueda).toBeNull();
       expect(proyectoRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it("guarda los datos de apertura de búsqueda del proyecto", async () => {
+      const fechaLimiteBusqueda = enUnaHora();
+      const creado = await service.crear({
+        idColectivo: "col-1",
+        titulo: "T",
+        descripcion: "D",
+        busquedaAbierta: true,
+        fechaLimiteBusqueda,
+      });
+
+      expect(creado.busquedaAbierta).toBe(true);
+      expect(creado.fechaLimiteBusqueda).toEqual(fechaLimiteBusqueda);
     });
 
     it("agrega el id del proyecto al colectivo a través del repositorio", async () => {
@@ -450,170 +464,52 @@ describe("ProyectoService", () => {
     });
   });
 
-  describe("crearColaboracion (anotarse a un proyecto)", () => {
-    const colaboradora = {
-      _id: "c-1",
-      habilidades: ["Testing E2E con Cypress"],
-    };
-    const perfilTester = {
-      habilidadesRequeridas: ["testing e2e con cypress"],
-      habilidadesOpcionales: [],
-    };
-
-    beforeEach(() => {
-      colaboradorService.obtenerPorId.mockResolvedValue(colaboradora);
-      perfilRepository.obtenerTodos.mockResolvedValue([perfilTester]);
-    });
-
-    it("anota a la colaboradora cuando encaja con algun perfil", async () => {
-      const proyecto = proyectoActivo();
-      await service.crearColaboracion(proyecto, "c-1");
-
-      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
-      const guardada = colaboracionRepository.save.mock.calls[0][0];
-      expect(guardada.proyecto).toBe(proyecto);
-      expect(guardada.colaborador).toBe(colaboradora);
-      expect(guardada.esAnonima).toBe(false);
-    });
-
-    it("registra la preferencia de contribución anónima", async () => {
-      await service.crearColaboracion(proyectoActivo(), "c-1", true);
-
-      const guardada = colaboracionRepository.save.mock.calls[0][0];
-      expect(guardada.esAnonima).toBe(true);
-    });
-
-    it("publica la contribución sin identidad cuando es anónima", async () => {
-      const fecha = new Date();
-      proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
-      colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
-        {
-          idProyecto: "p-1",
-          idColaborador: {
-            _id: "c-1",
-            nombre: "Nombre privado",
-            apellido: "Apellido privado",
-          },
-          fecha,
-          esAnonima: true,
-        },
-        {
-          idProyecto: "p-1",
-          idColaborador: {
-            _id: "c-2",
-            nombreFantasia: "Colaboradora visible",
-            usuarioGitHub: "visible-dev",
-          },
-          fecha,
-          esAnonima: false,
-        },
-      ]);
-
-      const contribuciones = await service.obtenerColaboracionesPublicas("p-1");
-
-      expect(contribuciones[0]).toEqual({
+  it("publica colaboraciones sin filtrar la identidad cuando son anónimas", async () => {
+    const fecha = new Date();
+    proyectoRepository.buscarPorId.mockResolvedValue(proyectoActivo());
+    colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
+      {
         idProyecto: "p-1",
+        idColaborador: {
+          _id: "c-1",
+          nombre: "Nombre privado",
+          apellido: "Apellido privado",
+        },
         fecha,
         esAnonima: true,
-      });
-      expect(contribuciones[1]).toEqual({
+      },
+      {
         idProyecto: "p-1",
-        fecha,
-        esAnonima: false,
-        colaborador: {
-          id: "c-2",
+        idColaborador: {
+          _id: "c-2",
           nombreFantasia: "Colaboradora visible",
           usuarioGitHub: "visible-dev",
-          nombre: undefined,
-          apellido: undefined,
         },
-      });
+        fecha,
+        esAnonima: false,
+      },
+    ]);
+
+    const contribuciones = await service.obtenerColaboracionesPublicas("p-1");
+
+    expect(contribuciones[0]).toEqual({
+      idProyecto: "p-1",
+      idPerfil: null,
+      fecha,
+      esAnonima: true,
     });
-
-    it("rechaza anotarse a un proyecto finalizado", async () => {
-      const proyecto = proyectoActivo({ estado: "FINALIZADO" });
-      await expect(
-        service.crearColaboracion(proyecto, "c-1"),
-      ).rejects.toMatchObject({
-        codigo: "PROYECTO_FINALIZADO",
-      });
-      expect(colaboracionRepository.save).not.toHaveBeenCalled();
-    });
-
-    it("falla si la colaboradora no existe", async () => {
-      colaboradorService.obtenerPorId.mockResolvedValue(null);
-      await expect(
-        service.crearColaboracion(proyectoActivo(), "x"),
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    it("rechaza anotarla dos veces en el mismo proyecto", async () => {
-      colaboracionRepository.existeColaboracion.mockResolvedValue(true);
-      await expect(
-        service.crearColaboracion(proyectoActivo(), "c-1"),
-      ).rejects.toMatchObject({
-        codigo: "COLABORACION_YA_EXISTENTE",
-      });
-    });
-
-    it("pregunta por la colaboración exacta en vez de traer todas", async () => {
-      await service.crearColaboracion(proyectoActivo(), "c-1");
-
-      expect(colaboracionRepository.existeColaboracion).toHaveBeenCalledWith(
-        "p-1",
-        "c-1",
-      );
-    });
-
-    it("rechaza si no tiene ninguna habilidad requerida de ningun perfil", async () => {
-      colaboradorService.obtenerPorId.mockResolvedValue({
-        _id: "c-1",
-        habilidades: ["Jest"],
-      });
-      await expect(
-        service.crearColaboracion(proyectoActivo(), "c-1"),
-      ).rejects.toMatchObject({
-        codigo: "HABILIDADES_INSUFICIENTES",
-      });
-      expect(colaboracionRepository.save).not.toHaveBeenCalled();
-    });
-
-    it("acepta una coincidencia parcial porque alcanza con una habilidad requerida", async () => {
-      perfilRepository.obtenerTodos.mockResolvedValue([
-        {
-          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
-          habilidadesOpcionales: ["Jest"],
-        },
-      ]);
-      colaboradorService.obtenerPorId.mockResolvedValue({
-        _id: "c-1",
-        habilidades: ["Testing E2E con Cypress", "Jest"],
-      });
-      await service.crearColaboracion(proyectoActivo(), "c-1");
-      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
-    });
-
-    it("acepta cuando cumple un perfil aunque no cumpla otro", async () => {
-      perfilRepository.obtenerTodos.mockResolvedValue([
-        { habilidadesRequeridas: ["Java"], habilidadesOpcionales: [] },
-        {
-          habilidadesRequeridas: ["Testing E2E con Cypress", "SQL"],
-          habilidadesOpcionales: ["Jest"],
-        },
-      ]);
-      colaboradorService.obtenerPorId.mockResolvedValue({
-        _id: "c-1",
-        habilidades: ["Testing E2E con Cypress", "SQL"],
-      });
-      await service.crearColaboracion(proyectoActivo(), "c-1");
-      expect(colaboracionRepository.save).toHaveBeenCalledTimes(1);
-    });
-
-    it("rechaza si el proyecto no tiene perfiles", async () => {
-      perfilRepository.obtenerTodos.mockResolvedValue([]);
-      await expect(
-        service.crearColaboracion(proyectoActivo(), "c-1"),
-      ).rejects.toThrow(BadRequestError);
+    expect(contribuciones[1]).toEqual({
+      idProyecto: "p-1",
+      idPerfil: null,
+      fecha,
+      esAnonima: false,
+      colaborador: {
+        id: "c-2",
+        nombreFantasia: "Colaboradora visible",
+        usuarioGitHub: "visible-dev",
+        nombre: undefined,
+        apellido: undefined,
+      },
     });
   });
 
@@ -882,18 +778,17 @@ describe("ProyectoService", () => {
   });
 });
 
-describe("preferencia de anonimato de una colaboración", () => {
+describe("preferencia de anonimato de una postulación", () => {
   it("acepta la preferencia y la deja desactivada si se omite", () => {
-    expect(idColaboradorSchema.parse({ idColaborador: "c-1" })).toEqual({
-      idColaborador: "c-1",
-      esAnonima: false,
-    });
+    expect(crearPostulacionSchema.parse({})).toEqual({ esAnonima: false });
     expect(
-      idColaboradorSchema.parse({ idColaborador: "c-1", esAnonima: true }),
-    ).toEqual({ idColaborador: "c-1", esAnonima: true });
+      crearPostulacionSchema.parse({ esAnonima: true }),
+    ).toEqual({ esAnonima: true });
     expect(
-      idColaboradorSchema.safeParse({ idColaborador: "c-1", esAnonima: "true" })
-        .success,
+      crearPostulacionSchema.safeParse({ idColaborador: "c-1" }).success,
+    ).toBe(false);
+    expect(
+      crearPostulacionSchema.safeParse({ esAnonima: "true" }).success,
     ).toBe(false);
   });
 
