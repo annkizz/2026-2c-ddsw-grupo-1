@@ -10,8 +10,10 @@ export class Proyecto {
     porcentajeConcrecion,
     enlaceSistema,
     enlaceCodigoFuente,
-    etiquetas = [],
-    ubicacion = null,
+    busquedaAbierta,
+    fechaLimiteBusqueda,
+    etiquetas,
+    ubicacion,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -23,6 +25,8 @@ export class Proyecto {
     this.porcentajeConcrecion = porcentajeConcrecion;
     this.enlaceSistema = enlaceSistema;
     this.enlaceCodigoFuente = enlaceCodigoFuente;
+    this.busquedaAbierta = busquedaAbierta;
+    this.fechaLimiteBusqueda = fechaLimiteBusqueda;
     this.etiquetas = etiquetas ?? [];
     this.ubicacion = ubicacion ?? null;
   }
@@ -70,5 +74,24 @@ export class Proyecto {
     if (enlaceCodigoFuente !== undefined) {
       this.enlaceCodigoFuente = enlaceCodigoFuente;
     }
+  }
+
+  editarDatos({ titulo, descripcion }) {
+    this.titulo = titulo;
+    this.descripcion = descripcion;
+  }
+
+  configurarBusqueda(busquedaAbierta, fechaLimiteBusqueda = null) {
+    this.busquedaAbierta = busquedaAbierta;
+    this.fechaLimiteBusqueda = busquedaAbierta ? fechaLimiteBusqueda : null;
+    // busquedaAbierta true -> this.fechaLimiteBusqueda = fechaLimiteBusqueda; si es false, null
+  }
+
+  busquedaVigente(ahora = new Date()) {
+    return (
+      !this.estaFinalizado() &&
+      this.busquedaAbierta === true &&
+      (!this.fechaLimiteBusqueda || this.fechaLimiteBusqueda > ahora)
+    );
   }
 }

@@ -5,6 +5,7 @@ import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
+const fechaLimiteBusquedaSchema = z.coerce.date();
 
 export const proyectoSchema = z
   .object({
@@ -12,6 +13,8 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
+    busquedaAbierta: z.boolean().optional(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
     // req 34: lista opcional etiquetas
     etiquetas: z
       .array(z.string().min(1).max(ETIQUETA_MAX))
@@ -54,6 +57,20 @@ const valoresComoLista = (valor) => {
   if (valor === undefined) return [];
   return Array.isArray(valor) ? valor : [valor];
 };
+
+export const proyectoEdicionSchema = z
+  .object({
+    titulo: z.string().trim().min(1),
+    descripcion: z.string().trim().min(1),
+  })
+  .strict();
+
+export const busquedaSchema = z
+  .object({
+    busquedaAbierta: z.boolean(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
+  })
+  .strict();
 
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
@@ -164,5 +181,28 @@ export class ProyectoController {
     const proyectoCerrado =
       await this.proyectoService.cerrarProyecto(proyectoId);
     res.status(200).json(proyectoCerrado);
+  }
+
+  async obtenerPorId(req, res) {
+    const proyecto = await this.proyectoService.obtenerPorId(
+      req.params.idProyecto,
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async actualizar(req, res) {
+    const proyecto = await this.proyectoService.actualizar(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async configurarBusqueda(req, res) {
+    const proyecto = await this.proyectoService.configurarBusqueda(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
   }
 }
