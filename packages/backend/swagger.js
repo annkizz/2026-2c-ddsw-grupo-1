@@ -1,3 +1,5 @@
+import { agregarDocumentacionDeAuth } from "./swaggerAuth.js";
+
 const swaggerDefinition = {
   openapi: "3.0.0",
   info: {
@@ -1550,5 +1552,7 @@ const swaggerSpec = {
     },
   },
 };
+
+agregarDocumentacionDeAuth(swaggerSpec);
 
 export default swaggerSpec;

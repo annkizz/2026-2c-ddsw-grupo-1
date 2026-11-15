@@ -1,0 +1,109 @@
+.registro {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.registro h1 {
+  font-size: 30px;
+  margin: 0 0 24px;
+}
+
+.registro h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.registro-card.MuiCard-root {
+  padding: 24px;
+  border-radius: 16px;
+}
+
+@media (max-width: 720px) {
+  .registro h1 {
+    font-size: 26px;
+  }
+  .registro-card.MuiCard-root {
+    padding: 16px;
+  }
+}
+
+.habilidades-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.medios-vacio {
+  color: var(--muted);
+  margin: 6px 0 24px;
+}
+
+.medios-fila {
+  display: grid;
+  grid-template-columns: 150px 1fr 44px;
+  gap: 12px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.medios-agregar {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 8px 0 20px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--navy);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cuenta-creada.MuiCard-root {
+  text-align: center;
+  padding: 32px 24px 36px;
+}
+
+.cuenta-creada-icono {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #24734b;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+}
+
+.cuenta-creada p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.cuenta-creada-boton {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.cuenta-creada-boton .MuiButton-root {
+  height: 48px;
+  min-width: 220px;
+}
+
+@media (max-width: 720px) {
+  .medios-fila {
+    grid-template-columns: 1fr 44px;
+  }
+  .medios-fila > :nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .cuenta-creada-boton .MuiButton-root {
+    width: 100%;
+  }
+}

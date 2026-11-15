@@ -1,0 +1,4 @@
+export const OrigenBaja = {
+  COLECTIVO: "COLECTIVO",
+  PERSONA_COLABORADORA: "PERSONA_COLABORADORA",
+};
