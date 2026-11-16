@@ -57,6 +57,8 @@ export class PerfilService {
       opcionales.map((h) => h.titulo),
       datos.compromiso,
       datos.limiteColaboraciones ?? null,
+      datos.tipoAceptacion,
+
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -142,5 +144,19 @@ export class PerfilService {
       }
       return habilidad;
     });
+  }
+
+  async cerrarBusquedaSiCorresponde(id){
+    const perfilChequeado = await this.perfilRepository.buscarPorId(id);
+
+    if(await this.colaboracionRepository.contarPorPerfil(id) === perfilChequeado.limiteColaboraciones){
+      perfil.cerrarBusqueda();
+      this.perfilRepository.actualizar(id, { busquedaAbierta: perfil.busquedaAbierta });
+      
+      return id; // Se devuelve el id para que busque postulaciones para ese perfil en específico
+    }
+    
+    return null; // No se devuelve nada para que siga igual
+
   }
 }

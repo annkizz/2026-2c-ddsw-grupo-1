@@ -12,6 +12,8 @@ import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
+import { TipoAceptacion } from "../domain/TipoAceptacion.js";
+import { PerfilService } from "./PerfilService.js";
 
 export class PostulacionService {
   constructor(
@@ -20,12 +22,14 @@ export class PostulacionService {
     colaboradorService = new ColaboradorService(),
     colaboracionRepository = new ColaboracionRepository(),
     postulacionRepository = new PostulacionRepository(),
+    perfilService = new PerfilService(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
     this.colaboradorService = colaboradorService;
     this.colaboracionRepository = colaboracionRepository;
     this.postulacionRepository = postulacionRepository;
+    this.perfilService = perfilService;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -151,6 +155,11 @@ export class PostulacionService {
     );
     try {
       const guardada = await this.postulacionRepository.save(postulacion);
+      
+      if(perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE) {
+        await this.resolver(guardada.proyecto.idProyecto, guardada.idPostulacion, EstadoPostulacion.ACEPTADA, sistema);
+      }
+
       return this.toDTO(guardada);
     } catch (error) {
       if (error.code === 11000) {
@@ -197,8 +206,8 @@ export class PostulacionService {
     }
     this.validarColectivoDelProyecto(actor, proyecto);
 
-    const postulacion =
-      await this.postulacionRepository.buscarPorId(idPostulacion);
+    const postulacion = await this.postulacionRepository.buscarPorId(idPostulacion);
+
     if (!postulacion || String(postulacion.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError(
         "Postulación no encontrada",
@@ -228,6 +237,7 @@ export class PostulacionService {
     }
 
     this.validarProyectoAbierto(proyecto);
+
     const perfil = await this.perfilRepository.buscarPorId(
       postulacion.idPerfil,
     );
@@ -245,7 +255,7 @@ export class PostulacionService {
         "La colaboradora ya participó de este proyecto",
         "COLABORACION_YA_EXISTENTE",
       );
-    }
+    }    
 
     const colaboracionesActivas =
       await this.colaboracionRepository.contarPorPerfil(perfil._id);
@@ -294,6 +304,13 @@ export class PostulacionService {
           postulacion,
         ),
       );
+
+      if(perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES){
+        const estadoDeBusqueda = await this.perfilService.cerrarBusquedaSiCorresponde(perfil._id); // No lo aplique todavia
+        if(estadoDeBusqueda){
+          rechazarPostulacionesPorId(estadoDeBusqueda);
+        } 
+      }
 
       return this.toDTO({
         ...postulacion.toObject(),
@@ -400,5 +417,11 @@ export class PostulacionService {
     }
 
     return dto;
+  }
+
+  async rechazarPostulacionesPorId(id){
+    const postulaciones = this.postulacionRepository.rechazarPendientesPorPerfil();
+    
+    return postulaciones.map((postulacion) => this.toDTO(postulacion));
   }
 }

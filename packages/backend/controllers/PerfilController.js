@@ -12,6 +12,7 @@ export const perfilSchema = z
       horas: z.int().min(1),
       tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]),
     }),
+    tipoAceptacion: z.enum(["LLENAR_VACANTES", "SIN_LIMITE", "MANUAL"]),
   })
   .strict();
 
