@@ -675,6 +675,16 @@ const swaggerSpec = {
         },
       },
     },
+    "/proyectos/destacados": {
+      get: {
+        summary: "Obtiene proyectos destacados vigentes",
+        description:
+          "Devuelve proyectos activos cuyo periodo de destacado todavía no venció, ordenados por fecha de vencimiento más próxima.",
+        responses: {
+          200: { description: "Lista pública de proyectos destacados" },
+        },
+      },
+    },
     "/proyectos/ubicaciones": {
       get: {
         summary: "Distribucion de proyectos activos por region (req 15)",
@@ -963,6 +973,61 @@ const swaggerSpec = {
               "El actor autenticado no puede dar de baja esta colaboración",
           },
           409: { description: "La colaboración ya fue dada de baja" },
+        },
+      },
+    },
+    "/proyectos/{idProyecto}/destacado": {
+      patch: {
+        summary: "Configura o quita el destacado de un proyecto",
+        description:
+          "Requiere un token Bearer de un usuario con rol ADMINISTRADOR. Al destacar, la fecha de vencimiento es obligatoria y futura; los proyectos finalizados no pueden destacarse.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                oneOf: [
+                  {
+                    type: "object",
+                    required: ["destacado", "destacadoHasta"],
+                    properties: {
+                      destacado: { type: "boolean", enum: [true] },
+                      destacadoHasta: {
+                        type: "string",
+                        format: "date-time",
+                      },
+                    },
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    required: ["destacado"],
+                    properties: {
+                      destacado: { type: "boolean", enum: [false] },
+                    },
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Destacado actualizado" },
+          400: { description: "Fecha inválida o vencimiento no futuro" },
+          401: { description: "Sesión no autenticada" },
+          403: { description: "La cuenta no pertenece al equipo administrativo" },
+          404: { description: "Proyecto no encontrado" },
+          409: { description: "No se puede destacar un proyecto finalizado" },
         },
       },
     },

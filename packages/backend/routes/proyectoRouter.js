@@ -6,9 +6,12 @@ import {
   avanceSchema,
   proyectoEdicionSchema,
   busquedaSchema,
+  destacarProyectoSchema,
 } from "../controllers/ProyectoController.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
 import { crearPostulacionRouter } from "./postulacionRouter.js";
+import { requerirRol } from "../middlewares/authMiddleware.js";
+import { Rol } from "../domain/Rol.js";
 
 export function crearProyectoRouter(
   proyectoController,
@@ -17,6 +20,10 @@ export function crearProyectoRouter(
   autenticar,
 ) {
   const router = express.Router();
+
+  router
+    .route("/destacados")
+    .get((req, res) => proyectoController.obtenerDestacados(req, res));
 
   router
     .route("/")
@@ -33,6 +40,14 @@ export function crearProyectoRouter(
     .route("/:idProyecto/colaboraciones")
     .get((req, res) =>
       proyectoController.obtenerColaboracionesPublicas(req, res),
+    );
+
+  router
+    .route("/:idProyecto/destacado")
+    .patch(
+      requerirRol(Rol.ADMINISTRADOR),
+      validate(destacarProyectoSchema),
+      (req, res) => proyectoController.configurarDestacado(req, res),
     );
 
   router

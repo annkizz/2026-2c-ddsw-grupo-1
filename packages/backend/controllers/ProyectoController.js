@@ -64,6 +64,20 @@ export const busquedaSchema = z
   })
   .strict();
 
+export const destacarProyectoSchema = z.union([
+  z
+    .object({
+      destacado: z.literal(true),
+      destacadoHasta: z.coerce.date(),
+    })
+    .strict(),
+  z
+    .object({
+      destacado: z.literal(false),
+    })
+    .strict(),
+]);
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
@@ -91,6 +105,19 @@ export class ProyectoController {
     }
     const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
+  };
+
+  obtenerDestacados = async (req, res) => {
+    const proyectos = await this.proyectoService.obtenerDestacados();
+    res.status(200).json(proyectos);
+  };
+
+  configurarDestacado = async (req, res) => {
+    const proyecto = await this.proyectoService.configurarDestacado(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
   };
 
   obtenerUbicaciones = async (req, res) => {
