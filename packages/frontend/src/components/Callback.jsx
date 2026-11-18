@@ -10,7 +10,7 @@ import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
 // pidió GET /me, decidimos a dónde mandar a la persona.
 const Callback = () => {
   const navigate = useNavigate();
-  const { sesion, errorSesion, cargando, recargarSesion, cerrarSesion, iniciarSesion } = useAuth();
+  const { sesion, errorSesion, recargarSesion, cerrarSesion } = useAuth();
   const { error: errorLogto } = useHandleSignInCallback(() => {});
 
   useEffect(() => {
@@ -23,13 +23,17 @@ const Callback = () => {
     );
   }, [sesion, navigate]);
 
-  if (errorLogto) {
+  if (errorSesion || errorLogto) {
+    const mensajeError = errorSesion
+      ? `No pudimos verificar tu sesión con el servidor: ${errorSesion}`
+      : `No pudimos completar el inicio de sesión con Logto: ${
+          errorLogto?.message ?? 'Ocurrió un error inesperado.'
+        }`;
+
     return (
       <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Alert severity="error">
-          No pudimos verificar tu sesión con el servidor: {errorSesion}
-        </Alert>
-        <Button onClick={recargarSesion}>Reintentar</Button>
+        <Alert severity="error">{mensajeError}</Alert>
+        {errorSesion && <Button onClick={recargarSesion}>Reintentar</Button>}
         <Button onClick={cerrarSesion}>Salir</Button>
       </div>
     );

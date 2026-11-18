@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { useHandleSignInCallback } from '@logto/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -23,6 +23,7 @@ describe('destino del callback de Logto', () => {
     sessionStorage.clear();
     jest.clearAllMocks();
     useNavigate.mockReturnValue(navigate);
+    useHandleSignInCallback.mockReturnValue({ error: undefined });
     useAuth.mockReturnValue({
       sesion: { tienePerfil: false },
       errorSesion: false,
@@ -55,5 +56,46 @@ describe('destino del callback de Logto', () => {
     render(<Callback />);
 
     expect(navigate).toHaveBeenCalledWith('/registro/colectivo', { replace: true });
+  });
+
+  it('muestra el error de verificación del servidor y permite reintentar', () => {
+    const recargarSesion = jest.fn();
+    useAuth.mockReturnValue({
+      sesion: null,
+      errorSesion: 'El servidor tardó demasiado. Reintentá.',
+      recargarSesion,
+      cerrarSesion: jest.fn(),
+    });
+
+    render(<Callback />);
+
+    expect(
+      screen.getByText(
+        'No pudimos verificar tu sesión con el servidor: El servidor tardó demasiado. Reintentá.',
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByText('Reintentar'));
+    expect(recargarSesion).toHaveBeenCalledTimes(1);
+  });
+
+  it('muestra los errores del callback de Logto', () => {
+    useHandleSignInCallback.mockReturnValue({
+      error: new Error('callback inválido'),
+    });
+    useAuth.mockReturnValue({
+      sesion: null,
+      errorSesion: null,
+      recargarSesion: jest.fn(),
+      cerrarSesion: jest.fn(),
+    });
+
+    render(<Callback />);
+
+    expect(
+      screen.getByText(
+        'No pudimos completar el inicio de sesión con Logto: callback inválido',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Reintentar')).toBeNull();
   });
 });

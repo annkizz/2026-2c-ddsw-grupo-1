@@ -222,8 +222,8 @@ const PerfilesProyecto = () => {
     );
   }
 
-  const esOtroColectivo = sesion?.idColectivo && proyecto.idColectivo !== sesion.idColectivo;
-  if (esOtroColectivo) {
+  const esDueno = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  if (!esDueno) {
     return (
       <div className="perfiles-contenedor">
         <Link to={`/proyectos/${id}`} className="perfiles-volver">

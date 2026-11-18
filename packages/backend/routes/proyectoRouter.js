@@ -107,11 +107,9 @@ export function crearProyectoRouter(
   }
 
   router.use(
-      "/:idProyecto/perfiles",
-      autenticar,
-      requerirRol(Rol.COLECTIVO),
-      crearPerfilRouter(perfilController),
-    );
+    "/:idProyecto/perfiles",
+    crearPerfilRouter(perfilController, autenticar),
+  );
     
   return router;
 }

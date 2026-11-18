@@ -168,4 +168,38 @@ describe('flujo de autenticación', () => {
 
     expect(await screen.findByText('el token es invalido o vencio (TOKEN_INVALIDO)')).toBeInTheDocument();
   });
+
+  it('muestra un error recuperable si la verificación de sesión agota el tiempo', async () => {
+    obtenerSesion.mockRejectedValue({ code: 'ECONNABORTED' });
+    render(
+      <AuthProvider>
+        <AccionesAuth />
+      </AuthProvider>
+    );
+
+    fireEvent.click(screen.getByText('Verificar sesión'));
+
+    expect(
+      await screen.findByText(
+        'El servidor tardó demasiado en verificar tu sesión. Reintentá.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('indica cuando no puede conectarse al backend', async () => {
+    obtenerSesion.mockRejectedValue({ code: 'ERR_NETWORK' });
+    render(
+      <AuthProvider>
+        <AccionesAuth />
+      </AuthProvider>
+    );
+
+    fireEvent.click(screen.getByText('Verificar sesión'));
+
+    expect(
+      await screen.findByText(
+        'No pudimos conectarnos con el servidor. Verificá que el backend esté iniciado.',
+      ),
+    ).toBeInTheDocument();
+  });
 });
