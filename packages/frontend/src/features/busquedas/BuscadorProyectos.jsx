@@ -19,10 +19,16 @@ function ordenDeCoincidencia(proyecto) {
 
 const FILTROS_INICIALES = {
   habilidades: [],
-  idColectivo: "",
+  idColectivos: [],
   etiquetas: [],
-  provincia: "",
+  provincias: [],
 };
+
+function alternarEnLista(valores, valor) {
+  return valores.includes(valor)
+    ? valores.filter((uno) => uno !== valor)
+    : [...valores, valor];
+}
 
 export default function BuscadorProyectos() {
   const { sesion } = useAuth();
@@ -31,7 +37,6 @@ export default function BuscadorProyectos() {
 
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
   const [filtrosAplicados, setFiltrosAplicados] = useState(null);
-  const [mostrarMas, setMostrarMas] = useState(false);
 
   const habilidadesState = useListado("/habilidades");
   const etiquetasState = useListado("/etiquetas");
@@ -43,18 +48,21 @@ export default function BuscadorProyectos() {
   const urlBusqueda = useMemo(() => {
     if (!filtrosAplicados) return null;
 
-    const parametros = new URLSearchParams({ estado: "ACTIVO" });
+    const parametros = new URLSearchParams({
+      estado: "ACTIVO",
+      modo: "cualquiera",
+    });
     for (const habilidad of filtrosAplicados.habilidades) {
       parametros.append("habilidad", habilidad);
     }
     for (const etiqueta of filtrosAplicados.etiquetas) {
       parametros.append("etiqueta", etiqueta);
     }
-    if (filtrosAplicados.provincia !== "") {
-      parametros.append("provincia", filtrosAplicados.provincia);
+    for (const provincia of filtrosAplicados.provincias) {
+      parametros.append("provincia", provincia);
     }
-    if (filtrosAplicados.idColectivo !== "") {
-      parametros.append("idColectivo", filtrosAplicados.idColectivo);
+    for (const idColectivo of filtrosAplicados.idColectivos) {
+      parametros.append("idColectivo", idColectivo);
     }
     return `/proyectos?${parametros.toString()}`;
   }, [filtrosAplicados]);
@@ -111,8 +119,8 @@ export default function BuscadorProyectos() {
   const hayFiltros =
     filtros.habilidades.length > 0 ||
     filtros.etiquetas.length > 0 ||
-    filtros.idColectivo !== "" ||
-    filtros.provincia !== "";
+    filtros.idColectivos.length > 0 ||
+    filtros.provincias.length > 0;
 
   const filtrosPendientes =
     !filtrosAplicados ||
@@ -121,27 +129,37 @@ export default function BuscadorProyectos() {
   const alternarHabilidad = (habilidad) => {
     setFiltros((actual) => ({
       ...actual,
-      habilidades: actual.habilidades.includes(habilidad)
-        ? actual.habilidades.filter((una) => una !== habilidad)
-        : [...actual.habilidades, habilidad],
+      habilidades: alternarEnLista(actual.habilidades, habilidad),
     }));
   };
 
   const alternarEtiqueta = (etiqueta) => {
     setFiltros((actual) => ({
       ...actual,
-      etiquetas: actual.etiquetas.includes(etiqueta)
-        ? actual.etiquetas.filter((una) => una !== etiqueta)
-        : [...actual.etiquetas, etiqueta],
+      etiquetas: alternarEnLista(actual.etiquetas, etiqueta),
+    }));
+  };
+
+  const alternarColectivo = (idColectivo) => {
+    setFiltros((actual) => ({
+      ...actual,
+      idColectivos: alternarEnLista(actual.idColectivos, idColectivo),
+    }));
+  };
+
+  const alternarProvincia = (codigoProvincia) => {
+    setFiltros((actual) => ({
+      ...actual,
+      provincias: alternarEnLista(actual.provincias, codigoProvincia),
     }));
   };
 
   const buscar = () => {
     setFiltrosAplicados({
       habilidades: [...filtros.habilidades],
-      idColectivo: filtros.idColectivo,
+      idColectivos: [...filtros.idColectivos],
       etiquetas: [...filtros.etiquetas],
-      provincia: filtros.provincia,
+      provincias: [...filtros.provincias],
     });
     if (filtrosAplicados) resultadosState.recargar();
   };
@@ -149,13 +167,11 @@ export default function BuscadorProyectos() {
   const limpiarFiltros = () => {
     setFiltros(FILTROS_INICIALES);
     setFiltrosAplicados(null);
-    setMostrarMas(false);
   };
 
   const verTodosLosProyectos = () => {
     setFiltros(FILTROS_INICIALES);
     setFiltrosAplicados({ ...FILTROS_INICIALES });
-    setMostrarMas(false);
   };
 
   const opcionesHabilidades = habilidadesState.datos.map((habilidad) => ({
@@ -168,27 +184,27 @@ export default function BuscadorProyectos() {
     etiqueta: etiqueta.replaceAll("_", " "),
   }));
 
-  const opcionesColectivos = [
-    {
-      valor: "",
-      etiqueta: "Todos los colectivos",
-      secundario: "Sin filtrar por colectivo",
-    },
-    ...colectivosState.datos.map((colectivo) => ({
-      valor: colectivo.id,
-      etiqueta: colectivo.nombre,
-      secundario: colectivo.tipoDeColectivo
-        ?.replaceAll("_", " ")
-        .toLowerCase(),
-    })),
-  ];
+  const opcionesColectivos = colectivosState.datos.map((colectivo) => ({
+    valor: colectivo.id,
+    etiqueta: colectivo.nombre,
+    secundario: colectivo.tipoDeColectivo
+      ?.replaceAll("_", " ")
+      .toLowerCase(),
+  }));
+
+  const opcionesProvincias = PROVINCIAS.map((provincia) => ({
+    valor: provincia.codigo,
+    etiqueta: provincia.nombre,
+  }));
 
   return (
     <section className="pagina">
       <h1>Buscar proyectos</h1>
       <p className="pagina__bajada">
         Encontrá proyectos en los que puedas aportar tus conocimientos. Combiná
-        habilidades, colectivos, etiquetas y provincias de tus preferencias.
+        habilidades, colectivos, etiquetas y provincias: verás los proyectos que
+        coincidan con al menos uno de los valores elegidos, junto con el detalle
+        de qué coincidió.
       </p>
 
       <div className="filtros filtros--busqueda">
@@ -196,7 +212,7 @@ export default function BuscadorProyectos() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="habilidades"
-              etiqueta="Habilidades"
+              etiqueta="Habilidades (opcional)"
               opciones={opcionesHabilidades}
               seleccion={filtros.habilidades}
               multiple
@@ -231,7 +247,7 @@ export default function BuscadorProyectos() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="etiquetas"
-              etiqueta="Etiquetas"
+              etiqueta="Etiquetas (opcional)"
               opciones={opcionesEtiquetas}
               seleccion={filtros.etiquetas}
               multiple
@@ -264,30 +280,54 @@ export default function BuscadorProyectos() {
           </div>
         </div>
 
-        <p className="filtros__ayuda">
-          Podés elegir varias habilidades y etiquetas. Buscá por nombre.
-        </p>
+        <div className="filtros__avanzados" id="filtros-avanzados">
+          <div className="filtros__grupo filtros__grupo--buscable">
+            <CustomSelect
+              id="colectivos"
+              etiqueta="Colectivos (opcional)"
+              opciones={opcionesColectivos}
+              seleccion={filtros.idColectivos}
+              multiple
+              onSeleccionar={alternarColectivo}
+              placeholder={
+                colectivosState.cargando
+                  ? "Cargando colectivos…"
+                  : "Buscá colectivos"
+              }
+              textoVacio={
+                colectivosState.cargando
+                  ? "Cargando colectivos…"
+                  : "No hay colectivos con ese texto."
+              }
+            />
+            {colectivosState.error && (
+              <div className="estado-bloque estado-bloque--compacto">
+                <p className="estado estado--error">
+                  No pudimos cargar los colectivos.
+                </p>
+                <button
+                  type="button"
+                  className="boton boton--secundario"
+                  onClick={colectivosState.recargar}
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
+          </div>
 
-        <div className="filtros__acciones">
-          <button
-            type="button"
-            className="boton boton--secundario"
-            aria-expanded={mostrarMas}
-            aria-controls="filtros-avanzados"
-            onClick={() => setMostrarMas((actual) => !actual)}
-          >
-            {mostrarMas ? "Ocultar más filtros" : "Más filtros"}
-          </button>
-          <button
-            type="button"
-            className="boton boton--secundario"
-            onClick={limpiarFiltros}
-          >
-            Limpiar filtros
-          </button>
-          <button type="button" className="boton" onClick={buscar}>
-            Buscar
-          </button>
+          <div className="filtros__grupo filtros__grupo--buscable">
+            <CustomSelect
+              id="provincias"
+              etiqueta="Provincias (opcional)"
+              opciones={opcionesProvincias}
+              seleccion={filtros.provincias}
+              multiple
+              onSeleccionar={alternarProvincia}
+              placeholder="Buscá provincias"
+              textoVacio="No hay provincias con ese texto."
+            />
+          </div>
         </div>
 
         {hayFiltros && (
@@ -300,76 +340,32 @@ export default function BuscadorProyectos() {
               `${filtros.etiquetas.length} etiqueta${
                 filtros.etiquetas.length === 1 ? "" : "s"
               } · `}
-            {filtros.idColectivo !== "" && "colectivo · "}
-            {filtros.provincia !== "" && "provincia · "}
+            {filtros.idColectivos.length > 0 &&
+              `${filtros.idColectivos.length} colectivo${
+                filtros.idColectivos.length === 1 ? "" : "s"
+              } · `}
+            {filtros.provincias.length > 0 &&
+              `${filtros.provincias.length} provincia${
+                filtros.provincias.length === 1 ? "" : "s"
+              } · `}
             {filtrosPendientes
               ? "presioná Buscar para aplicar"
               : "filtros aplicados"}
           </p>
         )}
 
-        {mostrarMas && (
-          <div className="filtros__avanzados" id="filtros-avanzados">
-            <div className="filtros__grupo filtros__grupo--buscable">
-              <CustomSelect
-                id="colectivo"
-                etiqueta="Colectivos"
-                opciones={opcionesColectivos}
-                seleccion={[filtros.idColectivo]}
-                onSeleccionar={(valor) =>
-                  setFiltros((actual) => ({ ...actual, idColectivo: valor }))
-                }
-                placeholder={
-                  colectivosState.cargando
-                    ? "Cargando colectivos…"
-                    : "Todos los colectivos"
-                }
-                textoVacio={
-                  colectivosState.cargando
-                    ? "Cargando colectivos…"
-                    : "No hay colectivos con ese texto."
-                }
-              />
-              {colectivosState.error && (
-                <div className="estado-bloque estado-bloque--compacto">
-                  <p className="estado estado--error">
-                    No pudimos cargar los colectivos.
-                  </p>
-                  <button
-                    type="button"
-                    className="boton boton--secundario"
-                    onClick={colectivosState.recargar}
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="filtros__grupo">
-              <label className="selector__label" htmlFor="provincia">
-                Provincia
-              </label>
-              <select
-                id="provincia"
-                value={filtros.provincia}
-                onChange={(evento) =>
-                  setFiltros((actual) => ({
-                    ...actual,
-                    provincia: evento.target.value,
-                  }))
-                }
-              >
-                <option value="">Todas las provincias</option>
-                {PROVINCIAS.map((provincia) => (
-                  <option key={provincia.codigo} value={provincia.codigo}>
-                    {provincia.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
+        <div className="filtros__acciones">
+          <button
+            type="button"
+            className="boton boton--secundario"
+            onClick={limpiarFiltros}
+          >
+            Limpiar filtros
+          </button>
+          <button type="button" className="boton" onClick={buscar}>
+            Buscar
+          </button>
+        </div>
       </div>
 
       {!filtrosAplicados && (
@@ -490,12 +486,11 @@ export default function BuscadorProyectos() {
             <>
               <p className="estado" role="status" aria-live="polite">
                 {resultados.length === 0
-                  ? "No encontramos proyectos activos con esos filtros."
+                  ? "No encontramos proyectos activos que coincidan con al menos uno de los filtros."
                   : `${resultados.length} proyecto${
                       resultados.length === 1 ? "" : "s"
-                    } activo${resultados.length === 1 ? "" : "s"} encontrado${
-                      resultados.length === 1 ? "" : "s"
-                    }.`}
+                    } activo${resultados.length === 1 ? "" : "s"} con al menos
+                    una coincidencia.`}
                 {resultados.length > 0 &&
                   cantidadCoincidencias > 0 &&
                   ` ${cantidadCoincidencias} coinciden con tus habilidades.`}

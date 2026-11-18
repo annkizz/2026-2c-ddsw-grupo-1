@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiCode, FiHelpCircle } from 'react-icons/fi';
+import { FiCode } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import './Header.css';
 
@@ -32,12 +32,7 @@ const Header = () => {
           <Link to="/perfil">Mi perfil</Link>
           <button onClick={cerrarSesion}>Salir</button>
         </nav>
-      ) : (
-        <a className="header-ayuda" href="#ayuda">
-          <FiHelpCircle />
-          <span>¿Necesitás ayuda?</span>
-        </a>
-      )}
+      ) : null}
     </header>
   );
 };

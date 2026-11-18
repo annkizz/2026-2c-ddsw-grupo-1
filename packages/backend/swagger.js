@@ -611,9 +611,11 @@ const swaggerSpec = {
             name: "provincia",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas.",
+              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas. Se puede repetir para buscar varias provincias.",
           },
           {
             name: "estado",
@@ -630,9 +632,11 @@ const swaggerSpec = {
             name: "idColectivo",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se combina con etiqueta, provincia, habilidad y estado.",
+              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se puede repetir para buscar varios colectivos.",
           },
           {
             name: "habilidad",
@@ -644,9 +648,20 @@ const swaggerSpec = {
             description:
               "Búsquedas: opcional. Filtra proyectos que tengan al menos un perfil con alguna de las habilidades indicadas (requeridas u opcionales). Se manda el título de la habilidad.",
           },
+          {
+            name: "modo",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["cualquiera"] },
+            description:
+              "Búsquedas: opcional. Con modo=cualquiera el proyecto entra si coincide en AL MENOS UNO de los filtros (habilidad, etiqueta, provincia o colectivo) y cada proyecto incluye 'coincidencias' indicando en qué coincidió. Sin este parámetro todos los filtros se combinan con AND.",
+          },
         ],
         responses: {
-          200: { description: "Lista de proyectos" },
+          200: {
+            description:
+              "Lista de proyectos. Con modo=cualquiera cada proyecto incluye coincidencias: [{ tipo: HABILIDAD|ETIQUETA|PROVINCIA|COLECTIVO, valor }]",
+          },
         },
       },
       post: {

@@ -249,7 +249,21 @@ export class ProyectoService {
   }
 
   async obtenerTodos(filtros = {}) {
+    if (filtros.modo !== undefined) {
+      const modo = String(filtros.modo).trim().toLowerCase();
+      if (modo !== "cualquiera") {
+        throw new BadRequestError(
+          "el modo de búsqueda no es válido",
+          "MODO_BUSQUEDA_INVALIDO",
+        );
+      }
+      return this.buscarPorAlMenosUno(filtros);
+    }
+
     const filtrosNormalizados = { ...filtros };
+    delete filtrosNormalizados.modo;
+    delete filtrosNormalizados.provincias;
+    delete filtrosNormalizados.idColectivos;
     if (filtrosNormalizados.etiquetas !== undefined) {
       filtrosNormalizados.etiquetas = normalizarEtiquetas(
         filtrosNormalizados.etiquetas,
@@ -266,24 +280,14 @@ export class ProyectoService {
       filtrosNormalizados.provincia = provincia.codigoProvincia;
     }
     if (filtrosNormalizados.estado !== undefined) {
-      const estado = String(filtrosNormalizados.estado).trim().toUpperCase();
-      if (!ESTADOS_VALIDOS.has(estado)) {
-        throw new BadRequestError(
-          "el estado ingresado no es válido",
-          "ESTADO_INVALIDO",
-        );
-      }
-      filtrosNormalizados.estado = estado;
+      filtrosNormalizados.estado = this.normalizarEstadoDeBusqueda(
+        filtrosNormalizados.estado,
+      );
     }
     if (filtrosNormalizados.idColectivo !== undefined) {
-      const idColectivo = String(filtrosNormalizados.idColectivo).trim();
-      if (!this.colectivoRepository.esIdValido(idColectivo)) {
-        throw new BadRequestError(
-          "el colectivo ingresado no es válido",
-          "COLECTIVO_INVALIDO",
-        );
-      }
-      filtrosNormalizados.idColectivo = idColectivo;
+      filtrosNormalizados.idColectivo = this.normalizarIdColectivoDeBusqueda(
+        filtrosNormalizados.idColectivo,
+      );
     }
     if (filtrosNormalizados.habilidades !== undefined) {
   
@@ -310,6 +314,199 @@ export class ProyectoService {
       filtrosNormalizados,
     );
     return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  async buscarPorAlMenosUno(filtros = {}) {
+    const estado = this.normalizarEstadoDeBusqueda(filtros.estado);
+    const provincias = this.normalizarProvinciasDeBusqueda(
+      filtros.provincias ?? filtros.provincia,
+    );
+    const idColectivos = this.normalizarColectivosDeBusqueda(
+      filtros.idColectivos ?? filtros.idColectivo,
+    );
+    const etiquetas = normalizarEtiquetas(
+      this.comoLista(filtros.etiquetas).filter(
+        (etiqueta) => String(etiqueta).trim() !== "",
+      ),
+    );
+    const habilidades = this.comoLista(filtros.habilidades)
+      .map((habilidad) => String(habilidad).trim())
+      .filter((habilidad) => habilidad !== "");
+
+    // null = no se pidio habilidad; [] = se pidio y no la tiene ningun perfil
+    let idsProyectos = null;
+    if (habilidades.length > 0) {
+      idsProyectos = (
+        await this.perfilRepository.obtenerProyectosPorHabilidades(habilidades)
+      ).map((id) => String(id));
+    }
+
+    const proyectos = await this.proyectoRepository.buscarPorAlMenosUno({
+      estado,
+      etiquetas,
+      provincias,
+      idColectivos,
+      idsProyectos,
+      hayFiltrosDeBusqueda:
+        etiquetas.length > 0 ||
+        provincias.length > 0 ||
+        idColectivos.length > 0 ||
+        habilidades.length > 0,
+    });
+
+    const habilidadesPorProyecto =
+      await this.habilidadesCoincidentesPorProyecto(proyectos, habilidades);
+    const nombresDeColectivo = await this.nombresDeColectivoPorId(idColectivos);
+
+    return proyectos.map((proyecto) =>
+      this.toDTOConCoincidencias(proyecto, {
+        habilidades: habilidadesPorProyecto.get(String(proyecto._id)) ?? [],
+        etiquetas,
+        provincias,
+        idColectivos,
+        nombresDeColectivo,
+      }),
+    );
+  }
+
+  // que habilidades pedidas tiene cada proyecto (a traves de sus perfiles)
+  async habilidadesCoincidentesPorProyecto(proyectos, habilidades) {
+    const coincidencias = new Map();
+    if (habilidades.length === 0 || proyectos.length === 0) {
+      return coincidencias;
+    }
+
+    const perfiles = await this.perfilRepository.obtenerPorProyectos(
+      proyectos.map((proyecto) => proyecto._id),
+    );
+
+    for (const perfil of perfiles) {
+      const delPerfil = new Set([
+        ...(perfil.habilidadesRequeridas ?? []),
+        ...(perfil.habilidadesOpcionales ?? []),
+      ]);
+      const coincidentes = habilidades.filter((habilidad) =>
+        delPerfil.has(habilidad),
+      );
+      if (coincidentes.length === 0) continue;
+
+      const clave = String(perfil.idProyecto);
+      const acumuladas = coincidencias.get(clave) ?? [];
+      for (const habilidad of coincidentes) {
+        if (!acumuladas.includes(habilidad)) acumuladas.push(habilidad);
+      }
+      coincidencias.set(clave, acumuladas);
+    }
+
+    return coincidencias;
+  }
+
+  async nombresDeColectivoPorId(idColectivos) {
+    const nombres = new Map();
+    if (idColectivos.length === 0) return nombres;
+
+    const colectivos = await this.colectivoRepository.obtenerPorIds(
+      idColectivos,
+    );
+    for (const colectivo of colectivos) {
+      nombres.set(String(colectivo._id), colectivo.nombre);
+    }
+    return nombres;
+  }
+
+  toDTOConCoincidencias(
+    proyecto,
+    { habilidades, etiquetas, provincias, idColectivos, nombresDeColectivo },
+  ) {
+    const coincidencias = habilidades.map((habilidad) => ({
+      tipo: "HABILIDAD",
+      valor: habilidad,
+    }));
+
+    const etiquetasDelProyecto = proyecto.etiquetas ?? [];
+    for (const etiqueta of etiquetas) {
+      if (etiquetasDelProyecto.includes(etiqueta)) {
+        coincidencias.push({ tipo: "ETIQUETA", valor: etiqueta });
+      }
+    }
+
+    const ubicacion = proyecto.ubicacion;
+    if (ubicacion && provincias.includes(ubicacion.codigoProvincia)) {
+      coincidencias.push({
+        tipo: "PROVINCIA",
+        valor: ubicacion.nombreProvincia ?? ubicacion.codigoProvincia,
+      });
+    }
+
+    const idColectivo = String(proyecto.idColectivo);
+    if (idColectivos.includes(idColectivo)) {
+      coincidencias.push({
+        tipo: "COLECTIVO",
+        valor: nombresDeColectivo.get(idColectivo) ?? idColectivo,
+      });
+    }
+
+    return { ...this.toDTO(proyecto), coincidencias };
+  }
+
+  comoLista(valor) {
+    if (valor === undefined || valor === null) return [];
+    return Array.isArray(valor) ? valor : [valor];
+  }
+
+  normalizarEstadoDeBusqueda(estado) {
+    if (estado === undefined) return undefined;
+
+    const valor = String(estado).trim().toUpperCase();
+    if (!ESTADOS_VALIDOS.has(valor)) {
+      throw new BadRequestError(
+        "el estado ingresado no es válido",
+        "ESTADO_INVALIDO",
+      );
+    }
+    return valor;
+  }
+
+  normalizarProvinciasDeBusqueda(valores) {
+    const codigos = [];
+    for (const valor of this.comoLista(valores)) {
+      if (String(valor).trim() === "") continue;
+
+      const provincia = normalizarProvincia(String(valor));
+      if (provincia === null) {
+        throw new BadRequestError(
+          "la provincia ingresada no es válida",
+          "PROVINCIA_INVALIDA",
+        );
+      }
+      if (!codigos.includes(provincia.codigoProvincia)) {
+        codigos.push(provincia.codigoProvincia);
+      }
+    }
+    return codigos;
+  }
+
+  normalizarColectivosDeBusqueda(valores) {
+    const ids = [];
+    for (const valor of this.comoLista(valores)) {
+      const id = String(valor).trim();
+      if (id === "") continue;
+
+      const idNormalizado = this.normalizarIdColectivoDeBusqueda(id);
+      if (!ids.includes(idNormalizado)) ids.push(idNormalizado);
+    }
+    return ids;
+  }
+
+  normalizarIdColectivoDeBusqueda(valor) {
+    const id = String(valor).trim();
+    if (!this.colectivoRepository.esIdValido(id)) {
+      throw new BadRequestError(
+        "el colectivo ingresado no es válido",
+        "COLECTIVO_INVALIDO",
+      );
+    }
+    return id.toLowerCase();
   }
 
   async obtenerUbicaciones(nivel = "provincia") {

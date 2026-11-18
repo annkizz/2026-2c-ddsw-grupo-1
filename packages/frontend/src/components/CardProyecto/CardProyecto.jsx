@@ -14,6 +14,19 @@ function listarHabilidades(habilidades) {
   return habilidades?.length > 0 ? habilidades.join(", ") : "ninguna";
 }
 
+const TIPOS_COINCIDENCIA = {
+  HABILIDAD: "Habilidad",
+  ETIQUETA: "Etiqueta",
+  PROVINCIA: "Provincia",
+  COLECTIVO: "Colectivo",
+};
+
+function describirCoincidencia(coincidencia) {
+  const tipo = TIPOS_COINCIDENCIA[coincidencia.tipo] ?? coincidencia.tipo;
+  const valor = String(coincidencia.valor ?? "").replaceAll("_", " ");
+  return `${tipo}: ${valor}`;
+}
+
 export default function CardProyecto({ proyecto, nombreColectivo }) {
   const perfilesCompatibles =
     proyecto.coincidencia?.perfilesCompatibles ??
@@ -21,6 +34,7 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
     [];
   const tieneCoincidencia = perfilesCompatibles.length > 0;
   const etiquetas = proyecto.etiquetas ?? [];
+  const coincidencias = proyecto.coincidencias ?? [];
 
   return (
     <li className="tarjeta">
@@ -52,6 +66,23 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
       )}
 
       {proyecto.descripcion && <p>{proyecto.descripcion}</p>}
+
+      {coincidencias.length > 0 && (
+        <div className="coincidencia">
+          <p className="tarjeta__meta">
+            <strong>Coincide en:</strong>
+          </p>
+          <ul className="lista-coincidencias">
+            {coincidencias.map((coincidencia) => (
+              <li key={`${coincidencia.tipo}-${coincidencia.valor}`}>
+                <span className="etiqueta etiqueta--coincidencia">
+                  {describirCoincidencia(coincidencia)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {etiquetas.length > 0 && (
         <p className="tarjeta__etiquetas">

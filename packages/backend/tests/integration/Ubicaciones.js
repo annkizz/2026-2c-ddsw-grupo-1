@@ -77,7 +77,16 @@ const construirApp = () => {
   app.use(express.json());
   app.use(
     "/proyectos",
-    crearProyectoRouter(proyectoController, perfilController),
+    crearProyectoRouter(
+      proyectoController,
+      perfilController,
+      null,
+      (req, res, next) => {
+        // La suite no valida JWT: simula una colectiva autenticada.
+        req.usuario = { rol: "COLECTIVO" };
+        next();
+      },
+    ),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);

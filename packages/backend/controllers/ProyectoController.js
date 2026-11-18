@@ -98,14 +98,20 @@ export class ProyectoController {
   obtenerTodos = async (req, res) => {
     const etiquetas = valoresComoLista(req.query.etiqueta);
     const filtros = etiquetas.length > 0 ? { etiquetas } : {};
+    // modo=cualquiera
+    if (req.query.modo !== undefined) {
+      filtros.modo = primerValor(req.query.modo);
+    }
     if (req.query.provincia !== undefined) {
       filtros.provincia = primerValor(req.query.provincia);
+      filtros.provincias = valoresComoLista(req.query.provincia);
     }
     if (req.query.estado !== undefined) {
       filtros.estado = primerValor(req.query.estado);
     }
     if (req.query.idColectivo !== undefined) {
       filtros.idColectivo = primerValor(req.query.idColectivo);
+      filtros.idColectivos = valoresComoLista(req.query.idColectivo);
     }
     if (req.query.habilidad !== undefined) {
       filtros.habilidades = valoresComoLista(req.query.habilidad);

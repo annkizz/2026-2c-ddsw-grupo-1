@@ -111,6 +111,21 @@
   margin-top: 8px;
 }
 
+.lista-coincidencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etiqueta--coincidencia {
+  background: #edf7ed;
+  color: #1e6b3a;
+  font-weight: 600;
+}
+
 .tarjeta__meta {
   color: var(--texto-suave) !important;
   font-size: 13px !important;
