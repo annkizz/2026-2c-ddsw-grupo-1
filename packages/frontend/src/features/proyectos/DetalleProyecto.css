@@ -116,6 +116,17 @@
   margin: 0 0 24px;
 }
 
+.detalle-descripcion > :first-child { margin-top: 0; }
+.detalle-descripcion > :last-child { margin-bottom: 0; }
+.detalle-descripcion a { color: inherit; text-decoration: underline; }
+.detalle-descripcion pre {
+  overflow-x: auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+}
+.detalle-descripcion code { font-size: 0.9em; }
+
 .detalle-fechas-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

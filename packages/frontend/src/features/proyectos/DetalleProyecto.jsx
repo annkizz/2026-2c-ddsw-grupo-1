@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { FiArrowLeft, FiInfo, FiLock, FiCheckCircle, FiShield } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import Markdown from '../../components/Markdown.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
@@ -268,7 +269,7 @@ const DetalleProyecto = () => {
           </div>
 
           <h1>{proyecto.titulo}</h1>
-          <p className="detalle-descripcion">{proyecto.descripcion}</p>
+          <Markdown className="detalle-descripcion">{proyecto.descripcion}</Markdown>
 
           <div className="detalle-fechas-grid">
             <div>
