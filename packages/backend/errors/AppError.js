@@ -15,6 +15,13 @@ export class BadRequestError extends AppError {
   }
 }
 
+export class UnauthorizedError extends AppError {
+  constructor(message, codigo) {
+    super(message, codigo);
+    this.status = 401;
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message, codigo) {
     super(message, codigo);
@@ -42,5 +49,17 @@ export class UnprocessableEntityError extends AppError {
     this.status = 422;
   }
 }
+
+export class BadGatewayError extends AppError {
+  constructor(message, codigo) { 
+    super(message, codigo); 
+    this.status = 502; }
+}
+export class ServiceUnavailableError extends AppError {
+  constructor(message, codigo) { 
+    super(message, codigo); 
+    this.status = 503; }
+}
+
 
 // agrego el codigo para poder identificar mas facil el error!!

@@ -6,13 +6,25 @@ export class ColectivoRepository {
     this.model = model;
   }
 
-  obtenerTodos() {
-    return this.model.find().exec();
+  obtenerTodos(filtros = {}) {
+    const query = {};
+    if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
+      if (filtros.etiquetas.length === 1) {
+        query.etiquetas = filtros.etiquetas[0];
+      } else {
+        query.etiquetas = { $in: filtros.etiquetas };
+      }
+    }
+    return this.model.find(query).exec();
   }
 
   async buscarPorId(id) {
-    if (!mongoose.isValidObjectId(id)) return null;
+    if (!this.esIdValido(id)) return null;
     return await this.model.findById(id).exec();
+  }
+
+  esIdValido(id) {
+    return mongoose.isValidObjectId(id);
   }
 
   save(unColectivo, id = unColectivo._id) {
@@ -24,6 +36,8 @@ export class ColectivoRepository {
           descripcion: unColectivo.descripcion,
           ubicacion: unColectivo.ubicacion,
           tipoDeColectivo: unColectivo.tipoDeColectivo,
+          etiquetas: unColectivo.etiquetas ?? [],
+          usuario: unColectivo.usuario,
         },
         {
           upsert: true,
@@ -48,4 +62,10 @@ export class ColectivoRepository {
     }
     return colectivo;
   }
+
+  async buscarPorUsuario(id) { 
+    return this.model.
+    findOne({ usuario: id }).exec(); 
+  }
+
 }

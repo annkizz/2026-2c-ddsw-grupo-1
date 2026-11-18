@@ -22,6 +22,36 @@ describe("Validaciones - perfilSchema (zod)", () => {
 
     expect(resultado.success).toBe(true);
     expect(resultado.data.habilidadesOpcionales).toEqual([]);
+    expect(resultado.data.limiteColaboraciones).toBeNull();
+  });
+
+  it("acepta un límite de colaboraciones válido", () => {
+    const resultado = perfilSchema.safeParse({
+      ...perfilValido(),
+      limiteColaboraciones: 3,
+    });
+
+    expect(resultado.success).toBe(true);
+    expect(resultado.data.limiteColaboraciones).toBe(3);
+  });
+
+  it("rechaza datos de búsqueda que pertenecen al proyecto", () => {
+    expect(
+      perfilSchema.safeParse({
+        ...perfilValido(),
+        busquedaAbierta: true,
+        fechaLimiteBusqueda: "2026-12-01T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each([0, -1, 1.5])("rechaza un límite inválido (%p)", (limite) => {
+    expect(
+      perfilSchema.safeParse({
+        ...perfilValido(),
+        limiteColaboraciones: limite,
+      }).success,
+    ).toBe(false);
   });
 
   it("rechaza descripción vacía", () => {
@@ -51,6 +81,26 @@ describe("Validaciones - perfilSchema (zod)", () => {
     datos.compromiso.tipoColaboracion = "SORTEO";
     expect(perfilSchema.safeParse(datos).success).toBe(false);
   });
+
+  it("acepta un límite de colaboraciones entero", () => {
+    const datos = { ...perfilValido(), limiteColaboraciones: 2 };
+    expect(perfilSchema.safeParse(datos).success).toBe(true);
+  });
+
+  it("el límite de colaboraciones queda sin límite si se omite", () => {
+    const resultado = perfilSchema.safeParse(perfilValido());
+
+    expect(resultado.success).toBe(true);
+    expect(resultado.data.limiteColaboraciones).toBeNull();
+  });
+
+  it.each([0, -1, 2.5, "3"])(
+    "rechaza un límite de colaboraciones inválido (%p)",
+    (limite) => {
+      const datos = { ...perfilValido(), limiteColaboraciones: limite };
+      expect(perfilSchema.safeParse(datos).success).toBe(false);
+    },
+  );
 
   it("rechaza campos que no forman parte del perfil (strict)", () => {
     const datos = { ...perfilValido(), campoExtra: "x" };

@@ -8,6 +8,18 @@ const colaboracionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    idPerfil: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Perfil",
+      default: null,
+      index: true,
+    },
+    idPostulacion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Postulacion",
+      default: null,
+      index: true,
+    },
     idColaborador: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Colaborador",

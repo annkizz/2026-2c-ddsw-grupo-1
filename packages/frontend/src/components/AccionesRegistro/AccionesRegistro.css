@@ -1,0 +1,24 @@
+.acciones-registro {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.acciones-registro .MuiButton-root {
+  height: 48px;
+  min-width: 140px;
+}
+
+.acciones-registro .MuiButton-contained {
+  min-width: 220px;
+}
+
+@media (max-width: 720px) {
+  .acciones-registro {
+    flex-direction: column-reverse;
+  }
+  .acciones-registro .MuiButton-root {
+    width: 100%;
+  }
+}

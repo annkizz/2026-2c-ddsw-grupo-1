@@ -2,6 +2,10 @@ import { ConflictError, NotFoundError } from "../errors/AppError.js";
 import {
   crearEvaluadorCoincidencia,
   evaluarCoincidencia,
+  puntajeDeCoincidencia,
+  puntajeMaximoDeCoincidencia,
+  porcentajeDeCobertura,
+  porcentajeDeCoberturaRequerida,
 } from "../domain/Matching.js";
 
 const idDe = (documento) => String(documento.id ?? documento._id);
@@ -42,7 +46,6 @@ export class MatchingService {
         "PROYECTO_FINALIZADO",
       );
     }
-
     const yaAnotadas = (
       await this.colaboracionRepository.obtenerIdsColaboradoresDeProyecto(
         idProyecto,
@@ -55,9 +58,7 @@ export class MatchingService {
       );
 
     return candidatas
-      .filter(
-        (colaboradora) => !yaAnotadas.includes(String(colaboradora._id)),
-      )
+      .filter((colaboradora) => !yaAnotadas.includes(String(colaboradora._id)))
       .map((colaboradora) => ({
         colaboradora,
         evaluacion: evaluarCoincidencia(perfil, colaboradora.habilidades),
@@ -74,12 +75,14 @@ export class MatchingService {
           tieneCoincidencia: evaluacion.tieneCoincidencia,
           requeridasCoincidentes: evaluacion.requeridasCoincidentes,
           opcionalesCoincidentes: evaluacion.opcionalesCoincidentes,
+          puntaje: puntajeDeCoincidencia(evaluacion),
         };
         if (colaboradora.pronombres?.length > 0) {
           dto.pronombres = colaboradora.pronombres;
         }
         return dto;
-      });
+      })
+      .sort((uno, otro) => otro.puntaje - uno.puntaje);
   }
 
   // busqueda de potenciales proyectos segun habilidades de colaboradora.
@@ -104,9 +107,8 @@ export class MatchingService {
       await this.proyectoRepository.obtenerAbiertosParaMatching(yaAnotadas);
     if (abiertos.length === 0) return [];
 
-    const perfiles = await this.perfilRepository.obtenerCompatiblesPorProyectos(
+    const perfiles = await this.perfilRepository.obtenerPorProyectos(
       abiertos.map((p) => p._id),
-      colaboradora.habilidades,
     );
     const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
 
@@ -116,10 +118,25 @@ export class MatchingService {
         (perfil) => String(perfil.idProyecto) === String(proyecto._id),
       );
       const perfilesCompatibles = [];
+      let puntaje = 0;
+      let puntajeMaximo = 0;
+      let requeridasCoincidentes = 0;
+      let requeridasTotales = 0;
 
       for (const perfil of perfilesDelProyecto) {
         const coincidencia = evaluar(perfil);
+
+        if (coincidencia.requeridasTotales === 0) continue;
+
+        const maximoDelPerfil = puntajeMaximoDeCoincidencia(coincidencia);
+        puntajeMaximo += maximoDelPerfil;
+        requeridasTotales += coincidencia.requeridasTotales;
+
         if (!coincidencia.tieneCoincidencia) continue;
+
+        const puntajeDelPerfil = puntajeDeCoincidencia(coincidencia);
+        puntaje += puntajeDelPerfil;
+        requeridasCoincidentes += coincidencia.requeridasCoincidentes.length;
 
         perfilesCompatibles.push({
           id: idDe(perfil),
@@ -127,6 +144,12 @@ export class MatchingService {
           compromiso: perfil.compromiso,
           requeridasCoincidentes: coincidencia.requeridasCoincidentes,
           opcionalesCoincidentes: coincidencia.opcionalesCoincidentes,
+          puntaje: puntajeDelPerfil,
+          puntajeMaximo: maximoDelPerfil,
+          porcentajeCobertura: porcentajeDeCobertura({
+            puntaje: puntajeDelPerfil,
+            puntajeMaximo: maximoDelPerfil,
+          }),
         });
       }
 
@@ -135,11 +158,33 @@ export class MatchingService {
           id: String(proyecto._id),
           titulo: proyecto.titulo,
           descripcion: proyecto.descripcion,
+          puntaje,
+          puntajeMaximo,
+          porcentajeCobertura: porcentajeDeCobertura({
+            puntaje,
+            puntajeMaximo,
+          }),
+          porcentajeRequeridas: porcentajeDeCoberturaRequerida({
+            requeridasCoincidentes,
+            requeridasTotales,
+          }),
           perfilesCompatibles,
         });
       }
     }
 
-    return resultados;
+    return resultados.sort((uno, otro) => {
+      // 1) habilidades req
+      // 2) cuanto cubre del proyecto en total
+      // 3) + puntos brutos
+      const porRequeridas =
+        otro.porcentajeRequeridas - uno.porcentajeRequeridas;
+      if (porRequeridas !== 0) return porRequeridas;
+
+      const porCobertura = otro.porcentajeCobertura - uno.porcentajeCobertura;
+      if (porCobertura !== 0) return porCobertura;
+
+      return otro.puntaje - uno.puntaje;
+    });
   }
 }

@@ -1,9 +1,14 @@
 import { Estado } from "../domain/Estado.js";
 import { Proyecto } from "../domain/Proyecto.js";
-import { Colaboracion } from "../domain/Colaboracion.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
-import { evaluarCoincidencia } from "../domain/Matching.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
+import {
+  construirUbicacionDeProyecto,
+  normalizarProvincia,
+  PAIS_ARGENTINA,
+  ubicacionHeredadaDeColectivo,
+} from "../domain/provincias.js";
 import {
   BadRequestError,
   ConflictError,
@@ -13,6 +18,11 @@ import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
+
+const NIVELES_MAPA = new Set(["provincia", "pais"]);
+const ESTADOS_VALIDOS = new Set(Object.values(Estado));
 
 export class ProyectoService {
   constructor(
@@ -22,6 +32,7 @@ export class ProyectoService {
     colectivoRepository = new ColectivoRepository(),
     colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
+    despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
@@ -29,9 +40,10 @@ export class ProyectoService {
     this.colectivoRepository = colectivoRepository;
     this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
+    this.despachadorWebhooks = despachadorWebhooks;
   }
 
-  crear = async (datosProyecto) => {
+  crear = async (datosProyecto, usuario) => {
     const colectivo = await this.colectivoRepository.buscarPorId(
       datosProyecto.idColectivo,
     );
@@ -43,10 +55,33 @@ export class ProyectoService {
       );
     }
 
+    //  VALIDACIÓN DE PROPIEDAD AL CREAR
+    const colectivoUsuario = await this.colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id);
+    if (!colectivoUsuario || String(colectivoUsuario._id ?? colectivoUsuario.id) !== String(colectivo._id)) {
+      throw new ForbiddenError("No podés crear proyectos para otro colectivo", "ACCESO_DENEGADO");
+    }
+
     const fechaLimiteCierre = datosProyecto.fechaLimiteCierre ?? null;
     if (fechaLimiteCierre !== null) {
       this.validarFechaLimite(fechaLimiteCierre);
     }
+
+    let ubicacion;
+    if (datosProyecto.ubicacion === undefined) {
+      ubicacion = ubicacionHeredadaDeColectivo(colectivo);
+    } else {
+      ubicacion = construirUbicacionDeProyecto(datosProyecto.ubicacion);
+      if (ubicacion === null) {
+        throw new BadRequestError(
+          "la provincia ingresada no es válida",
+          "PROVINCIA_INVALIDA",
+        );
+      }
+    }
+
+    const busquedaAbierta = datosProyecto.busquedaAbierta ?? false;
+    const fechaLimiteBusqueda = datosProyecto.fechaLimiteBusqueda ?? null;
+    this.validarBusqueda(busquedaAbierta, fechaLimiteBusqueda);
 
     const proyecto = new Proyecto(
       datosProyecto.titulo,
@@ -59,6 +94,10 @@ export class ProyectoService {
       0,
       null,
       null,
+      busquedaAbierta,
+      fechaLimiteBusqueda,
+      normalizarEtiquetas(datosProyecto.etiquetas),
+      ubicacion,
     );
 
     const proyectoGuardado = await this.proyectoRepository.save(proyecto);
@@ -82,7 +121,46 @@ export class ProyectoService {
       porcentajeConcrecion: proyecto.porcentajeConcrecion,
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
+      busquedaAbierta: proyecto.busquedaAbierta ?? false,
+      fechaLimiteBusqueda: proyecto.fechaLimiteBusqueda ?? null,
+      busquedaVigente: proyecto.busquedaVigente(),
+      etiquetas: proyecto.etiquetas ?? [],
+      ubicacion: proyecto.ubicacion ?? null,
+      destacado: proyecto.destacado ?? false,
+      destacadoHasta: proyecto.destacadoHasta ?? null,
     };
+  }
+
+  async obtenerDestacados(ahora = new Date()) {
+    const proyectos = await this.proyectoRepository.obtenerDestacados(ahora);
+    return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  async configurarDestacado(idProyecto, { destacado, destacadoHasta }) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (destacado) {
+      if (proyecto.estaFinalizado()) {
+        throw new ConflictError(
+          "No se puede destacar un proyecto finalizado",
+          "PROYECTO_FINALIZADO",
+        );
+      }
+
+      if (
+        !(destacadoHasta instanceof Date) ||
+        Number.isNaN(destacadoHasta.getTime()) ||
+        destacadoHasta <= new Date()
+      ) {
+        throw new BadRequestError(
+          "La fecha de vencimiento del destacado debe ser futura",
+          "FECHA_DESTACADO_INVALIDA",
+        );
+      }
+    }
+
+    proyecto.configurarDestacado(destacado, destacado ? destacadoHasta : null);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 
   validarFechaLimite(fechaLimiteCierre, ahora = new Date()) {
@@ -114,7 +192,7 @@ export class ProyectoService {
     if (!proyecto.cierreVencido(ahora)) {
       return false;
     }
-    await this.finalizar(proyecto);
+    await this.finalizar(proyecto, "AUTOMATICO");
     return true;
   }
 
@@ -130,10 +208,23 @@ export class ProyectoService {
     return proyecto;
   }
 
-  async finalizar(proyecto) {
-    // falta implementar lo de la 3era entrega: rechazar las postulaciones pendientes del proyecto
+  async finalizar(proyecto, motivo = "MANUAL") {
+    const yaEstabaFinalizado = proyecto.estaFinalizado();
     proyecto.cerrar();
-    return await this.proyectoRepository.save(proyecto);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    if (!yaEstabaFinalizado) {
+      this.despachadorWebhooks.emitir(
+        EventoWebhook.PROYECTO_CERRADO,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          titulo: proyecto.titulo,
+          motivo,
+          fecha: new Date().toISOString(),
+        },
+      );
+    }
+    return guardado;
   }
 
   async cerrarProyectosVencidos(ahora = new Date()) {
@@ -143,7 +234,7 @@ export class ProyectoService {
 
     for (const proyecto of vencidos) {
       try {
-        await this.finalizar(proyecto);
+        await this.finalizar(proyecto, "AUTOMATICO");
         cerrados.push(String(proyecto._id));
       } catch (error) {
         fallidos.push({
@@ -156,9 +247,149 @@ export class ProyectoService {
     return { cerrados, fallidos };
   }
 
-  async obtenerTodos() {
-    const proyectos = await this.proyectoRepository.obtenerTodos();
+  async obtenerTodos(filtros = {}) {
+    const filtrosNormalizados = { ...filtros };
+    if (filtrosNormalizados.etiquetas !== undefined) {
+      filtrosNormalizados.etiquetas = normalizarEtiquetas(
+        filtrosNormalizados.etiquetas,
+      );
+    }
+    if (filtrosNormalizados.provincia !== undefined) {
+      const provincia = normalizarProvincia(filtrosNormalizados.provincia);
+      if (provincia === null) {
+        throw new BadRequestError(
+          "la provincia ingresada no es válida",
+          "PROVINCIA_INVALIDA",
+        );
+      }
+      filtrosNormalizados.provincia = provincia.codigoProvincia;
+    }
+    if (filtrosNormalizados.estado !== undefined) {
+      const estado = String(filtrosNormalizados.estado).trim().toUpperCase();
+      if (!ESTADOS_VALIDOS.has(estado)) {
+        throw new BadRequestError(
+          "el estado ingresado no es válido",
+          "ESTADO_INVALIDO",
+        );
+      }
+      filtrosNormalizados.estado = estado;
+    }
+    if (filtrosNormalizados.idColectivo !== undefined) {
+      const idColectivo = String(filtrosNormalizados.idColectivo).trim();
+      if (!this.colectivoRepository.esIdValido(idColectivo)) {
+        throw new BadRequestError(
+          "el colectivo ingresado no es válido",
+          "COLECTIVO_INVALIDO",
+        );
+      }
+      filtrosNormalizados.idColectivo = idColectivo;
+    }
+    if (filtrosNormalizados.habilidades !== undefined) {
+  
+      const habilidades = (
+        Array.isArray(filtrosNormalizados.habilidades)
+          ? filtrosNormalizados.habilidades
+          : [filtrosNormalizados.habilidades]
+      )
+        .map((habilidad) => String(habilidad).trim())
+        .filter((habilidad) => habilidad !== "");
+
+      delete filtrosNormalizados.habilidades;
+      if (habilidades.length > 0) {
+        const idsProyectos =
+          await this.perfilRepository.obtenerProyectosPorHabilidades(
+            habilidades,
+          );
+        if (idsProyectos.length === 0) return [];
+        filtrosNormalizados.idsProyectos = idsProyectos;
+      }
+    }
+
+    const proyectos = await this.proyectoRepository.obtenerTodos(
+      filtrosNormalizados,
+    );
     return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  async obtenerUbicaciones(nivel = "provincia") {
+    if (!NIVELES_MAPA.has(nivel)) {
+      throw new BadRequestError(
+        "el nivel del mapa no es válido",
+        "NIVEL_MAPA_INVALIDO",
+      );
+    }
+
+    const proyectos = await this.proyectoRepository.obtenerActivosParaMapa();
+    const grupos = new Map();
+
+    for (const proyecto of proyectos) {
+      const region = this.regionDeUbicacion(proyecto.ubicacion, nivel);
+      if (region === null) {
+        continue;
+      }
+
+      let grupo = grupos.get(region.codigo);
+      if (grupo === undefined) {
+        grupo = {
+          nivel,
+          codigo: region.codigo,
+          nombre: region.nombre,
+          cantidad: 0,
+          proyectos: [],
+        };
+        grupos.set(region.codigo, grupo);
+      }
+
+      const colectivo = proyecto.idColectivo;
+      grupo.cantidad += 1;
+      grupo.proyectos.push({
+        id: String(proyecto._id),
+        titulo: proyecto.titulo,
+        ciudad: proyecto.ubicacion.ciudad ?? null,
+        colectivo: {
+          id: colectivo ? String(colectivo._id ?? colectivo) : null,
+          nombre: colectivo?.nombre ?? null,
+        },
+      });
+    }
+
+    const resultado = [...grupos.values()];
+    resultado.sort((a, b) => {
+      if (b.cantidad !== a.cantidad) {
+        return b.cantidad - a.cantidad;
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    return resultado;
+  }
+
+  regionDeUbicacion(ubicacion, nivel) {
+    if (!ubicacion) {
+      return null;
+    }
+
+    if (nivel === "pais") {
+      const codigo =
+        ubicacion.codigoPais ??
+        (ubicacion.codigoProvincia ? PAIS_ARGENTINA.codigoPais : null);
+      if (!codigo) {
+        return null;
+      }
+      return {
+        codigo,
+        nombre: ubicacion.nombrePais ?? PAIS_ARGENTINA.nombrePais,
+      };
+    }
+
+    if (!ubicacion.codigoProvincia) {
+      return null;
+    }
+
+    return {
+      codigo: ubicacion.codigoProvincia,
+      nombre: ubicacion.nombreProvincia ?? ubicacion.codigoProvincia,
+    };
   }
 
   obtenerProyectoPorId(id) {
@@ -167,12 +398,14 @@ export class ProyectoService {
 
   toContribucionPublica({
     idProyecto,
+    idPerfil,
     idColaborador,
     fecha,
     esAnonima = false,
   }) {
     const contribucion = {
       idProyecto: String(idProyecto),
+      idPerfil: idPerfil ? String(idPerfil) : null,
       fecha,
       esAnonima,
     };
@@ -199,69 +432,13 @@ export class ProyectoService {
     );
   };
 
-  colaboradorPerteneceAProyecto = (proyectoId, colaboradorId) => {
-    return this.colaboracionRepository.existeColaboracion(
-      proyectoId,
-      colaboradorId,
-    );
-  };
-
-  verificarHabilidades = async (proyecto, colaborador) => {
-    const perfiles = await this.perfilRepository.obtenerTodos(proyecto._id);
-    return perfiles.some(
-      (perfil) =>
-        evaluarCoincidencia(perfil, colaborador.habilidades).tieneCoincidencia,
-    );
-  };
-
-  async crearColaboracion(proyecto, colaboradorId, esAnonima = false) {
-    if (proyecto.estaFinalizado()) {
-      throw new ConflictError(
-        "No se puede anotar a un proyecto finalizado",
-        "PROYECTO_FINALIZADO",
-      );
-    }
-
-    const colaborador =
-      await this.colaboradorService.obtenerPorId(colaboradorId);
-
-    if (!colaborador) {
-      throw new NotFoundError(
-        "La colaboradora no existe",
-        "COLABORADORA_NO_ENCONTRADA",
-      );
-    }
-
-    if (await this.colaboradorPerteneceAProyecto(proyecto._id, colaboradorId)) {
-      throw new ConflictError(
-        "La colaboradora ya está anotada en este proyecto",
-        "COLABORACION_YA_EXISTENTE",
-      );
-    }
-
-    if (!(await this.verificarHabilidades(proyecto, colaborador))) {
-      throw new BadRequestError(
-        "La colaboradora no cumple con las habilidades requeridas",
-        "HABILIDADES_INSUFICIENTES",
-      );
-    }
-
-    const nuevaColaboracion = new Colaboracion(
-      proyecto,
-      colaborador,
-      new Date().toISOString(),
-      esAnonima,
-    );
-    return await this.colaboracionRepository.save(nuevaColaboracion);
-  }
-
-  async cerrarProyecto(idProyecto) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async cerrarProyecto(idProyecto, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
     return this.toDTO(await this.finalizar(proyecto));
   }
 
-  async actualizarAvance(idProyecto, datosAvance) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async actualizarAvance(idProyecto, datosAvance, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
 
     if (Object.keys(datosAvance).length === 0) {
       throw new BadRequestError(
@@ -282,5 +459,72 @@ export class ProyectoService {
       enlaceSistema: proyecto.enlaceSistema,
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente,
     };
+  }
+
+  validarBusqueda(busquedaAbierta, fechaLimiteBusqueda, ahora = new Date()) {
+    if (fechaLimiteBusqueda === null) return;
+    if (!busquedaAbierta) {
+      throw new BadRequestError(
+        "No se puede indicar una fecha límite si la búsqueda no está abierta",
+        "BUSQUEDA_CERRADA_CON_FECHA",
+      );
+    }
+    if (fechaLimiteBusqueda <= ahora) {
+      throw new BadRequestError(
+        "La fecha límite de la búsqueda debe ser futura",
+        "FECHA_LIMITE_BUSQUEDA_INVALIDA",
+      );
+    }
+  }
+
+  async obtenerPorId(idProyecto) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+    return this.toDTO(proyecto);
+  }
+
+  async actualizar(idProyecto, datos, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
+    const datosNormalizados = { ...datos };
+    if (datosNormalizados.etiquetas !== undefined) {
+      datosNormalizados.etiquetas = normalizarEtiquetas(
+        datosNormalizados.etiquetas,
+      );
+    }
+    proyecto.editarDatos(datosNormalizados);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
+  }
+
+  async validarPropietario(idProyecto, usuario, colectivoRepository) {
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+    if (!proyecto) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+
+    const colectivoUsuario = await colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id);
+    if (!colectivoUsuario) {
+      throw new ForbiddenError("El usuario no tiene un colectivo asociado", "COLECTIVO_NO_ENCONTRADO");
+    }
+
+    if (String(colectivoUsuario._id ?? colectivoUsuario.id) !== String(proyecto.idColectivo)) {
+      throw new ForbiddenError("No tenés permisos sobre este proyecto", "ACCESO_DENEGADO");
+    }
+
+    return proyecto;
+  }
+
+  async configurarBusqueda(idProyecto, { busquedaAbierta, fechaLimiteBusqueda }, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
+
+    if (proyecto.estaFinalizado()) {
+      throw new ConflictError(
+        "No se puede configurar la búsqueda de un proyecto finalizado",
+        "PROYECTO_FINALIZADO",
+      );
+    }
+
+    const fechaLimite = fechaLimiteBusqueda ?? null;
+    this.validarBusqueda(busquedaAbierta, fechaLimite);
+    proyecto.configurarBusqueda(busquedaAbierta, fechaLimite);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 }
