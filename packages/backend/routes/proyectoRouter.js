@@ -28,8 +28,11 @@ export function crearProyectoRouter(
   router
     .route("/")
     .get((req, res) => proyectoController.obtenerTodos(req, res))
-    .post(validate(proyectoSchema), (req, res) =>
-      proyectoController.crear(req, res),
+    .post(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(proyectoSchema),
+      (req, res) => proyectoController.crear(req, res),
     );
 
   router
@@ -52,31 +55,45 @@ export function crearProyectoRouter(
 
   router
     .route("/:idProyecto/cierre")
-    .patch((req, res) => proyectoController.cerrarProyecto(req, res));
+    .patch(autenticar, requerirRol(Rol.COLECTIVO), (req, res) =>
+      proyectoController.cerrarProyecto(req, res),
+    );
 
   router
     .route("/:idProyecto/cierre-programado")
-    .patch(validate(cierreProgramadoSchema), (req, res) =>
-      proyectoController.programarCierre(req, res),
+    .patch(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(cierreProgramadoSchema),
+      (req, res) => proyectoController.programarCierre(req, res),
     );
 
   router
     .route("/:idProyecto/avance")
-    .patch(validate(avanceSchema), (req, res) =>
-      proyectoController.actualizarAvance(req, res),
+    .patch(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(avanceSchema),
+      (req, res) => proyectoController.actualizarAvance(req, res),
     );
 
   router
     .route("/:idProyecto")
     .get((req, res) => proyectoController.obtenerPorId(req, res))
-    .put(validate(proyectoEdicionSchema), (req, res) =>
-      proyectoController.actualizar(req, res),
+    .put(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(proyectoEdicionSchema),
+      (req, res) => proyectoController.actualizar(req, res),
     );
 
   router
     .route("/:idProyecto/busqueda")
-    .put(validate(busquedaSchema), (req, res) =>
-      proyectoController.configurarBusqueda(req, res),
+    .put(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(busquedaSchema),
+      (req, res) => proyectoController.configurarBusqueda(req, res),
     );
 
   if (postulacionController) {
@@ -89,7 +106,12 @@ export function crearProyectoRouter(
     );
   }
 
-  router.use("/:idProyecto/perfiles", crearPerfilRouter(perfilController));
-
+  router.use(
+      "/:idProyecto/perfiles",
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      crearPerfilRouter(perfilController),
+    );
+    
   return router;
 }

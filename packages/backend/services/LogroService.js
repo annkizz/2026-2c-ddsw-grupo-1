@@ -22,6 +22,12 @@ export class LogroService {
       titulo: logro.titulo,
       descripcion: logro.descripcion,
       fecha: logro.fecha,
+      publicacionLinkedin: logro.publicacionLinkedin ? {
+        estado: logro.publicacionLinkedin.estado,
+        urnPost: logro.publicacionLinkedin.urnPost,
+        mensajeError: logro.publicacionLinkedin.mensajeError,
+        fechaEnvio: logro.publicacionLinkedin.fechaEnvio
+      } : undefined
     };
   }
 

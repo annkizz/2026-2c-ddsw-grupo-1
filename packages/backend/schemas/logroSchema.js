@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Logro } from "../domain/Logro.js";
-import { EstadoEnvio } from "../domain/EstadoEnvio.js";
+import { publicacionSchema } from "./publicacionSchema.js"
 
 const logroSchema = new mongoose.Schema(
   {

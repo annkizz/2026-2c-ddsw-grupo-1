@@ -1,6 +1,7 @@
 import { EstadoEnvio } from "../domain/EstadoEnvio.js";
+import mongoose from "mongoose"
 
-const publicacionSchema = new mongoose.Schema(
+export const publicacionSchema = new mongoose.Schema(
   {
     estado: { type: String, enum: Object.values(EstadoEnvio), required: true },
     fecha: { type: Date, required: true },

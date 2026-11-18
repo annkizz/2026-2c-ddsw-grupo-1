@@ -37,6 +37,7 @@ export class ColectivoRepository {
           ubicacion: unColectivo.ubicacion,
           tipoDeColectivo: unColectivo.tipoDeColectivo,
           etiquetas: unColectivo.etiquetas ?? [],
+          usuario: unColectivo.usuario,
         },
         {
           upsert: true,
@@ -61,4 +62,10 @@ export class ColectivoRepository {
     }
     return colectivo;
   }
+
+  async buscarPorUsuario(id) { 
+    return this.model.
+    findOne({ usuario: id }).exec(); 
+  }
+
 }

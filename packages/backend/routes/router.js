@@ -52,6 +52,12 @@ import { WebhookService } from "../services/WebhookService.js";
 import { WebhookController } from "../controllers/WebhookController.js";
 import { DespachadorWebhooks } from "../services/webhooks/DespachadorWebhooks.js";
 import { crearWebhookRouter } from "./webhookRouter.js";
+import { ConexionLinkedinRepository } from "../repositories/ConexionLinkedinRepository.js";
+import { LinkedinClient } from "../services/linkedin/LinkedinClient.js";
+import { LinkedinConexionService } from "../services/LinkedinConexionService.js";
+import { PublicacionLinkedinService } from "../services/PublicacionLinkedinService.js";
+import { LinkedinController } from "../controllers/LinkedinController.js";
+import { crearLinkedinRouter } from "./linkedinRouter.js";
 
 const router = express.Router();
 
@@ -110,6 +116,7 @@ const proyectoService = new ProyectoService(
   colectivoRepository,
   colaboracionRepository,
   perfilRepository,
+  despachadorWebhooks,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
@@ -139,6 +146,18 @@ const webhookService = new WebhookService(
 
 const webhookController = new WebhookController(webhookService, usuarioService);
 
+const conexionLinkedinRepository = new ConexionLinkedinRepository();
+const linkedinClient = new LinkedinClient();
+const linkedinConexionService = new LinkedinConexionService(
+  conexionLinkedinRepository, colectivoRepository, linkedinClient,
+);
+const publicacionLinkedinService = new PublicacionLinkedinService(
+  linkedinConexionService, linkedinClient,
+);
+
+const linkedinController = new LinkedinController(linkedinConexionService);
+
+
 const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedinService);
 const logroController = new LogroController(logroService);
@@ -159,16 +178,6 @@ const matchingService = new MatchingService(
 );
 const matchingController = new MatchingController(matchingService);
 
-const conexionLinkedinRepository = new ConexionLinkedinRepository();
-const linkedinClient = new LinkedinClient();
-const linkedinConexionService = new LinkedinConexionService(
-  conexionLinkedinRepository, colectivoRepository, linkedinClient,
-);
-const publicacionLinkedinService = new PublicacionLinkedinService(
-  linkedinConexionService, linkedinClient,
-);
-
-const linkedinController = new LinkedinController(linkedinConexionService);
 
 router.use("/me", crearUsuarioRouter(usuarioController, autenticar));
 router.use(

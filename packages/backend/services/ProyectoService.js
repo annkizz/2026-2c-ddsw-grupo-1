@@ -43,7 +43,7 @@ export class ProyectoService {
     this.despachadorWebhooks = despachadorWebhooks;
   }
 
-  crear = async (datosProyecto) => {
+  crear = async (datosProyecto, usuario) => {
     const colectivo = await this.colectivoRepository.buscarPorId(
       datosProyecto.idColectivo,
     );
@@ -53,6 +53,12 @@ export class ProyectoService {
         "el colectivo no existe",
         "COLECTIVO_NO_ENCONTRADO",
       );
+    }
+
+    //  VALIDACIÓN DE PROPIEDAD AL CREAR
+    const colectivoUsuario = await this.colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id);
+    if (!colectivoUsuario || String(colectivoUsuario._id ?? colectivoUsuario.id) !== String(colectivo._id)) {
+      throw new ForbiddenError("No podés crear proyectos para otro colectivo", "ACCESO_DENEGADO");
     }
 
     const fechaLimiteCierre = datosProyecto.fechaLimiteCierre ?? null;
@@ -426,13 +432,13 @@ export class ProyectoService {
     );
   };
 
-  async cerrarProyecto(idProyecto) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async cerrarProyecto(idProyecto, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
     return this.toDTO(await this.finalizar(proyecto));
   }
 
-  async actualizarAvance(idProyecto, datosAvance) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async actualizarAvance(idProyecto, datosAvance, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
 
     if (Object.keys(datosAvance).length === 0) {
       throw new BadRequestError(
@@ -476,8 +482,8 @@ export class ProyectoService {
     return this.toDTO(proyecto);
   }
 
-  async actualizar(idProyecto, datos) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async actualizar(idProyecto, datos, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
     const datosNormalizados = { ...datos };
     if (datosNormalizados.etiquetas !== undefined) {
       datosNormalizados.etiquetas = normalizarEtiquetas(
@@ -488,8 +494,26 @@ export class ProyectoService {
     return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 
-  async configurarBusqueda(idProyecto, { busquedaAbierta, fechaLimiteBusqueda }) {
-    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+  async validarPropietario(idProyecto, usuario, colectivoRepository) {
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+    if (!proyecto) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+
+    const colectivoUsuario = await colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id);
+    if (!colectivoUsuario) {
+      throw new ForbiddenError("El usuario no tiene un colectivo asociado", "COLECTIVO_NO_ENCONTRADO");
+    }
+
+    if (String(colectivoUsuario._id ?? colectivoUsuario.id) !== String(proyecto.idColectivo)) {
+      throw new ForbiddenError("No tenés permisos sobre este proyecto", "ACCESO_DENEGADO");
+    }
+
+    return proyecto;
+  }
+
+  async configurarBusqueda(idProyecto, { busquedaAbierta, fechaLimiteBusqueda }, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario, this.colectivoRepository);
 
     if (proyecto.estaFinalizado()) {
       throw new ConflictError(
