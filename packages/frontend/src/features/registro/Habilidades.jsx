@@ -1,40 +1,32 @@
 import { useState } from 'react';
-import { Card, Chip, TextField } from '@mui/material';
+import { Alert, Button, Card } from '@mui/material';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import { useListado } from '../../hooks/useListado';
 
-// Paso 2 de 3: habilidades (el backend exige al menos una)
+// Paso 2 de 3: habilidades (el backend exige al menos una del catálogo).
 const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
-  const [texto, setTexto] = useState('');
   const [error, setError] = useState(false);
+  const habilidadesState = useListado('/habilidades');
+  const opciones = habilidadesState.datos.map((habilidad) => ({
+    valor: habilidad.titulo,
+    etiqueta: habilidad.titulo
+  }));
 
-  // devuelve la lista nueva para poder usarla enseguida
-  const agregar = () => {
-    const nueva = texto.replace(/,/g, '').trim();
-    setTexto('');
-    const yaEsta = datos.habilidades.some((h) => h.toLowerCase() === nueva.toLowerCase());
-    if (nueva === '' || yaEsta) return datos.habilidades;
-
-    const lista = [...datos.habilidades, nueva];
-    setDatos({ ...datos, habilidades: lista });
+  const alternar = (habilidad) => {
+    setDatos((actual) => ({
+      ...actual,
+      habilidades: actual.habilidades.includes(habilidad)
+        ? actual.habilidades.filter((una) => una !== habilidad)
+        : [...actual.habilidades, habilidad]
+    }));
     setError(false);
-    return lista;
-  };
-
-  const quitar = (habilidad) => {
-    setDatos({ ...datos, habilidades: datos.habilidades.filter((h) => h !== habilidad) });
-  };
-
-  const alTeclear = (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      agregar();
-    }
   };
 
   const siguiente = (e) => {
     e.preventDefault();
-    const lista = agregar();
-    if (lista.length === 0) {
+    if (habilidadesState.cargando) return;
+    if (habilidadesState.error || opciones.length === 0 || datos.habilidades.length === 0) {
       setError(true);
       return;
     }
@@ -45,23 +37,39 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
     <form onSubmit={siguiente} noValidate>
       <Card variant="outlined" className="registro-card">
         <h2>Indicá tus habilidades</h2>
-        <TextField
-          fullWidth
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={alTeclear}
-          onBlur={agregar}
-          placeholder="Ej: React (Enter para agregar)"
-          error={error}
-          helperText={error ? 'Agregá al menos una habilidad.' : ' '}
+        <CustomSelect
+          id="registro-habilidades"
+          etiqueta="Habilidades"
+          opciones={opciones}
+          seleccion={datos.habilidades}
+          multiple
+          onSeleccionar={alternar}
+          placeholder={
+            habilidadesState.cargando ? 'Cargando habilidades…' : 'Buscá una habilidad disponible'
+          }
+          textoVacio={
+            habilidadesState.cargando
+              ? 'Cargando habilidades…'
+              : 'No hay habilidades con ese texto.'
+          }
         />
-        <div className="habilidades-lista">
-          {datos.habilidades.map((habilidad) => (
-            <Chip key={habilidad} label={habilidad} onDelete={() => quitar(habilidad)} />
-          ))}
-        </div>
+        {habilidadesState.error && (
+          <Alert
+            severity="error"
+            action={<Button onClick={habilidadesState.recargar}>Reintentar</Button>}
+          >
+            No pudimos cargar las habilidades disponibles. Volvé a intentarlo antes de continuar.
+          </Alert>
+        )}
+        {error && !habilidadesState.error && (
+          <Alert severity="warning">
+            {opciones.length === 0
+              ? 'No hay habilidades disponibles para registrar el perfil.'
+              : 'Elegí al menos una habilidad disponible.'}
+          </Alert>
+        )}
       </Card>
-      <AccionesRegistro onVolver={onVolver} siguiente="Listo" />
+      <AccionesRegistro onVolver={onVolver} siguiente="Siguiente" />
     </form>
   );
 };

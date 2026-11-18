@@ -22,10 +22,38 @@ export function crearVerificadorLogto(env = process.env, crearJwks) {
         audience: env.LOGTO_AUDIENCE,
       });
       return payload;
-    } catch {
+    } catch (error) {
+      let codigo = "TOKEN_INVALIDO";
+      let mensaje = "el token es invalido";
+
+      if (error.code === "ERR_JWT_EXPIRED") {
+        codigo = "TOKEN_VENCIDO";
+        mensaje = "el token de Logto vencio";
+      } else if (error.code === "ERR_JWT_CLAIM_VALIDATION_FAILED") {
+        if (error.claim === "aud") {
+          codigo = "TOKEN_AUDIENCIA_INVALIDA";
+          mensaje = "la audiencia del token no corresponde a esta API";
+        } else if (error.claim === "iss") {
+          codigo = "TOKEN_EMISOR_INVALIDO";
+          mensaje = "el emisor del token no corresponde a Logto";
+        }
+      } else if (error.code === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED") {
+        codigo = "TOKEN_FIRMA_INVALIDA";
+        mensaje = "la firma del token no coincide con las claves de Logto";
+      } else if (error.code === "ERR_JWKS_NO_MATCHING_KEY") {
+        codigo = "CLAVE_LOGTO_NO_ENCONTRADA";
+        mensaje = "no se encontro la clave de firma del token en el JWKS de Logto";
+      } else if (
+        error.code === "ERR_JWT_INVALID" ||
+        error.code === "ERR_JWS_INVALID"
+      ) {
+        codigo = "TOKEN_FORMATO_INVALIDO";
+        mensaje = "el token recibido no tiene un formato JWT valido";
+      }
+
       throw new UnauthorizedError(
-        "el token es invalido o vencio",
-        "TOKEN_INVALIDO",
+        mensaje,
+        codigo,
       );
     }
   };

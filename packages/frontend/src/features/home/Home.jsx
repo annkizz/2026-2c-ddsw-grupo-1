@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, CircularProgress } from '@mui/material';
+import { Alert, Button, CircularProgress } from '@mui/material';
 import { FiArrowRight, FiCode, FiRepeat, FiUsers } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import TipoCuenta from '../registro/TipoCuenta.jsx';
-import { leerTipo, rutaDeRegistro } from '../registro/tipoElegido';
 import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { cargando, sesion, iniciarSesion, registrarse } = useAuth();
+  const { cargando, sesion, errorLogto, iniciarSesion, registrarse } = useAuth();
   const [eligiendoTipo, setEligiendoTipo] = useState(false);
 
-  // Si ya hay sesión: con perfil va a su perfil; sin perfil sigue el registro
+  // Solo las cuentas con perfil salen del inicio automáticamente.
   useEffect(() => {
-    if (!sesion) return;
-    navigate(sesion.tienePerfil ? '/perfil' : rutaDeRegistro(leerTipo()), { replace: true });
+    if (sesion?.tienePerfil) navigate('/perfil', { replace: true });
   }, [sesion, navigate]);
 
   return (
@@ -41,12 +39,17 @@ const Home = () => {
           fullWidth
           size="large"
           onClick={iniciarSesion}
-          disabled={cargando}
-          startIcon={cargando ? <CircularProgress size={18} color="inherit" /> : null}
-          endIcon={cargando ? null : <FiArrowRight />}
+          disabled={cargando && !errorLogto}
+          startIcon={cargando && !errorLogto ? <CircularProgress size={18} color="inherit" /> : null}
+          endIcon={cargando && !errorLogto ? null : <FiArrowRight />}
         >
-          {cargando ? 'Ingresando…' : 'Ingresar'}
+          {cargando && !errorLogto ? 'Ingresando…' : 'Ingresar'}
         </Button>
+        {errorLogto && (
+          <Alert severity="error" sx={{ marginTop: 2 }}>
+            No pudimos abrir el inicio de sesión de Logto: {errorLogto.message}
+          </Alert>
+        )}
         <p className="home-cambio">
           ¿Primera vez acá?
           <button onClick={() => setEligiendoTipo(true)}>Crear una cuenta</button>
@@ -56,7 +59,7 @@ const Home = () => {
       {eligiendoTipo && (
         <TipoCuenta
           onCerrar={() => setEligiendoTipo(false)}
-          onElegir={() => registrarse()} // el tipo ya quedó guardado; al volver de Logto seguimos el registro
+          onElegir={() => registrarse()}
         />
       )}
     </div>

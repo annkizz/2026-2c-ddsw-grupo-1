@@ -2,10 +2,10 @@ import { Navigate } from 'react-router-dom';
 import { Alert, Button } from '@mui/material';
 import { useAuth } from '../hooks/useAuth.jsx';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import { leerTipo } from '../features/registro/tipoElegido';
 
-// Sin sesión -> "/". Con sesión pero sin perfil -> registro (salvo exigirPerfil={false})
-const RequiereAuth = ({ children, exigirPerfil = true }) => {
-  const { isAuthenticated, cargando, sesion, errorSesion, recargarSesion, cerrarSesion } = useAuth();
+const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
+  const { isAuthenticated, cargando, sesion } = useAuth();
 
   if (cargando) {
     return <LoadingSplash message="Conectando..." />;
@@ -15,6 +15,7 @@ const RequiereAuth = ({ children, exigirPerfil = true }) => {
     return <Navigate to="/" replace />;
   }
 
+<<<<<<< HEAD
   if (errorSesion || !sesion) {
     return (
       <div role="alert" style={{ padding: '2rem', maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
@@ -35,6 +36,17 @@ const RequiereAuth = ({ children, exigirPerfil = true }) => {
 
   if (exigirPerfil && !sesion.tienePerfil) {
     return <Navigate to="/registro/tipo" replace />;
+=======
+  if (sesion?.tienePerfil) {
+    if (!exigirPerfil) {
+      return <Navigate to="/perfil" replace />;
+    }
+    return children;
+  }
+
+  if (exigirPerfil || (tipoRegistro && leerTipo() !== tipoRegistro)) {
+    return <Navigate to="/" replace />;
+>>>>>>> a6d443a
   }
 
   return children;

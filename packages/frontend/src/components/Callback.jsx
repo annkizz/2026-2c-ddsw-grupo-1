@@ -15,36 +15,22 @@ const Callback = () => {
 
   useEffect(() => {
     if (!sesion) return;
-    navigate(sesion.tienePerfil ? '/perfil' : rutaDeRegistro(leerTipo()), { replace: true });
+    navigate(
+      sesion.tienePerfil
+        ? '/perfil'
+        : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
+      { replace: true }
+    );
   }, [sesion, navigate]);
 
   if (errorLogto) {
     return (
-      <div role="alert" style={{ padding: '2rem', maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          No pudimos completar el inicio de sesión. Volvé a intentarlo.
+      <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
+        <Alert severity="error">
+          No pudimos verificar tu sesión con el servidor: {errorSesion}
         </Alert>
-        <Button variant="contained" onClick={iniciarSesion}>
-          Iniciar sesión de nuevo
-        </Button>
-      </div>
-    );
-  }
-
-  if (errorSesion && !cargando) {
-    return (
-      <div role="alert" style={{ padding: '2rem', maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          No pudimos verificar tu sesión con el servidor. Revisá tu conexión e intentá nuevamente.
-        </Alert>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Button variant="contained" onClick={recargarSesion}>
-            Reintentar
-          </Button>
-          <Button variant="outlined" onClick={cerrarSesion}>
-            Salir
-          </Button>
-        </div>
+        <Button onClick={recargarSesion}>Reintentar</Button>
+        <Button onClick={cerrarSesion}>Salir</Button>
       </div>
     );
   }
