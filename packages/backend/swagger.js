@@ -1470,40 +1470,47 @@ const swaggerSpec = {
     },
     "/notificaciones": {
       get: {
-        summary: "Lista notificaciones",
+        summary: "Lista las notificaciones de la colaboradora autenticada",
         description:
-          "Devuelve las notificaciones más recientes primero. Se puede filtrar por colectivo, colaboradora o ambos.",
+          "Solo pueden consultar notificaciones los usuarios con rol COLABORADOR. La lista se limita a su propio perfil y las notificaciones más recientes aparecen primero.",
         parameters: [
           {
             in: "query",
-            name: "idColectivo",
+            name: "pag",
             required: false,
-            schema: { type: "string" },
-            example: "c00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 1 },
           },
           {
             in: "query",
-            name: "idColaborador",
+            name: "limite",
             required: false,
-            schema: { type: "string" },
-            example: "b00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 10 },
           },
         ],
         responses: {
           200: {
             description:
-              "Lista de notificaciones. No incluye emails ni teléfonos.",
+              "Notificaciones de la colaboradora autenticada. No incluye emails ni teléfonos.",
             content: {
               "application/json": {
                 schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Notificacion" },
+                  type: "object",
+                  properties: {
+                    idColaboradora: { type: "string" },
+                    notificaciones: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Notificacion" },
+                    },
+                    total: { type: "integer" },
+                    pag: { type: "integer" },
+                    totalPags: { type: "integer" },
+                  },
                 },
               },
             },
           },
-          400: {
-            description: "Filtros inválidos o no soportados",
+          403: {
+            description: "El usuario no tiene rol COLABORADOR",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1515,7 +1522,7 @@ const swaggerSpec = {
       post: {
         summary: "Crea un mensaje interno para una colaboradora",
         description:
-          "Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
+          "Solo puede enviar el colectivo autenticado y únicamente desde su propio perfil. Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
         requestBody: {
           required: true,
           content: {
@@ -1564,7 +1571,8 @@ const swaggerSpec = {
             },
           },
           403: {
-            description: "La colaboradora no aceptó mensajería",
+            description:
+              "El usuario no es un colectivo, intenta enviar desde otro colectivo o la colaboradora no aceptó mensajería",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1584,7 +1592,9 @@ const swaggerSpec = {
     },
     "/notificaciones/{id}": {
       get: {
-        summary: "Obtiene una notificación por ID",
+        summary: "Obtiene una notificación propia por ID",
+        description:
+          "Solo la colaboradora destinataria puede consultar la notificación.",
         parameters: [
           {
             in: "path",
@@ -1608,6 +1618,80 @@ const swaggerSpec = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+              },
+              403: {
+                description: "La notificación pertenece a otra colaboradora",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "/notificaciones/colaboradora/{id}": {
+          get: {
+            summary: "Lista las notificaciones propias de una colaboradora",
+            description:
+              "Solo puede acceder el usuario COLABORADOR dueño del perfil indicado.",
+            parameters: [
+              {
+                in: "path",
+                name: "id",
+                required: true,
+                schema: { type: "string" },
+              },
+              {
+                in: "query",
+                name: "pag",
+                required: false,
+                schema: { type: "integer", minimum: 1, default: 1 },
+              },
+              {
+                in: "query",
+                name: "limite",
+                required: false,
+                schema: { type: "integer", minimum: 1, default: 10 },
+              },
+            ],
+            responses: {
+              200: {
+                description: "Notificaciones de la colaboradora autenticada",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        idColaboradora: { type: "string" },
+                        notificaciones: {
+                          type: "array",
+                          items: { $ref: "#/components/schemas/Notificacion" },
+                        },
+                        total: { type: "integer" },
+                        pag: { type: "integer" },
+                        totalPags: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+              403: {
+                description:
+                  "El usuario no tiene rol COLABORADOR o el perfil pertenece a otra persona",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
+              },
+              404: {
+                description: "Colaboradora no encontrada",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
               },
             },
           },

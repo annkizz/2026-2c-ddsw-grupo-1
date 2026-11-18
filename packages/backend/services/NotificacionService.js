@@ -46,15 +46,16 @@ export class NotificacionService {
 
   // Un colectivo contacta a una colaboradora. Si ella aceptó ser contactada:
   // 1) se guarda el mensaje interno; 2) se lo replica por cada medio de contacto registrado.
-  async crear(datosNotificacion) {
+  async crear(datosNotificacion, usuario) {
     const { idColectivo, idColaborador, contenido } = datosNotificacion;
 
-    const colectivo = await this.colectivoRepository.buscarPorId(idColectivo);
-
-    if (!colectivo) {
-      throw new NotFoundError(
-        "El colectivo no existe",
-        "COLECTIVO_NO_ENCONTRADO",
+    const colectivo = await this.colectivoRepository.buscarPorUsuario(
+      usuario._id,
+    );
+    if (!colectivo || String(colectivo._id) !== String(idColectivo)) {
+      throw new ForbiddenError(
+        "Solo podes enviar notificaciones desde tu propio colectivo",
+        "COLECTIVO_AJENO",
       );
     }
 
@@ -119,25 +120,38 @@ export class NotificacionService {
     return notificaciones.map((n) => this.toDTO(n));
   }
 
-  async obtenerTodosPaginado(pag, limite) {
-    const resultado =
-      await this.notificacionRepository.obternerTodosPaginado(pag, limite);
+  async obtenerTodosPaginado(idUsuario, pag, limite) {
+    const colaboradora =
+      await this.colaboradorRepository.buscarPorUsuario(idUsuario);
+    if (!colaboradora) {
+      throw new NotFoundError(
+        "La colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
 
-    const notificacionesDto = resultado.notificaciones.map((n) => this.toDTO(n));
-    return {
-        ...resultado,
-        
-    };
+    return this.obtenerTodosPorColaboradora(
+      colaboradora._id,
+      pag,
+      limite,
+      idUsuario,
+    );
   }
 
-  async obtenerTodosPorColaboradora(idColaboradora, pag, limite){
-    
+  async obtenerTodosPorColaboradora(idColaboradora, pag, limite, idUsuario) {
     const colaboradora = await this.colaboradorRepository.buscarPorId(idColaboradora);
 
     if (!colaboradora) {
       throw new NotFoundError(
         "La colaboradora no existe",
         "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+
+    if (String(colaboradora.usuario) !== String(idUsuario)) {
+      throw new ForbiddenError(
+        "Solo podes consultar tus propias notificaciones",
+        "NOTIFICACION_AJENA",
       );
     }
 
@@ -149,7 +163,16 @@ export class NotificacionService {
     }
   }
 
-  async obtenerPorId(id) {
+  async obtenerPorId(id, idUsuario) {
+    const colaboradora =
+      await this.colaboradorRepository.buscarPorUsuario(idUsuario);
+    if (!colaboradora) {
+      throw new NotFoundError(
+        "La colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+
     const notificacion = await this.notificacionRepository.buscarPorId(id);
     if (!notificacion) {
       throw new NotFoundError(
@@ -157,6 +180,14 @@ export class NotificacionService {
         "NOTIFICACION_NO_ENCONTRADA",
       );
     }
+
+    if (String(notificacion.idColaborador) !== String(colaboradora._id)) {
+      throw new ForbiddenError(
+        "Solo podes consultar tus propias notificaciones",
+        "NOTIFICACION_AJENA",
+      );
+    }
+
     return this.toDTO(notificacion);
   }
 }
