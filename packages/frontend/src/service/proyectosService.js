@@ -67,6 +67,12 @@ export const obtenerProyectoPorId = async (idProyecto) => {
   return response.data;
 };
 
+// agrupacion de proyectos activos por ubicación para el mapa
+export const obtenerUbicacionesProyectos = async (params) => {
+  const response = await api.get('/proyectos/ubicaciones', { params });
+  return response.data;
+};
+
 export const actualizarProyecto = async (token, idProyecto, proyecto) => {
   const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
   return response.data;

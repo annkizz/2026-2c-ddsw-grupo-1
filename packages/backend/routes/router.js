@@ -63,6 +63,10 @@ const habilidadRepository = new HabilidadRepository();
 const habilidadService = new HabilidadService(habilidadRepository);
 const habilidadController = new HabilidadController(habilidadService);
 
+const etiquetaRepository = new EtiquetaRepository();
+const etiquetaService = new EtiquetaService(etiquetaRepository);
+const etiquetaController = new EtiquetaController(etiquetaService);
+
 const colectivoRepository = new ColectivoRepository();
 const colaboradorRepository = new ColaboradorRepository();
 const usuarioService = new UsuarioService(
@@ -144,6 +148,7 @@ router.use(
   autenticarSiModifica,
   crearHabilidadRouter(habilidadController),
 );
+router.use("/etiquetas", crearEtiquetasRouter(etiquetaController));
 // una sola vez para todo /proyectos (lo usan el router de proyectos y el de logros)
 router.use("/proyectos", autenticarSiModifica);
 router.use(

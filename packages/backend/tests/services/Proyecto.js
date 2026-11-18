@@ -324,6 +324,20 @@ describe("ProyectoService", () => {
       expect(resultado.estado).toBe("ACTIVO");
     });
 
+    it("normaliza y reemplaza las etiquetas al editarlas", async () => {
+      proyectoRepository.buscarPorId.mockResolvedValue(
+        proyectoActivo({ etiquetas: ["salud"] }),
+      );
+
+      const resultado = await service.actualizar("p-1", {
+        titulo: "T",
+        descripcion: "D",
+        etiquetas: ["Accesibilidad Web", "accesibilidad_web", "Salud"],
+      });
+
+      expect(resultado.etiquetas).toEqual(["accesibilidad_web", "salud"]);
+    });
+
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
       await expect(
         service.actualizar("nope", { titulo: "T", descripcion: "D" }),

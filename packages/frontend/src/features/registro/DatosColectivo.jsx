@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Card, MenuItem, TextField } from '@mui/material';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useListado } from '../../hooks/useListado';
 import { TIPOS_COLECTIVO, crearColectivo } from '../../service/colectivosService';
 import { mensajeDeError } from '../../service/api';
+import { ETIQUETAS_MAX } from '../../utils/etiquetas';
 import { borrarTipo } from './tipoElegido';
 import './Registro.css';
 
@@ -12,6 +15,7 @@ const DATOS_INICIALES = {
   nombre: '',
   tipoDeColectivo: '',
   ubicacion: '',
+  etiquetas: [],
   descripcion: ''
 };
 const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'ubicacion', 'descripcion'];
@@ -23,10 +27,20 @@ const DatosColectivo = () => {
   const [faltantes, setFaltantes] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
+  const etiquetasState = useListado('/etiquetas');
 
   const setValorDe = (campo) => (e) => {
     setDatos({ ...datos, [campo]: e.target.value });
     setFaltantes(faltantes.filter((f) => f !== campo));
+  };
+
+  const alternarEtiqueta = (etiqueta) => {
+    setDatos((prev) => ({
+      ...prev,
+      etiquetas: prev.etiquetas.includes(etiqueta)
+        ? prev.etiquetas.filter((una) => una !== etiqueta)
+        : [...prev.etiquetas, etiqueta]
+    }));
   };
 
   const propsDe = (campo) => ({
@@ -37,6 +51,11 @@ const DatosColectivo = () => {
     fullWidth: true,
     required: true
   });
+
+  const opcionesEtiquetas = etiquetasState.datos.map((etiqueta) => ({
+    valor: etiqueta,
+    etiqueta: etiqueta.replaceAll('_', ' ')
+  }));
 
   const guardar = async (e) => {
     e.preventDefault();
@@ -64,16 +83,55 @@ const DatosColectivo = () => {
       <h1>Registrar Colectivo</h1>
       <form onSubmit={guardar} noValidate>
         <Card variant="outlined" className="registro-card">
-          <TextField label="Nombre" placeholder="Nombre" {...propsDe('nombre')} />
-          <TextField select label="Tipo de colectivo" {...propsDe('tipoDeColectivo')}>
-            {TIPOS_COLECTIVO.map((tipo) => (
-              <MenuItem key={tipo.valor} value={tipo.valor}>
-                {tipo.texto}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField label="Ubicación" placeholder="Ciudad" {...propsDe('ubicacion')} />
-          <TextField label="Descripción" placeholder="Descripción del colectivo" multiline minRows={3} {...propsDe('descripcion')} />
+          <div className="registro-campos">
+            <TextField label="Nombre" placeholder="Nombre" {...propsDe('nombre')} />
+            <TextField select label="Tipo de colectivo" {...propsDe('tipoDeColectivo')}>
+              {TIPOS_COLECTIVO.map((tipo) => (
+                <MenuItem key={tipo.valor} value={tipo.valor}>
+                  {tipo.texto}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField label="Ubicación" placeholder="Ciudad" {...propsDe('ubicacion')} />
+
+            <CustomSelect
+              id="colectivo-etiquetas"
+              etiqueta="Etiquetas"
+              opciones={opcionesEtiquetas}
+              seleccion={datos.etiquetas}
+              multiple
+              maxSeleccion={ETIQUETAS_MAX}
+              permiteCrear
+              onSeleccionar={alternarEtiqueta}
+              onQuitar={alternarEtiqueta}
+              placeholder={
+                etiquetasState.cargando ? 'Cargando etiquetas…' : 'Buscá o escribí una etiqueta'
+              }
+              textoVacio={
+                etiquetasState.cargando
+                  ? 'Cargando etiquetas…'
+                  : 'No hay etiquetas con ese texto. Podés crear una nueva.'
+              }
+            />
+            {etiquetasState.error && (
+              <Alert severity="warning">
+                No pudimos cargar las etiquetas existentes. Igual podés escribir etiquetas nuevas.
+              </Alert>
+            )}
+            <small className="registro-ayuda">
+              Buscá etiquetas existentes o creá las tuyas (hasta {ETIQUETAS_MAX}) para que tu
+              colectivo aparezca en las búsquedas.
+            </small>
+
+            <TextField
+              label="Descripción"
+              placeholder="Descripción del colectivo"
+              multiline
+              minRows={3}
+              {...propsDe('descripcion')}
+            />
+          </div>
         </Card>
 
         {error && (

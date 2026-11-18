@@ -83,9 +83,12 @@ export class Proyecto {
     }
   }
 
-  editarDatos({ titulo, descripcion }) {
+  editarDatos({ titulo, descripcion, etiquetas }) {
     this.titulo = titulo;
     this.descripcion = descripcion;
+    if (etiquetas !== undefined) {
+      this.etiquetas = etiquetas;
+    }
   }
 
   configurarBusqueda(busquedaAbierta, fechaLimiteBusqueda = null) {

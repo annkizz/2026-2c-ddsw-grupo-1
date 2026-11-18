@@ -32,13 +32,10 @@ export class PerfilRepository {
     return await this.model.find({ idProyecto });
   }
 
-  async obtenerCompatiblesPorProyectos(idsProyectos, habilidades) {
-    if (idsProyectos.length === 0 || habilidades.length === 0) return [];
+  async obtenerPorProyectos(idsProyectos) {
+    if (idsProyectos.length === 0) return [];
     return this.model
-      .find({
-        idProyecto: { $in: idsProyectos },
-        habilidadesRequeridas: { $in: habilidades },
-      })
+      .find({ idProyecto: { $in: idsProyectos } })
       .select(
         "_id idProyecto descripcion compromiso habilidadesRequeridas habilidadesOpcionales",
       )

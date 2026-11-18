@@ -18,7 +18,7 @@ export const obtenerColectivoPorId = async (id) => {
   return response.data;
 };
 
-// El formulario tiene un solo campo "ubicacion"; el backend espera { pais, provincia, ciudad }
+// El formulario tiene un solo campo "ubicacion", el backend espera { pais, provincia, ciudad }
 export const crearColectivo = async (token, formulario) => {
   const response = await api.post(
     '/colectivos',
@@ -26,7 +26,8 @@ export const crearColectivo = async (token, formulario) => {
       nombre: formulario.nombre.trim(),
       descripcion: formulario.descripcion.trim(),
       tipoDeColectivo: formulario.tipoDeColectivo,
-      ubicacion: { ciudad: formulario.ubicacion.trim() }
+      ubicacion: { ciudad: formulario.ubicacion.trim() },
+      ...(formulario.etiquetas?.length > 0 ? { etiquetas: formulario.etiquetas } : {})
     },
     conToken(token)
   );

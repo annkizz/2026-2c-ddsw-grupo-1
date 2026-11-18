@@ -426,7 +426,13 @@ export class ProyectoService {
 
   async actualizar(idProyecto, datos) {
     const proyecto = await this.buscarProyectoOFallar(idProyecto);
-    proyecto.editarDatos(datos);
+    const datosNormalizados = { ...datos };
+    if (datosNormalizados.etiquetas !== undefined) {
+      datosNormalizados.etiquetas = normalizarEtiquetas(
+        datosNormalizados.etiquetas,
+      );
+    }
+    proyecto.editarDatos(datosNormalizados);
     return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 
