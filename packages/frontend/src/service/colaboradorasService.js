@@ -58,9 +58,3 @@ export const crearColaboradora = async (token, formulario) => {
   const response = await api.post('/colaboradoras', armarBodyColaboradora(formulario), conToken(token));
   return response.data;
 };
-
-// PUT reemplaza el perfil completo (datos, habilidades y medios de contacto)
-export const actualizarColaboradora = async (token, id, formulario) => {
-  const response = await api.put(`/colaboradoras/${id}`, armarBodyColaboradora(formulario), conToken(token));
-  return response.data;
-};
