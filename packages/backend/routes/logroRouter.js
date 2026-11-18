@@ -1,6 +1,7 @@
 import express from "express";
 import { validate } from "../middlewares/validate.js";
 import { logroSchema } from "../controllers/LogroController.js";
+import { logroSchema, logroCreacionSchema } from "../controllers/LogroController.js";
 
 export function crearLogroRouter(logroController) {
   const router = express.Router();
@@ -18,5 +19,9 @@ export function crearLogroRouter(logroController) {
     )
     .delete((req, res) => logroController.eliminar(req, res));
 
+    router
+    .route("/:idProyecto/logros/:id/linkedin")
+    .post((req, res) => logroController.publicarEnLinkedIn(req, res));
+    
   return router;
 }

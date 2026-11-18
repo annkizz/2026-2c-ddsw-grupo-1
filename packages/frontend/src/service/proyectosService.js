@@ -85,3 +85,12 @@ export const actualizarAvance = async (token, idProyecto, datos) => {
   const response = await api.patch(`/proyectos/${idProyecto}/avance`, datos, conToken(token));
   return response.data;
 };
+
+export const publicarLogroEnLinkedIn = async (token, idProyecto, idLogro) => {
+  const response = await api.post(
+    `/proyectos/${idProyecto}/logros/${idLogro}/linkedin`,
+    null,
+    conToken(token)
+  );
+  return response.data;
+};

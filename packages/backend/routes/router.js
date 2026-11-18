@@ -119,7 +119,7 @@ const postulacionController = new PostulacionController(
 );
 
 const logroRepository = new LogroRepository();
-const logroService = new LogroService(logroRepository, proyectoRepository);
+const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedInService);
 const logroController = new LogroController(logroService);
 
 const notificacionRepository = new NotificacionRepository();
@@ -137,6 +137,17 @@ const matchingService = new MatchingService(
   colaboracionRepository,
 );
 const matchingController = new MatchingController(matchingService);
+
+const conexionLinkedInRepository = new ConexionLinkedInRepository();
+const linkedInClient = new LinkedInClient();
+const linkedInConexionService = new LinkedInConexionService(
+  conexionLinkedInRepository, colectivoRepository, linkedInClient,
+);
+const publicacionLinkedInService = new PublicacionLinkedInService(
+  linkedInConexionService, linkedInClient,
+);
+const linkedInController = new LinkedInController(linkedInConexionService);
+
 
 router.use("/me", crearUsuarioRouter(usuarioController, autenticar));
 router.use(
@@ -171,5 +182,6 @@ router.use(
   crearNotificacionRouter(notificacionController),
 );
 router.use(crearMatchingRouter(matchingController));
+router.use("/linkedin", autenticar, crearLinkedInRouter(linkedInController));
 
 export default router;
