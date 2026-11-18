@@ -28,13 +28,22 @@ import { t } from '../../i18n/t';
 import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
 import './DetalleProyecto.css';
+import { useLinkedin } from '../../hooks/useLinkedin.js';
+import { codigoDeError } from '../../service/api';
+import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
 
 const ES_ENLACE = /^https?:\/\/\S+$/i;
+
+const avisoDePublicacion = (publicacion) =>
+  publicacion.estado === 'ENVIADO'
+    ? { severity: 'success', texto: t('linkedin.okPublicado') }
+    : { severity: 'warning', texto: publicacion.detalle || t('linkedin.falloPublicacion') };
 
 const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { sesion, getAccessToken, isAuthenticated, cargando: authCargando, iniciarSesion } = useAuth();
+  const linkedin = useLinkedin(sesion?.rol === 'COLECTIVO');
 
   const [proyecto, setProyecto] = useState(null);
   const [perfiles, setPerfiles] = useState([]);
@@ -66,9 +75,12 @@ const DetalleProyecto = () => {
   const [guardandoBusqueda, setGuardandoBusqueda] = useState(false);
   const [errorBusqueda, setErrorBusqueda] = useState('');
 
-  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '' });
+  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarLogroEnLinkedin : false });
   const [errorLogro, setErrorLogro] = useState('');
   const [guardandoLogro, setGuardandoLogro] = useState(false);
+
+  const [avisoLinkedin, setAvisoLinkedin] = useState(null); // { severity, texto }
+  const [publicandoId, setPublicandoId] = useState(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -305,13 +317,20 @@ const DetalleProyecto = () => {
         titulo,
         descripcion,
         fecha: new Date().toISOString(),
+        // solo se manda si está tildado (así no depende de que el backend ya esté desplegado)
+        ...(nuevoLogro.publicarEnLinkedin && { publicarEnLinkedin: true }),
       });
       setLogros((actuales) => [...actuales, creado]);
-      setNuevoLogro({ titulo: '', descripcion: '' });
-    } catch (err) {
-      setErrorLogro(err.response?.data?.error || t('detalleProyecto.errorLogro'));
-    } finally {
-      setGuardandoLogro(false);
+      setNuevoLogro({ titulo: '', descripcion: '', publicarEnLinkedin: false });
+      if (creado.publicacionLinkedin) setAvisoLinkedin(avisoDePublicacion(creado.publicacionLinkedin));
+      } catch (err) {
+        const codigo = codigoDeError(err);
+        if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
+          linkedin.recargar(); // el estado local estaba desactualizado
+        }
+        setErrorLogro(err.response?.data?.error || t('detalleProyecto.errorLogro'));
+      } finally {
+        setGuardandoLogro(false);
     }
   };
 
@@ -579,6 +598,40 @@ const DetalleProyecto = () => {
                 {formatearFecha(logro.fecha) && <small> · {formatearFecha(logro.fecha)}</small>}
                 <br />
                 <span>{logro.descripcion}</span>
+                 {esDueño && (
+                  <div style={{ marginTop: '4px' }}>
+                    {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
+                      <small>
+                        ✓ {t('linkedin.publicado')}
+                        {logro.publicacionLinkedin.urnPost && (
+                          <>
+                            {' · '}
+                            <a
+                              href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {t('linkedin.verPublicacion')}
+                            </a>
+                          </>
+                        )}
+                      </small>
+                    ) : (
+                      <Button
+                        size="small"
+                        disabled={publicandoId === logro.id}
+                        onClick={() => handlePublicarLogro(logro)}
+                        startIcon={publicandoId === logro.id ? <CircularProgress size={14} color="inherit" /> : null}
+                      >
+                        {logro.publicacionLinkedin?.estado === 'FALLIDO'
+                          ? t('linkedin.reintentar')
+                          : linkedin.estado?.conectado
+                            ? t('linkedin.compartir')
+                            : t('linkedin.conectar')}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -828,7 +881,42 @@ const DetalleProyecto = () => {
             fullWidth
             sx={{ mt: 2 }}
           />
-
+            {linkedin.estado &&
+                (linkedin.estado.conectado ? (
+                  <div>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={nuevoLogro.publicarEnLinkedin}
+                          onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
+                          disabled={guardandoLogro}
+                        />
+                      }
+                      label={t('linkedin.publicarAlCrear')}
+                    />
+                    <br />
+                    <small className="texto-muted">
+                      {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
+                    </small>
+                  </div>
+                ) : (
+                  <Alert
+                    severity="info"
+                    action={
+                      <Button color="inherit" size="small" onClick={linkedin.conectar}>
+                        {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
+                      </Button>
+                    }
+                  >
+                    {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
+                  </Alert>
+                ))}
+              {linkedin.error && <Alert severity="error">{linkedin.error}</Alert>}
+            {avisoLinkedin && (
+                <Alert severity={avisoLinkedin.severity} onClose={() => setAvisoLinkedin(null)}>
+                  {avisoLinkedin.texto}
+                </Alert>
+              )}
           {errorBusqueda && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {errorBusqueda}
@@ -851,6 +939,29 @@ const DetalleProyecto = () => {
       </Dialog>
     </div>
   );
+};
+
+const handlePublicarLogro = async (logro) => {
+  if (!linkedin.estado?.conectado) {
+    linkedin.conectar();
+    return;
+  }
+  setPublicandoId(logro.id);
+  setAvisoLinkedin(null);
+  try {
+    const token = await getAccessToken();
+    const actualizado = await publicarLogroEnLinkedin(token, id, logro.id);
+    setLogros((actuales) => actuales.map((l) => (l.id === actualizado.id ? actualizado : l)));
+    setAvisoLinkedin(avisoDePublicacion(actualizado.publicacionLinkedin));
+  } catch (err) {
+    const codigo = codigoDeError(err);
+    if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
+      linkedin.recargar();
+    }
+    setAvisoLinkedin({ severity: 'error', texto: err.response?.data?.error || t('linkedin.falloPublicacion') });
+  } finally {
+    setPublicandoId(null);
+  }
 };
 
 export default DetalleProyecto;

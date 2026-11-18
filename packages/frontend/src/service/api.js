@@ -13,4 +13,6 @@ export const conToken = (token) => ({
 export const mensajeDeError = (error) =>
   error.response?.data?.error ?? 'No pudimos conectarnos con el servidor';
 
+export const codigoDeError = (error) => error.response?.data?.codigo
+
 export default api;

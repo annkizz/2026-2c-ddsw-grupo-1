@@ -1,4 +1,5 @@
 import { agregarDocumentacionDeAuth } from "./swaggerAuth.js";
+import { agregarDocumentacionDeWebhooks } from "./swaggerWebhooks.js";
 
 const swaggerDefinition = {
   openapi: "3.0.0",
@@ -1826,5 +1827,6 @@ const swaggerSpec = {
 };
 
 agregarDocumentacionDeAuth(swaggerSpec);
+agregarDocumentacionDeWebhooks(swaggerSpec);
 
 export default swaggerSpec;

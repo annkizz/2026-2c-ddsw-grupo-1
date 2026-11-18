@@ -32,6 +32,14 @@ export class LogroRepository {
     );
   }
 
+    async registrarPublicacion(idLogro, publicacion) {
+    return await this.model.findByIdAndUpdate(
+      idLogro,
+      { publicacionLinkedin: publicacion },
+      { returnDocument: "after" },
+    );
+  }
+
   async eliminar(idProyecto, idLogro) {
     if (!mongoose.isValidObjectId(idLogro)) {
       return null;

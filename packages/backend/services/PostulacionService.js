@@ -13,6 +13,8 @@ import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
+import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 
 export class PostulacionService {
   constructor(
@@ -21,12 +23,14 @@ export class PostulacionService {
     colaboradorService = new ColaboradorService(),
     colaboracionRepository = new ColaboracionRepository(),
     postulacionRepository = new PostulacionRepository(),
+    despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
     this.colaboradorService = colaboradorService;
     this.colaboracionRepository = colaboracionRepository;
     this.postulacionRepository = postulacionRepository;
+    this.despachadorWebhooks = despachadorWebhooks;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -150,6 +154,17 @@ export class PostulacionService {
     );
     try {
       const guardada = await this.postulacionRepository.save(postulacion);
+      this.despachadorWebhooks.emitir(
+        EventoWebhook.POSTULACION_CREADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(guardada._id),
+          fecha: guardada.fechaPostulacion,
+        },
+      );
       return this.toDTO(guardada);
     } catch (error) {
       if (error.code === 11000) {
@@ -294,11 +309,24 @@ export class PostulacionService {
         ),
       );
 
-      return this.toDTO({
+       const resultado = this.toDTO({
         ...postulacion.toObject(),
         estado: EstadoPostulacion.ACEPTADA,
         idColaborador: colaborador,
       });
+            this.despachadorWebhooks.emitir(
+        EventoWebhook.COLABORACION_ACEPTADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(idPostulacion),
+          esAnonima: Boolean(postulacion.esAnonima),
+          fecha: new Date().toISOString(),
+        },
+      );
+      return resultado;
     } catch (error) {
       const erroresRollback = [];
       if (postulacionAceptada) {

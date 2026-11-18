@@ -22,6 +22,7 @@ import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
 import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
 import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
 import Mapa from './features/busquedas/Mapa.jsx';
+import LinkedinCallback from './components/LinkedinCallback.jsx';
 
 const theme = createTheme({
   palette: {
@@ -59,6 +60,16 @@ function App() {
             <Routes>
               <Route path="/callback" element={<Callback />} />
               <Route path="/" element={<Layout />}>
+              <Route
+                    path="/linkedin/callback"
+                    element={
+                      <RequiereAuth>
+                        <RequiereRol roles={['COLECTIVO']}>
+                          <LinkedinCallback />
+                        </RequiereRol>
+                      </RequiereAuth>
+                    }
+                  />
                 <Route index element={<Home />} />
                 <Route path="/proyectos" element={<ListaProyectos />} />
                 <Route path="/proyectos/:id" element={<DetalleProyecto />} />

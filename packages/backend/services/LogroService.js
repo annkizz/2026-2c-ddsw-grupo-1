@@ -2,14 +2,17 @@ import { Logro } from "../domain/Logro.js";
 import { LogroRepository } from "../repositories/LogroRepository.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { NotFoundError } from "../errors/AppError.js";
-
+import { EstadoEnvio } from "../domain/EstadoEnvio.js";
+import { ConflictError } from "../errors/AppError.js"; 
 export class LogroService {
   constructor(
     logroRepository = new LogroRepository(),
     proyectoRepository = new ProyectoRepository(),
+    publicacionLinkedinService = null,
   ) {
     this.logroRepository = logroRepository;
     this.proyectoRepository = proyectoRepository;
+    this.publicacionLinkedinService = publicacionLinkedinService;
   }
 
   toDTO(logro) {
@@ -32,19 +35,52 @@ export class LogroService {
     }
   }
 
-  async crear(idProyecto, datosLogro) {
+  async crear(idProyecto,  { publicarEnLinkedin = false, ...datosLogro }, usuario) {
     await this.validarProyecto(idProyecto);
 
-    const logro = new Logro(
-      datosLogro.titulo,
-      datosLogro.descripcion,
-      datosLogro.fecha,
-      idProyecto,
-    );
+    // si pide publicar, se valida TODO antes de guardar
+    let proyecto = null;
+    let credenciales = null;
+    if (publicarEnLinkedin) {
+      proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+      credenciales = await this.publicacionLinkedinService.validarPuedePublicar(proyecto, usuario);
+    }
+
+    const logro = new Logro(datosLogro.titulo, datosLogro.descripcion, datosLogro.fecha, idProyecto);
 
     const guardado = await this.logroRepository.save(logro);
-    return this.toDTO(guardado);
-  }
+    if (!credenciales) return this.toDTO(guardado);
+
+    const publicacion = await this.publicarYRegistrar(proyecto, guardado, credenciales);
+    return this.toDTO({ ...(guardado.toObject?.() ?? guardado), publicacionLinkedin: publicacion });
+}
+
+  async publicarYRegistrar(proyecto, logro, credenciales) {
+    const resultado = await this.publicacionLinkedinService.publicarLogro(proyecto, logro, credenciales);
+    try {
+      await this.logroRepository.registrarPublicacion(logro._id ?? logro.id, resultado);
+    } catch (error) {
+      console.error(`[linkedin] no se pudo registrar el resultado: ${error.message}`);
+    }
+    return resultado;
+}
+
+// botón "Compartir en Linkedin" de un logro ya creado (también sirve para reintentar un FALLIDO)
+  async publicarEnLinkedin(idProyecto, idLogro, usuario) {
+    await this.validarProyecto(idProyecto);
+    const logro = await this.logroRepository.buscarPorId(idProyecto, idLogro);
+    if (!logro) {
+      throw new NotFoundError("logro no encontrado", "LOGRO_NO_ENCONTRADO");
+    }
+    if (logro.publicacionLinkedin?.estado === EstadoEnvio.ENVIADO) {
+      throw new ConflictError("El logro ya fue publicado en Linkedin", "LOGRO_YA_PUBLICADO");
+    }
+
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+    const credenciales = await this.publicacionLinkedinService.validarPuedePublicar(proyecto, usuario);
+    const publicacion = await this.publicarYRegistrar(proyecto, logro, credenciales);
+    return this.toDTO({ ...(logro.toObject?.() ?? logro), publicacionLinkedin: publicacion });
+}
 
   async obtenerPorProyecto(idProyecto) {
     await this.validarProyecto(idProyecto);
