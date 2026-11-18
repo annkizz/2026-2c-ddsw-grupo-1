@@ -155,17 +155,6 @@
   margin: 0 0 16px;
 }
 
-.detalle-barra {
-  height: 8px !important;
-  border-radius: 4px;
-  background: var(--line) !important;
-}
-
-.detalle-barra .MuiLinearProgress-bar {
-  background-color: var(--navy) !important;
-  border-radius: 4px;
-}
-
 .detalle-admin-panel {
   background: white;
   border: 1px solid var(--line);
@@ -308,6 +297,68 @@
 .texto-muted {
   color: var(--muted);
   font-size: 13px;
+}
+
+.perfil-vacantes {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.postulacion-dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.postulacion-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.postulacion-resumen strong {
+  color: var(--ink);
+}
+
+.postulacion-resumen span,
+.postulacion-instruccion {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.postulacion-instruccion {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.postulacion-anonimato {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  background: #f7f9fb;
+  border-radius: 8px;
+}
+
+.postulacion-anonimato div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.postulacion-anonimato strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.postulacion-anonimato small {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 @media (max-width: 900px) {

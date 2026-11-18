@@ -15,6 +15,15 @@ export const obtenerColaboraciones = async (idProyecto) => {
   return response.data;
 };
 
+export const crearPostulacion = async (token, idProyecto, idPerfil, postulacion) => {
+  const response = await api.post(
+    `/proyectos/${idProyecto}/perfiles/${idPerfil}/postulaciones`,
+    postulacion,
+    conToken(token)
+  );
+  return response.data;
+};
+
 export const sumarColaboradora = async (token, idProyecto, idColaborador) => {
   const response = await api.post(`/proyectos/${idProyecto}/colaboraciones`, { idColaborador }, conToken(token));
   return response.data;

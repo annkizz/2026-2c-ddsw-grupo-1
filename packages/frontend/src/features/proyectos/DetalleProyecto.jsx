@@ -18,10 +18,12 @@ import {
   obtenerProyectoPorId,
   obtenerPerfiles,
   obtenerLogros,
+  obtenerColaboraciones,
+  crearPostulacion,
   crearLogro,
   configurarBusqueda,
   actualizarAvance,
-} from '../../service/proyectos';
+} from '../../service/proyectosService';
 import { t } from '../../i18n/t';
 import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
@@ -32,13 +34,22 @@ const ES_ENLACE = /^https?:\/\/\S+$/i;
 const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { sesion, getAccessToken } = useAuth();
+  const { sesion, getAccessToken, isAuthenticated, cargando: authCargando, iniciarSesion } = useAuth();
 
   const [proyecto, setProyecto] = useState(null);
   const [perfiles, setPerfiles] = useState([]);
+  const [colaboraciones, setColaboraciones] = useState(null);
   const [logros, setLogros] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(null); // null | 'NO_ENCONTRADO' | 'ERROR'
+
+  const [modalPostulacionAbierto, setModalPostulacionAbierto] = useState(false);
+  const [perfilPostulando, setPerfilPostulando] = useState(null);
+  const [esAnonima, setEsAnonima] = useState(false);
+  const [guardandoPostulacion, setGuardandoPostulacion] = useState(false);
+  const [errorPostulacion, setErrorPostulacion] = useState('');
+  const [postulacionesEnviadas, setPostulacionesEnviadas] = useState({});
+  const [postulacionesPendientes, setPostulacionesPendientes] = useState({});
 
   const [modalAvanceAbierto, setModalAvanceAbierto] = useState(false);
 
@@ -63,14 +74,16 @@ const DetalleProyecto = () => {
     setCargando(true);
     setErrorCarga(null);
     try {
-      const [dataProyecto, dataPerfiles, dataLogros] = await Promise.all([
+      const [dataProyecto, dataPerfiles, dataLogros, dataColaboraciones] = await Promise.all([
         obtenerProyectoPorId(id),
         obtenerPerfiles(id).catch(() => []),
         obtenerLogros(id).catch(() => []),
+        obtenerColaboraciones(id).catch(() => null),
       ]);
       setProyecto(dataProyecto);
       setPerfiles(dataPerfiles);
       setLogros(dataLogros);
+      setColaboraciones(dataColaboraciones);
     } catch (error) {
       setErrorCarga(error.response?.status === 404 ? 'NO_ENCONTRADO' : 'ERROR');
     } finally {
@@ -123,6 +136,59 @@ const DetalleProyecto = () => {
   const avance = Math.min(100, Math.max(0, Number(proyecto.porcentajeConcrecion) || 0));
   const busquedaVigente = Boolean(proyecto.busquedaVigente);
   const fechaLimiteBusqueda = formatearFecha(proyecto.fechaLimiteBusqueda);
+
+  const abrirPostulacion = (perfil) => {
+    if (!isAuthenticated) {
+      iniciarSesion();
+      return;
+    }
+    if (sesion?.rol !== 'COLABORADOR') return;
+    setPerfilPostulando(perfil);
+    setEsAnonima(false);
+    setErrorPostulacion('');
+    setModalPostulacionAbierto(true);
+  };
+
+  const enviarPostulacion = async () => {
+    if (!perfilPostulando) return;
+    setGuardandoPostulacion(true);
+    setErrorPostulacion('');
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setErrorPostulacion(t('detalleProyecto.errorSesionPostulacion'));
+        return;
+      }
+      await crearPostulacion(token, id, perfilPostulando.id, { esAnonima });
+      setPostulacionesEnviadas((actuales) => ({
+        ...actuales,
+        [perfilPostulando.id]: true,
+      }));
+    } catch (error) {
+      const codigo = error.response?.data?.codigo;
+      const traducciones = {
+        BUSQUEDA_CERRADA: 'errorBusquedaCerradaPostulacion',
+        PROYECTO_FINALIZADO: 'errorProyectoFinalizadoPostulacion',
+        POSTULACION_YA_EXISTENTE: 'errorPostulacionExistente',
+        COLABORACION_YA_EXISTENTE: 'errorColaboracionExistente',
+        LIMITE_COLABORACIONES_ALCANZADO: 'errorVacantesCompletas',
+        ACCESO_POSTULACION_DENEGADO: 'errorSoloColaboradoras',
+      };
+      setErrorPostulacion(
+        codigo && traducciones[codigo]
+          ? t(`detalleProyecto.${traducciones[codigo]}`)
+          : t('detalleProyecto.errorServidorPostulacion')
+      );
+      if (codigo === 'POSTULACION_YA_EXISTENTE') {
+        setPostulacionesPendientes((actuales) => ({
+          ...actuales,
+          [perfilPostulando.id]: true,
+        }));
+      }
+    } finally {
+      setGuardandoPostulacion(false);
+    }
+  };
 
   // ---- Búsqueda ----
   const abrirConfigurarBusqueda = () => {
@@ -294,8 +360,16 @@ const DetalleProyecto = () => {
           <LinearProgress
             variant="determinate"
             value={avance}
-            className="detalle-barra"
             aria-label={t('detalleProyecto.seccionAvance')}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: 'var(--line)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: 'var(--navy)',
+                borderRadius: 4,
+              },
+            }}
           />
           <Button
             variant="outlined"
@@ -353,9 +427,24 @@ const DetalleProyecto = () => {
 
       <div className="detalle-perfiles-seccion">
         <h2>{t('detalleProyecto.seccionPerfiles')}</h2>
+        {colaboraciones === null &&
+          perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {t('detalleProyecto.errorCargarVacantes')}
+            </Alert>
+          )}
         <div className="detalle-perfiles-grid">
           {perfiles.length > 0 ? (
-            perfiles.map((perfil) => (
+            perfiles.map((perfil) => {
+              const ocupadas = (colaboraciones ?? []).filter(
+                (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
+              ).length;
+              const vacantesDisponibles =
+                perfil.limiteColaboraciones == null || colaboraciones == null
+                  ? null
+                  : Math.max(0, perfil.limiteColaboraciones - ocupadas);
+
+              return (
               <div key={perfil.id} className="perfil-card-publico">
                 <h3>{perfil.descripcion}</h3>
 
@@ -400,13 +489,48 @@ const DetalleProyecto = () => {
                   </div>
                 </div>
 
-                <Button variant="contained" fullWidth disabled={!busquedaVigente} sx={{ mt: 2 }}>
-                  {busquedaVigente
-                    ? t('detalleProyecto.postularme')
-                    : t('detalleProyecto.busquedaCerradaBtn')}
+                {vacantesDisponibles != null && (
+                  <div className="perfil-vacantes">
+                    {vacantesDisponibles === 0
+                      ? t('detalleProyecto.vacantesCompletas')
+                      : vacantesDisponibles === 1
+                        ? t('detalleProyecto.unaVacanteDisponible')
+                        : t('detalleProyecto.vacantesDisponibles', {
+                            cantidad: vacantesDisponibles,
+                          })}
+                  </div>
+                )}
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={
+                    !busquedaVigente ||
+                    esDueño ||
+                    authCargando ||
+                    (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
+                    Boolean(postulacionesEnviadas[perfil.id]) ||
+                    Boolean(postulacionesPendientes[perfil.id]) ||
+                    vacantesDisponibles === 0
+                  }
+                  onClick={() => abrirPostulacion(perfil)}
+                  sx={{ mt: 2 }}
+                >
+                  {postulacionesEnviadas[perfil.id]
+                    ? t('detalleProyecto.postulacionEnviada')
+                    : postulacionesPendientes[perfil.id]
+                      ? t('detalleProyecto.postulacionPendiente')
+                      : !busquedaVigente
+                        ? t('detalleProyecto.busquedaCerradaBtn')
+                        : sesion?.rol === 'COLECTIVO'
+                          ? t('detalleProyecto.soloColaboradoras')
+                          : !isAuthenticated
+                            ? t('detalleProyecto.iniciarSesionPostulacion')
+                            : t('detalleProyecto.postularme')}
                 </Button>
               </div>
-            ))
+              );
+            })
           ) : (
             <p className="texto-muted">{t('detalleProyecto.sinPerfiles')}</p>
           )}
@@ -517,6 +641,77 @@ const DetalleProyecto = () => {
             {t('detalleProyecto.volverAlDetalle')}
           </Button>
         </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={modalPostulacionAbierto}
+        onClose={() => !guardandoPostulacion && setModalPostulacionAbierto(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t('detalleProyecto.modalPostulacionTitulo')}</DialogTitle>
+        <DialogContent className="postulacion-dialogo" sx={{ pt: 1 }}>
+          <div className="postulacion-resumen">
+            <strong>{proyecto.titulo}</strong>
+            <span>{perfilPostulando?.descripcion}</span>
+          </div>
+          {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
+            <Alert severity="success">
+              <strong>{t('detalleProyecto.postulacionEnviadaTitulo')}</strong>
+              <div>{t('detalleProyecto.postulacionEnviadaDescripcion')}</div>
+            </Alert>
+          ) : (
+            <>
+              <p className="postulacion-instruccion">
+                {t('detalleProyecto.postulacionInstruccion')}
+              </p>
+              <div className="postulacion-anonimato">
+                <div>
+                  <strong>{t('detalleProyecto.anonimatoLabel')}</strong>
+                  <small>{t('detalleProyecto.anonimatoAyuda')}</small>
+                </div>
+                <Switch
+                  checked={esAnonima}
+                  onChange={(event) => setEsAnonima(event.target.checked)}
+                  disabled={guardandoPostulacion}
+                  slotProps={{ input: { 'aria-label': t('detalleProyecto.anonimatoLabel') } }}
+                />
+              </div>
+              {errorPostulacion && <Alert severity="error">{errorPostulacion}</Alert>}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
+            <Button onClick={() => setModalPostulacionAbierto(false)}>
+              {t('detalleProyecto.cerrar')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => setModalPostulacionAbierto(false)}
+                disabled={guardandoPostulacion}
+              >
+                {t('detalleProyecto.cancelar')}
+              </Button>
+              <Button
+                variant="contained"
+                onClick={enviarPostulacion}
+                disabled={
+                  guardandoPostulacion ||
+                  Boolean(postulacionesPendientes[perfilPostulando?.id])
+                }
+                startIcon={
+                  guardandoPostulacion ? <CircularProgress size={16} color="inherit" /> : null
+                }
+              >
+                {guardandoPostulacion
+                  ? t('detalleProyecto.enviandoPostulacion')
+                  : t('detalleProyecto.enviarPostulacion')}
+              </Button>
+            </>
+          )}
+        </DialogActions>
       </Dialog>
 
       {/* Actualizar avance (solo el colectivo dueño) */}

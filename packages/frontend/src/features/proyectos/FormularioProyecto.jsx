@@ -12,7 +12,7 @@ import {
   obtenerProyectoPorId,
   configurarBusqueda,
   programarCierre,
-} from '../../service/proyectos';
+} from '../../service/proyectosService';
 import { t } from '../../i18n/t';
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';

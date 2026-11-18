@@ -18,11 +18,11 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
-  obtenerHabilidades,
   crearPerfil,
   actualizarPerfil,
   eliminarPerfil,
-} from '../../service/proyectos';
+} from '../../service/proyectosService';
+import { obtenerHabilidades } from '../../service/habilidadesService';
 import { t } from '../../i18n/t';
 import {
   TIPOS_COMPROMISO,

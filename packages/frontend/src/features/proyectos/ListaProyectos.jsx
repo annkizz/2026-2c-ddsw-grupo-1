@@ -14,10 +14,10 @@ import {
 } from '@mui/material';
 import { FiPlus, FiEye, FiEdit2, FiCheck, FiInfo, FiLock, FiFolder } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { obtenerProyectos, cerrarProyecto } from '../../service/proyectos';
+import { obtenerProyectos, cerrarProyecto } from '../../service/proyectosService';
 import { t } from '../../i18n/t';
 import { formatearFecha } from '../../utils/fechas';
-import './ListaProyectos.css';
+import './ListaProyectos copy.css';
 
 const filtros = [
   { labelKey: 'proyectos.todos', value: 'TODOS' },
