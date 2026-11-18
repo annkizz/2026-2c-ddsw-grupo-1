@@ -18,6 +18,8 @@ import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 
 const NIVELES_MAPA = new Set(["provincia", "pais"]);
 const ESTADOS_VALIDOS = new Set(Object.values(Estado));
@@ -30,6 +32,7 @@ export class ProyectoService {
     colectivoRepository = new ColectivoRepository(),
     colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
+    despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
@@ -37,6 +40,7 @@ export class ProyectoService {
     this.colectivoRepository = colectivoRepository;
     this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
+    this.despachadorWebhooks = despachadorWebhooks;
   }
 
   crear = async (datosProyecto) => {
@@ -148,7 +152,7 @@ export class ProyectoService {
     if (!proyecto.cierreVencido(ahora)) {
       return false;
     }
-    await this.finalizar(proyecto);
+    await this.finalizar(proyecto, "AUTOMATICO");
     return true;
   }
 
@@ -164,10 +168,23 @@ export class ProyectoService {
     return proyecto;
   }
 
-  async finalizar(proyecto) {
+    async finalizar(proyecto, motivo = "MANUAL") {
+    const yaEstabaFinalizado = proyecto.estaFinalizado();
     proyecto.cerrar();
-    return this.proyectoRepository.save(proyecto);
-  }
+    const guardado = await this.proyectoRepository.save(proyecto);
+    if (!yaEstabaFinalizado) {
+     this.despachadorWebhooks.emitir(
+       EventoWebhook.PROYECTO_CERRADO,
+       proyecto.idColectivo,
+       {
+         idProyecto: String(proyecto._id),
+         titulo: proyecto.titulo,          motivo,
+          fecha: new Date().toISOString(),
+        },
+      );
+    }
+      return guardado;
+   }
 
   async cerrarProyectosVencidos(ahora = new Date()) {
     const vencidos = await this.proyectoRepository.obtenerVencidos(ahora);
@@ -176,7 +193,7 @@ export class ProyectoService {
 
     for (const proyecto of vencidos) {
       try {
-        await this.finalizar(proyecto);
+        await this.finalizar(proyecto, "AUTOMATICO");
         cerrados.push(String(proyecto._id));
       } catch (error) {
         fallidos.push({

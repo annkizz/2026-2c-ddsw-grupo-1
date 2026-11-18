@@ -46,8 +46,16 @@ import {
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { PostulacionService } from "../services/PostulacionService.js";
 import { PostulacionController } from "../controllers/PostulacionController.js";
+import { Rol } from "../domain/Rol.js";
+import { WebhookRepository } from "../repositories/WebhookRepository.js";
+import { WebhookService } from "../services/WebhookService.js";
+import { WebhookController } from "../controllers/WebhookController.js";
+import { DespachadorWebhooks } from "../services/webhooks/DespachadorWebhooks.js";
+import { crearWebhookRouter } from "./webhookRouter.js";
 
 const router = express.Router();
+const webhookRepository = new WebhookRepository();
+const despachadorWebhooks = new DespachadorWebhooks(webhookRepository);
 
 const usuarioRepository = new UsuarioRepository();
 const autenticar = crearAutenticar(usuarioRepository, crearVerificadorLogto());
@@ -112,11 +120,20 @@ const postulacionService = new PostulacionService(
   colaboradorService,
   colaboracionRepository,
   postulacionRepository,
+  despachadorWebhooks,
 );
 const postulacionController = new PostulacionController(
   postulacionService,
   usuarioService,
 );
+
+const webhookService = new WebhookService(
+  webhookRepository,
+  despachadorWebhooks,
+);
+
+const webhookController = new WebhookController(webhookService, usuarioService);
+
 
 const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedInService);
@@ -183,5 +200,12 @@ router.use(
 );
 router.use(crearMatchingRouter(matchingController));
 router.use("/linkedin", autenticar, crearLinkedInRouter(linkedInController));
+
+router.use(
+  "/colectivos/:idColectivo/webhooks",
+  autenticar,
+  requerirRol(Rol.COLECTIVO),
+  crearWebhookRouter(webhookController),
+);
 
 export default router;
