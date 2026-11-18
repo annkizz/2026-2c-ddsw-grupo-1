@@ -49,3 +49,8 @@ export const actualizarColectivo = async (token, id, formulario, ubicacionAnteri
   );
   return response.data;
 };
+
+export const obtenerMiPerfilColectivo = async (token) => {
+  const response = await api.get('/colectivos/me', conToken(token));
+  return response.data;
+};

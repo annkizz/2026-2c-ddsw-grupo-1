@@ -28,6 +28,14 @@ export class ColectivoService {
     };
   }
 
+  toPrivateDTO(colectivo) {
+    return {
+      ...this.toDTO(colectivo),
+      aceptaMensajeria: colectivo.aceptaMensajeria ?? false,
+      mediosDeContacto: colectivo.mediosDeContacto ?? [],
+    };
+  }
+
   armarColectivo(datosColectivo) {
     return new Colectivo(
       datosColectivo.nombre,
@@ -35,6 +43,8 @@ export class ColectivoService {
       datosColectivo.ubicacion,
       datosColectivo.tipoDeColectivo,
       normalizarEtiquetas(datosColectivo.etiquetas),
+      datosColectivo.mediosDeContacto,
+      datosColectivo.aceptaMensajeria,
     );
   }
 
@@ -78,11 +88,27 @@ export class ColectivoService {
         filtrosNormalizados.etiquetas,
       );
     }
-
     const colectivos = await this.colectivoRepository.obtenerTodos(
       filtrosNormalizados,
     );
     return colectivos.map((colectivo) => this.toDTO(colectivo));
+  }
+
+  async obtenerPorId(idColectivo) {
+    return this.toDTO(await this.buscarOFallar(idColectivo));
+  }
+
+  async obtenerPorUsuario(usuario) {
+    const colectivo = await this.colectivoRepository.buscarPorUsuario(
+      usuario._id,
+    );
+    if (!colectivo) {
+      throw new NotFoundError(
+        "todavia no registraste el perfil de tu colectivo",
+        "PERFIL_NO_ENCONTRADO",
+      );
+    }
+    return this.toPrivateDTO(colectivo);
   }
 
   async buscarOFallar(idColectivo) {

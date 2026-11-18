@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ColectivoService } from "../services/ColectivoService.js";
+import { medioDeContactoSchema } from "../schemas/zod/medioDeContactoSchema.js";
 
 export const colectivoSchema = z
   .object({
@@ -24,6 +25,8 @@ export const colectivoSchema = z
       .array(z.string().min(1).max(ETIQUETA_MAX))
       .max(ETIQUETAS_MAX)
       .optional(),
+    aceptaMensajeria: z.boolean().default(false),
+    mediosDeContacto: z.array(medioDeContactoSchema).default([]),
   })
   .strict();
 
@@ -51,6 +54,11 @@ export class ColectivoController {
 
   async obtenerPorId(req, res) {
     const colectivo = await this.colectivoService.obtenerPorId(req.params.id);
+    res.status(200).json(colectivo);
+  }
+
+  async obtenerPropio(req, res) {
+    const colectivo = await this.colectivoService.obtenerPorUsuario(req.usuario);
     res.status(200).json(colectivo);
   }
 

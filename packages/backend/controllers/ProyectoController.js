@@ -88,7 +88,10 @@ export class ProyectoController {
   }
 
   crear = async (req, res) => {
-    const proyectoNuevo = await this.proyectoService.crear(req.body);
+    const proyectoNuevo = await this.proyectoService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(proyectoNuevo);
   };
 
