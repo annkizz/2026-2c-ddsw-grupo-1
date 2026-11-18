@@ -38,3 +38,8 @@ export const actualizarColectivo = async (token, id, datos) => {
   const response = await api.put(`/colectivos/${id}`, datos, conToken(token));
   return response.data;
 };
+
+export const obtenerMiPerfilColectivo = async (token) => {
+  const response = await api.get('/colectivos/me', conToken(token));
+  return response.data;
+};

@@ -25,6 +25,11 @@ export const obtenerMiPerfilColaboradora = async (token) => {
   return response.data;
 };
 
+export const actualizarColaboradora = async (token, id, datos) => {
+  const response = await api.put(`/colaboradoras/${id}`, datos, conToken(token));
+  return response.data;
+};
+
 export const obtenerProyectosDeColaboradora = async (id) => {
   const response = await api.get(`/colaboradoras/${id}/proyectos`);
   return response.data;

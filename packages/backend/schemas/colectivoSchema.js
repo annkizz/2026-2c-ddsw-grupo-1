@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Colectivo } from "../domain/Colectivo.js";
 import { TipoColectivo } from "../domain/TipoColectivo.js";
+import { medioDeContactoSchema } from "./medioDeContactoSchema.js";
 
 const ubicacionSchema = new mongoose.Schema(
   {
@@ -22,6 +23,8 @@ const colectivoSchema = new mongoose.Schema(
       required: true,
     },
     etiquetas: { type: [String], default: [] },
+    aceptaMensajeria: { type: Boolean, default: false },
+    mediosDeContacto: { type: [medioDeContactoSchema], default: [] },
     proyectos: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Proyecto" }],
       default: [],

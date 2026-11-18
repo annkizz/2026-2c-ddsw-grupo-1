@@ -47,7 +47,7 @@ const theme = createTheme({
 const logtoConfig = {
   endpoint: process.env.REACT_APP_LOGTO_ENDPOINT,
   appId: process.env.REACT_APP_LOGTO_APP_ID,
-  scopes: ['offline_access'],
+  scopes: ['offline_access', 'email'],
   resources: RESOURCE ? [RESOURCE] : []
 };
 

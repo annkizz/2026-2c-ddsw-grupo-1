@@ -37,6 +37,8 @@ export class ColectivoRepository {
           ubicacion: unColectivo.ubicacion,
           tipoDeColectivo: unColectivo.tipoDeColectivo,
           etiquetas: unColectivo.etiquetas ?? [],
+          aceptaMensajeria: unColectivo.aceptaMensajeria ?? false,
+          mediosDeContacto: unColectivo.mediosDeContacto ?? [],
           usuario: unColectivo.usuario,
         },
         {

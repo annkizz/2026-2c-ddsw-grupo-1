@@ -12,6 +12,7 @@ import {
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
 } from "../errors/AppError.js";
 import { ColaboradorService } from "./ColaboradorService.js";

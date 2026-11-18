@@ -15,6 +15,12 @@ export function crearColectivoRouter(colectivoController, autenticar) {
     );
 
   router
+    .route("/me")
+    .get(autenticar, requerirRol(Rol.COLECTIVO), (req, res) =>
+      colectivoController.obtenerPropio(req, res),
+    );
+
+  router
     .route("/:id")
     .get((req, res) => colectivoController.obtenerPorId(req, res))
     .put(

@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React, { useState } from 'react';
 import { useLogto } from '@logto/react';
 import { obtenerSesion } from '../service/usuariosService';
 import { AuthProvider, RESOURCE, useAuth } from './useAuth.jsx';
@@ -13,13 +14,24 @@ jest.mock('../service/usuariosService', () => ({
 }));
 
 const AccionesAuth = () => {
-  const { iniciarSesion, registrarse, recargarSesion, errorSesion } = useAuth();
+  const {
+    iniciarSesion,
+    registrarse,
+    recargarSesion,
+    errorSesion,
+    obtenerEmailCuenta,
+    cargando,
+  } = useAuth();
+  const [email, setEmail] = useState('');
 
   return (
     <>
       <button onClick={iniciarSesion}>Iniciar sesión</button>
       <button onClick={registrarse}>Crear cuenta</button>
       <button onClick={recargarSesion}>Verificar sesión</button>
+      <button onClick={async () => setEmail(await obtenerEmailCuenta())}>Leer email</button>
+      {email && <output>{email}</output>}
+      <output data-testid="auth-loading">{String(cargando)}</output>
       {errorSesion && <output>{errorSesion}</output>}
     </>
   );
@@ -28,11 +40,13 @@ const AccionesAuth = () => {
 describe('flujo de autenticación', () => {
   const signIn = jest.fn();
   const getAccessToken = jest.fn();
+  const fetchUserInfo = jest.fn();
 
   beforeEach(() => {
     sessionStorage.clear();
     jest.clearAllMocks();
     getAccessToken.mockResolvedValue('access-token');
+    fetchUserInfo.mockResolvedValue({ email: 'cuenta@example.com' });
     obtenerSesion.mockResolvedValue({ tienePerfil: true });
     useLogto.mockReturnValue({
       isAuthenticated: false,
@@ -40,6 +54,7 @@ describe('flujo de autenticación', () => {
       signIn,
       signOut: jest.fn(),
       getAccessToken,
+      fetchUserInfo,
     });
   });
 
@@ -103,6 +118,40 @@ describe('flujo de autenticación', () => {
     fireEvent.click(screen.getByText('Verificar sesión'));
 
     await waitFor(() => expect(obtenerSesion).not.toHaveBeenCalled());
+  });
+
+  it('obtiene el email de la cuenta desde el endpoint de usuario de Logto', async () => {
+    render(
+      <AuthProvider>
+        <AccionesAuth />
+      </AuthProvider>
+    );
+
+    fireEvent.click(screen.getByText('Leer email'));
+
+    expect(await screen.findByText('cuenta@example.com')).toBeInTheDocument();
+    expect(fetchUserInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('no bloquea una sesión autenticada por operaciones de Logto en curso', async () => {
+    useLogto.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: true,
+      signIn,
+      signOut: jest.fn(),
+      getAccessToken,
+      fetchUserInfo,
+    });
+
+    render(
+      <AuthProvider>
+        <AccionesAuth />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth-loading')).toHaveTextContent('false');
+    });
   });
 
   it('muestra el error de autenticación devuelto por el servidor', async () => {

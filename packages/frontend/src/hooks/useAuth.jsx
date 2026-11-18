@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLogto } from '@logto/react';
 import { obtenerSesion } from '../service/usuariosService';
 import { borrarTipo } from '../features/registro/tipoElegido';
@@ -15,7 +15,8 @@ export const AuthProvider = ({ children }) => {
     error: errorLogto,
     signIn,
     signOut: logtoSignOut,
-    getAccessToken: logtoGetAccessToken
+    getAccessToken: logtoGetAccessToken,
+    fetchUserInfo: logtoFetchUserInfo
   } = useLogto();
   const [sesion, setSesion] = useState(null);
   const [cargandoSesion, setCargandoSesion] = useState(false);
@@ -75,6 +76,26 @@ export const AuthProvider = ({ children }) => {
     [signIn]
   );
   const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);
+  const obtenerEmailCuenta = useCallback(async () => {
+    const userInfo = await logtoFetchUserInfo();
+    const email = typeof userInfo?.email === 'string' ? userInfo.email.trim() : '';
+    if (!email) {
+      throw new Error(
+        'Logto no devolvio el email. Verifica que la cuenta tenga un email y que la aplicacion tenga habilitado el permiso email.'
+      );
+    }
+    return email;
+  }, [logtoFetchUserInfo]);
+  const cambiarContrasena = useCallback(
+    (email) =>
+      signIn({
+        redirectUri: `${window.location.origin}/callback`,
+        firstScreen: 'reset_password',
+        identifiers: ['email'],
+        ...(email ? { loginHint: email } : {})
+      }),
+    [signIn]
+  );
   
   const contextValue = useMemo(
     () => ({
@@ -82,15 +103,20 @@ export const AuthProvider = ({ children }) => {
       errorLogto,
       errorSesion,
       // true mientras Logto o el backend todavía no respondieron
-      cargando: isLoading || cargandoSesion || (isAuthenticated && !sesion && !errorSesion),
+      cargando:
+        (!isAuthenticated && isLoading) ||
+        cargandoSesion ||
+        (isAuthenticated && !sesion && !errorSesion),
       sesion, // { rol, tienePerfil, idColectivo, idColaborador, ... }
       iniciarSesion,
       registrarse,
       cerrarSesion,
+      obtenerEmailCuenta,
+      cambiarContrasena,
       getAccessToken,
       recargarSesion
     }),
-    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, getAccessToken, recargarSesion]
+    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
