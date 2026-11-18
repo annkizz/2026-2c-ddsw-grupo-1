@@ -269,5 +269,23 @@
     },
     "cupoLimitado": "Hasta {cantidad} colaboraciones",
     "sinLimite": "Sin límite"
+  },
+  "linkedin": {
+    "conectar": "Conectar LinkedIn",
+    "reconectar": "Reconectar LinkedIn",
+    "desconectar": "Desconectar",
+    "conectadoComo": "Conectado como",
+    "avisoNoConectado": "Conectá tu cuenta de LinkedIn para compartir logros en tu perfil. Vas a ir a LinkedIn y volver acá.",
+    "avisoVencida": "La conexión con LinkedIn venció. Volvé a conectarla para publicar.",
+    "publicarAlCrear": "Publicar también en mi LinkedIn",
+    "compartir": "Compartir en LinkedIn",
+    "reintentar": "Reintentar publicación",
+    "publicado": "Publicado en LinkedIn",
+    "verPublicacion": "Ver publicación",
+    "okPublicado": "¡Logro publicado en LinkedIn!",
+    "falloPublicacion": "El logro se guardó, pero no se pudo publicar en LinkedIn.",
+    "callbackConectando": "Conectando con LinkedIn...",
+    "callbackError": "No pudimos conectar tu cuenta de LinkedIn. Es posible que hayas cancelado el permiso.",
+    "volver": "Volver"
   }
 }
