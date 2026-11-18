@@ -14,6 +14,8 @@ export class Proyecto {
     fechaLimiteBusqueda = null,
     etiquetas = [],
     ubicacion = null,
+    destacado = false,
+    destacadoHasta = null,
   ) {
     this.titulo = titulo;
     this.descripcion = descripcion;
@@ -29,6 +31,8 @@ export class Proyecto {
     this.fechaLimiteBusqueda = fechaLimiteBusqueda;
     this.etiquetas = etiquetas ?? [];
     this.ubicacion = ubicacion ?? null;
+    this.destacado = destacado ?? false;
+    this.destacadoHasta = destacadoHasta ?? null;
   }
   cambiarEstado(nuevoEstado) {
     this.estado = nuevoEstado;
@@ -57,6 +61,12 @@ export class Proyecto {
   programarCierre(unaFechaLimite) {
     this.fechaLimiteCierre = unaFechaLimite;
   }
+
+  configurarDestacado(destacado, destacadoHasta = null) {
+    this.destacado = destacado;
+    this.destacadoHasta = destacado ? destacadoHasta : null;
+  }
+
   tieneCierreProgramado() {
     return this.fechaLimiteCierre !== null;
   }

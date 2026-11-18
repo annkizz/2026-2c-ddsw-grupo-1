@@ -35,6 +35,17 @@ export class ProyectoRepository {
     return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
   }
 
+  obtenerDestacados(ahora = new Date()) {
+    return this.proyectoModel
+      .find({
+        estado: Estado.ACTIVO,
+        destacado: true,
+        destacadoHasta: { $gt: ahora },
+      })
+      .sort({ destacadoHasta: 1, fechaInicio: -1 })
+      .exec();
+  }
+
   obtenerActivosParaMapa() {
     return this.proyectoModel
       .find({ estado: Estado.ACTIVO })
@@ -119,6 +130,8 @@ export class ProyectoRepository {
           fechaLimiteBusqueda: unProyecto.fechaLimiteBusqueda,
           etiquetas: unProyecto.etiquetas,
           ubicacion: unProyecto.ubicacion,
+          destacado: unProyecto.destacado ?? false,
+          destacadoHasta: unProyecto.destacadoHasta ?? null,
         },
         {
           upsert: true,

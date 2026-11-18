@@ -116,7 +116,41 @@ export class ProyectoService {
       busquedaVigente: proyecto.busquedaVigente(),
       etiquetas: proyecto.etiquetas ?? [],
       ubicacion: proyecto.ubicacion ?? null,
+      destacado: proyecto.destacado ?? false,
+      destacadoHasta: proyecto.destacadoHasta ?? null,
     };
+  }
+
+  async obtenerDestacados(ahora = new Date()) {
+    const proyectos = await this.proyectoRepository.obtenerDestacados(ahora);
+    return proyectos.map((proyecto) => this.toDTO(proyecto));
+  }
+
+  async configurarDestacado(idProyecto, { destacado, destacadoHasta }) {
+    const proyecto = await this.buscarProyectoOFallar(idProyecto);
+
+    if (destacado) {
+      if (proyecto.estaFinalizado()) {
+        throw new ConflictError(
+          "No se puede destacar un proyecto finalizado",
+          "PROYECTO_FINALIZADO",
+        );
+      }
+
+      if (
+        !(destacadoHasta instanceof Date) ||
+        Number.isNaN(destacadoHasta.getTime()) ||
+        destacadoHasta <= new Date()
+      ) {
+        throw new BadRequestError(
+          "La fecha de vencimiento del destacado debe ser futura",
+          "FECHA_DESTACADO_INVALIDA",
+        );
+      }
+    }
+
+    proyecto.configurarDestacado(destacado, destacado ? destacadoHasta : null);
+    return this.toDTO(await this.proyectoRepository.save(proyecto));
   }
 
   validarFechaLimite(fechaLimiteCierre, ahora = new Date()) {
