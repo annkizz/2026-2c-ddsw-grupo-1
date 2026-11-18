@@ -18,6 +18,7 @@ import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 
 const NIVELES_MAPA = new Set(["provincia", "pais"]);
 const ESTADOS_VALIDOS = new Set(Object.values(Estado));
@@ -30,6 +31,7 @@ export class ProyectoService {
     colectivoRepository = new ColectivoRepository(),
     colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
+    postulacionRepository = new PostulacionRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
@@ -37,6 +39,7 @@ export class ProyectoService {
     this.colectivoRepository = colectivoRepository;
     this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
+    this.postulacionRepository = postulacionRepository;
   }
 
   crear = async (datosProyecto) => {
@@ -166,7 +169,12 @@ export class ProyectoService {
 
   async finalizar(proyecto) {
     proyecto.cerrar();
-    return this.proyectoRepository.save(proyecto);
+    const guardado = await this.proyectoRepository.save(proyecto);
+    // Al cerrarse el proyecto, las postulaciones pendientes se rechazan.
+    await this.postulacionRepository.rechazarPendientesDeProyecto(
+      proyecto._id,
+    );
+    return guardado;
   }
 
   async cerrarProyectosVencidos(ahora = new Date()) {

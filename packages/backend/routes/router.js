@@ -97,6 +97,7 @@ const proyectoService = new ProyectoService(
   colectivoRepository,
   colaboracionRepository,
   perfilRepository,
+  postulacionRepository,
 );
 const proyectoController = new ProyectoController(proyectoService);
 

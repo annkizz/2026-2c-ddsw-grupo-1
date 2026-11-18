@@ -57,6 +57,15 @@ export class PostulacionRepository {
       .exec();
   }
 
+  rechazarPendientesDeProyecto(idProyecto) {
+    return this.model
+      .updateMany(
+        { idProyecto, estado: EstadoPostulacion.PENDIENTE },
+        { $set: { estado: EstadoPostulacion.RECHAZADA } },
+      )
+      .exec();
+  }
+
   reabrirSiAceptada(id) {
     return this.model
       .updateOne(
