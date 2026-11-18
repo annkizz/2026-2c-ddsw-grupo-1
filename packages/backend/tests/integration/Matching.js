@@ -17,6 +17,7 @@ import { ProyectoModel } from "../../schemas/proyectoSchema.js";
 import { ColaboradorModel } from "../../schemas/colaboradorSchema.js";
 import { PerfilModel } from "../../schemas/perfilSchema.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
+import { TipoAceptacion } from "../../domain/TipoAceptacion.js";
 import { crearAppDeMatching } from "./utils/buildApp.js";
 import {
   conectarALaBaseDePrueba,
@@ -354,6 +355,7 @@ describe("MatchingService con al menos una habilidad requerida (integración)", 
         horas: 5,
         tipoColaboracion: "GRATUITA",
       },
+      tipoAceptacion: TipoAceptacion.MANUAL,
     });
   };
 
