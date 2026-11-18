@@ -925,7 +925,11 @@ const DetalleProyecto = () => {
                 checked={busquedaSwitch}
                 onChange={(e) => setBusquedaSwitch(e.target.checked)}
                 disabled={guardandoBusqueda || esFinalizado}
-                inputProps={{ 'aria-label': t('formularioProyecto.labelBusquedaAbierta') }}
+                slotProps={{
+                  input: {
+                    'aria-label': t('formularioProyecto.labelBusquedaAbierta'),
+                  },
+                }}
               />
             </div>
 
@@ -943,7 +947,7 @@ const DetalleProyecto = () => {
                   : t('formularioProyecto.ayudaFechaLimiteInactiva'))
               }
               disabled={guardandoBusqueda || esFinalizado || !busquedaSwitch}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
               sx={{ mt: 2 }}
             />

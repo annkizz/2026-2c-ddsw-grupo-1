@@ -698,7 +698,10 @@ export class ProyectoService {
       throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
     }
 
-    const colectivoUsuario = await colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id);
+    const idUsuario = usuario?._id ?? usuario?.id;
+    const colectivoUsuario = idUsuario
+      ? await colectivoRepository.buscarPorUsuario(idUsuario)
+      : null;
     if (!colectivoUsuario) {
       throw new ForbiddenError("El usuario no tiene un colectivo asociado", "COLECTIVO_NO_ENCONTRADO");
     }

@@ -159,6 +159,7 @@ export class ProyectoController {
     const avance = await this.proyectoService.actualizarAvance(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(200).json(avance);
   }
@@ -176,7 +177,7 @@ export class ProyectoController {
     }
 
     const proyectoCerrado =
-      await this.proyectoService.cerrarProyecto(proyectoId);
+      await this.proyectoService.cerrarProyecto(proyectoId, req.usuario);
     res.status(200).json(proyectoCerrado);
   }
 
@@ -200,6 +201,7 @@ export class ProyectoController {
     const proyecto = await this.proyectoService.configurarBusqueda(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(200).json(proyecto);
   }

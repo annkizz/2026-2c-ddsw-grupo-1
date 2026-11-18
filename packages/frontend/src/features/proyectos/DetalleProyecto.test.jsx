@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import {
@@ -109,5 +109,38 @@ describe('DetalleProyecto - postulaciones', () => {
 
     expect(await screen.findByText('No quedan vacantes para este perfil')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Postularme' })).toBeDisabled();
+  });
+
+  it('mantiene la etiqueta de fecha flotada cuando la búsqueda está cerrada', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      isAuthenticated: true,
+      cargando: false,
+    });
+    obtenerProyectoPorId.mockResolvedValueOnce({
+      id: 'proyecto-1',
+      idColectivo: 'colectivo-1',
+      titulo: 'Proyecto solidario',
+      descripcion: 'Descripción',
+      estado: 'ACTIVO',
+      busquedaAbierta: false,
+      busquedaVigente: false,
+      fechaLimiteBusqueda: null,
+    });
+
+    render(<DetalleProyecto />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Configurar búsqueda' }));
+
+    const fecha = screen.getByLabelText(
+      'Fecha límite de la búsqueda (opcional)',
+    );
+    expect(fecha).toBeDisabled();
+    expect(
+      screen.getByText('Fecha límite de la búsqueda (opcional)', {
+        selector: 'label',
+      }),
+    ).toHaveClass('MuiInputLabel-shrink');
   });
 });
