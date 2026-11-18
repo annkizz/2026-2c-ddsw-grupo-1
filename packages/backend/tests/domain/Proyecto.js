@@ -224,5 +224,26 @@ describe("Dominio - Proyecto", () => {
       expect(proyecto.idColectivo).toBe("col-1");
       expect(proyecto.estado).toBe("ACTIVO");
     });
+
+    it("editarDatos reemplaza las etiquetas cuando se envían", () => {
+      const proyecto = crear();
+
+      proyecto.editarDatos({
+        titulo: "Nuevo",
+        descripcion: "Nueva descripción",
+        etiquetas: ["salud", "comunidad"],
+      });
+
+      expect(proyecto.etiquetas).toEqual(["salud", "comunidad"]);
+    });
+
+    it("editarDatos sin etiquetas conserva las que ya tenía", () => {
+      const proyecto = crear();
+      proyecto.etiquetas = ["salud"];
+
+      proyecto.editarDatos({ titulo: "Nuevo", descripcion: "Nueva descripción" });
+
+      expect(proyecto.etiquetas).toEqual(["salud"]);
+    });
   });
 });

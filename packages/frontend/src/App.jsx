@@ -19,6 +19,9 @@ import Notificaciones from './features/notificaciones/Notificaciones.jsx';
 import MiPerfil from './features/perfil/MiPerfil.jsx';
 import FormularioProyecto from './features/proyectos/FormularioProyecto.jsx';
 import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
+import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
+import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
+import Mapa from './features/busquedas/Mapa.jsx';
 
 const theme = createTheme({
   palette: {
@@ -59,6 +62,36 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/proyectos" element={<ListaProyectos />} />
                 <Route path="/proyectos/:id" element={<DetalleProyecto />} />
+                <Route
+                  path="/buscar-proyectos"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLABORADOR']}>
+                        <BuscadorProyectos />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
+                <Route
+                  path="/mapa"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLABORADOR']}>
+                        <Mapa />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
+                <Route
+                  path="/buscar-colaboradores"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLECTIVO']}>
+                        <BuscadorColaboradores />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
                 <Route path="/colaboradoras/:id" element={<PerfilColaboradora />} />
                 <Route path="/colectivos/:id" element={<PerfilColectivo />} />
 

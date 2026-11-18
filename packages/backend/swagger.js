@@ -184,7 +184,8 @@ const swaggerSpec = {
         ],
         responses: {
           200: {
-            description: "Lista de colaboradoras compatibles con el perfil",
+            description:
+              "Lista de colaboradoras compatibles con el perfil, ordenada por puntaje descendente",
             content: {
               "application/json": {
                 schema: {
@@ -201,6 +202,21 @@ const swaggerSpec = {
                       },
                       presentacion: { type: "string" },
                       tieneCoincidencia: { type: "boolean" },
+                      puntaje: {
+                        type: "integer",
+                        description:
+                          "2 por cada habilidad requerida en común + 1 por cada opcional",
+                      },
+                      puntajeMaximo: {
+                        type: "integer",
+                        description:
+                          "Máximo posible del perfil: 2 por requerida + 1 por opcional",
+                      },
+                      porcentajeCobertura: {
+                        type: "integer",
+                        description:
+                          "Puntaje alcanzado sobre el máximo posible del perfil",
+                      },
                       requeridasCoincidentes: {
                         type: "array",
                         items: { type: "string" },
@@ -241,7 +257,8 @@ const swaggerSpec = {
         ],
         responses: {
           200: {
-            description: "Lista de proyectos compatibles",
+            description:
+              "Lista de proyectos compatibles, ordenada por puntaje descendente",
             content: {
               "application/json": {
                 schema: {
@@ -252,6 +269,26 @@ const swaggerSpec = {
                       id: { type: "string" },
                       titulo: { type: "string" },
                       descripcion: { type: "string" },
+                      puntaje: {
+                        type: "integer",
+                        description:
+                          "Suma del puntaje de todos los perfiles compatibles",
+                      },
+                      puntajeMaximo: {
+                        type: "integer",
+                        description:
+                          "Suma del máximo posible de los perfiles con requeridas del proyecto",
+                      },
+                      porcentajeCobertura: {
+                        type: "integer",
+                        description:
+                          "Puntaje alcanzado sobre el máximo posible del proyecto",
+                      },
+                      porcentajeRequeridas: {
+                        type: "integer",
+                        description:
+                          "Habilidades requeridas cubiertas sobre el total de requeridas del proyecto",
+                      },
                       perfilesCompatibles: {
                         type: "array",
                         items: {
@@ -262,6 +299,21 @@ const swaggerSpec = {
                             compromiso: {
                               type: "object",
                               additionalProperties: true,
+                            },
+                            puntaje: {
+                              type: "integer",
+                              description:
+                                "2 por cada requerida en común + 1 por cada opcional",
+                            },
+                            puntajeMaximo: {
+                              type: "integer",
+                              description:
+                                "Máximo posible del perfil: 2 por requerida + 1 por opcional",
+                            },
+                            porcentajeCobertura: {
+                              type: "integer",
+                              description:
+                                "Puntaje alcanzado sobre el máximo posible del perfil",
                             },
                             requeridasCoincidentes: {
                               type: "array",
@@ -1259,7 +1311,7 @@ const swaggerSpec = {
         },
       },
       put: {
-        summary: "Edita el título y la descripción de un proyecto",
+        summary: "Edita el título, la descripción y las etiquetas de un proyecto",
         parameters: [
           {
             in: "path",
@@ -1281,6 +1333,14 @@ const swaggerSpec = {
                   descripcion: {
                     type: "string",
                     example: "Sitio para que voluntarias y voluntarios reserven turnos.",
+                  },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Salud"],
+                    description:
+                      "req 34: Lista de etiquetas personalizadas (max 10, de 1 a 30 caracteres c/u).",
                   },
                 },
                 additionalProperties: false,

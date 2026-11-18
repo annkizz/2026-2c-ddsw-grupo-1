@@ -54,6 +54,10 @@ export const proyectoEdicionSchema = z
   .object({
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
   })
   .strict();
 

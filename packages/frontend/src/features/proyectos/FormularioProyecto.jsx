@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Alert, Button, CircularProgress, Switch, TextField } from '@mui/material';
+import { Alert, Button, CircularProgress, MenuItem, Switch, TextField } from '@mui/material';
 import { FiArrowLeft, FiAlertCircle, FiCheck, FiLock } from 'react-icons/fi';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useListado } from '../../hooks/useListado';
+import { PROVINCIAS } from '../../data/provincias';
 import {
   crearProyecto,
   actualizarProyecto,
@@ -11,12 +14,16 @@ import {
   programarCierre,
 } from '../../service/proyectos';
 import { t } from '../../i18n/t';
+import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import './FormularioProyecto.css';
 
 const DATOS_INICIALES = {
   titulo: '',
   descripcion: '',
+  etiquetas: [],
+  provincia: '',
+  ciudad: '',
   fechaLimiteCierre: '',
   busquedaAbierta: false,
   fechaLimiteBusqueda: '',
@@ -36,6 +43,7 @@ const FormularioProyecto = () => {
   const [guardando, setGuardando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
   const [errorServidor, setErrorServidor] = useState('');
+  const etiquetasState = useListado('/etiquetas');
 
   useEffect(() => {
     if (!esEdicion) return;
@@ -47,6 +55,9 @@ const FormularioProyecto = () => {
         const cargados = {
           titulo: proyecto.titulo || '',
           descripcion: proyecto.descripcion || '',
+          etiquetas: proyecto.etiquetas ?? [],
+          provincia: proyecto.ubicacion?.codigoProvincia ?? '',
+          ciudad: proyecto.ubicacion?.ciudad ?? '',
           fechaLimiteCierre: aInputFecha(proyecto.fechaLimiteCierre),
           busquedaAbierta: Boolean(proyecto.busquedaAbierta),
           fechaLimiteBusqueda: aInputFecha(proyecto.fechaLimiteBusqueda),
@@ -70,6 +81,26 @@ const FormularioProyecto = () => {
   const cambiarCampo = (campo, valor) => {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
     if (errores[campo]) setErrores((prev) => ({ ...prev, [campo]: '' }));
+    if (errorServidor) setErrorServidor('');
+  };
+
+  const alternarEtiqueta = (etiqueta) => {
+    setDatos((prev) => ({
+      ...prev,
+      etiquetas: prev.etiquetas.includes(etiqueta)
+        ? prev.etiquetas.filter((una) => una !== etiqueta)
+        : [...prev.etiquetas, etiqueta],
+    }));
+    if (errorServidor) setErrorServidor('');
+  };
+
+  const cambiarProvincia = (e) => {
+    const provincia = e.target.value;
+    setDatos((prev) => ({
+      ...prev,
+      provincia,
+      ciudad: provincia ? prev.ciudad : '',
+    }));
     if (errorServidor) setErrorServidor('');
   };
 
@@ -121,6 +152,11 @@ const FormularioProyecto = () => {
     }
   };
 
+  const opcionesEtiquetas = etiquetasState.datos.map((etiqueta) => ({
+    valor: etiqueta,
+    etiqueta: etiquetaLegible(etiqueta),
+  }));
+
   const guardar = async (e) => {
     e.preventDefault();
     if (!validarFormularioCompleto()) return;
@@ -134,9 +170,19 @@ const FormularioProyecto = () => {
       const fechaCierre = datos.fechaLimiteCierre ? aIso(datos.fechaLimiteCierre) : null;
       const fechaBusqueda =
         datos.busquedaAbierta && datos.fechaLimiteBusqueda ? aIso(datos.fechaLimiteBusqueda) : null;
+      const ubicacion = datos.provincia
+        ? {
+            provincia: datos.provincia,
+            ...(datos.ciudad.trim() ? { ciudad: datos.ciudad.trim() } : {}),
+          }
+        : undefined;
 
       if (esEdicion) {
-        await actualizarProyecto(token, id, { titulo, descripcion });
+        await actualizarProyecto(token, id, {
+          titulo,
+          descripcion,
+          etiquetas: datos.etiquetas,
+        });
 
         if (!esFinalizado && (cambio('busquedaAbierta') || cambio('fechaLimiteBusqueda'))) {
           await configurarBusqueda(token, id, {
@@ -154,6 +200,8 @@ const FormularioProyecto = () => {
           idColectivo: sesion?.idColectivo,
           titulo,
           descripcion,
+          ...(datos.etiquetas.length > 0 ? { etiquetas: datos.etiquetas } : {}),
+          ...(ubicacion ? { ubicacion } : {}),
           busquedaAbierta: datos.busquedaAbierta,
           ...(fechaCierre ? { fechaLimiteCierre: fechaCierre } : {}),
           ...(fechaBusqueda ? { fechaLimiteBusqueda: fechaBusqueda } : {}),
@@ -250,6 +298,90 @@ const FormularioProyecto = () => {
                 </span>
               )}
             </div>
+
+            <div className="form-proyecto-campo">
+              <CustomSelect
+                id="proyecto-etiquetas"
+                etiqueta={t('formularioProyecto.labelEtiquetas')}
+                opciones={opcionesEtiquetas}
+                seleccion={datos.etiquetas}
+                multiple
+                maxSeleccion={ETIQUETAS_MAX}
+                permiteCrear
+                onSeleccionar={alternarEtiqueta}
+                onQuitar={alternarEtiqueta}
+                placeholder={
+                  etiquetasState.cargando
+                    ? t('formularioProyecto.cargandoEtiquetas')
+                    : t('formularioProyecto.placeholderEtiquetas')
+                }
+                textoVacio={
+                  etiquetasState.cargando
+                    ? t('formularioProyecto.cargandoEtiquetas')
+                    : t('formularioProyecto.textoVacioEtiquetas')
+                }
+              />
+              {etiquetasState.error && (
+                <Alert severity="warning" className="form-proyecto-aviso-etiquetas">
+                  {t('formularioProyecto.errorEtiquetas')}
+                  <Button size="small" onClick={etiquetasState.recargar}>
+                    {t('formularioProyecto.reintentar')}
+                  </Button>
+                </Alert>
+              )}
+              <small className="form-proyecto-ayuda">
+                {t('formularioProyecto.ayudaEtiquetas')}
+              </small>
+            </div>
+
+            {!esEdicion && (
+              <>
+                <div className="form-proyecto-ubicacion">
+                  <div className="form-proyecto-campo">
+                    <label htmlFor="proyecto-provincia">
+                      {t('formularioProyecto.labelProvincia')}
+                    </label>
+                    <TextField
+                      id="proyecto-provincia"
+                      select
+                      value={datos.provincia}
+                      onChange={cambiarProvincia}
+                      disabled={camposBloqueados}
+                      fullWidth
+                      size="small"
+                      SelectProps={{ displayEmpty: true }}
+                    >
+                      <MenuItem value="">
+                        {t('formularioProyecto.opcionProvinciaHeredada')}
+                      </MenuItem>
+                      {PROVINCIAS.map(({ codigo, nombre }) => (
+                        <MenuItem key={codigo} value={codigo}>
+                          {nombre}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </div>
+
+                  <div className="form-proyecto-campo">
+                    <label htmlFor="proyecto-ciudad">
+                      {t('formularioProyecto.labelCiudad')}
+                    </label>
+                    <TextField
+                      id="proyecto-ciudad"
+                      placeholder={t('formularioProyecto.placeholderCiudad')}
+                      value={datos.ciudad}
+                      onChange={(e) => cambiarCampo('ciudad', e.target.value)}
+                      disabled={camposBloqueados || !datos.provincia}
+                      fullWidth
+                      size="small"
+                    />
+                  </div>
+                </div>
+                <small className="form-proyecto-ayuda">
+                  {t('formularioProyecto.ayudaUbicacion')}
+                </small>
+              </>
+            )}
           </section>
 
           <div className="form-proyecto-columna-derecha">

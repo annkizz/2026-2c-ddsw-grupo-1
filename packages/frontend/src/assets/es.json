@@ -93,7 +93,18 @@
     "labelEnlaceSistema": "Enlace al sistema en producción (opcional)",
     "placeholderEnlaceSistema": "https://mi-sistema.com",
     "labelEnlaceRepo": "Enlace al repositorio de código (opcional)",
-    "placeholderEnlaceRepo": "https://github.com/colectivo/repositorio"
+    "placeholderEnlaceRepo": "https://github.com/colectivo/repositorio",
+    "labelEtiquetas": "Etiquetas",
+    "placeholderEtiquetas": "Buscá o escribí una etiqueta",
+    "cargandoEtiquetas": "Cargando etiquetas…",
+    "textoVacioEtiquetas": "No hay etiquetas con ese texto. Podés crear una nueva.",
+    "errorEtiquetas": "No pudimos cargar las etiquetas existentes. Igual podés escribir etiquetas nuevas.",
+    "ayudaEtiquetas": "Buscá etiquetas existentes o creá las tuyas (hasta 10) para que el proyecto aparezca en las búsquedas.",
+    "labelProvincia": "Provincia",
+    "labelCiudad": "Ciudad",
+    "placeholderCiudad": "Ciudad (opcional)",
+    "opcionProvinciaHeredada": "Usar la ubicación del colectivo",
+    "ayudaUbicacion": "Si no elegís provincia, el proyecto usa la ubicación del colectivo."
   },
   "detalleProyecto": {
     "volverALista": "Volver a la lista",

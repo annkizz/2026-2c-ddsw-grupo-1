@@ -1,4 +1,5 @@
 import { Colectivo } from "../domain/Colectivo.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
 import { Rol } from "../domain/Rol.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { ForbiddenError, NotFoundError } from "../errors/AppError.js";

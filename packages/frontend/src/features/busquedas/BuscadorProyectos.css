@@ -1,0 +1,39 @@
+/* Filtros avanzados y selector de provincia de la búsqueda de proyectos. */
+.filtros__resumen {
+  margin: 12px 0 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.filtros__avanzados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.filtros__grupo select {
+  width: 100%;
+  height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background-color: var(--blanco);
+  color: var(--texto);
+  font: inherit;
+  font-size: 14px;
+}
+
+.filtros__grupo select:focus {
+  outline: 2px solid rgba(21, 50, 75, 0.25);
+  outline-offset: 1px;
+  border-color: rgba(21, 50, 75, 0.6);
+}
+
+@media (max-width: 760px) {
+  .filtros__avanzados {
+    grid-template-columns: 1fr;
+  }
+}

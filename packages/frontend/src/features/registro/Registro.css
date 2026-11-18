@@ -21,6 +21,19 @@
   border-radius: 16px;
 }
 
+.registro-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.registro-ayuda {
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 @media (max-width: 720px) {
   .registro h1 {
     font-size: 26px;
