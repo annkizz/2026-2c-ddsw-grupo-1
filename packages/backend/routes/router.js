@@ -176,7 +176,7 @@ const matchingService = new MatchingService(
 const matchingController = new MatchingController(matchingService);
 
 
-router.use("/me", crearUsuarioRouter(usuarioController, autenticar));
+router.use("/", crearUsuarioRouter(usuarioController, autenticar));
 router.use(
   "/habilidades",
   autenticarSiModifica,

@@ -19,9 +19,10 @@ describe("verificador de tokens de Logto", () => {
     audience = AUDIENCE,
     exp = "5m",
     key,
+    kid = "k1",
   } = {}) =>
     new SignJWT({ scope: "read" })
-      .setProtectedHeader({ alg: "ES384", kid: "k1" })
+      .setProtectedHeader({ alg: "ES384", kid })
       .setSubject("logto-ana")
       .setIssuer(issuer)
       .setAudience(audience)
@@ -46,19 +47,20 @@ describe("verificador de tokens de Logto", () => {
     expect(payload.sub).toBe("logto-ana");
   });
 
-  it("rechaza con 401 un token vencido, de otro issuer, de otra audience o firmado con otra clave", async () => {
+  it("identifica vencimiento, claims, firma, clave y formato invalidos", async () => {
     const otraClave = (await generateKeyPair("ES384")).privateKey;
 
-    for (const token of [
-      await firmar({ exp: "-1m" }),
-      await firmar({ issuer: "https://otro/oidc" }),
-      await firmar({ audience: "https://otra-api" }),
-      await firmar({ key: otraClave }),
-      "esto.no.es-un-jwt",
+    for (const [token, codigo] of [
+      [await firmar({ exp: "-1m" }), "TOKEN_VENCIDO"],
+      [await firmar({ issuer: "https://otro/oidc" }), "TOKEN_EMISOR_INVALIDO"],
+      [await firmar({ audience: "https://otra-api" }), "TOKEN_AUDIENCIA_INVALIDA"],
+      [await firmar({ key: otraClave }), "TOKEN_FIRMA_INVALIDA"],
+      [await firmar({ kid: "unknown" }), "CLAVE_LOGTO_NO_ENCONTRADA"],
+      ["esto.no.es-un-jwt", "TOKEN_FORMATO_INVALIDO"],
     ]) {
       await expect(verificar(token)).rejects.toMatchObject({
         status: 401,
-        codigo: "TOKEN_INVALIDO",
+        codigo,
       });
     }
   });

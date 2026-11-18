@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLogto } from '@logto/react';
 import { obtenerSesion } from '../service/usuariosService';
+import { borrarTipo } from '../features/registro/tipoElegido';
 
 export const RESOURCE = process.env.REACT_APP_LOGTO_RESOURCES;
 
@@ -11,31 +12,39 @@ export const AuthProvider = ({ children }) => {
   const {
     isAuthenticated,
     isLoading,
+    error: errorLogto,
     signIn,
     signOut: logtoSignOut,
     getAccessToken: logtoGetAccessToken
   } = useLogto();
   const [sesion, setSesion] = useState(null);
   const [cargandoSesion, setCargandoSesion] = useState(false);
-  const [errorSesion, setErrorSesion] = useState(false);
+  const [errorSesion, setErrorSesion] = useState(null);
   const pidiendoSesion = useRef(false);
 
   const getAccessToken = useCallback(async () => {
-    try {
-      return await logtoGetAccessToken(RESOURCE);
-    } catch {
-      return null;
+    const token = await logtoGetAccessToken(RESOURCE);
+    if (!token) {
+      throw new Error(
+        'Logto no devolvio el token JWT de la API. Verifica que la aplicacion tenga habilitado el refresh token y acceso al recurso de la API.'
+      );
     }
+    return token;
   }, [logtoGetAccessToken]);
 
   const recargarSesion = useCallback(async () => {
     setCargandoSesion(true);
-    setErrorSesion(false);
+    setErrorSesion(null);
     try {
       const token = await getAccessToken();
-      setSesion(await obtenerSesion(token));
-    } catch {
-      setErrorSesion(true);
+      const nuevaSesion = await obtenerSesion(token);
+      setSesion(nuevaSesion);
+      return nuevaSesion;
+    } catch (error) {
+      const mensaje = error?.response?.data?.error ?? error?.message ?? 'No se pudo verificar la sesión.';
+      const codigo = error?.response?.data?.codigo;
+      setErrorSesion(codigo ? `${mensaje} (${codigo})` : mensaje);
+      return null;
     } finally {
       setCargandoSesion(false);
     }
@@ -52,7 +61,15 @@ export const AuthProvider = ({ children }) => {
     recargarSesion();
   }, [isAuthenticated, recargarSesion]);
 
-  const iniciarSesion = useCallback(() => signIn(`${window.location.origin}/callback`), [signIn]);
+  const iniciarSesion = useCallback(() => {
+    borrarTipo();
+    return signIn({
+      redirectUri: `${window.location.origin}/callback`,
+      firstScreen: 'identifier:sign_in',
+      identifiers: ['email'],
+      prompt: ['login', 'consent']
+    });
+  }, [signIn]);
   const registrarse = useCallback(
     () => signIn({ redirectUri: `${window.location.origin}/callback`, interactionMode: 'signUp' }),
     [signIn]
@@ -62,6 +79,8 @@ export const AuthProvider = ({ children }) => {
   const contextValue = useMemo(
     () => ({
       isAuthenticated,
+      errorLogto,
+      errorSesion,
       // true mientras Logto o el backend todavía no respondieron
       cargando: isLoading || cargandoSesion || (isAuthenticated && !sesion && !errorSesion),
       sesion, // { rol, tienePerfil, idColectivo, idColaborador, ... }
@@ -71,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       getAccessToken,
       recargarSesion
     }),
-    [isAuthenticated, isLoading, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, getAccessToken, recargarSesion]
+    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, getAccessToken, recargarSesion]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

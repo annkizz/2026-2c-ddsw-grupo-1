@@ -27,6 +27,7 @@ const DatosColectivo = () => {
   const [faltantes, setFaltantes] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
+  const [registroCreado, setRegistroCreado] = useState(false);
   const etiquetasState = useListado('/etiquetas');
 
   const setValorDe = (campo) => (e) => {
@@ -66,11 +67,22 @@ const DatosColectivo = () => {
     setGuardando(true);
     setError(null);
     try {
-      const token = await getAccessToken();
-      await crearColectivo(token, datos);
-      await recargarSesion();
+      if (!registroCreado) {
+        const token = await getAccessToken();
+        await crearColectivo(token, datos);
+        setRegistroCreado(true);
+      }
+
+      const nuevaSesion = await recargarSesion();
+      if (!nuevaSesion?.tienePerfil) {
+        setError(
+          'El servidor no confirmó el perfil. Podés volver a intentar verificarlo sin reenviar el formulario.'
+        );
+        return;
+      }
+
       borrarTipo();
-      navigate('/registro/listo');
+      navigate('/perfil');
     } catch (e) {
       setError(mensajeDeError(e));
     } finally {
@@ -140,7 +152,14 @@ const DatosColectivo = () => {
           </Alert>
         )}
 
-        <AccionesRegistro onVolver={() => navigate('/registro/tipo')} guardando={guardando} />
+        <AccionesRegistro
+          onVolver={() => {
+            borrarTipo();
+            navigate('/');
+          }}
+          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
+          guardando={guardando}
+        />
       </form>
     </div>
   );

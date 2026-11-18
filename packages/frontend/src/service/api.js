@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001'
 });
 
 // El backend pide "Authorization: Bearer <token>" en todo lo que modifica datos

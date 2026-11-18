@@ -29,7 +29,15 @@ const REGLAS = {
 };
 
 // Paso 3 de 3: medios de contacto (opcional)
-const MediosDeContacto = ({ datos, setDatos, onVolver, onSiguiente, guardando, error }) => {
+const MediosDeContacto = ({
+  datos,
+  setDatos,
+  onVolver,
+  onSiguiente,
+  siguiente = 'Listo',
+  guardando,
+  error
+}) => {
   const [conError, setConError] = useState([]); // posiciones de los medios inválidos
 
   const cambiarMedio = (posicion, cambios) => {
@@ -119,7 +127,7 @@ const MediosDeContacto = ({ datos, setDatos, onVolver, onSiguiente, guardando, e
         </Alert>
       )}
 
-      <AccionesRegistro onVolver={onVolver} siguiente="Listo" guardando={guardando} />
+      <AccionesRegistro onVolver={onVolver} siguiente={siguiente} guardando={guardando} />
     </form>
   );
 };

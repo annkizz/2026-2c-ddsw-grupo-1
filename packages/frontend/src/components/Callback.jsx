@@ -14,13 +14,20 @@ const Callback = () => {
 
   useEffect(() => {
     if (!sesion) return;
-    navigate(sesion.tienePerfil ? '/perfil' : rutaDeRegistro(leerTipo()), { replace: true });
+    navigate(
+      sesion.tienePerfil
+        ? '/perfil'
+        : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
+      { replace: true }
+    );
   }, [sesion, navigate]);
 
    if (errorSesion) {
     return (
       <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Alert severity="error">No pudimos verificar tu sesión con el servidor.</Alert>
+        <Alert severity="error">
+          No pudimos verificar tu sesión con el servidor: {errorSesion}
+        </Alert>
         <Button onClick={recargarSesion}>Reintentar</Button>
         <Button onClick={cerrarSesion}>Salir</Button>
       </div>

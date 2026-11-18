@@ -1,6 +1,6 @@
 import { createTheme, ThemeProvider } from '@mui/material';
 import { LogtoProvider } from '@logto/react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, RESOURCE } from './hooks/useAuth.jsx';
 import RequiereAuth from './components/RequiereAuth.jsx';
 import RequiereRol from './components/RequiereRol.jsx';
@@ -10,7 +10,6 @@ import Home from './features/home/Home.jsx';
 import TipoCuenta from './features/registro/TipoCuenta.jsx';
 import DatosColectivo from './features/registro/DatosColectivo.jsx';
 import RegistroColaboradora from './features/registro/RegistroColaboradora.jsx';
-import CuentaCreada from './features/registro/CuentaCreada.jsx';
 import ListaProyectos from './features/proyectos/ListaProyectos.jsx';
 import DetalleProyecto from './features/proyectos/DetalleProyecto.jsx';
 import PerfilColaboradora from './features/colaboradoras/PerfilColaboradora.jsx';
@@ -48,6 +47,7 @@ const theme = createTheme({
 const logtoConfig = {
   endpoint: process.env.REACT_APP_LOGTO_ENDPOINT,
   appId: process.env.REACT_APP_LOGTO_APP_ID,
+  scopes: ['offline_access'],
   resources: RESOURCE ? [RESOURCE] : []
 };
 
@@ -106,11 +106,11 @@ function App() {
                 <Route path="/colaboradoras/:id" element={<PerfilColaboradora />} />
                 <Route path="/colectivos/:id" element={<PerfilColectivo />} />
 
-                {/* registro: con sesión de Logto pero todavía sin perfil */}
+                {/* El tipo se elige desde el inicio antes de iniciar el alta en Logto. */}
                 <Route path="/registro/tipo" element={<RequiereAuth exigirPerfil={false}><TipoCuenta /></RequiereAuth>} />
-                <Route path="/registro/colectivo" element={<RequiereAuth exigirPerfil={false}><DatosColectivo /></RequiereAuth>} />
-                <Route path="/registro/colaboradora" element={<RequiereAuth exigirPerfil={false}><RegistroColaboradora /></RequiereAuth>} />
-                <Route path="/registro/listo" element={<RequiereAuth exigirPerfil={false}><CuentaCreada /></RequiereAuth>} />
+                <Route path="/registro/colectivo" element={<RequiereAuth exigirPerfil={false} tipoRegistro="colectivo"><DatosColectivo /></RequiereAuth>} />
+                <Route path="/registro/colaboradora" element={<RequiereAuth exigirPerfil={false} tipoRegistro="colaboradora"><RegistroColaboradora /></RequiereAuth>} />
+                <Route path="/registro/listo" element={<Navigate to="/perfil" replace />} />
 
                 {/* con sesión y perfil */}
                 <Route path="/perfil" element={<RequiereAuth><MiPerfil /></RequiereAuth>} />

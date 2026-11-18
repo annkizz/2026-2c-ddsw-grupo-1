@@ -1,9 +1,9 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import { leerTipo } from '../features/registro/tipoElegido';
 
-// Sin sesión -> "/". Con sesión pero sin perfil -> registro (salvo exigirPerfil={false})
-const RequiereAuth = ({ children, exigirPerfil = true }) => {
+const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
   const { isAuthenticated, cargando, sesion } = useAuth();
 
   if (cargando) {
@@ -14,8 +14,15 @@ const RequiereAuth = ({ children, exigirPerfil = true }) => {
     return <Navigate to="/" replace />;
   }
 
-  if (exigirPerfil && sesion && !sesion.tienePerfil) {
-    return <Navigate to="/registro/tipo" replace />;
+  if (sesion?.tienePerfil) {
+    if (!exigirPerfil) {
+      return <Navigate to="/perfil" replace />;
+    }
+    return children;
+  }
+
+  if (exigirPerfil || (tipoRegistro && leerTipo() !== tipoRegistro)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
