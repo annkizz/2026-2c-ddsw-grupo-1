@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
     setErrorSesion(false);
     try {
       const token = await getAccessToken();
+      if (!token) throw new Error('No se pudo obtener el token de acceso');
       setSesion(await obtenerSesion(token));
     } catch {
       setErrorSesion(true);
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated) {
       setSesion(null);
+      setErrorSesion(false);
       pidiendoSesion.current = false;
       return;
     }
@@ -58,12 +60,14 @@ export const AuthProvider = ({ children }) => {
     [signIn]
   );
   const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);
-  
+
   const contextValue = useMemo(
     () => ({
       isAuthenticated,
       // true mientras Logto o el backend todavía no respondieron
       cargando: isLoading || cargandoSesion || (isAuthenticated && !sesion && !errorSesion),
+      // true si Logto autenticó pero GET /me falló (backend caído, token inválido, etc.)
+      errorSesion,
       sesion, // { rol, tienePerfil, idColectivo, idColaborador, ... }
       iniciarSesion,
       registrarse,
