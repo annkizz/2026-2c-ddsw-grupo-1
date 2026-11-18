@@ -39,10 +39,6 @@ import { UsuarioRepository } from "../repositories/UsuarioRepository.js";
 import { UsuarioService } from "../services/UsuarioService.js";
 import { UsuarioController } from "../controllers/UsuarioController.js";
 import { crearUsuarioRouter } from "./usuarioRouter.js";
-import {
-  crearAutenticar,
-  crearVerificadorLogto,
-} from "../middlewares/authMiddleware.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { PostulacionService } from "../services/PostulacionService.js";
 import { PostulacionController } from "../controllers/PostulacionController.js";
@@ -58,6 +54,7 @@ import { LinkedinConexionService } from "../services/LinkedinConexionService.js"
 import { PublicacionLinkedinService } from "../services/PublicacionLinkedinService.js";
 import { LinkedinController } from "../controllers/LinkedinController.js";
 import { crearLinkedinRouter } from "./linkedinRouter.js";
+import { crearAutenticar, requerirRol, crearVerificadorLogto } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

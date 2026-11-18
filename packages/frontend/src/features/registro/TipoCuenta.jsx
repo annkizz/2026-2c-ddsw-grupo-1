@@ -22,7 +22,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
   return (
     <Dialog open onClose={onCerrar} fullWidth maxWidth="sm">
       <DialogTitle className="tipo-cuenta-titulo">
-        <h2>Crear una cuenta</h2>
+        <span>Crear una cuenta</span>
         {onCerrar && (
           <IconButton aria-label="Cerrar" onClick={onCerrar}>
             <FiX />

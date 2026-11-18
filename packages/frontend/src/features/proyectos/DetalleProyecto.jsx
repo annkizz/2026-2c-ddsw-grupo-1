@@ -31,6 +31,8 @@ import './DetalleProyecto.css';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
 import { codigoDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 const ES_ENLACE = /^https?:\/\/\S+$/i;
 

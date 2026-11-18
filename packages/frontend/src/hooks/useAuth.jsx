@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     [signIn]
   );
   const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);
-
+  
   const contextValue = useMemo(
     () => ({
       isAuthenticated,
