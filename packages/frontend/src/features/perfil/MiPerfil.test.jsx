@@ -31,7 +31,7 @@ jest.mock('../../service/colaboradorasService', () => ({
 jest.mock('../../service/colectivosService', () => ({
   actualizarColectivo: jest.fn(),
   obtenerMiPerfilColectivo: jest.fn(),
-  TIPOS_COLECTIVO: [],
+  TIPOS_COLECTIVO: [{ valor: 'ONG', texto: 'ONG' }],
 }));
 
 const perfilValido = {
@@ -129,17 +129,50 @@ describe('MiPerfil', () => {
     await waitFor(() => expect(nombre).toHaveValue('Cande Dev'));
   });
 
-  it('muestra el aviso de éxito cuando se guardan los cambios', async () => {
+  it('muestra el estado de guardado y la confirmación para una colaboradora', async () => {
     renderPerfil();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByText('Guardamos tus cambios.')).toBeInTheDocument();
+    expect(await screen.findByText('Guardando…')).toBeInTheDocument();
+    const mensaje = await screen.findByRole('status');
+    expect(mensaje).toHaveTextContent('Los cambios ya fueron aplicados.');
+    expect(mensaje.querySelector('svg')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled();
     expect(actualizarColaboradora).toHaveBeenCalledWith(
       'token',
       'colaborador-1',
       expect.objectContaining({ nombreFantasia: 'Cande Dev', habilidades: ['Desarrollo'] }),
     );
+  });
+
+  it('muestra el estado de guardado y la confirmación para un colectivo', async () => {
+    useAuth.mockReturnValue({
+      sesion: { rol: 'COLECTIVO', idColectivo: 'colectivo-1' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      obtenerEmailCuenta: jest.fn().mockResolvedValue('colectivo@example.org'),
+      cambiarContrasena: jest.fn(),
+    });
+    useListado.mockReturnValue({ datos: [], cargando: false, error: null, recargar: jest.fn() });
+    obtenerMiPerfilColectivo.mockResolvedValue({
+      nombre: 'Colectivo Ejemplo',
+      descripcion: 'Descripción',
+      tipoDeColectivo: 'ONG',
+      etiquetas: [],
+      mediosDeContacto: [],
+    });
+    actualizarColectivo.mockResolvedValue({});
+
+    renderPerfil();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar cambios' }));
+
+    expect(await screen.findByText('Guardando…')).toBeInTheDocument();
+    const mensaje = await screen.findByRole('status');
+    expect(mensaje).toHaveTextContent('Los cambios ya fueron aplicados.');
+    expect(mensaje.querySelector('svg')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled();
+    expect(actualizarColectivo).toHaveBeenCalled();
   });
 
   it('muestra el error del servidor si no se pudieron guardar los cambios', async () => {

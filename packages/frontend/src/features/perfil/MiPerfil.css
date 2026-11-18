@@ -40,6 +40,10 @@
   margin: 0 0 18px 240px;
 }
 
+.mi-perfil-estado-confirmacion {
+  margin: 12px 0 0;
+}
+
 .mi-perfil-disposicion {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);

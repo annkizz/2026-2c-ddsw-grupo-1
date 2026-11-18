@@ -18,22 +18,44 @@ export const obtenerColectivoPorId = async (id) => {
   return response.data;
 };
 
-// El formulario tiene un solo campo "ubicacion" (ciudad), el backend espera { pais, provincia, ciudad }.
-// En la edición se conservan país y provincia que ya tuviera guardados.
-const armarUbicacion = (ciudad, ubicacionAnterior = {}) => {
-  const ubicacion = { ...(ubicacionAnterior ?? {}), ciudad: ciudad.trim() };
+const armarUbicacion = (formulario, ubicacionAnterior = {}) => {
+  const ubicacionFormulario = formulario.ubicacion;
+  let ubicacion;
+  if (ubicacionFormulario && typeof ubicacionFormulario === 'object') {
+    ubicacion = ubicacionFormulario;
+  } else if (
+    formulario.pais !== undefined ||
+    formulario.provincia !== undefined ||
+    formulario.ciudad !== undefined
+  ) {
+    ubicacion = {
+      pais: formulario.pais,
+      provincia: formulario.provincia,
+      ciudad: formulario.ciudad
+    };
+  } else {
+    ubicacion = {
+      ...(ubicacionAnterior ?? {}),
+      ...(typeof ubicacionFormulario === 'string' ? { ciudad: ubicacionFormulario } : {})
+    };
+  }
   return Object.fromEntries(
-    Object.entries(ubicacion).filter(([, valor]) => typeof valor === 'string' && valor.trim() !== '')
+    Object.entries(ubicacion)
+      .filter(([, valor]) => typeof valor === 'string' && valor.trim() !== '')
+      .map(([campo, valor]) => [campo, valor.trim()])
   );
 };
 
-const armarBodyColectivo = (formulario, ubicacionAnterior) => ({
-  nombre: formulario.nombre.trim(),
-  descripcion: formulario.descripcion.trim(),
-  tipoDeColectivo: formulario.tipoDeColectivo,
-  ubicacion: armarUbicacion(formulario.ubicacion, ubicacionAnterior),
-  ...(formulario.etiquetas?.length > 0 ? { etiquetas: formulario.etiquetas } : {})
-});
+const armarBodyColectivo = (formulario, ubicacionAnterior) => {
+  const ubicacion = armarUbicacion(formulario, ubicacionAnterior);
+  return {
+    nombre: formulario.nombre.trim(),
+    descripcion: formulario.descripcion.trim(),
+    tipoDeColectivo: formulario.tipoDeColectivo,
+    ...(Object.keys(ubicacion).length > 0 ? { ubicacion } : {}),
+    ...(formulario.etiquetas?.length > 0 ? { etiquetas: formulario.etiquetas } : {})
+  };
+};
 
 export const crearColectivo = async (token, formulario) => {
   const response = await api.post('/colectivos', armarBodyColectivo(formulario), conToken(token));

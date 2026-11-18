@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, Card, MenuItem, TextField } from '@mui/material';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
 import { TIPOS_COLECTIVO, crearColectivo } from '../../service/colectivosService';
@@ -14,12 +15,13 @@ import './Registro.css';
 const DATOS_INICIALES = {
   nombre: '',
   tipoDeColectivo: '',
-  ubicacion: '',
+  pais: '',
+  provincia: '',
+  ciudad: '',
   etiquetas: [],
   descripcion: ''
 };
-const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'ubicacion', 'descripcion'];
-
+const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'descripcion'];
 const DatosColectivo = () => {
   const navigate = useNavigate();
   const { getAccessToken, recargarSesion } = useAuth();
@@ -105,7 +107,12 @@ const DatosColectivo = () => {
               ))}
             </TextField>
 
-            <TextField label="Ubicación" placeholder="Ciudad" {...propsDe('ubicacion')} />
+            <UbicacionColectivo
+              pais={datos.pais}
+              provincia={datos.provincia}
+              ciudad={datos.ciudad}
+              onChange={(cambios) => setDatos((prev) => ({ ...prev, ...cambios }))}
+            />
 
             <CustomSelect
               id="colectivo-etiquetas"

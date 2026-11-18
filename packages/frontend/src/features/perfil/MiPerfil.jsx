@@ -15,8 +15,9 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { FiLock, FiPlus, FiX } from 'react-icons/fi';
+import { FiCheck, FiLock, FiPlus, FiX } from 'react-icons/fi';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
 import {
@@ -86,6 +87,7 @@ const normalizarPerfil = (perfil, esColaboradora) => {
 };
 
 const EMAIL_VALIDO = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+const DURACION_MINIMA_GUARDADO_MS = 600;
 
 const validarMedio = (medio) => {
   const valor = medio.valor.trim();
@@ -233,6 +235,12 @@ const MiPerfil = () => {
     setExito(false);
   };
 
+  const cambiarUbicacion = (cambios) => {
+    setDatos((actual) => ({ ...actual, ...cambios }));
+    setErrorServidor('');
+    setExito(false);
+  };
+
   const cambiarMedio = (indice, cambios) => {
     cambiar(
       'medios',
@@ -254,6 +262,7 @@ const MiPerfil = () => {
 
     setGuardando(true);
     setExito(false);
+    const inicioGuardado = Date.now();
     try {
       const token = await getAccessToken();
       const mediosDeContacto = datos.medios.map((medio) => ({
@@ -296,6 +305,10 @@ const MiPerfil = () => {
           mediosDeContacto,
         });
       }
+      const esperaRestante = DURACION_MINIMA_GUARDADO_MS - (Date.now() - inicioGuardado);
+      if (esperaRestante > 0) {
+        await new Promise((resolve) => setTimeout(resolve, esperaRestante));
+      }
       setDatosIniciales(datos);
       setExito(true);
     } catch (guardadoError) {
@@ -332,11 +345,6 @@ const MiPerfil = () => {
         <small>Los campos marcados como obligatorios deben completarse.</small>
       </header>
 
-      {exito && (
-        <Alert className="mi-perfil-estado" severity="success" role="status">
-          Guardamos tus cambios.
-        </Alert>
-      )}
       {errorServidor && (
         <Alert className="mi-perfil-estado" severity="error" role="alert">
           No pudimos guardar los cambios: {errorServidor}
@@ -479,11 +487,12 @@ const MiPerfil = () => {
                     <MenuItem key={tipo.valor} value={tipo.valor}>{tipo.texto}</MenuItem>
                   ))}
                 </TextField>
-                <div className="mi-perfil-dos-columnas">
-                  <TextField label="País" value={datos.pais} onChange={(e) => cambiar('pais', e.target.value)} />
-                  <TextField label="Provincia" value={datos.provincia} onChange={(e) => cambiar('provincia', e.target.value)} />
-                </div>
-                <TextField label="Ciudad" value={datos.ciudad} onChange={(e) => cambiar('ciudad', e.target.value)} fullWidth />
+                <UbicacionColectivo
+                  pais={datos.pais}
+                  provincia={datos.provincia}
+                  ciudad={datos.ciudad}
+                  onChange={cambiarUbicacion}
+                />
                 <TextField
                   id="descripcion-colectivo"
                   label="Descripción (obligatoria)"
@@ -608,10 +617,25 @@ const MiPerfil = () => {
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="contained" disabled={guardando || (listado.error && esColaboradora)}>
-              {guardando ? <CircularProgress size={18} color="inherit" /> : 'Guardar cambios'}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={guardando || (listado.error && esColaboradora)}
+              startIcon={guardando ? <CircularProgress size={18} color="inherit" /> : undefined}
+            >
+              {guardando ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>
+          {exito && (
+            <Alert
+              className="mi-perfil-estado-confirmacion"
+              severity="success"
+              role="status"
+              icon={<FiCheck aria-hidden="true" />}
+            >
+              Los cambios ya fueron aplicados.
+            </Alert>
+          )}
         </form>
         </div>
       </div>
