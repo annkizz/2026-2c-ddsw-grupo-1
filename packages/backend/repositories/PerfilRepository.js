@@ -14,6 +14,7 @@ export class PerfilRepository {
       habilidadesOpcionales: perfil.habilidadesOpcionales,
       compromiso: perfil.compromiso,
       limiteColaboraciones: perfil.limiteColaboraciones,
+      tipoAceptacion: perfil.tipoAceptacion,
     });
     return await documento.save();
   }

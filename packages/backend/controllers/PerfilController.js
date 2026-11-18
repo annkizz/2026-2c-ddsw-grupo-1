@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PerfilService } from "../services/PerfilService.js";
 
-export const perfilSchema = z
+export const perfilBaseSchema = z
   .object({
     descripcion: z.string().min(1),
     habilidadesRequeridas: z.array(z.string()).min(1),
@@ -12,9 +12,23 @@ export const perfilSchema = z
       horas: z.int().min(1),
       tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]),
     }),
-    tipoAceptacion: z.enum(["LLENAR_VACANTES", "SIN_LIMITE", "MANUAL"]),
-  })
-  .strict();
+  });
+
+export const perfilSchema = z.discriminatedUnion("tipoAceptacion", [
+        perfilBaseSchema.extend({ 
+          tipoAceptacion: z.literal("LLENAR_VACANTES"),
+          limiteColaboraciones: z.int().positive().min(1),}),
+        
+        perfilBaseSchema.extend({
+          tipoAceptacion: z.literal("SIN_LIMITE"),
+          limiteColaboraciones: z.null().default(null),
+        }),
+
+        perfilBaseSchema.extend({
+          tipoAceptacion: z.literal("MANUAL"),
+          limiteColaboraciones: z.int().positive().default(null),})
+
+]);
 
 export class PerfilController {
   constructor(perfilService = new PerfilService()) {

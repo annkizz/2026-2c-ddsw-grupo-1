@@ -1,6 +1,6 @@
 import { NotificacionService } from "../services/NotificacionService.js";
 import { BadRequestError } from "../errors/AppError.js";
-import { notificacionFiltroSchema, notificacionPaginasSchema } from "../schemas/zod/notificacionSchema.js";
+import { notificacionFiltroSchema } from "../schemas/zod/notificacionSchema.js";
 
 export class NotificacionController {
   constructor(notificacionService = new NotificacionService()) {

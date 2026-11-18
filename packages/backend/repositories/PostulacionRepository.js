@@ -69,12 +69,8 @@ export class PostulacionRepository {
   rechazarPendientesPorPerfil(id){
     return this.model
       .updateMany(
-        { idPerfil: id,
-          estado: EstadoPostulacion.PENDIENTE
-        },
-        { $set: EstadoPostulacion.RECHAZADA, 
-          fechaRevision: new Date()
-        }
+        { idPerfil: id, estado: EstadoPostulacion.PENDIENTE },
+        { $set: { estado: EstadoPostulacion.RECHAZADA , fechaRevision: new Date() } },
       )
       .exec();
   }

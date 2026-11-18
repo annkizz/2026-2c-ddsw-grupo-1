@@ -26,6 +26,7 @@ export class PerfilService {
       habilidadesRequeridas: perfil.habilidadesRequeridas.slice(),
       habilidadesOpcionales: perfil.habilidadesOpcionales.slice(),
       limiteColaboraciones: perfil.limiteColaboraciones ?? null,
+      tipoAceptacion: perfil.tipoAceptacion,
       compromiso: {
         tipoCompromiso: perfil.compromiso.tipoCompromiso,
         horas: perfil.compromiso.horas,
@@ -101,6 +102,7 @@ export class PerfilService {
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
       compromiso: datos.compromiso,
       limiteColaboraciones: datos.limiteColaboraciones ?? null,
+      tipoAceptacion: datos.tipoAceptacion,
     });
     if (!actualizado) {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
@@ -146,17 +148,4 @@ export class PerfilService {
     });
   }
 
-  async cerrarBusquedaSiCorresponde(id){
-    const perfilChequeado = await this.perfilRepository.buscarPorId(id);
-
-    if(await this.colaboracionRepository.contarPorPerfil(id) === perfilChequeado.limiteColaboraciones){
-      perfil.cerrarBusqueda();
-      this.perfilRepository.actualizar(id, { busquedaAbierta: perfil.busquedaAbierta });
-      
-      return id; // Se devuelve el id para que busque postulaciones para ese perfil en específico
-    }
-    
-    return null; // No se devuelve nada para que siga igual
-
-  }
 }

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { Colectivo } from "../../domain/Colectivo.js";
 import { Proyecto } from "../../domain/Proyecto.js";
 
