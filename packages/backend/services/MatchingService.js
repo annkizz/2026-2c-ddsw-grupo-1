@@ -26,7 +26,7 @@ export class MatchingService {
   // busqueda de potenciales colaboradoras segun perfil del proyecto
   // excluye anotadas y exige las habilidades requeridas del perfil
 
-  async buscarColaboradorasParaPerfil(idProyecto, id) {
+  async buscarColaboradorasParaPerfil(idProyecto, id, pag, limite) {
     const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
     if (!proyecto) {
       throw new NotFoundError(
@@ -57,7 +57,7 @@ export class MatchingService {
         perfil.habilidadesRequeridas,
       );
 
-    return candidatas
+    const resultados = candidatas
       .filter((colaboradora) => !yaAnotadas.includes(String(colaboradora._id)))
       .map((colaboradora) => ({
         colaboradora,
@@ -84,12 +84,22 @@ export class MatchingService {
         return dto;
       })
       .sort((uno, otro) => otro.puntaje - uno.puntaje);
+
+    if (pag === undefined || limite === undefined) return resultados;
+    const inicio = (pag - 1) * limite;
+    const pagina = resultados.slice(inicio, inicio + limite);
+    return {
+      colaboradoras: pagina,
+      total: resultados.length,
+      pag,
+      totalPags: Math.ceil(resultados.length / limite),
+    };
   }
 
   // busqueda de potenciales proyectos segun habilidades de colaboradora.
   // proyectos donde esta anotada, proyectos abiertos y perfiles de esos
 
-  async buscarProyectosParaColaboradora(idColaborador) {
+  async buscarProyectosParaColaboradora(idColaborador, pag, limite) {
     const colaboradora =
       await this.colaboradorRepository.buscarPorId(idColaborador);
     if (!colaboradora) {
@@ -180,7 +190,7 @@ export class MatchingService {
       }
     }
 
-    return resultados.sort((uno, otro) => {
+    const ordenados = resultados.sort((uno, otro) => {
       // 1) habilidades req
       // 2) cuanto cubre del proyecto en total
       // 3) + puntos brutos
@@ -193,5 +203,15 @@ export class MatchingService {
 
       return otro.puntaje - uno.puntaje;
     });
+
+    if (pag === undefined || limite === undefined) return ordenados;
+    const inicio = (pag - 1) * limite;
+    const pagina = ordenados.slice(inicio, inicio + limite);
+    return {
+      proyectos: pagina,
+      total: ordenados.length,
+      pag,
+      totalPags: Math.ceil(ordenados.length / limite),
+    };
   }
 }

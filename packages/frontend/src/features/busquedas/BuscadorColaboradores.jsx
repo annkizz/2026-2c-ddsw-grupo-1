@@ -113,7 +113,16 @@ export default function BuscadorColaboradores() {
     }
   }, [idPerfil, perfiles]);
 
-  const { grupos, cargando, error, recargar, cantidadPerfiles } = useCandidatas(
+  const {
+    grupos,
+    cargando,
+    cargandoMas,
+    error,
+    recargar,
+    cargarMas,
+    hayMas,
+    cantidadPerfiles,
+  } = useCandidatas(
     perfiles,
     idPerfilAplicado,
     busquedaIniciada,
@@ -346,6 +355,17 @@ export default function BuscadorColaboradores() {
                 </ul>
               </section>
             ))}
+
+          {hayMas && (
+            <Button
+              variant="outlined"
+              type="button"
+              disabled={cargandoMas}
+              onClick={cargarMas}
+            >
+              {cargandoMas ? "Cargando…" : "Cargar más"}
+            </Button>
+          )}
 
         </section>
       )}

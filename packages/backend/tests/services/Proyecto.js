@@ -661,6 +661,29 @@ describe("ProyectoService", () => {
       ).rejects.toMatchObject({ codigo: "PROVINCIA_INVALIDA" });
     });
 
+    it("pagina proyectos sin devolver más de 6", async () => {
+      proyectoRepository.obtenerTodos.mockResolvedValue(
+        Array.from({ length: 8 }, (_, indice) => ({
+          _id: `p-${indice + 1}`,
+          titulo: `Proyecto ${indice + 1}`,
+          estado: "ACTIVO",
+          idColectivo: `col-${indice + 1}`,
+          busquedaVigente: () => true,
+        })),
+      );
+
+      const resultado = await service.obtenerTodos(
+        { estado: "ACTIVO" },
+        1,
+        6,
+      );
+
+      expect(resultado.proyectos).toHaveLength(6);
+      expect(resultado.total).toBe(8);
+      expect(resultado.pag).toBe(1);
+      expect(resultado.totalPags).toBe(2);
+    });
+
     it("agrupa solo los proyectos activos con ubicacion por provincia", async () => {
       proyectoRepository.obtenerActivosParaMapa.mockResolvedValue([
         {

@@ -4,8 +4,11 @@ import { obtenerCandidatas } from "../service/proyectosService";
 export function useCandidatas(perfiles, idPerfil, habilitado) {
   const [grupos, setGrupos] = useState([]);
   const [cargando, setCargando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [error, setError] = useState(null);
   const [intento, setIntento] = useState(0);
+  const [pag, setPag] = useState(1);
+  const [totalPags, setTotalPags] = useState(0);
 
   const perfilesBuscados = useMemo(() => {
     if (!habilitado) return [];
@@ -29,15 +32,47 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
 
     Promise.all(
       perfilesBuscados.map((perfil) =>
-        obtenerCandidatas(perfil.idProyecto, perfil.id).then((candidatas) => ({
-          perfil,
-          candidatas,
-        })),
+        obtenerCandidatas(perfil.idProyecto, perfil.id, pag).then((cuerpo) => {
+          const candidatas = Array.isArray(cuerpo)
+            ? cuerpo
+            : cuerpo.colaboradoras ?? [];
+          return {
+            perfil,
+            candidatas,
+            totalPags: Array.isArray(cuerpo) ? 1 : cuerpo.totalPags ?? 0,
+          };
+        }),
       ),
     )
       .then((resultados) => {
         if (cancelado) return;
-        setGrupos(resultados.filter((grupo) => grupo.candidatas.length > 0));
+        setGrupos((actual) => {
+          if (pag === 1) {
+            return resultados.filter((grupo) => grupo.candidatas.length > 0);
+          }
+          return actual.map((grupo) => {
+            const siguiente = resultados.find(
+              (resultado) => resultado.perfil.id === grupo.perfil.id,
+            );
+            if (!siguiente) return grupo;
+            return {
+              ...grupo,
+              candidatas: [
+                ...grupo.candidatas,
+                ...siguiente.candidatas.filter(
+                  (candidata) =>
+                    !grupo.candidatas.some((actual) => actual.id === candidata.id),
+                ),
+              ],
+            };
+          });
+        });
+        setTotalPags(
+          resultados.reduce(
+            (maximo, resultado) => Math.max(maximo, resultado.totalPags ?? 0),
+            0,
+          ),
+        );
       })
       .catch(() => {
         if (cancelado) return;
@@ -47,21 +82,37 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
         );
       })
       .finally(() => {
-        if (!cancelado) setCargando(false);
+        if (!cancelado) {
+          setCargando(false);
+          setCargandoMas(false);
+        }
       });
 
     return () => {
       cancelado = true;
     };
-  }, [perfilesBuscados, habilitado, intento]);
+  }, [perfilesBuscados, habilitado, intento, pag]);
 
-  const recargar = useCallback(() => setIntento((actual) => actual + 1), []);
+  const recargar = useCallback(() => {
+    setPag(1);
+    setTotalPags(0);
+    setIntento((actual) => actual + 1);
+  }, []);
+
+  const cargarMas = useCallback(() => {
+    if (cargandoMas || pag >= totalPags) return;
+    setCargandoMas(true);
+    setPag((actual) => actual + 1);
+  }, [cargandoMas, pag, totalPags]);
 
   return {
     grupos,
     cargando,
+    cargandoMas,
     error,
     recargar,
+    cargarMas,
+    hayMas: pag < totalPags,
     cantidadPerfiles: perfilesBuscados.length,
   };
 }

@@ -2,6 +2,8 @@ import { z } from "zod";
 import { NotFoundError } from "../errors/AppError.js";
 import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
+import { paginacionSchema } from "../schemas/zod/paginacionSchema.js";
+import { BadRequestError } from "../errors/AppError.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
 const fechaLimiteBusquedaSchema = z.coerce.date().nullable();
@@ -96,6 +98,19 @@ export class ProyectoController {
   };
 
   obtenerTodos = async (req, res) => {
+    let pag = null;
+    let limite = null;
+    if (req.query.pag !== undefined || req.query.limite !== undefined) {
+      const paginacion = paginacionSchema.safeParse(req.query);
+      if (!paginacion.success) {
+        throw new BadRequestError(
+          "Los parámetros de paginación son inválidos",
+          "PAGINACION_INVALIDA",
+        );
+      }
+      pag = paginacion.data.pag;
+      limite = paginacion.data.limite;
+    }
     const etiquetas = valoresComoLista(req.query.etiqueta);
     const filtros = etiquetas.length > 0 ? { etiquetas } : {};
     // modo=cualquiera
@@ -116,7 +131,11 @@ export class ProyectoController {
     if (req.query.habilidad !== undefined) {
       filtros.habilidades = valoresComoLista(req.query.habilidad);
     }
-    const proyectos = await this.proyectoService.obtenerTodos(filtros);
+    const proyectos = await this.proyectoService.obtenerTodos(
+      filtros,
+      pag,
+      limite,
+    );
     res.status(200).json(proyectos);
   };
 
