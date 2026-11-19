@@ -39,11 +39,6 @@
   opacity: 0.85;
 }
 
-.provincia--activa {
-  stroke: var(--color-text);
-  stroke-width: var(--border-width-strong);
-}
-
 /* Foco distinto de la selección (2.4.7): trazo punteado oscuro, legible sobre cualquier relleno
    y en los dos modos de color; no depende del tono. */
 .provincia:focus-visible {
@@ -51,11 +46,6 @@
   stroke: var(--color-text);
   stroke-width: calc(var(--border-width-strong) + var(--focus-ring-width));
   stroke-dasharray: var(--space-1) var(--focus-ring-width);
-}
-
-.provincia--activa:focus-visible {
-  stroke-dasharray: none;
-  stroke-width: calc(var(--border-width-strong) + var(--focus-ring-width));
 }
 
 .mapa__numero {

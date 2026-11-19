@@ -135,12 +135,16 @@ export default function Mapa() {
                       d={region.path}
                       fill={colores[nivelDeRegion(cantidad, maximo)]}
                       fillRule="evenodd"
-                      className={`provincia${activa ? " provincia--activa" : ""}`}
+                      className="provincia"
                       tabIndex={0}
                       role="button"
                       aria-pressed={activa}
                       aria-label={`${region.nombre}: ${cantidad} proyecto${cantidad === 1 ? "" : "s"}`}
-                      onClick={() => seleccionar(region.codigo)}
+                      onMouseDown={(evento) => evento.preventDefault()}
+                      onClick={(evento) => {
+                        seleccionar(region.codigo);
+                        if (evento.detail > 0) evento.currentTarget.blur();
+                      }}
                       onKeyDown={(evento) => {
                         if (evento.key === "Enter" || evento.key === " ") {
                           evento.preventDefault();
