@@ -13,6 +13,7 @@ const datosPerfil = () => ({
     horas: 5,
     tipoColaboracion: "GRATUITA",
   },
+  tipoAceptacion: "MANUAL",
 });
 
 // simula un documento tal como lo devuelve el repositorio
@@ -80,6 +81,8 @@ describe("PerfilService", () => {
           habilidadesOpcionales: ["Uso de Soap UI"],
           compromiso: datosPerfil().compromiso,
           limiteColaboraciones: null,
+          tipoAceptacion: "MANUAL",
+          busquedaAbierta: true,
         },
         ID_PROYECTO,
       );
@@ -89,6 +92,8 @@ describe("PerfilService", () => {
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
         habilidadesOpcionales: ["Uso de Soap UI"],
+        limiteColaboraciones: null,
+        tipoAceptacion: "MANUAL",
         compromiso: datosPerfil().compromiso,
         limiteColaboraciones: null,
       });
@@ -240,6 +245,8 @@ describe("PerfilService", () => {
         descripcion: "Tester",
         habilidadesRequeridas: ["Testing E2E con Cypress"],
         habilidadesOpcionales: ["Uso de Soap UI"],
+        limiteColaboraciones: null,
+        tipoAceptacion: "MANUAL",
         compromiso: datosPerfil().compromiso,
         limiteColaboraciones: null,
       });

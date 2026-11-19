@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { perfilSchema } from "../../controllers/PerfilController.js";
 
 const perfilValido = () => ({
@@ -9,6 +10,36 @@ const perfilValido = () => ({
     horas: 5,
     tipoColaboracion: "GRATUITA",
   },
+  tipoAceptacion: "MANUAL",
+});
+
+it("requiere límite para LLENAR_VACANTES", () => {
+  expect(
+    perfilSchema.safeParse({
+      ...perfilValido(),
+      tipoAceptacion: "LLENAR_VACANTES",
+    }).success,
+  ).toBe(false);
+});
+
+it("no permite límite para SIN_LIMITE", () => {
+  expect(
+    perfilSchema.safeParse({
+      ...perfilValido(),
+      tipoAceptacion: "SIN_LIMITE",
+      limiteColaboraciones: 2,
+    }).success,
+  ).toBe(false);
+});
+
+it("permite crear un perfil LLENAR_VACANTES con límite", () => {
+  expect(
+    perfilSchema.safeParse({
+      ...perfilValido(),
+      tipoAceptacion: "LLENAR_VACANTES",
+      limiteColaboraciones: 2,
+    }).success,
+  ).toBe(true);
 });
 
 describe("Validaciones - perfilSchema (zod)", () => {
@@ -17,7 +48,8 @@ describe("Validaciones - perfilSchema (zod)", () => {
   });
 
   it("si no vienen habilidades opcionales, las completa con []", () => {
-    const { habilidadesOpcionales, ...datos } = perfilValido();
+    const datos = perfilValido();
+    delete datos.habilidadesOpcionales;
     const resultado = perfilSchema.safeParse(datos);
 
     expect(resultado.success).toBe(true);

@@ -28,12 +28,15 @@ export class PerfilService {
       descripcion: perfil.descripcion,
       habilidadesRequeridas: perfil.habilidadesRequeridas.slice(),
       habilidadesOpcionales: perfil.habilidadesOpcionales.slice(),
+      limiteColaboraciones: perfil.limiteColaboraciones ?? null,
+      tipoAceptacion: perfil.tipoAceptacion,
       compromiso: {
         tipoCompromiso: perfil.compromiso.tipoCompromiso,
         horas: perfil.compromiso.horas,
         tipoColaboracion: perfil.compromiso.tipoColaboracion,
       },
       limiteColaboraciones: perfil.limiteColaboraciones ?? null,
+      tipoAceptacion: perfil.tipoAceptacion,
     };
   }
 
@@ -60,6 +63,8 @@ export class PerfilService {
       opcionales.map((h) => h.titulo),
       datos.compromiso,
       datos.limiteColaboraciones ?? null,
+      datos.tipoAceptacion,
+
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -103,6 +108,7 @@ export class PerfilService {
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
       compromiso: datos.compromiso,
       limiteColaboraciones: datos.limiteColaboraciones ?? null,
+      tipoAceptacion: datos.tipoAceptacion,
     });
     if (!actualizado) {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
@@ -172,4 +178,5 @@ export class PerfilService {
       return habilidad;
     });
   }
+
 }
