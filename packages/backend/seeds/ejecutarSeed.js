@@ -43,6 +43,7 @@ export async function ejecutarSeed(
 
   const idsProyectosSeed = datos.proyectos.map((p) => p.id);
   await db.borrarDatosDeProyectos(idsProyectosSeed);
+  const perfilesGuardados = new Map();
 
   // req 15: la seed crea los colectivos despues de los proyectos, asi que el
   // fallback de ubicacion se resuelve con un lookup en memoria de los datos.
@@ -53,7 +54,11 @@ export async function ejecutarSeed(
 
   for (const p of datos.proyectos) {
     for (const perfil of p.perfiles) {
-      await db.guardarPerfil({ ...perfil, idProyecto: p.id });
+      const guardado = await db.guardarPerfil({
+        ...perfil,
+        idProyecto: p.id,
+      });
+      perfilesGuardados.set(String(perfil.id), guardado);
     }
 
     await proyectoRepository.save(
@@ -75,6 +80,8 @@ export async function ejecutarSeed(
         p.ubicacion !== undefined
           ? construirUbicacionDeProyecto(p.ubicacion)
           : ubicacionHeredadaDeColectivo(colectivosPorId[p.idColectivo]),
+        p.destacado ?? false,
+        p.destacadoHasta ?? null,
       ),
       p.id,
     );
@@ -106,8 +113,16 @@ export async function ejecutarSeed(
     const colaborador = await colaboradorRepository.buscarPorId(
       c.idColaborador,
     );
+    const perfil = c.idPerfil
+      ? perfilesGuardados.get(String(c.idPerfil))
+      : null;
+    if (c.idPerfil && !perfil) {
+      throw new Error(
+        `No se encontró el perfil ${c.idPerfil} para la colaboración de seed`,
+      );
+    }
     await colaboracionRepository.save(
-      new Colaboracion(proyecto, colaborador, null, c.fecha, c.esAnonima),
+      new Colaboracion(proyecto, colaborador, perfil, c.fecha, c.esAnonima),
     );
   }
 

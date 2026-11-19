@@ -1,6 +1,6 @@
-# Levanta la API y MongoDB juntas.
+# Levanta MongoDB, seed, API y frontend.
 # Desde la raiz del proyecto:  docker compose up -d --build
-# Las variables ${...} salen del archivo .env de la raiz (ver .env.example).
+# Las variables ${...} salen del archivo .env de la raiz (ver DESPLIEGUE.md).
 
 x-api-env: &api-env # variables que comparten la API y el seed
   SERVER_PORT: 3000
@@ -8,7 +8,10 @@ x-api-env: &api-env # variables que comparten la API y el seed
   # no debe tener caracteres especiales (@ : / ?) porque va dentro de la URL.
   MONGODB_URI: mongodb://${MONGO_USER:?Falta MONGO_USER en .env}:${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}@mongo:27017
   MONGODB_DB_NAME: ${MONGODB_DB_NAME:-codigo_a_voluntad}
-  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-} # vacio = cualquier origen (ok mientras no haya frontend desplegado)
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+  LOGTO_ISSUER: ${LOGTO_ISSUER:?Falta LOGTO_ISSUER en .env}
+  LOGTO_JWKS_URL: ${LOGTO_JWKS_URL:?Falta LOGTO_JWKS_URL en .env}
+  LOGTO_AUDIENCE: ${LOGTO_AUDIENCE:?Falta LOGTO_AUDIENCE en .env}
 
 services:
   mongo:
@@ -19,24 +22,25 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}
     volumes:
       - mongo-data:/data/db # los datos viven en este "disco" y sobreviven a reinicios
+    ports:
+      - "127.0.0.1:27017:27017" # acceso local para Compass; no se expone a la red
     healthcheck: # Docker pregunta si Mongo ya esta listo para recibir conexiones
       test:
         ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
-    # No hay "ports": Mongo NO se expone fuera de Docker, solo la API puede hablarle.
 
   api:
     build: . # usa el Dockerfile de la raiz
     image: codigo-a-voluntad-api
     restart: unless-stopped
     depends_on:
-      mongo:
-        condition: service_healthy # la API arranca recien cuando Mongo esta listo
+      seed:
+        condition: service_completed_successfully
     environment: *api-env
     ports:
-      - "${API_PORT:-3000}:3000" # puerto de la VM : puerto dentro del contenedor
+      - "127.0.0.1:${API_PORT:-3001}:3000" # acceso local; el frontend proxya la API
     healthcheck: # usa la ruta /healthcheck de la API
       test:
         [
@@ -51,13 +55,34 @@ services:
   seed: # tarea de una sola vez: carga datos iniciales
     build: .
     image: codigo-a-voluntad-api
-    profiles: ["seed"] # no arranca con "up"; se corre a mano (ver DESPLIEGUE.md)
     restart: "no"
     depends_on:
       mongo:
         condition: service_healthy
     environment: *api-env
     command: ["node", "packages/backend/seeds/seed.js"]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+      args:
+        REACT_APP_API_URL: /api
+        REACT_APP_LOGTO_ENDPOINT: ${REACT_APP_LOGTO_ENDPOINT:?Falta REACT_APP_LOGTO_ENDPOINT en .env}
+        REACT_APP_LOGTO_APP_ID: ${REACT_APP_LOGTO_APP_ID:?Falta REACT_APP_LOGTO_APP_ID en .env}
+        REACT_APP_LOGTO_RESOURCES: ${REACT_APP_LOGTO_RESOURCES:?Falta REACT_APP_LOGTO_RESOURCES en .env}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   mongo-data:
