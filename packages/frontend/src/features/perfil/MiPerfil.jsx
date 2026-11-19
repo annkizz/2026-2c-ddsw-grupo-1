@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -328,7 +329,7 @@ const MiPerfil = () => {
       }
       setDatosIniciales(datos);
       setExito(true);
-      notificar({ mensaje: 'Perfil guardado' });
+      notificar({ mensaje: t('miPerfil.perfilGuardado') });
     } catch (guardadoError) {
       setErrorServidor(mensajeDeError(guardadoError));
     } finally {
@@ -347,12 +348,12 @@ const MiPerfil = () => {
     );
 
   const titulo = `Tu perfil de ${esColaboradora ? 'colaboradora' : 'colectivo'}`;
-  const migas = [{ texto: 'Inicio', to: '/' }, { texto: 'Mi perfil' }];
+  const migas = [{ texto: t('navegacion.inicio'), to: '/' }, { texto: 'Mi perfil' }];
 
   if (cargando) {
     return (
       <div className="contenedor-pagina">
-        <EsqueletoFormulario campos={5} etiqueta="Cargando tu perfil…" />
+        <EsqueletoFormulario campos={5} etiqueta={t('miPerfil.cargandoTuPerfil')} />
       </div>
     );
   }
@@ -363,7 +364,7 @@ const MiPerfil = () => {
         <EncabezadoPagina titulo={titulo} migas={migas} />
         <AlertaError
           error={errorCarga}
-          titulo="No pudimos cargar tu perfil"
+          titulo={t('miPerfil.noPudimosCargarTuPerfil')}
           onReintentar={() => setIntentoCarga((n) => n + 1)}
         />
       </div>
@@ -386,14 +387,14 @@ const MiPerfil = () => {
     <div className={`contenedor-pagina mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
       <EncabezadoPagina
         titulo={titulo}
-        subtitulo="Mantené tus datos al día para que la comunidad pueda encontrarte. Los campos obligatorios están indicados."
+        subtitulo={t('miPerfil.manteneTusDatosAlDia')}
         migas={migas}
       />
 
       <div className={`mi-perfil-disposicion${esColaboradora ? '' : ' mi-perfil-disposicion--sin-nav'}`}>
         {esColaboradora && (
           <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
-            <p className="mi-perfil-nav__titulo">Mi cuenta</p>
+            <p className="mi-perfil-nav__titulo">{t('miPerfil.miCuenta')}</p>
             {secciones.map(([id, etiqueta]) => (
               <Button
                 variant="text"
@@ -467,7 +468,7 @@ const MiPerfil = () => {
                   <TextField
                     id="nombre-fantasia"
                     label="Nombre de fantasía (obligatorio)"
-                    placeholder="Ej.: Luna Código"
+                    placeholder={t('miPerfil.ejNombrePublico')}
                     value={datos.nombreFantasia}
                     onChange={(e) => cambiar('nombreFantasia', e.target.value)}
                     error={Boolean(errores.nombreFantasia)}
@@ -478,7 +479,7 @@ const MiPerfil = () => {
                   <TextField
                     id="usuario-github"
                     label="Usuario de GitHub o GitLab (opcional)"
-                    placeholder="Ej.: luna-codigo"
+                    placeholder={t('miPerfil.ejUsuarioGithub')}
                     value={datos.usuarioGitHub}
                     onChange={(e) => cambiar('usuarioGitHub', e.target.value)}
                     helperText="Sin @ ni enlace al perfil."
@@ -488,7 +489,7 @@ const MiPerfil = () => {
                     <TextField
                       id="nombre-persona"
                       label="Nombre (opcional)"
-                      placeholder="Ej.: Lucía"
+                      placeholder={t('miPerfil.ejLucia')}
                       value={datos.nombre}
                       onChange={(e) => cambiar('nombre', e.target.value)}
                       fullWidth
@@ -496,7 +497,7 @@ const MiPerfil = () => {
                     <TextField
                       id="apellido-persona"
                       label="Apellido (opcional)"
-                      placeholder="Ej.: Gómez"
+                      placeholder={t('miPerfil.ejGomez')}
                       value={datos.apellido}
                       onChange={(e) => cambiar('apellido', e.target.value)}
                       fullWidth
@@ -505,16 +506,16 @@ const MiPerfil = () => {
                   <TextField
                     id="pronombres"
                     label="Pronombres (opcional)"
-                    placeholder="Ej.: ella, elle"
+                    placeholder={t('miPerfil.ejEllaElle')}
                     value={datos.pronombres}
                     onChange={(e) => cambiar('pronombres', e.target.value)}
-                    helperText="Separalos con comas."
+                    helperText={t('miPerfil.separalosConComas')}
                     fullWidth
                   />
                   <TextField
                     id="presentacion"
                     label="Presentación breve (opcional)"
-                    placeholder="Ej.: Soy QA y quiero aportar a proyectos de salud."
+                    placeholder={t('miPerfil.ejPresentacion')}
                     value={datos.presentacion}
                     onChange={(e) => cambiar('presentacion', e.target.value)}
                     multiline
@@ -565,7 +566,7 @@ const MiPerfil = () => {
                   <TextField
                     id="descripcion-colectivo"
                     label="Descripción (obligatoria)"
-                    placeholder="Ej.: Acompañamos a familias del barrio con talleres de apoyo escolar."
+                    placeholder={t('miPerfil.ejDescripcionColectivo')}
                     value={datos.descripcion}
                     onChange={(e) => cambiar('descripcion', e.target.value)}
                     error={Boolean(errores.descripcion)}
@@ -593,13 +594,13 @@ const MiPerfil = () => {
               {listado.error && (
                 <AlertaError
                   error={listado.error}
-                  titulo="No pudimos cargar las opciones disponibles"
+                  titulo={t('miPerfil.noPudimosCargarLasOpciones')}
                   onReintentar={listado.recargar}
                 />
               )}
               <CustomSelect
                 id="mi-perfil-habilidades"
-                etiqueta={esColaboradora ? 'Habilidades (obligatorio)' : 'Áreas y etiquetas (opcional)'}
+                etiqueta={esColaboradora ? 'Habilidades (obligatorio)' : t('miPerfil.areasYEtiquetasOpcional')}
                 opciones={esColaboradora ? opcionesHabilidades : opcionesAreas}
                 seleccion={etiquetas}
                 multiple
@@ -613,7 +614,7 @@ const MiPerfil = () => {
                     etiquetas.filter((actual) => actual !== valor),
                   )
                 }
-                placeholder={listado.cargando ? 'Cargando opciones…' : 'Ej.: React'}
+                placeholder={listado.cargando ? 'Cargando opciones…' : t('perfilesProyecto.placeholderHabilidades')}
                 textoVacio={listado.cargando ? 'Cargando opciones…' : 'No hay coincidencias.'}
               />
             </section>
@@ -624,7 +625,7 @@ const MiPerfil = () => {
                 Tus medios de contacto son privados y no se muestran públicamente.
               </Alert>
               {datos.medios.length > 0 && (
-                <ul className="medios-lista" aria-label="Medios de contacto">
+                <ul className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
                   {datos.medios.map((medio, indice) => (
                     <li className="medios-fila" key={`${indice}-${medio.tipo}`}>
                       <TextField
@@ -643,8 +644,8 @@ const MiPerfil = () => {
                       </TextField>
                       <TextField
                         id={`medio-contacto-${indice}`}
-                        label={medio.tipo === 'EMAIL' ? 'Dirección de email' : 'Número con código de país'}
-                        placeholder={medio.tipo === 'EMAIL' ? 'Ej.: nombre@dominio.com' : 'Ej.: +54 9 11 4567 8901'}
+                        label={medio.tipo === 'EMAIL' ? 'Dirección de email' : t('miPerfil.numeroConCodigoDePais')}
+                        placeholder={medio.tipo === 'EMAIL' ? t('miPerfil.ejEmail') : t('miPerfil.ejTelefono')}
                         value={medio.valor}
                         onChange={(e) => cambiarMedio(indice, { valor: e.target.value })}
                         error={Boolean(errores[`medio-${indice}`])}
@@ -681,7 +682,7 @@ const MiPerfil = () => {
             {errorServidor && (
               <Alert className="mi-perfil-estado" severity="error" role="alert">
                 <span>{`No pudimos guardar los cambios: ${errorServidor}`}</span>
-                <p className="texto-secundario">Tus datos siguen acá. Podés volver a intentarlo con “Guardar cambios”.</p>
+                <p className="texto-secundario">{t('miPerfil.tusDatosSiguenAcaPodes')}</p>
               </Alert>
             )}
 
@@ -724,7 +725,7 @@ const MiPerfil = () => {
       <Dialogo open={confirmarDescartar} onClose={() => setConfirmarDescartar(false)} aria-labelledby="descartar-cambios-titulo">
         <DialogTitle id="descartar-cambios-titulo">¿Descartar los cambios?</DialogTitle>
         <DialogContent>
-          <DialogContentText>Vas a perder los cambios que no guardaste. Esta acción no se puede deshacer.</DialogContentText>
+          <DialogContentText>{t('miPerfil.vasAPerderLosCambios')}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmarDescartar(false)} variant="outlined">

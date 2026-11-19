@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@mui/material';
@@ -42,7 +43,7 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
     <form onSubmit={siguiente} noValidate>
       <section className="registro-card" aria-labelledby="paso-habilidades-titulo">
         <h2 id="paso-habilidades-titulo">Indicá tus habilidades</h2>
-        <p className="registro-card__intro">Elegí al menos una. Las usamos para recomendarte proyectos.</p>
+        <p className="registro-card__intro">{t('registro.elegiAlMenosUnaLas')}</p>
         <CustomSelect
           id="registro-habilidades"
           etiqueta="Habilidades"
@@ -50,15 +51,15 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
           seleccion={datos.habilidades}
           multiple
           onSeleccionar={alternar}
-          ayuda="Podés buscar escribiendo parte del nombre."
+          ayuda={t('registro.podesBuscarEscribiendoParteDel')}
           error={error && !habilidadesState.error && !sinOpciones ? 'Elegí al menos una habilidad disponible.' : undefined}
-          placeholder={habilidadesState.cargando ? 'Cargando habilidades…' : 'Ej.: React'}
+          placeholder={habilidadesState.cargando ? 'Cargando habilidades…' : t('perfilesProyecto.placeholderHabilidades')}
           textoVacio={habilidadesState.cargando ? 'Cargando habilidades…' : 'No hay habilidades con ese texto.'}
         />
         {habilidadesState.error && (
           <AlertaError
             error={habilidadesState.error}
-            titulo="No pudimos cargar las habilidades disponibles"
+            titulo={t('registro.noPudimosCargarLasHabilidades')}
             onReintentar={habilidadesState.recargar}
           />
         )}

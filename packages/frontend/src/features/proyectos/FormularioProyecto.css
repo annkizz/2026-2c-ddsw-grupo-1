@@ -89,7 +89,7 @@
   }
 
   .form-proyecto-acciones {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .form-proyecto-acciones .MuiButton-root {

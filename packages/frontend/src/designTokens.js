@@ -137,6 +137,8 @@ const resto = {
   '--icon-size-lg': '24px',
   '--icon-size-xl': '48px',
   '--avatar-size': '64px',
+  // Ajuste óptico: alinea íconos de 16px con la primera línea de texto (no es espaciado).
+  '--icon-alineacion': '2px',
   '--logo-size': '40px',
   '--logo-size-movil': '32px',
   '--progress-height': '8px',

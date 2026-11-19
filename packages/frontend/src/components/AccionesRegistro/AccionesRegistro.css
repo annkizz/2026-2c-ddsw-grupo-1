@@ -10,7 +10,7 @@
 
 @media (max-width: 599.95px) {
   .acciones-registro {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .acciones-registro .MuiButton-root {

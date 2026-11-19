@@ -116,7 +116,7 @@
   }
 
   .mi-perfil-acciones {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .mi-perfil-acciones .MuiButton-root {

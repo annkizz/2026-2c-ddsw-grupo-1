@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -11,7 +12,7 @@ import Habilidades from './Habilidades.jsx';
 import MediosDeContacto from './MediosDeContacto.jsx';
 import './Registro.css';
 
-const PASOS = ['Tus datos', 'Habilidades', 'Contacto'];
+const PASOS = [t('registro.tusDatos'), 'Habilidades', 'Contacto'];
 
 const DATOS_INICIALES = {
   nombreFantasia: '',
@@ -57,7 +58,7 @@ const RegistroColaboradora = () => {
       borrarTipo();
       navigate('/perfil');
     } catch (e) {
-      setError(mensajeDeError(e, 'No pudimos crear tu perfil. Tus datos siguen acá.'));
+      setError(mensajeDeError(e, t('registro.noPudimosCrearTuPerfil')));
     } finally {
       setGuardando(false);
     }
@@ -66,8 +67,8 @@ const RegistroColaboradora = () => {
   return (
     <div className="contenedor-pagina contenedor-pagina--formulario registro">
       <EncabezadoPagina
-        titulo="Crear tu perfil de colaboradora"
-        subtitulo="Con estos datos los colectivos te encuentran y te recomendamos proyectos."
+        titulo={t('registro.crearTuPerfilDeColaboradora')}
+        subtitulo={t('registro.conEstosDatosLosColectivos')}
       >
         <PasosRegistro pasos={PASOS} actual={paso} />
       </EncabezadoPagina>
@@ -96,7 +97,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? 'Verificar registro' : 'Crear mi perfil'}
+          siguiente={registroCreado ? 'Verificar registro' : t('registro.crearMiPerfil')}
           guardando={guardando}
           error={error}
         />

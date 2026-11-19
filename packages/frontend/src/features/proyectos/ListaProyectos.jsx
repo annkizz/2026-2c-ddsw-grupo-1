@@ -118,7 +118,7 @@ const ListaProyectos = () => {
         migas={esColectivo ? [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('proyectos.titulo') }] : undefined}
       />
 
-      <div className="filtros-barra" role="search" aria-label="Filtrar proyectos">
+      <div className="filtros-barra" role="search" aria-label={t('proyectos.filtrarProyectos')}>
         <TextField
           id="busqueda-titulo"
           className="filtros-barra__busqueda"
@@ -162,7 +162,7 @@ const ListaProyectos = () => {
       {cargando ? (
         <EsqueletoGrilla etiqueta={t('proyectos.cargando')} />
       ) : errorCarga ? (
-        <AlertaError error={errorCarga} titulo="No pudimos cargar los proyectos" onReintentar={cargarDatos} />
+        <AlertaError error={errorCarga} titulo={t('proyectos.noPudimosCargarLosProyectos')} onReintentar={cargarDatos} />
       ) : proyectosBase.length === 0 ? (
         <EstadoVacio
           icono={FiFolder}
@@ -188,7 +188,7 @@ const ListaProyectos = () => {
             <EstadoVacio
               icono={FiSearch}
               titulo={t('proyectos.sinResultados')}
-              descripcion="Probá con otra palabra o cambiá el filtro de estado."
+              descripcion={t('proyectos.probaConOtraPalabraO')}
               accion={
                 <Button
                   variant="outlined"
@@ -259,7 +259,7 @@ const ListaProyectos = () => {
                           variant="text"
                           onClick={() => navigate(`/proyectos/${proyecto.id}/editar`)}
                           startIcon={<FiEdit2 aria-hidden="true" />}
-                          aria-label={`Editar proyecto: ${proyecto.titulo}`}
+                          aria-label={t('proyectos.editarProyectoDe', { titulo: proyecto.titulo })}
                         >
                           Editar proyecto
                         </Button>
@@ -270,7 +270,7 @@ const ListaProyectos = () => {
                           color="error"
                           startIcon={<FiXCircle aria-hidden="true" />}
                           onClick={() => abrirCierre(proyecto)}
-                          aria-label={`Cerrar proyecto: ${proyecto.titulo}`}
+                          aria-label={t('proyectos.cerrarProyectoDe', { titulo: proyecto.titulo })}
                         >
                           {t('proyectos.cerrarProyecto')}
                         </Button>
@@ -297,7 +297,7 @@ const ListaProyectos = () => {
             <strong>{t('proyectos.advertenciaPermanente')}</strong>
           </DialogContentText>
           {errorCierre && (
-            <AlertaError className="dialogo-alerta" error={errorCierre} titulo="No pudimos cerrar el proyecto" />
+            <AlertaError className="dialogo-alerta" error={errorCierre} titulo={t('proyectos.noPudimosCerrarElProyecto')} />
           )}
         </DialogContent>
         <DialogActions>

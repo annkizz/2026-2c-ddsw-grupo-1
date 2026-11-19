@@ -1,4 +1,4 @@
-/* CustomSelect con el mismo aspecto que los inputs de MUI (label arriba, 48px, borde #6B7280, foco con anillo). */
+/* CustomSelect con el mismo aspecto que los inputs de MUI (label arriba, 48px, borde de input, foco con anillo). */
 .selector {
   position: relative;
   display: flex;
@@ -81,7 +81,7 @@
 
 .selector__error svg {
   flex: 0 0 auto;
-  margin-top: var(--focus-ring-width);
+  margin-top: var(--icon-alineacion);
 }
 
 .selector__ayuda {

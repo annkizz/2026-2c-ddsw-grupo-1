@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, MenuItem, TextField } from '@mui/material';
@@ -26,13 +27,13 @@ const DATOS_INICIALES = {
 };
 const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'descripcion'];
 const AYUDAS_CAMPOS = {
-  nombre: 'Es el nombre que van a ver las personas colaboradoras.',
-  descripcion: 'Contá qué hacen y a quiénes acompañan.'
+  nombre: t('registro.ayudaNombreColectivo'),
+  descripcion: t('registro.contaQueHacenYA')
 };
 const ERRORES_CAMPOS = {
-  nombre: 'Ingresá el nombre del colectivo',
-  tipoDeColectivo: 'Elegí un tipo de colectivo',
-  descripcion: 'Escribí una descripción del colectivo'
+  nombre: t('registro.ingresaElNombreDelColectivo'),
+  tipoDeColectivo: t('registro.elegiUnTipoDeColectivo'),
+  descripcion: t('registro.escribiUnaDescripcionDelColectivo')
 };
 const IDS = {
   nombre: 'registro-colectivo-nombre',
@@ -113,7 +114,7 @@ const DatosColectivo = () => {
       borrarTipo();
       navigate('/perfil');
     } catch (e) {
-      setError(mensajeDeError(e, 'No pudimos registrar el colectivo. Tus datos siguen acá.'));
+      setError(mensajeDeError(e, t('registro.noPudimosRegistrarElColectivo')));
     } finally {
       setGuardando(false);
     }
@@ -122,8 +123,8 @@ const DatosColectivo = () => {
   return (
     <div className="contenedor-pagina contenedor-pagina--formulario registro">
       <EncabezadoPagina
-        titulo="Registrar tu colectivo"
-        subtitulo="Paso 2 de 2: contanos sobre tu colectivo para que las personas colaboradoras lo conozcan."
+        titulo={t('registro.registrarTuColectivo')}
+        subtitulo={t('registro.paso2De2Contanos')}
       />
       <form onSubmit={guardar} noValidate>
         <ResumenErrores
@@ -131,11 +132,11 @@ const DatosColectivo = () => {
           intento={intento}
         />
         <section className="registro-card" aria-labelledby="registro-colectivo-datos">
-          <h2 id="registro-colectivo-datos">Datos del colectivo</h2>
+          <h2 id="registro-colectivo-datos">{t('registro.datosDelColectivo')}</h2>
           <p className="registro-card__intro">Los campos obligatorios están indicados.</p>
           <TextField
             id="registro-colectivo-nombre"
-            label="Nombre (obligatorio)"
+            label={t('registro.nombreObligatorio')}
             placeholder="Ej.: Colectivo La Semilla"
             {...propsDe('nombre')}
           />
@@ -168,7 +169,7 @@ const DatosColectivo = () => {
           <div>
             <CustomSelect
               id="colectivo-etiquetas"
-              etiqueta="Etiquetas (opcional)"
+              etiqueta={t('registro.etiquetasOpcional')}
               opciones={opcionesEtiquetas}
               seleccion={datos.etiquetas}
               multiple
@@ -177,7 +178,7 @@ const DatosColectivo = () => {
               onSeleccionar={alternarEtiqueta}
               onQuitar={alternarEtiqueta}
               ayuda={`Buscá etiquetas existentes o creá las tuyas (hasta ${ETIQUETAS_MAX}) para que tu colectivo aparezca en las búsquedas.`}
-              placeholder={etiquetasState.cargando ? 'Cargando etiquetas…' : 'Ej.: Alimentos'}
+              placeholder={etiquetasState.cargando ? 'Cargando etiquetas…' : t('formularioProyecto.placeholderEtiquetas')}
               textoVacio={
                 etiquetasState.cargando ? 'Cargando etiquetas…' : 'No hay etiquetas con ese texto. Podés crear una nueva.'
               }
@@ -192,7 +193,7 @@ const DatosColectivo = () => {
           <TextField
             id="registro-colectivo-descripcion"
             label="Descripción (obligatoria)"
-            placeholder="Ej.: Acompañamos a familias del barrio con talleres de apoyo escolar."
+            placeholder={t('miPerfil.ejDescripcionColectivo')}
             multiline
             minRows={4}
             {...propsDe('descripcion')}
@@ -210,7 +211,7 @@ const DatosColectivo = () => {
             borrarTipo();
             navigate('/');
           }}
-          siguiente={registroCreado ? 'Verificar registro' : 'Registrar colectivo'}
+          siguiente={registroCreado ? 'Verificar registro' : t('registro.registrarColectivo')}
           guardando={guardando}
         />
       </form>

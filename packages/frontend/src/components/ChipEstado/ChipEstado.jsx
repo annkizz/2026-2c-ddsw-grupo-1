@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Chip } from '@mui/material';
@@ -7,8 +8,8 @@ import { FiCheckCircle, FiClock, FiPlayCircle, FiXCircle } from 'react-icons/fi'
 const ESTADOS = {
   ACTIVO: { texto: 'Activo', color: 'primary', Icono: FiPlayCircle },
   FINALIZADO: { texto: 'Finalizado', color: 'default', Icono: FiCheckCircle },
-  ABIERTA: { texto: 'Búsqueda abierta', color: 'success', Icono: FiCheckCircle },
-  CERRADA: { texto: 'Búsqueda cerrada', color: 'default', Icono: FiXCircle },
+  ABIERTA: { texto: t('proyectos.busquedaAbierta'), color: 'success', Icono: FiCheckCircle },
+  CERRADA: { texto: t('proyectos.busquedaCerrada'), color: 'default', Icono: FiXCircle },
   PENDIENTE: { texto: 'Pendiente', color: 'warning', Icono: FiClock }
 };
 

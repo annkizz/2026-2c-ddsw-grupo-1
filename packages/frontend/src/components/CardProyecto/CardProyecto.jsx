@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Chip } from '@mui/material';
@@ -46,7 +47,7 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
             className="tarjeta__chip-destacado"
             color="success"
             icon={<FiCheckCircle aria-hidden="true" />}
-            label="Coincide con tu perfil"
+            label={t('comun.coincideConTuPerfil')}
           />
         )}
 
@@ -83,7 +84,7 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
 
         {tieneCoincidencia && (
           <div className="coincidencia">
-            <h4 className="coincidencia__titulo">Perfiles compatibles</h4>
+            <h4 className="coincidencia__titulo">{t('comun.perfilesCompatibles')}</h4>
             <ul className="lista-perfiles">
               {perfilesCompatibles.map((perfil) => (
                 <li key={perfil.id}>

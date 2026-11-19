@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useMemo, useState } from "react";
 import { Button, MenuItem, TextField } from "@mui/material";
 import { FiFilter, FiRotateCcw, FiSearch } from "react-icons/fi";
@@ -195,11 +196,11 @@ export default function BuscadorProyectos() {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo="Buscar proyectos"
-        subtitulo="Encontrá proyectos en los que puedas aportar tus conocimientos. Combiná habilidades, colectivos, etiquetas y provincias."
-        migas={[{ texto: "Inicio", to: "/" }, { texto: "Buscar proyectos" }]}
+        subtitulo={t('buscadorProyectos.encontraProyectosEnLosQue')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Buscar proyectos" }]}
       />
 
-      <div className="filtros filtros--busqueda" role="search" aria-label="Filtros de proyectos">
+      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
@@ -221,7 +222,7 @@ export default function BuscadorProyectos() {
               }
             />
             {habilidadesState.error && (
-              <AlertaError error={habilidadesState.error} titulo="No pudimos cargar las habilidades" onReintentar={habilidadesState.recargar} />
+              <AlertaError error={habilidadesState.error} titulo={t('buscadorProyectos.noPudimosCargarLasHabilidades')} onReintentar={habilidadesState.recargar} />
             )}
           </div>
 
@@ -236,7 +237,7 @@ export default function BuscadorProyectos() {
               placeholder={
                 etiquetasState.cargando
                   ? "Cargando etiquetas…"
-                  : "Ej.: Salud"
+                  : t('buscadorProyectos.ejSalud')
               }
               textoVacio={
                 etiquetasState.cargando
@@ -245,7 +246,7 @@ export default function BuscadorProyectos() {
               }
             />
             {etiquetasState.error && (
-              <AlertaError error={etiquetasState.error} titulo="No pudimos cargar las etiquetas" onReintentar={etiquetasState.recargar} />
+              <AlertaError error={etiquetasState.error} titulo={t('buscadorProyectos.noPudimosCargarLasEtiquetas')} onReintentar={etiquetasState.recargar} />
             )}
           </div>
         </div>
@@ -319,7 +320,7 @@ export default function BuscadorProyectos() {
                 }
               />
               {colectivosState.error && (
-                <AlertaError error={colectivosState.error} titulo="No pudimos cargar los colectivos" onReintentar={colectivosState.recargar} />
+                <AlertaError error={colectivosState.error} titulo={t('buscadorProyectos.noPudimosCargarLosColectivos')} onReintentar={colectivosState.recargar} />
               )}
             </div>
 
@@ -369,11 +370,11 @@ export default function BuscadorProyectos() {
           </div>
 
           {coincidenciasState.cargando && (
-            <EsqueletoGrilla cantidad={3} etiqueta="Calculando recomendaciones…" />
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorProyectos.calculandoRecomendaciones')} />
           )}
 
           {coincidenciasState.error && (
-            <AlertaError error={coincidenciasState.error} titulo="No pudimos calcular las recomendaciones" onReintentar={coincidenciasState.recargar} />
+            <AlertaError error={coincidenciasState.error} titulo={t('buscadorProyectos.noPudimosCalcularLasRecomendaciones')} onReintentar={coincidenciasState.recargar} />
           )}
 
           {!coincidenciasState.cargando &&
@@ -387,7 +388,7 @@ export default function BuscadorProyectos() {
                   variant="outlined"
                   type="button"
                   onClick={verTodosLosProyectos}
-                >Ver todos los proyectos activos</Button>} />
+                >{t('buscadorProyectos.verTodosLosProyectosActivos')}</Button>} />
             )}
 
           {!coincidenciasState.cargando &&
@@ -409,11 +410,11 @@ export default function BuscadorProyectos() {
           </div>
 
           {resultadosState.cargando && (
-            <EsqueletoGrilla cantidad={3} etiqueta="Buscando proyectos activos…" />
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorProyectos.buscandoProyectosActivos')} />
           )}
 
           {resultadosState.error && (
-            <AlertaError error={resultadosState.error} titulo="No pudimos buscar proyectos" onReintentar={resultadosState.recargar} />
+            <AlertaError error={resultadosState.error} titulo={t('buscadorProyectos.noPudimosBuscarProyectos')} onReintentar={resultadosState.recargar} />
           )}
 
           {!resultadosState.cargando && !resultadosState.error && (

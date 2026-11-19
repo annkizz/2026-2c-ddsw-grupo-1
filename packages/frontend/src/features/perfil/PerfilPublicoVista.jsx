@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Chip } from '@mui/material';
@@ -21,7 +22,7 @@ const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, t
   if (cargando) {
     return (
       <div className="contenedor-pagina contenedor-pagina--formulario">
-        <EsqueletoPerfil etiqueta="Cargando el perfil…" />
+        <EsqueletoPerfil etiqueta={t('perfilPublico.cargandoElPerfil')} />
       </div>
     );
   }
@@ -30,16 +31,16 @@ const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, t
     const noEncontrado = !error || error?.response?.status === 404;
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
-        <EncabezadoPagina titulo={`Perfil de ${tipo.toLowerCase()}`} migas={[{ texto: 'Inicio', to: '/' }, { texto: 'Perfil' }]} />
+        <EncabezadoPagina titulo={t('perfilPublico.tituloPerfilDe', { tipo: tipo.toLowerCase() })} migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: 'Perfil' }]} />
         {noEncontrado ? (
           <EstadoVacio
             icono={FiUser}
-            titulo="No encontramos este perfil"
-            descripcion="Puede que el enlace haya cambiado o que el perfil ya no esté disponible."
+            titulo={t('perfilPublico.noEncontramosEstePerfil')}
+            descripcion={t('perfilPublico.puedeQueElEnlaceHaya')}
             accion={volver}
           />
         ) : (
-          <AlertaError error={error} titulo="No pudimos cargar este perfil" onReintentar={onReintentar} />
+          <AlertaError error={error} titulo={t('perfilPublico.noPudimosCargarEstePerfil')} onReintentar={onReintentar} />
         )}
       </div>
     );
@@ -47,8 +48,8 @@ const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, t
 
   return (
     <div className="contenedor-pagina contenedor-pagina--formulario perfil-publico">
-      <EncabezadoPagina titulo={titulo} antetitulo={tipo} migas={[{ texto: 'Inicio', to: '/' }, { texto: titulo }]} />
-      <section className="perfil-publico__tarjeta" aria-label="Datos del perfil">
+      <EncabezadoPagina titulo={titulo} antetitulo={tipo} migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: titulo }]} />
+      <section className="perfil-publico__tarjeta" aria-label={t('perfilPublico.datosDelPerfil')}>
         {datos.filter(Boolean).map((dato, i) => (
           <p key={i} className={i === datos.length - 1 ? 'perfil-publico__descripcion' : 'texto-secundario'}>
             {dato}

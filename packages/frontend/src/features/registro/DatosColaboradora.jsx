@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { TextField } from '@mui/material';
@@ -8,12 +9,12 @@ import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
 const OBLIGATORIOS = ['nombreFantasia', 'usuarioGitHub', 'presentacion'];
 
 const CAMPOS = {
-  nombreFantasia: { label: 'Nombre público (obligatorio)', placeholder: 'Ej.: Luna Código', ayuda: 'Es el nombre que van a ver los colectivos.', error: 'Ingresá un nombre público' },
-  usuarioGitHub: { label: 'Usuario de GitHub (obligatorio)', placeholder: 'Ej.: luna-codigo', ayuda: 'Sin la @ ni el enlace completo.', error: 'Ingresá tu usuario de GitHub' },
-  nombre: { label: 'Nombre (opcional)', placeholder: 'Ej.: Lucía' },
-  apellido: { label: 'Apellido (opcional)', placeholder: 'Ej.: Gómez' },
-  pronombres: { label: 'Pronombres (opcional)', placeholder: 'Ej.: ella, elle', ayuda: 'Separalos con comas.' },
-  presentacion: { label: 'Presentación (obligatoria)', placeholder: 'Ej.: Soy QA y quiero aportar a proyectos de salud.', ayuda: 'Contanos quién sos y qué te interesa.', error: 'Escribí una presentación breve' }
+  nombreFantasia: { label: t('registro.nombrePublicoObligatorio'), placeholder: t('miPerfil.ejNombrePublico'), ayuda: t('registro.ayudaNombrePublico'), error: t('registro.ingresaUnNombrePublico') },
+  usuarioGitHub: { label: t('registro.usuarioDeGithubObligatorio'), placeholder: t('miPerfil.ejUsuarioGithub'), ayuda: t('registro.sinLaNiElEnlace'), error: t('registro.ingresaTuUsuarioDeGithub') },
+  nombre: { label: t('registro.nombreOpcional'), placeholder: t('miPerfil.ejLucia') },
+  apellido: { label: t('registro.apellidoOpcional'), placeholder: t('miPerfil.ejGomez') },
+  pronombres: { label: t('registro.pronombresOpcional'), placeholder: t('miPerfil.ejEllaElle'), ayuda: t('miPerfil.separalosConComas') },
+  presentacion: { label: t('registro.presentacionObligatoria'), placeholder: t('miPerfil.ejPresentacion'), ayuda: t('registro.contanosQuienSosYQue'), error: t('registro.escribiUnaPresentacionBreve') }
 };
 
 // Paso 1 de 3: datos personales
@@ -69,7 +70,7 @@ const DatosColaboradora = ({ datos, setDatos, onVolver, onSiguiente }) => {
         intento={intento}
       />
       <section className="registro-card" aria-labelledby="paso-datos-titulo">
-        <h2 id="paso-datos-titulo">Tus datos</h2>
+        <h2 id="paso-datos-titulo">{t('registro.tusDatos')}</h2>
         <p className="registro-card__intro">Los campos obligatorios están indicados.</p>
         <TextField {...propsDe('nombreFantasia')} />
         <TextField {...propsDe('usuarioGitHub')} />

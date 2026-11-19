@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
@@ -63,7 +64,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
           </CardActionArea>
         </Card>
       ))}
-      <Alert severity="info">Elegí la opción que mejor te represente. En ambos casos, sumarse es gratis.</Alert>
+      <Alert severity="info">{t('registro.elegiLaOpcionQueMejor')}</Alert>
     </div>
   );
 
@@ -72,8 +73,8 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina
           titulo="Crear una cuenta"
-          subtitulo="Paso 1: elegí el tipo de cuenta. Después completás tus datos."
-          migas={[{ texto: 'Inicio', to: '/' }, { texto: 'Crear una cuenta' }]}
+          subtitulo={t('registro.paso1ElegiElTipo')}
+          migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: 'Crear una cuenta' }]}
         />
         {opciones}
       </div>

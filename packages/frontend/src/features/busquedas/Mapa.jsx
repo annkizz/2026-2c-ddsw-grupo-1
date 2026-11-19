@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import { FiMapPin, FiX } from "react-icons/fi";
@@ -91,15 +92,15 @@ export default function Mapa() {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo="Proyectos por provincia"
-        subtitulo="Explorá cómo se distribuyen los proyectos activos en el país. Elegí una provincia en el mapa o en la tabla para ver sus proyectos."
-        migas={[{ texto: "Inicio", to: "/" }, { texto: "Mapa" }]}
+        subtitulo={t('mapa.exploraComoSeDistribuyenLos')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Mapa" }]}
       />
 
-      {cargando && <EsqueletoDetalle etiqueta="Cargando el mapa…" />}
+      {cargando && <EsqueletoDetalle etiqueta={t('mapa.cargandoElMapa')} />}
       {error && (
         <AlertaError
           error={error}
-          titulo="No pudimos cargar el mapa"
+          titulo={t('mapa.noPudimosCargarElMapa')}
           onReintentar={() => setIntento((actual) => actual + 1)}
         />
       )}
@@ -191,7 +192,7 @@ export default function Mapa() {
                     Más proyectos
                   </li>
                 </ul>
-                <p className="texto-secundario">El número en cada provincia indica la cantidad de proyectos.</p>
+                <p className="texto-secundario">{t('mapa.elNumeroEnCadaProvincia')}</p>
               </div>
             </div>
 
@@ -266,7 +267,7 @@ export default function Mapa() {
         </>
       )}
 
-      <p className="texto-caption mapa-fuente">Fuente del mapa: GADM 4.1 (gadm.org), uso académico con atribución.</p>
+      <p className="texto-caption mapa-fuente">{t('mapa.fuenteDelMapaGadm4')}</p>
     </div>
   );
 }

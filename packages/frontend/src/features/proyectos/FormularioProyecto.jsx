@@ -385,7 +385,7 @@ const FormularioProyecto = () => {
 
             {!esEdicion && (
               <fieldset className="form-proyecto-ubicacion">
-                <legend>Ubicación</legend>
+                <legend>{t('formularioProyecto.ubicacion')}</legend>
                 <p className="texto-secundario">{t('formularioProyecto.ayudaUbicacion')}</p>
                 <div className="form-proyecto-ubicacion__campos">
                   <TextField

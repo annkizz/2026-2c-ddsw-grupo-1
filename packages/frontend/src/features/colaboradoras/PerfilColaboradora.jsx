@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { obtenerColaboradoraPorId } from '../../service/colaboradorasService';
@@ -35,7 +36,7 @@ const PerfilColaboradora = () => {
 
   return (
     <PerfilPublicoVista
-      tipo="Persona colaboradora"
+      tipo={t('perfilPublico.personaColaboradora')}
       cargando={cargando}
       error={error}
       encontrado={Boolean(colaboradora)}

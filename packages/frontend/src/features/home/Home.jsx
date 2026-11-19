@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Skeleton } from '@mui/material';
@@ -33,18 +34,18 @@ import './Home.css';
 const PASOS_AYUDA = [
   {
     icono: FiUserPlus,
-    titulo: 'Creá tu cuenta',
-    texto: 'Elegí si te sumás como colectivo o como persona colaboradora. El registro tiene pocos pasos.',
+    titulo: t('inicio.creaTuCuenta'),
+    texto: t('inicio.elegiSiTeSumasComo'),
   },
   {
     icono: FiEdit3,
     titulo: 'Completá tu perfil',
-    texto: 'Contá qué hace tu colectivo o qué habilidades tenés: así las coincidencias son mejores.',
+    texto: t('inicio.contaQueHaceTuColectivo'),
   },
   {
     icono: FiRepeat,
-    titulo: 'Conectá con proyectos',
-    texto: 'Los colectivos publican proyectos y perfiles; las personas colaboradoras los encuentran y se postulan.',
+    titulo: t('inicio.conectaConProyectos'),
+    texto: t('inicio.losColectivosPublicanProyectosY'),
   },
 ];
 
@@ -161,7 +162,7 @@ const Home = () => {
         <section className="dashboard" aria-labelledby="dashboard-titulo">
           <EncabezadoPagina
             id="dashboard-titulo"
-            antetitulo="Espacio de tu colectivo"
+            antetitulo={t('inicio.espacioDeTuColectivo')}
             titulo="¿Qué querés impulsar hoy?"
             subtitulo="Publicá proyectos, revisá su estado y encontrá colaboradoras."
           />
@@ -212,7 +213,7 @@ const Home = () => {
               ) : errorProyectos ? (
                 <AlertaError
                   error={errorProyectos}
-                  titulo="No pudimos cargar tus proyectos"
+                  titulo={t('buscadorColaboradoras.noPudimosCargarTusProyectos')}
                   onReintentar={() => setIntentoCarga((intento) => intento + 1)}
                 />
               ) : sinProyectos ? (
@@ -268,7 +269,7 @@ const Home = () => {
             <AlertaError
               className="dashboard-alerta-perfil"
               error={errorPerfil}
-              titulo="No pudimos comprobar si tu perfil está completo"
+              titulo={t('inicio.noPudimosComprobarSiTu')}
               onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
             />
           ) : camposPerfilFaltantes.length > 0 ? (
@@ -293,9 +294,9 @@ const Home = () => {
           <EncabezadoPagina
             id="home-titulo"
             className="encabezado-pagina--hero"
-            antetitulo="Tecnología con propósito"
+            antetitulo={t('inicio.tecnologiaConProposito')}
             titulo="El código es mejor cuando nos conecta."
-            subtitulo="Unimos a colectivos que necesitan software con personas que quieren colaborar."
+            subtitulo={t('inicio.unimosAColectivosQueNecesitan')}
           />
           <div className="home-pares" aria-hidden="true">
             <span>
@@ -327,7 +328,7 @@ const Home = () => {
             <AlertaError
               className="home-login__error"
               error={errorLogto}
-              titulo="No pudimos abrir el inicio de sesión"
+              titulo={t('inicio.noPudimosAbrirElInicio')}
             />
           )}
           <p className="home-cambio">
@@ -340,8 +341,8 @@ const Home = () => {
       </div>
 
       <section id={ID_AYUDA} className="home-ayuda" aria-labelledby="home-ayuda-titulo" tabIndex={-1}>
-        <h2 id="home-ayuda-titulo">Cómo funciona</h2>
-        <p className="home-ayuda__intro">Tres pasos para empezar a colaborar.</p>
+        <h2 id="home-ayuda-titulo">{t('navegacion.comoFunciona')}</h2>
+        <p className="home-ayuda__intro">{t('inicio.tresPasosParaEmpezarA')}</p>
         <ol className="home-ayuda__pasos">
           {PASOS_AYUDA.map(({ icono: Icono, titulo, texto }, indice) => (
             <li key={titulo} className="home-ayuda__paso">

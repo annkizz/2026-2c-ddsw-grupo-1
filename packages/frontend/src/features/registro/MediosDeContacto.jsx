@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
@@ -12,21 +13,21 @@ const CELULAR_REGEX = /^\+\d{10,15}$/; // igual que el backend, pero tolerando e
 const REGLAS = {
   EMAIL: {
     etiqueta: 'Dirección de email',
-    ejemplo: 'Ej.: nombre@dominio.com',
+    ejemplo: t('miPerfil.ejEmail'),
     esValido: (valor) => EMAIL_REGEX.test(valor.trim()),
-    mensaje: 'Ingresá un email válido, por ejemplo nombre@dominio.com'
+    mensaje: t('registro.ingresaUnEmailValidoPor')
   },
   WHATSAPP: {
     etiqueta: 'Número de WhatsApp',
-    ejemplo: 'Ej.: +54 9 11 4567 8901',
+    ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono con código de país, por ejemplo +54 9 11 4567 8901'
+    mensaje: t('registro.ingresaUnTelefonoConCodigo')
   },
   SMS: {
     etiqueta: 'Número de celular',
-    ejemplo: 'Ej.: +54 9 11 4567 8901',
+    ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono con código de país, por ejemplo +54 9 11 4567 8901'
+    mensaje: t('registro.ingresaUnTelefonoConCodigo')
   }
 };
 
@@ -82,11 +83,11 @@ const MediosDeContacto = ({
 
         {datos.medios.length === 0 ? (
           <p className="texto-secundario">
-            <strong>Medios de contacto (opcional).</strong> Todavía no agregaste medios de contacto. Podés continuar sin
+            <strong>{t('registro.mediosDeContactoOpcional')}</strong> Todavía no agregaste medios de contacto. Podés continuar sin
             completar este paso.
           </p>
         ) : (
-          <ul className="medios-lista" aria-label="Medios de contacto">
+          <ul className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
             {datos.medios.map((medio, i) => (
               <li className="medios-fila" key={i}>
                 <TextField

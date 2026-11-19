@@ -433,7 +433,7 @@ const PerfilesProyecto = () => {
               value={form.habilidadesRequeridas}
               onChange={(_, valor) => setForm({ ...form, habilidadesRequeridas: valor })}
               disabled={guardando}
-              noOptionsText="No hay habilidades con ese texto"
+              noOptionsText={t('perfilesProyecto.noHayHabilidadesConEse')}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -454,7 +454,7 @@ const PerfilesProyecto = () => {
               value={form.habilidadesOpcionales}
               onChange={(_, valor) => setForm({ ...form, habilidadesOpcionales: valor })}
               disabled={guardando}
-              noOptionsText="No hay habilidades con ese texto"
+              noOptionsText={t('perfilesProyecto.noHayHabilidadesConEse')}
               renderInput={(params) => (
                 <TextField
                   {...params}

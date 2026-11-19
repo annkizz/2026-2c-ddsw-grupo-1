@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
@@ -177,12 +178,12 @@ export default function BuscadorColaboradores() {
   return (
     <div className="contenedor-pagina">
       <EncabezadoPagina
-        titulo="Buscar colaboradoras"
-        subtitulo="Elegí uno de tus proyectos y el perfil que necesitás cubrir. La búsqueda revisa solo los perfiles de ese proyecto."
-        migas={[{ texto: "Inicio", to: "/" }, { texto: "Buscar colaboradoras" }]}
+        titulo={t('buscadorColaboradoras.buscarColaboradoras')}
+        subtitulo={t('buscadorColaboradoras.elegiUnoDeTusProyectos')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: t('buscadorColaboradoras.buscarColaboradoras') }]}
       />
 
-      <div className="filtros filtros--busqueda" role="search" aria-label="Filtros de colaboradoras">
+      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorColaboradoras.filtrosDeColaboradoras')}>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
@@ -194,7 +195,7 @@ export default function BuscadorColaboradores() {
               placeholder={
                 proyectosState.cargando
                   ? "Cargando proyectos…"
-                  : "Ej.: Portal de turnos"
+                  : t('buscadorColaboradoras.ejPortalDeTurnos')
               }
               textoVacio={
                 proyectosState.cargando
@@ -203,7 +204,7 @@ export default function BuscadorColaboradores() {
               }
             />
             {proyectosState.error && (
-              <AlertaError error={proyectosState.error} titulo="No pudimos cargar tus proyectos" onReintentar={proyectosState.recargar} />
+              <AlertaError error={proyectosState.error} titulo={t('buscadorColaboradoras.noPudimosCargarTusProyectos')} onReintentar={proyectosState.recargar} />
             )}
           </div>
 
@@ -218,7 +219,7 @@ export default function BuscadorColaboradores() {
                 placeholder={
                   perfilesState.cargando
                     ? "Cargando perfiles…"
-                    : "Ej.: Tester"
+                    : t('buscadorColaboradoras.ejTester')
                 }
                 textoVacio={
                   perfilesState.cargando
@@ -227,7 +228,7 @@ export default function BuscadorColaboradores() {
                 }
               />
               {perfilesState.error && (
-                <AlertaError error={perfilesState.error} titulo="No pudimos cargar los perfiles de este proyecto" onReintentar={perfilesState.recargar} />
+                <AlertaError error={perfilesState.error} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={perfilesState.recargar} />
               )}
             </div>
           )}
@@ -261,32 +262,32 @@ export default function BuscadorColaboradores() {
       </div>
 
       {proyectosState.cargando && (
-        <EsqueletoLista cantidad={2} etiqueta="Cargando tus proyectos activos…" />
+        <EsqueletoLista cantidad={2} etiqueta={t('buscadorColaboradoras.cargandoTusProyectosActivos')} />
       )}
 
       {!proyectosState.cargando &&
         !proyectosState.error &&
         proyectosState.datos.length === 0 && (
-          <EstadoVacio nivelTitulo="p" titulo="No tenés proyectos activos para buscar colaboradores." accion={<Button
+          <EstadoVacio nivelTitulo="p" titulo={t('buscadorColaboradoras.noTenesProyectosActivosPara')} accion={<Button
               variant="outlined"
               component={Link}
               to="/proyectos/nuevo"
-            >Crear proyecto</Button>} />
+            >{t('proyectos.crearProyecto')}</Button>} />
         )}
 
       {idProyecto !== "" && perfilesState.cargando && (
-        <EsqueletoLista cantidad={2} etiqueta="Cargando los perfiles de este proyecto…" />
+        <EsqueletoLista cantidad={2} etiqueta={t('buscadorColaboradoras.cargandoLosPerfilesDeEste')} />
       )}
 
       {idProyecto !== "" &&
         !perfilesState.cargando &&
         !perfilesState.error &&
         perfiles.length === 0 && (
-          <EstadoVacio nivelTitulo="p" titulo="Este proyecto todavía no tiene perfiles cargados." accion={<Button
+          <EstadoVacio nivelTitulo="p" titulo={t('detalleProyecto.sinPerfiles')} accion={<Button
               variant="outlined"
               component={Link}
               to={`/proyectos/${idProyecto}/perfiles`}
-            >Cargar perfiles</Button>} />
+            >{t('buscadorColaboradoras.cargarPerfiles')}</Button>} />
         )}
 
       {busquedaIniciada && (
@@ -307,11 +308,11 @@ export default function BuscadorColaboradores() {
           </div>
 
           {cargando && (
-            <EsqueletoGrilla cantidad={3} etiqueta="Buscando personas que coincidan…" />
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorColaboradoras.buscandoPersonasQueCoincidan')} />
           )}
 
           {error && (
-            <AlertaError error={error} titulo="No pudimos buscar colaboradores para los perfiles elegidos" onReintentar={recargar} />
+            <AlertaError error={error} titulo={t('buscadorColaboradoras.noPudimosBuscarColaboradoresPara')} onReintentar={recargar} />
           )}
 
           {!cargando && !error && grupos.length === 0 && (

@@ -340,7 +340,7 @@ export const crearTema = (tokens) => {
             fontSize: v('font-size-secundario'),
             lineHeight: v('line-height-body'),
             '&.Mui-error': { color: v('color-error'), fontWeight: v('font-weight-medium') },
-            '& svg': { flex: '0 0 auto', marginTop: v('focus-ring-width'), fontSize: v('icon-size-sm') }
+            '& svg': { flex: '0 0 auto', marginTop: v('icon-alineacion'), fontSize: v('icon-size-sm') }
           }
         }
       },
@@ -574,7 +574,7 @@ export const crearTema = (tokens) => {
     [abajoSm]: { fontSize: v('font-size-h1-movil') }
   };
   theme.components.MuiDialogActions.styleOverrides.root[abajoSm] = {
-    flexDirection: 'column-reverse',
+    flexDirection: 'column',
     alignItems: 'stretch',
     '& > *': { width: '100%' }
   };

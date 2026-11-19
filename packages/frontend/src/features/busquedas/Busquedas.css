@@ -94,7 +94,7 @@
   }
 
   .filtros__acciones {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .filtros__acciones .MuiButton-root {

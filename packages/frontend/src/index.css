@@ -2,6 +2,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* El header es fijo: al tabular, el elemento enfocado no queda tapado (WCAG 2.4.11). */
+  scroll-padding-top: calc(var(--space-8) + var(--space-2));
 }
 
 body {

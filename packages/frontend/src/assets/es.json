@@ -48,7 +48,13 @@
     "variosProyectos": "{cantidad} proyectos",
     "sinProyectos": "Todavía no cargaste proyectos",
     "sinProyectosSub": "Creá el primero para que las personas colaboradoras lo encuentren.",
-    "advertenciaPermanente": "Esta acción es permanente y no se puede deshacer."
+    "advertenciaPermanente": "Esta acción es permanente y no se puede deshacer.",
+    "filtrarProyectos": "Filtrar proyectos",
+    "noPudimosCargarLosProyectos": "No pudimos cargar los proyectos",
+    "probaConOtraPalabraO": "Probá con otra palabra o cambiá el filtro de estado.",
+    "noPudimosCerrarElProyecto": "No pudimos cerrar el proyecto",
+    "editarProyectoDe": "Editar proyecto: {titulo}",
+    "cerrarProyectoDe": "Cerrar proyecto: {titulo}"
   },
   "formularioProyecto": {
     "volver": "Mis proyectos",
@@ -116,7 +122,8 @@
     "seguirEditando": "Seguir editando",
     "salirSinGuardar": "Salir sin guardar",
     "migaMisProyectos": "Mis proyectos",
-    "datosConservados": "Tus datos siguen acá."
+    "datosConservados": "Tus datos siguen acá.",
+    "ubicacion": "Ubicación"
   },
   "detalleProyecto": {
     "volverALista": "Volver a la lista",
@@ -297,7 +304,8 @@
     "editarPerfil": "Editar perfil",
     "eliminarPerfil": "Eliminar perfil",
     "migaProyectos": "Proyectos",
-    "accesoTitulo": "No podés gestionar estos perfiles"
+    "accesoTitulo": "No podés gestionar estos perfiles",
+    "noHayHabilidadesConEse": "No hay habilidades con ese texto"
   },
   "enumeraciones": {
     "tipoCompromiso": {
@@ -336,7 +344,8 @@
     "callbackError": "No pudimos conectar tu cuenta de LinkedIn. Es posible que hayas cancelado el permiso.",
     "volver": "Volver",
     "errorPublicarContexto": "No pudimos publicar el logro en LinkedIn.",
-    "errorConectarContexto": "No pudimos conectar con LinkedIn."
+    "errorConectarContexto": "No pudimos conectar con LinkedIn.",
+    "exitoConectado": "Conectaste tu cuenta de LinkedIn"
   },
   "comun": {
     "reintentar": "Reintentar",
@@ -348,7 +357,9 @@
     "opcional": "(opcional)",
     "nuevaPestana": "(se abre en una pestaña nueva)",
     "cancelar": "Cancelar",
-    "volver": "Volver"
+    "volver": "Volver",
+    "coincideConTuPerfil": "Coincide con tu perfil",
+    "perfilesCompatibles": "Perfiles compatibles"
   },
   "errores": {
     "sinConexion": "No hay conexión con el servidor. Revisá tu conexión a internet e intentá de nuevo.",
@@ -415,5 +426,128 @@
     "errorSesionTitulo": "No pudimos verificar tu sesión con el servidor",
     "errorInicioTitulo": "No pudimos completar el inicio de sesión",
     "errorInicioDescripcion": "Volvé a intentarlo desde el inicio."
+  },
+  "miPerfil": {
+    "perfilGuardado": "Perfil guardado",
+    "cargandoTuPerfil": "Cargando tu perfil…",
+    "noPudimosCargarTuPerfil": "No pudimos cargar tu perfil",
+    "manteneTusDatosAlDia": "Mantené tus datos al día para que la comunidad pueda encontrarte. Los campos obligatorios están indicados.",
+    "ejNombrePublico": "Ej.: Luna Código",
+    "ejUsuarioGithub": "Ej.: luna-codigo",
+    "ejLucia": "Ej.: Lucía",
+    "ejGomez": "Ej.: Gómez",
+    "ejEllaElle": "Ej.: ella, elle",
+    "separalosConComas": "Separalos con comas.",
+    "ejPresentacion": "Ej.: Soy QA y quiero aportar a proyectos de salud.",
+    "ejDescripcionColectivo": "Ej.: Acompañamos a familias del barrio con talleres de apoyo escolar.",
+    "noPudimosCargarLasOpciones": "No pudimos cargar las opciones disponibles",
+    "areasYEtiquetasOpcional": "Áreas y etiquetas (opcional)",
+    "mediosDeContacto": "Medios de contacto",
+    "numeroConCodigoDePais": "Número con código de país",
+    "ejEmail": "Ej.: nombre@dominio.com",
+    "ejTelefono": "Ej.: +54 9 11 4567 8901",
+    "miCuenta": "Mi cuenta",
+    "tusDatosSiguenAcaPodes": "Tus datos siguen acá. Podés volver a intentarlo con “Guardar cambios”.",
+    "vasAPerderLosCambios": "Vas a perder los cambios que no guardaste. Esta acción no se puede deshacer."
+  },
+  "buscadorProyectos": {
+    "encontraProyectosEnLosQue": "Encontrá proyectos en los que puedas aportar tus conocimientos. Combiná habilidades, colectivos, etiquetas y provincias.",
+    "filtrosDeProyectos": "Filtros de proyectos",
+    "noPudimosCargarLasHabilidades": "No pudimos cargar las habilidades",
+    "ejSalud": "Ej.: Salud",
+    "noPudimosCargarLasEtiquetas": "No pudimos cargar las etiquetas",
+    "noPudimosCargarLosColectivos": "No pudimos cargar los colectivos",
+    "calculandoRecomendaciones": "Calculando recomendaciones…",
+    "noPudimosCalcularLasRecomendaciones": "No pudimos calcular las recomendaciones",
+    "buscandoProyectosActivos": "Buscando proyectos activos…",
+    "noPudimosBuscarProyectos": "No pudimos buscar proyectos",
+    "verTodosLosProyectosActivos": "Ver todos los proyectos activos"
+  },
+  "buscadorColaboradoras": {
+    "buscarColaboradoras": "Buscar colaboradoras",
+    "elegiUnoDeTusProyectos": "Elegí uno de tus proyectos y el perfil que necesitás cubrir. La búsqueda revisa solo los perfiles de ese proyecto.",
+    "filtrosDeColaboradoras": "Filtros de colaboradoras",
+    "ejPortalDeTurnos": "Ej.: Portal de turnos",
+    "noPudimosCargarTusProyectos": "No pudimos cargar tus proyectos",
+    "ejTester": "Ej.: Tester",
+    "noTenesProyectosActivosPara": "No tenés proyectos activos para buscar colaboradores.",
+    "buscandoPersonasQueCoincidan": "Buscando personas que coincidan…",
+    "noPudimosBuscarColaboradoresPara": "No pudimos buscar colaboradores para los perfiles elegidos",
+    "cargarPerfiles": "Cargar perfiles",
+    "cargandoTusProyectosActivos": "Cargando tus proyectos activos…",
+    "cargandoLosPerfilesDeEste": "Cargando los perfiles de este proyecto…"
+  },
+  "mapa": {
+    "exploraComoSeDistribuyenLos": "Explorá cómo se distribuyen los proyectos activos en el país. Elegí una provincia en el mapa o en la tabla para ver sus proyectos.",
+    "noPudimosCargarElMapa": "No pudimos cargar el mapa",
+    "elNumeroEnCadaProvincia": "El número en cada provincia indica la cantidad de proyectos.",
+    "fuenteDelMapaGadm4": "Fuente del mapa: GADM 4.1 (gadm.org), uso académico con atribución.",
+    "cargandoElMapa": "Cargando el mapa…"
+  },
+  "inicio": {
+    "creaTuCuenta": "Creá tu cuenta",
+    "conectaConProyectos": "Conectá con proyectos",
+    "noPudimosComprobarSiTu": "No pudimos comprobar si tu perfil está completo",
+    "noPudimosAbrirElInicio": "No pudimos abrir el inicio de sesión",
+    "tresPasosParaEmpezarA": "Tres pasos para empezar a colaborar.",
+    "noPudimosIdentificarTuPerfil": "No pudimos identificar tu perfil para cargar recomendaciones",
+    "volveAIniciarSesionPara": "Volvé a iniciar sesión para continuar.",
+    "noPudimosCargarLasRecomendaciones": "No pudimos cargar las recomendaciones",
+    "mientrasTantoPodesAbrirEl": "Mientras tanto, podés abrir el buscador para explorar proyectos.",
+    "elegiSiTeSumasComo": "Elegí si te sumás como colectivo o como persona colaboradora. El registro tiene pocos pasos.",
+    "contaQueHaceTuColectivo": "Contá qué hace tu colectivo o qué habilidades tenés: así las coincidencias son mejores.",
+    "losColectivosPublicanProyectosY": "Los colectivos publican proyectos y perfiles; las personas colaboradoras los encuentran y se postulan.",
+    "espacioDeTuColectivo": "Espacio de tu colectivo",
+    "tecnologiaConProposito": "Tecnología con propósito",
+    "unimosAColectivosQueNecesitan": "Unimos a colectivos que necesitan software con personas que quieren colaborar.",
+    "tuEspacioDeColaboradora": "Tu espacio de colaboradora"
+  },
+  "registro": {
+    "ayudaNombreColectivo": "Es el nombre que van a ver las personas colaboradoras.",
+    "contaQueHacenYA": "Contá qué hacen y a quiénes acompañan.",
+    "ingresaElNombreDelColectivo": "Ingresá el nombre del colectivo",
+    "elegiUnTipoDeColectivo": "Elegí un tipo de colectivo",
+    "escribiUnaDescripcionDelColectivo": "Escribí una descripción del colectivo",
+    "noPudimosRegistrarElColectivo": "No pudimos registrar el colectivo. Tus datos siguen acá.",
+    "registrarTuColectivo": "Registrar tu colectivo",
+    "paso2De2Contanos": "Paso 2 de 2: contanos sobre tu colectivo para que las personas colaboradoras lo conozcan.",
+    "nombreObligatorio": "Nombre (obligatorio)",
+    "etiquetasOpcional": "Etiquetas (opcional)",
+    "registrarColectivo": "Registrar colectivo",
+    "datosDelColectivo": "Datos del colectivo",
+    "nombrePublicoObligatorio": "Nombre público (obligatorio)",
+    "ayudaNombrePublico": "Es el nombre que van a ver los colectivos.",
+    "ingresaUnNombrePublico": "Ingresá un nombre público",
+    "usuarioDeGithubObligatorio": "Usuario de GitHub (obligatorio)",
+    "sinLaNiElEnlace": "Sin la @ ni el enlace completo.",
+    "ingresaTuUsuarioDeGithub": "Ingresá tu usuario de GitHub",
+    "presentacionObligatoria": "Presentación (obligatoria)",
+    "contanosQuienSosYQue": "Contanos quién sos y qué te interesa.",
+    "escribiUnaPresentacionBreve": "Escribí una presentación breve",
+    "tusDatos": "Tus datos",
+    "ingresaUnEmailValidoPor": "Ingresá un email válido, por ejemplo nombre@dominio.com",
+    "ingresaUnTelefonoConCodigo": "Ingresá un teléfono con código de país, por ejemplo +54 9 11 4567 8901",
+    "mediosDeContactoOpcional": "Medios de contacto (opcional).",
+    "paso1ElegiElTipo": "Paso 1: elegí el tipo de cuenta. Después completás tus datos.",
+    "elegiLaOpcionQueMejor": "Elegí la opción que mejor te represente. En ambos casos, sumarse es gratis.",
+    "podesBuscarEscribiendoParteDel": "Podés buscar escribiendo parte del nombre.",
+    "noPudimosCargarLasHabilidades": "No pudimos cargar las habilidades disponibles",
+    "elegiAlMenosUnaLas": "Elegí al menos una. Las usamos para recomendarte proyectos.",
+    "noPudimosCrearTuPerfil": "No pudimos crear tu perfil. Tus datos siguen acá.",
+    "crearTuPerfilDeColaboradora": "Crear tu perfil de colaboradora",
+    "conEstosDatosLosColectivos": "Con estos datos los colectivos te encuentran y te recomendamos proyectos.",
+    "crearMiPerfil": "Crear mi perfil",
+    "nombreOpcional": "Nombre (opcional)",
+    "apellidoOpcional": "Apellido (opcional)",
+    "pronombresOpcional": "Pronombres (opcional)"
+  },
+  "perfilPublico": {
+    "cargandoElPerfil": "Cargando el perfil…",
+    "noEncontramosEstePerfil": "No encontramos este perfil",
+    "puedeQueElEnlaceHaya": "Puede que el enlace haya cambiado o que el perfil ya no esté disponible.",
+    "noPudimosCargarEstePerfil": "No pudimos cargar este perfil",
+    "datosDelPerfil": "Datos del perfil",
+    "personaColaboradora": "Persona colaboradora",
+    "tituloPerfilDe": "Perfil de {tipo}"
   }
 }

@@ -76,7 +76,7 @@
 }
 
 .detalle-busqueda-texto svg {
-  margin-top: var(--focus-ring-width);
+  margin-top: var(--icon-alineacion);
 }
 
 .detalle-avance .MuiButton-root {

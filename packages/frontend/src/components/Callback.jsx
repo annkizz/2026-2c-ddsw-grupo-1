@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useHandleSignInCallback } from '@logto/react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button } from '@mui/material';
+import { Alert, AlertTitle, Button } from '@mui/material';
+import { FiHome, FiLogOut, FiRefreshCw } from 'react-icons/fi';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { leerTipo, rutaDeRegistro } from '../features/registro/tipoElegido';
+import { t } from '../i18n/t';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import './Acceso.css';
 
 // Logto vuelve acá después del login/registro. Cuando el AuthProvider ya
 // pidió GET /me, decidimos a dónde mandar a la persona.
@@ -14,6 +17,7 @@ const Callback = () => {
     isAuthenticated,
     sesion,
     errorSesion,
+    tipoErrorSesion,
     cargando,
     recargarSesion,
     cerrarSesion
@@ -33,14 +37,27 @@ const Callback = () => {
   }, [sesion, navigate]);
 
   if (errorSesion || errorLogto) {
+    // Texto humano según el tipo de error. errorSesion (detalle técnico) solo se usa si el
+    // proveedor no informó el tipo (por ejemplo, en tests aislados con un mock de useAuth).
+    const detalle = tipoErrorSesion ? t(`errores.${tipoErrorSesion}`) : errorSesion || t('acceso.errorInicioDescripcion');
     return (
-      <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Alert severity="error">
-          {errorSesion || 'No pudimos completar el inicio de sesión.'}
+      <main className="acceso-estado" id="contenido-principal" tabIndex={-1}>
+        <h1 className="visualmente-oculto">{t('acceso.errorInicioTitulo')}</h1>
+        <Alert severity="error" role="alert">
+          <AlertTitle>{errorSesion ? t('acceso.errorSesionTitulo') : t('acceso.errorInicioTitulo')}</AlertTitle>
+          {detalle}
         </Alert>
-        {errorSesion && <Button onClick={recargarSesion}>Reintentar</Button>}
-        <Button onClick={cerrarSesion}>Salir</Button>
-      </div>
+        <div className="acceso-estado__acciones">
+          {errorSesion && (
+            <Button variant="contained" startIcon={<FiRefreshCw aria-hidden="true" />} onClick={recargarSesion}>
+              {t('comun.reintentar')}
+            </Button>
+          )}
+          <Button variant="outlined" startIcon={<FiLogOut aria-hidden="true" />} onClick={cerrarSesion}>
+            {t('navegacion.salir')}
+          </Button>
+        </div>
+      </main>
     );
   }
 
@@ -50,10 +67,18 @@ const Callback = () => {
 
   if (!isAuthenticated) {
     return (
-      <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Alert severity="error">No se pudo completar el inicio de sesión. Volvé a intentarlo.</Alert>
-        <Button onClick={() => navigate('/', { replace: true })}>Volver al inicio</Button>
-      </div>
+      <main className="acceso-estado" id="contenido-principal" tabIndex={-1}>
+        <h1 className="visualmente-oculto">{t('acceso.errorInicioTitulo')}</h1>
+        <Alert severity="error" role="alert">
+          <AlertTitle>{t('acceso.errorInicioTitulo')}</AlertTitle>
+          {t('acceso.errorInicioDescripcion')}
+        </Alert>
+        <div className="acceso-estado__acciones">
+          <Button variant="contained" startIcon={<FiHome aria-hidden="true" />} onClick={() => navigate('/', { replace: true })}>
+            Volver al inicio
+          </Button>
+        </div>
+      </main>
     );
   }
 

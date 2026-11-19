@@ -1,3 +1,4 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Skeleton } from '@mui/material';
@@ -68,7 +69,7 @@ const DashboardColaboradora = () => {
       <section className="dashboard" aria-labelledby="dashboard-titulo">
         <EncabezadoPagina
           id="dashboard-titulo"
-          antetitulo="Tu espacio de colaboradora"
+          antetitulo={t('inicio.tuEspacioDeColaboradora')}
           titulo="Encontrá un proyecto para aportar"
           subtitulo="Explorá oportunidades según tus habilidades o buscá por ubicación."
         />
@@ -112,18 +113,18 @@ const DashboardColaboradora = () => {
 
           {!idColaborador ? (
             <AlertaError
-              titulo="No pudimos identificar tu perfil para cargar recomendaciones"
-              mensaje="Volvé a iniciar sesión para continuar."
+              titulo={t('inicio.noPudimosIdentificarTuPerfil')}
+              mensaje={t('inicio.volveAIniciarSesionPara')}
             />
           ) : recomendacionesState.cargando ? (
             <EsqueletoGrilla cantidad={3} etiqueta="Buscando proyectos para vos…" />
           ) : recomendacionesState.error ? (
             <AlertaError
               error={recomendacionesState.error}
-              titulo="No pudimos cargar las recomendaciones"
+              titulo={t('inicio.noPudimosCargarLasRecomendaciones')}
               onReintentar={recomendacionesState.recargar}
             >
-              <span> Mientras tanto, podés abrir el buscador para explorar proyectos.</span>
+              <span> {t('inicio.mientrasTantoPodesAbrirEl')}</span>
             </AlertaError>
           ) : proyectosRecomendados.length === 0 ? (
             <DashboardEmptyState
@@ -160,7 +161,7 @@ const DashboardColaboradora = () => {
           <AlertaError
             className="dashboard-alerta-perfil"
             error={errorPerfil}
-            titulo="No pudimos comprobar si tu perfil está completo"
+            titulo={t('inicio.noPudimosComprobarSiTu')}
             onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
           />
         ) : camposFaltantes.length > 0 ? (
