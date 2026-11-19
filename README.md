@@ -101,6 +101,6 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Abrí `http://localhost:3000`. El frontend envía las llamadas a la API mediante `/api`; la API también queda disponible
-solo en la máquina local, en `http://localhost:3001`. La seed se carga una sola vez por versión en el volumen de Mongo.
-La configuración de Compose para VM y cómo forzar una recarga está en [DESPLIEGUE.md](./DESPLIEGUE.md).
+Abrí `http://localhost:3000` para desarrollo local. En la VM, Caddy sirve el frontend mediante HTTPS en el dominio
+configurado. La API queda disponible solo en la máquina local, en `http://localhost:3001`; la seed se carga una sola vez
+por versión en el volumen de Mongo. La configuración de Compose para VM está en [DESPLIEGUE.md](./DESPLIEGUE.md).

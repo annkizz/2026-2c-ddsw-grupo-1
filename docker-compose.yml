@@ -1,4 +1,4 @@
-# Levanta MongoDB, seed, API y frontend.
+# Levanta MongoDB, seed, API, frontend y proxy HTTPS.
 # Desde la raiz del proyecto:  docker compose up -d --build
 # Las variables ${...} salen del archivo .env de la raiz (ver DESPLIEGUE.md).
 
@@ -8,7 +8,7 @@ x-api-env: &api-env # variables que comparten la API y el seed
   # no debe tener caracteres especiales (@ : / ?) porque va dentro de la URL.
   MONGODB_URI: mongodb://${MONGO_USER:?Falta MONGO_USER en .env}:${MONGO_PASSWORD:?Falta MONGO_PASSWORD en .env}@mongo:27017
   MONGODB_DB_NAME: ${MONGODB_DB_NAME:-codigo_a_voluntad}
-  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
   LOGTO_ISSUER: ${LOGTO_ISSUER:?Falta LOGTO_ISSUER en .env}
   LOGTO_JWKS_URL: ${LOGTO_JWKS_URL:?Falta LOGTO_JWKS_URL en .env}
   LOGTO_AUDIENCE: ${LOGTO_AUDIENCE:?Falta LOGTO_AUDIENCE en .env}
@@ -76,7 +76,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
       interval: 15s
@@ -84,5 +84,24 @@ services:
       retries: 5
       start_period: 10s
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
 volumes:
   mongo-data:
+  caddy-data:
+  caddy-config:

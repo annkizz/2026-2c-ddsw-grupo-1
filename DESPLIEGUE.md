@@ -1,17 +1,19 @@
 ## Despliegue
 
 La aplicación se ejecuta con **Docker Compose** sobre una máquina virtual con Ubuntu (Google Cloud). Un solo comando
-levanta MongoDB, carga la seed si todavía no se ejecutó en ese volumen, y luego inicia la API y el frontend.
+levanta MongoDB, carga la seed si todavía no se ejecutó en ese volumen, inicia la API y el frontend, y configura HTTPS
+con Caddy.
 
-Los `Dockerfile` construyen las imágenes de API y frontend; `docker-compose.yml` conecta los servicios, espera a que cada
-uno esté listo y conserva la base en un volumen.
+Los `Dockerfile` construyen las imágenes de API y frontend; Caddy obtiene y renueva automáticamente un certificado TLS
+para el dominio configurado.
 
-| Servicio   | Qué es                  | Notas                                                                                  |
-| ---------- | ----------------------- | -------------------------------------------------------------------------------------- |
-| `mongo`    | MongoDB 7               | Datos persistentes en `mongo-data`; puerto ligado solo a `127.0.0.1`.                  |
-| `seed`     | Datos iniciales         | Corre antes de la API; carga la seed una sola vez por versión y base de datos.         |
-| `api`      | Backend Express         | Espera a que termine la seed; healthcheck en `/healthcheck`; puerto local 3001.        |
-| `frontend` | React servido por Nginx | Espera a que la API esté sana; proxy `/api` hacia la API; puerto web 3000 por defecto. |
+| Servicio   | Qué es                  | Notas                                                                                    |
+| ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                                   |
+| `seed`     | Datos iniciales         | Corre antes de la API; carga la seed una sola vez por versión y base de datos.           |
+| `api`      | Backend Express         | Espera a que termine la seed; solo expone su puerto local en `127.0.0.1:3001`.           |
+| `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                                  |
+| `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.         |
 
 ### Requisitos en la VM
 
@@ -23,12 +25,12 @@ docker compose version
 Si falta Docker: `sudo apt update && sudo apt install -y docker.io docker-compose-v2` y
 `sudo usermod -aG docker $USER` (después cerrar la sesión SSH y volver a entrar).
 
-Además, el puerto **3000** de la VM tiene que estar abierto hacia afuera: en Google Cloud, una regla de firewall de
-entrada para `tcp:3000` en la red de la VM. Es el frontend; la API se accede mediante su proxy `/api`. **No abrir nunca**
-los puertos 27017 (Mongo) ni 3001 (API).
+En Google Cloud, abrí los puertos **80 y 443** en el firewall de la VM para HTTP y HTTPS. No abras 27017 (Mongo),
+3001 (API) ni 3000 (frontend): esos puertos quedan internos o ligados a loopback.
 
-> La IP externa de la VM puede cambiar si se la apaga y se la vuelve a prender, salvo que se reserve como IP estática.
-> La aplicación se sirve por **HTTP** (no HTTPS): `http://<IP>:3000`.
+Usá una IP externa estática para la VM. Registrá un subdominio gratuito (por ejemplo, en DuckDNS) y apuntalo a esa IP.
+Caddy necesita que el DNS resuelva correctamente y que los puertos 80/443 sean accesibles para emitir el certificado;
+comprobá ambos antes de levantar Compose.
 
 ### Obtener el proyecto
 
@@ -54,44 +56,46 @@ nano .env
 
 Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant y el recurso de API.
 `REACT_APP_LOGTO_RESOURCES` debe coincidir con `LOGTO_AUDIENCE`. En la VM, reemplazá también `ALLOWED_ORIGINS` por
-`http://<IP-o-dominio>:3000`.
+`https://<subdominio>`, y `APP_DOMAIN` por el subdominio sin `https://` ni rutas (por ejemplo, `miapp.duckdns.org`).
 
 | Variable                        | Para qué sirve                                                                                                                                                                      |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen.                                                                                                                  |
 | `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                                                                                                         |
 | `API_PORT`                      | Puerto local de la API (3001); queda ligado a `127.0.0.1`, no se expone a la red.                                                                                                    |
-| `FRONTEND_PORT`                 | Puerto público del frontend (3000 por defecto).                                                                                                                                     |
-| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. Configurá el origen donde sirve el frontend.                                                                |
+| `FRONTEND_PORT`                 | Puerto de loopback para pruebas locales (3000 por defecto); no se expone a la red.                                                                                                   |
+| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. En la VM: `https://<subdominio>`.                                                                           |
 | `LOGTO_ISSUER`                  | Emisor OIDC de Logto, por ejemplo `https://tenant.logto.app/oidc`.                                                                                                                   |
 | `LOGTO_JWKS_URL`                | URL de claves públicas de Logto, normalmente `https://tenant.logto.app/oidc/jwks`.                                                                                                   |
 | `LOGTO_AUDIENCE`                | Identificador del recurso de API; debe coincidir con `REACT_APP_LOGTO_RESOURCES`.                                                                                                   |
 | `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                                                                                                        |
 | `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                                                                                                  |
 | `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                                                                                                     |
+| `APP_DOMAIN`                    | Hostname del frontend. En la VM, Caddy lo usa para solicitar y renovar el certificado HTTPS.                                                                                        |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
 
 Para desarrollo local, copiá las variables `LOGTO_*` de `packages/backend/.env` y las `REACT_APP_LOGTO_*` de
 `packages/frontend/.env` al `.env` de la raíz. Compose usa estas últimas al compilar el frontend.
-En la consola de Logto, autorizá además la URL de callback `http://<IP-o-dominio>:3000/callback`.
+En la consola de Logto, autorizá como callback `https://<subdominio>/callback` y como origen de la aplicación
+`https://<subdominio>`. Para desarrollo local, conservá también `http://localhost:3000/callback`.
 
 ### Levantar todo
 
 ```bash
 docker compose up -d --build
 docker compose ps -a
-docker compose logs --tail 20 seed api frontend
+docker compose logs --tail 20 seed api frontend caddy
 ```
 
 - `--build` construye las imágenes de API y frontend. **Usalo cuando cambie el código.**
 - `-d` deja todo corriendo de fondo.
-- **Esperado:** `mongo`, `api` y `frontend` en `healthy`; `seed` termina con código 0. La API puede tardar hasta un minuto
-  la primera vez, mientras carga los datos.
+- **Esperado:** `mongo`, `api` y `frontend` en `healthy`; `seed` termina con código 0. Caddy queda levantado y solicita
+  el certificado automáticamente; la primera emisión puede tardar unos minutos.
 
-La API queda disponible localmente en `http://localhost:3001`; el frontend en `http://localhost:3000` y la API a través
-de `http://localhost:3000/api`. En la VM solo se publica el frontend.
+En la VM, abrí `https://<subdominio>`. En desarrollo local, el frontend sigue disponible en `http://localhost:3000`;
+la API en `http://localhost:3001`.
 
 ### Actualizar los datos iniciales (seed)
 
@@ -123,15 +127,15 @@ La seed de integración de Jest usa el conjunto base y no incorpora automáticam
 
 ### Verificar el despliegue
 
-Desde el navegador (reemplazar `<IP>` por la IP de la VM):
+Desde el navegador (reemplazar `<subdominio>` por el dominio configurado):
 
 ```text
-http://<IP>:3000/                 -> frontend React
-http://<IP>:3000/api/healthcheck  -> {"status":"ok", ...}
-http://<IP>:3000/api/api-docs     -> documentación Swagger
+https://<subdominio>/                 -> frontend React
+https://<subdominio>/api/healthcheck  -> {"status":"ok", ...}
+https://<subdominio>/api/api-docs     -> documentación Swagger
 ```
 
-Desde Postman, con una variable `base = http://<IP>:3000/api`, probar `GET {{base}}/proyectos` (10 proyectos con la seed
+Desde Postman, con una variable `base = https://<subdominio>/api`, probar `GET {{base}}/proyectos` (10 proyectos con la seed
 ampliada) y el resto de los endpoints. Si se prefiere la terminal, desde la VM:
 `curl http://localhost:3000/api/proyectos`.
 
