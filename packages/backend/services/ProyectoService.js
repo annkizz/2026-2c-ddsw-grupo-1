@@ -268,7 +268,18 @@ export class ProyectoService {
     return { cerrados, fallidos };
   }
 
-  async obtenerTodos(filtros = {}) {
+  async obtenerTodos(filtros = {}, pag = null, limite = null) {
+    const paginar = (proyectos) => {
+      if (pag === null || limite === null) return proyectos;
+      const inicio = (pag - 1) * limite;
+      const pagina = proyectos.slice(inicio, inicio + limite);
+      return {
+        proyectos: pagina,
+        total: proyectos.length,
+        pag,
+        totalPags: Math.ceil(proyectos.length / limite),
+      };
+    };
     if (filtros.modo !== undefined) {
       const modo = String(filtros.modo).trim().toLowerCase();
       if (modo !== "cualquiera") {
@@ -277,7 +288,8 @@ export class ProyectoService {
           "MODO_BUSQUEDA_INVALIDO",
         );
       }
-      return this.buscarPorAlMenosUno(filtros);
+      const proyectos = await this.buscarPorAlMenosUno(filtros);
+      return paginar(proyectos);
     }
 
     const filtrosNormalizados = { ...filtros };
@@ -325,7 +337,7 @@ export class ProyectoService {
           await this.perfilRepository.obtenerProyectosPorHabilidades(
             habilidades,
           );
-        if (idsProyectos.length === 0) return [];
+        if (idsProyectos.length === 0) return paginar([]);
         filtrosNormalizados.idsProyectos = idsProyectos;
       }
     }
@@ -333,7 +345,7 @@ export class ProyectoService {
     const proyectos = await this.proyectoRepository.obtenerTodos(
       filtrosNormalizados,
     );
-    return proyectos.map((proyecto) => this.toDTO(proyecto));
+    return paginar(proyectos.map((proyecto) => this.toDTO(proyecto)));
   }
 
   async buscarPorAlMenosUno(filtros = {}) {

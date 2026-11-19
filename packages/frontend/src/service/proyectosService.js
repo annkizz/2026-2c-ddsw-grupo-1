@@ -102,8 +102,11 @@ export const crearLogro = async (token, idProyecto, logro) => {
 };
 
 // Matching: colaboradoras candidatas para un perfil
-export const obtenerCandidatas = async (idProyecto, idPerfil) => {
-  const response = await api.get(`/proyectos/${idProyecto}/perfiles/${idPerfil}/colaboradoras`);
+export const obtenerCandidatas = async (idProyecto, idPerfil, pag = null) => {
+  const response = await api.get(
+    `/proyectos/${idProyecto}/perfiles/${idPerfil}/colaboradoras`,
+    pag ? { params: { pag, limite: 6 } } : undefined,
+  );
   return response.data;
 };
 

@@ -14,6 +14,7 @@ import CardProyecto from "../../components/CardProyecto/CardProyecto";
 import { PROVINCIAS } from "../../data/provincias";
 import { useAuth } from "../../hooks/useAuth.jsx";
 import { useListado } from "../../hooks/useListado";
+import { usePaginacion } from "../../hooks/usePaginacion";
 import "./Busquedas.css";
 import "./BuscadorProyectos.css";
 
@@ -51,8 +52,9 @@ export default function BuscadorProyectos() {
   const habilidadesState = useListado("/habilidades");
   const etiquetasState = useListado("/etiquetas");
   const colectivosState = useListado("/colectivos");
-  const coincidenciasState = useListado(
+  const coincidenciasState = usePaginacion(
     idColaboradora ? `/colaboradoras/${idColaboradora}/proyectos` : null,
+    "proyectos",
   );
 
   const urlBusqueda = useMemo(() => {
@@ -77,7 +79,7 @@ export default function BuscadorProyectos() {
     return `/proyectos?${parametros.toString()}`;
   }, [filtrosAplicados]);
 
-  const resultadosState = useListado(urlBusqueda);
+  const resultadosState = usePaginacion(urlBusqueda, "proyectos");
 
   const colectivosPorId = useMemo(
     () =>
@@ -398,11 +400,25 @@ export default function BuscadorProyectos() {
           {!coincidenciasState.cargando &&
             !coincidenciasState.error &&
             recomendados.length > 0 && (
-              <ul className="tarjetas">
-                {recomendados.map((proyecto) => (
-                  <CardProyecto key={proyecto.id} proyecto={proyecto} />
-                ))}
-              </ul>
+              <>
+                <ul className="tarjetas">
+                  {recomendados.map((proyecto) => (
+                    <CardProyecto key={proyecto.id} proyecto={proyecto} />
+                  ))}
+                </ul>
+                {coincidenciasState.hayMas && (
+                  <Button
+                    variant="outlined"
+                    type="button"
+                    disabled={coincidenciasState.cargandoMas}
+                    onClick={coincidenciasState.cargarMas}
+                  >
+                    {coincidenciasState.cargandoMas
+                      ? "Cargando…"
+                      : "Cargar más"}
+                  </Button>
+                )}
+              </>
             )}
         </section>
       )}
@@ -436,17 +452,31 @@ export default function BuscadorProyectos() {
               </p>
 
               {resultados.length > 0 && (
-                <ul className="tarjetas">
-                  {resultados.map((proyecto) => (
-                    <CardProyecto
-                      key={proyecto.id}
-                      proyecto={proyecto}
-                      nombreColectivo={colectivosPorId.get(
-                        proyecto.idColectivo,
-                      )}
-                    />
-                  ))}
-                </ul>
+                <>
+                  <ul className="tarjetas">
+                    {resultados.map((proyecto) => (
+                      <CardProyecto
+                        key={proyecto.id}
+                        proyecto={proyecto}
+                        nombreColectivo={colectivosPorId.get(
+                          proyecto.idColectivo,
+                        )}
+                      />
+                    ))}
+                  </ul>
+                  {resultadosState.hayMas && (
+                    <Button
+                      variant="outlined"
+                      type="button"
+                      disabled={resultadosState.cargandoMas}
+                      onClick={resultadosState.cargarMas}
+                    >
+                      {resultadosState.cargandoMas
+                        ? "Cargando…"
+                        : "Cargar más"}
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}

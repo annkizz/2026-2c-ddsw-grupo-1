@@ -100,8 +100,17 @@ export class ColaboradorService {
     return await this.colaboradorRepository.save(colaborador, existente._id);
   };
 
-  async obtenerTodos() {
-    return await this.colaboradorRepository.obtenerTodos();
+  async obtenerTodos(pag = null, limite = null) {
+    const colaboradores = await this.colaboradorRepository.obtenerTodos();
+    if (pag === null || limite === null) return colaboradores;
+    const inicio = (pag - 1) * limite;
+    const pagina = colaboradores.slice(inicio, inicio + limite);
+    return {
+      colaboradores: pagina,
+      total: colaboradores.length,
+      pag,
+      totalPags: Math.ceil(colaboradores.length / limite),
+    };
   }
 
   obtenerPorId = (colaboradorId) => {
