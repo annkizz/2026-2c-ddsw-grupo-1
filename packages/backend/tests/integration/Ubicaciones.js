@@ -77,7 +77,16 @@ const construirApp = () => {
   app.use(express.json());
   app.use(
     "/proyectos",
-    crearProyectoRouter(proyectoController, perfilController),
+    crearProyectoRouter(
+      proyectoController,
+      perfilController,
+      null,
+      (req, res, next) => {
+        // La suite no valida JWT: simula una colectiva autenticada.
+        req.usuario = { rol: "COLECTIVO" };
+        next();
+      },
+    ),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);
@@ -142,6 +151,7 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     const proyectos = body.flatMap((grupo) => grupo.proyectos);
 
     expect(body.some((grupo) => grupo.codigo === "AR-X")).toBe(false);
+    expect(body.some((grupo) => grupo.codigo === "AR-C")).toBe(false);
     expect(proyectos.map((proyecto) => proyecto.id)).not.toContain(
       PROYECTO_INVENTARIO,
     );

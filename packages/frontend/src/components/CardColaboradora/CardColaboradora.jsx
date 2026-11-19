@@ -78,6 +78,81 @@ export default function CardColaboradora({ colaboradora }) {
           Disponible en una próxima entrega.
         </span>
       </div>
+      {invitacionEnviada && (
+        <Alert severity="success" role="status">
+          La invitación quedó en la bandeja de notificaciones de la persona.
+        </Alert>
+      )}
+      {errorInvitacion && <Alert severity="error">{errorInvitacion}</Alert>}
+
+      <Dialog
+        open={dialogoAbierto}
+        onClose={cerrarDialogo}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby={dialogTitleId}
+      >
+        <form onSubmit={enviarMensaje}>
+          <DialogTitle id={dialogTitleId}>
+            Contactar a {nombreVisible(colaboradora)}
+          </DialogTitle>
+          <DialogContent>
+            {resultado ? (
+              <Alert severity="success" role="status">
+                El mensaje quedó enviado dentro de la plataforma.
+                {resultado.envios?.length > 0 && (
+                  <ul>
+                    {resultado.envios.map((envio) => (
+                      <li key={envio.tipoDeContacto}>
+                        {envio.tipoDeContacto}: {envio.estado}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Alert>
+            ) : (
+              <>
+                <p>
+                  El mensaje se guardará en la bandeja de la persona. Sus medios
+                  de contacto permanecen privados.
+                </p>
+                {error && <Alert severity="error">{error}</Alert>}
+                <TextField
+                  autoFocus
+                  required
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  label="Mensaje"
+                  value={contenido}
+                  onChange={(event) => setContenido(event.target.value)}
+                  slotProps={{ htmlInput: { maxLength: 2000 } }}
+                  helperText={`${contenido.length}/2000`}
+                  disabled={enviando}
+                />
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {resultado ? (
+              <Button onClick={cerrarDialogo}>Cerrar</Button>
+            ) : (
+              <>
+                <Button onClick={cerrarDialogo} disabled={enviando}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={enviando || contenido.trim().length < 4}
+                >
+                  {enviando ? "Enviando…" : "Enviar mensaje"}
+                </Button>
+              </>
+            )}
+          </DialogActions>
+        </form>
+      </Dialog>
     </li>
   );
 }

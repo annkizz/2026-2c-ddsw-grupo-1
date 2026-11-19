@@ -46,7 +46,15 @@ export const AuthProvider = ({ children }) => {
       setSesion(nuevaSesion);
       return nuevaSesion;
     } catch (error) {
-      const mensaje = error?.response?.data?.error ?? error?.message ?? 'No se pudo verificar la sesión.';
+      const esTimeout =
+        error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT';
+      const esErrorDeRed =
+        error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED';
+      const mensaje = esTimeout
+        ? 'El servidor tardó demasiado en verificar tu sesión. Reintentá.'
+        : esErrorDeRed
+          ? 'No pudimos conectarnos con el servidor. Verificá que el backend esté iniciado.'
+          : error?.response?.data?.error ?? error?.message ?? 'No se pudo verificar la sesión.';
       const codigo = error?.response?.data?.codigo;
       setErrorSesion(codigo ? `${mensaje} (${codigo})` : mensaje);
       setTipoErrorSesion(clasificarError(error));

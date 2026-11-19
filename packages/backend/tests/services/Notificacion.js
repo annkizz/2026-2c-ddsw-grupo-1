@@ -7,6 +7,9 @@ import { TipoDeContacto } from "../../domain/TipoDeContacto.js";
 const ID_NOTIFICACION = "8f09d4b54eb34fc0a72a150";
 const ID_COLECTIVO = "c00000000000000000000001";
 const ID_COLABORADORA = "b00000000000000000000001";
+const ID_USUARIO_COLECTIVO = "d00000000000000000000001";
+const ID_USUARIO_COLABORADORA = "d00000000000000000000002";
+const ID_OTRA_COLABORADORA = "b00000000000000000000002";
 
 describe("NotificacionService", () => {
   let notificacionRepository;
@@ -18,9 +21,14 @@ describe("NotificacionService", () => {
   let colaboradora;
 
   beforeEach(() => {
-    colectivo = { _id: ID_COLECTIVO, nombre: "Fundación" };
+    colectivo = {
+      _id: ID_COLECTIVO,
+      usuario: ID_USUARIO_COLECTIVO,
+      nombre: "Fundación",
+    };
     colaboradora = {
       _id: ID_COLABORADORA,
+      usuario: ID_USUARIO_COLABORADORA,
       aceptaMensajeria: true,
       mediosDeContacto: [
         { tipoDeContacto: "EMAIL", contacto: "privado@example.org" },
@@ -32,13 +40,21 @@ describe("NotificacionService", () => {
         id: notificacion.id ?? ID_NOTIFICACION,
       })),
       obtenerTodos: jest.fn(async () => []),
+      obtenerTodosPorColaboradora: jest.fn(async () => ({
+        notificaciones: [],
+        total: 0,
+        pag: 1,
+        totalPags: 0,
+      })),
       buscarPorId: jest.fn(async () => null),
     };
     colectivoRepository = {
       buscarPorId: jest.fn(async () => colectivo),
+      buscarPorUsuario: jest.fn(async () => colectivo),
     };
     colaboradorRepository = {
       buscarPorId: jest.fn(async () => colaboradora),
+      buscarPorUsuario: jest.fn(async () => colaboradora),
     };
     notificadorExterno = {
       enviar: jest.fn(async (medio) => ({
@@ -56,11 +72,14 @@ describe("NotificacionService", () => {
   });
 
   it("guarda el mensaje y registra el resultado de cada medio sin exponer su destino", async () => {
-    const resultado = await service.crear({
-      idColectivo: colectivo._id,
-      idColaborador: colaboradora._id,
-      contenido: "Hola, queremos contactarte.",
-    });
+    const resultado = await service.crear(
+      {
+        idColectivo: colectivo._id,
+        idColaborador: colaboradora._id,
+        contenido: "Hola, queremos contactarte.",
+      },
+      { _id: ID_USUARIO_COLECTIVO },
+    );
 
     expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
     expect(
@@ -95,11 +114,14 @@ describe("NotificacionService", () => {
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     try {
-      const resultado = await service.crear({
-        idColectivo: colectivo._id,
-        idColaborador: colaboradora._id,
-        contenido: "Hola, queremos contactarte.",
-      });
+      const resultado = await service.crear(
+        {
+          idColectivo: colectivo._id,
+          idColaborador: colaboradora._id,
+          contenido: "Hola, queremos contactarte.",
+        },
+        { _id: ID_USUARIO_COLECTIVO },
+      );
 
       expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
       expect(resultado.envios[0]).toMatchObject({
@@ -115,11 +137,14 @@ describe("NotificacionService", () => {
     colaboradora.aceptaMensajeria = false;
 
     await expect(
-      service.crear({
-        idColectivo: colectivo._id,
-        idColaborador: colaboradora._id,
-        contenido: "Hola, queremos contactarte.",
-      }),
+      service.crear(
+        {
+          idColectivo: colectivo._id,
+          idColaborador: colaboradora._id,
+          contenido: "Hola, queremos contactarte.",
+        },
+        { _id: ID_USUARIO_COLECTIVO },
+      ),
     ).rejects.toMatchObject({
       status: 403,
       codigo: "COLABORADORA_NO_ACEPTA_MENSAJERIA",
@@ -129,30 +154,74 @@ describe("NotificacionService", () => {
     expect(notificadorExterno.enviar).not.toHaveBeenCalled();
   });
 
-  it("valida colectivo y colaboradora antes de guardar", async () => {
-    colectivoRepository.buscarPorId.mockResolvedValue(null);
+  it("rechaza que un colectivo envíe una notificación en nombre de otro", async () => {
+    colectivoRepository.buscarPorUsuario.mockResolvedValue(null);
+
     await expect(
-      service.crear({
-        idColectivo: colectivo._id,
-        idColaborador: colaboradora._id,
-        contenido: "Hola, queremos contactarte.",
-      }),
-    ).rejects.toMatchObject({ status: 404, codigo: "COLECTIVO_NO_ENCONTRADO" });
+      service.crear(
+        {
+          idColectivo: colectivo._id,
+          idColaborador: colaboradora._id,
+          contenido: "Hola, queremos contactarte.",
+        },
+        { _id: "d00000000000000000000003" },
+      ),
+    ).rejects.toMatchObject({ status: 403, codigo: "COLECTIVO_AJENO" });
     expect(notificacionRepository.save).not.toHaveBeenCalled();
 
-    colectivoRepository.buscarPorId.mockResolvedValue(colectivo);
+    colectivoRepository.buscarPorUsuario.mockResolvedValue(colectivo);
     colaboradorRepository.buscarPorId.mockResolvedValue(null);
     await expect(
-      service.crear({
-        idColectivo: colectivo._id,
-        idColaborador: colaboradora._id,
-        contenido: "Hola, queremos contactarte.",
-      }),
+      service.crear(
+        {
+          idColectivo: colectivo._id,
+          idColaborador: colaboradora._id,
+          contenido: "Hola, queremos contactarte.",
+        },
+        { _id: ID_USUARIO_COLECTIVO },
+      ),
     ).rejects.toMatchObject({
       status: 404,
       codigo: "COLABORADORA_NO_ENCONTRADA",
     });
     expect(notificacionRepository.save).not.toHaveBeenCalled();
+  });
+
+  it("no permite consultar las notificaciones de otra colaboradora", async () => {
+    colaboradorRepository.buscarPorId.mockResolvedValue({
+      ...colaboradora,
+      _id: ID_OTRA_COLABORADORA,
+      usuario: "d00000000000000000000003",
+    });
+
+    await expect(
+      service.obtenerTodosPorColaboradora(
+        ID_OTRA_COLABORADORA,
+        1,
+        10,
+        ID_USUARIO_COLABORADORA,
+      ),
+    ).rejects.toMatchObject({
+      status: 403,
+      codigo: "NOTIFICACION_AJENA",
+    });
+    expect(
+      notificacionRepository.obtenerTodosPorColaboradora,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("solo devuelve una notificación individual a su colaboradora destinataria", async () => {
+    notificacionRepository.buscarPorId.mockResolvedValue({
+      _id: ID_NOTIFICACION,
+      idColaborador: ID_OTRA_COLABORADORA,
+    });
+
+    await expect(
+      service.obtenerPorId(ID_NOTIFICACION, ID_USUARIO_COLABORADORA),
+    ).rejects.toMatchObject({
+      status: 403,
+      codigo: "NOTIFICACION_AJENA",
+    });
   });
 
   it("filtra notificaciones por IDs permitidos", async () => {

@@ -1,6 +1,7 @@
 import express from "express";
 import { validate } from "../middlewares/validate.js";
 import {
+  crearInvitacionSchema,
   crearPostulacionSchema,
   resolverPostulacionSchema,
 } from "../controllers/PostulacionController.js";
@@ -10,6 +11,14 @@ export function crearPostulacionRouter(
   autenticar,
 ) {
   const router = express.Router({ mergeParams: true });
+
+  router
+    .route("/perfiles/:idPerfil/invitaciones")
+    .post(
+      autenticar,
+      validate(crearInvitacionSchema),
+      (req, res) => postulacionController.invitar(req, res),
+    );
 
   router
     .route("/perfiles/:idPerfil/postulaciones")

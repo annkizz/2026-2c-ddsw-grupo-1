@@ -90,3 +90,17 @@ Para iniciar el backend en modo `dev` y el frontend simultáneamente, usá:
 ```bash
 npm run start:dev
 ```
+
+### Ejecutar el stack completo con Docker
+
+Para levantar MongoDB, cargar la seed, iniciar la API y servir el frontend juntos:
+
+```bash
+cp .env.example .env
+# Editar .env con los datos del tenant de Logto
+docker compose up -d --build
+```
+
+Abrí `http://localhost:3000` para desarrollo local. En la VM, Caddy sirve el frontend mediante HTTPS en el dominio
+configurado. La API queda disponible solo en la máquina local, en `http://localhost:3001`; la seed se carga una sola vez
+por versión en el volumen de Mongo. La configuración de Compose para VM está en [DESPLIEGUE.md](./DESPLIEGUE.md).

@@ -339,6 +339,8 @@ export default function BuscadorColaboradores() {
                     <CardColaboradora
                       key={`${perfil.id}-${colaboradora.id}`}
                       colaboradora={colaboradora}
+                      idProyecto={idProyecto}
+                      idPerfil={perfil.id}
                     />
                   ))}
                 </ul>

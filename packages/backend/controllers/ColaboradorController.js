@@ -53,6 +53,12 @@ export class ColaboradorController {
     res.status(200).json(this.toPrivateDTO(colaborador));
   }
 
+  async obtenerMisColaboraciones(req, res) {
+    const colaboraciones =
+      await this.colaboradorService.obtenerMisColaboraciones(req.usuario);
+    res.status(200).json(colaboraciones);
+  }
+
   obtenerTodos = async (req, res) => {
     const colaboradores = await this.colaboradorService.obtenerTodos();
     res

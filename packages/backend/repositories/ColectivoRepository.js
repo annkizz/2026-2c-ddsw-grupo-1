@@ -18,6 +18,14 @@ export class ColectivoRepository {
     return this.model.find(query).exec();
   }
 
+  obtenerPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.model
+      .find({ _id: { $in: ids } })
+      .select("_id nombre")
+      .exec();
+  }
+
   async buscarPorId(id) {
     if (!this.esIdValido(id)) return null;
     return await this.model.findById(id).exec();

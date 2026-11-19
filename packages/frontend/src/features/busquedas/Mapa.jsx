@@ -14,13 +14,15 @@ import "../../components/Card.css";
 import "./Busquedas.css";
 import "./Mapa.css";
 
-const REGIONES = PROVINCIAS_MAPA.provincias.map((provincia) => ({
-  codigo: provincia.codigoProvincia,
-  nombre: provincia.nombreProvincia,
-  path: provincia.path,
-  labelX: provincia.labelX,
-  labelY: provincia.labelY,
-}));
+const REGIONES = PROVINCIAS_MAPA.provincias
+  .filter((provincia) => provincia.codigoProvincia !== "AR-C")
+  .map((provincia) => ({
+    codigo: provincia.codigoProvincia,
+    nombre: provincia.nombreProvincia,
+    path: provincia.path,
+    labelX: provincia.labelX,
+    labelY: provincia.labelY,
+  }));
 
 // Escala secuencial de un solo tono (claro -> oscuro) del modo activo (normal o daltónico).
 // Además del color, cada provincia muestra su número y hay una tabla equivalente.

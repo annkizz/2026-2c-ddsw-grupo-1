@@ -24,6 +24,42 @@ export const crearPostulacion = async (token, idProyecto, idPerfil, postulacion)
   return response.data;
 };
 
+export const obtenerPostulaciones = async (token, idProyecto) => {
+  const response = await api.get(
+    `/proyectos/${idProyecto}/postulaciones`,
+    conToken(token)
+  );
+  return response.data;
+};
+
+export const resolverPostulacion = async (
+  token,
+  idProyecto,
+  idPostulacion,
+  decision
+) => {
+  const response = await api.patch(
+    `/proyectos/${idProyecto}/postulaciones/${idPostulacion}`,
+    { decision },
+    conToken(token)
+  );
+  return response.data;
+};
+
+export const invitarAColaborar = async (
+  token,
+  idProyecto,
+  idPerfil,
+  idColaborador,
+) => {
+  const response = await api.post(
+    `/proyectos/${idProyecto}/perfiles/${idPerfil}/invitaciones`,
+    { idColaborador },
+    conToken(token),
+  );
+  return response.data;
+};
+
 export const sumarColaboradora = async (token, idProyecto, idColaborador) => {
   const response = await api.post(`/proyectos/${idProyecto}/colaboraciones`, { idColaborador }, conToken(token));
   return response.data;
