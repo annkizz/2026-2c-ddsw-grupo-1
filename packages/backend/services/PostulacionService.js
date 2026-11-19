@@ -167,7 +167,8 @@ export class PostulacionService {
       const guardada = await this.postulacionRepository.save(postulacion);
 
       if (
-        perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE
+        perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE ||
+        perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES
       ) {
         return await this.aceptarPostulacion(
           proyecto,

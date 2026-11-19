@@ -26,7 +26,7 @@ export const perfilSchema = z.discriminatedUnion("tipoAceptacion", [
 
         perfilBaseSchema.extend({
           tipoAceptacion: z.literal("MANUAL"),
-          limiteColaboraciones: z.int().positive().default(null),})
+          limiteColaboraciones: z.int().positive().nullable().default(null),})
 
 ]);
 
