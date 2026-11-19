@@ -22,6 +22,12 @@ export function crearColaboradorRouter(colaboradorController, autenticar) {
     );
 
   router
+    .route("/me/colaboraciones")
+    .get(autenticar, requerirRol(Rol.COLABORADOR), (req, res) =>
+      colaboradorController.obtenerMisColaboraciones(req, res),
+    );
+
+  router
     .route("/:id")
     .get((req, res) => colaboradorController.obtenerPorId(req, res))
     .put(

@@ -260,8 +260,8 @@ const PerfilesProyecto = () => {
     );
   }
 
-  const esOtroColectivo = sesion?.idColectivo && proyecto.idColectivo !== sesion.idColectivo;
-  if (esOtroColectivo) {
+  const esDueno = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  if (!esDueno) {
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina titulo={t('perfilesProyecto.titulo')} migas={migas} />

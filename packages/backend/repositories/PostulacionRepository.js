@@ -57,6 +57,39 @@ export class PostulacionRepository {
       .exec();
   }
 
+  async rechazarPendientes(filtro, registrarRevision = false) {
+    const pendientes = await this.model
+      .find({ ...filtro, estado: EstadoPostulacion.PENDIENTE })
+      .exec();
+    const rechazadas = [];
+
+    for (const postulacion of pendientes) {
+      const actualizacion = {
+        $set: {
+          estado: EstadoPostulacion.RECHAZADA,
+          ...(registrarRevision && { fechaRevision: new Date() }),
+        },
+      };
+      const rechazada = await this.model
+        .findOneAndUpdate(
+          {
+            _id: postulacion._id,
+            estado: EstadoPostulacion.PENDIENTE,
+          },
+          actualizacion,
+          { returnDocument: "after" },
+        )
+        .exec();
+      if (rechazada) rechazadas.push(rechazada);
+    }
+
+    return rechazadas;
+  }
+
+  rechazarPendientesDeProyecto(idProyecto) {
+    return this.rechazarPendientes({ idProyecto });
+  }
+
   reabrirSiAceptada(id) {
     return this.model
       .updateOne(
@@ -64,6 +97,19 @@ export class PostulacionRepository {
         { $set: { estado: EstadoPostulacion.PENDIENTE } },
       )
       .exec();
+  }
+
+  reabrirSiRechazada(id) {
+    return this.model
+      .updateOne(
+        { _id: id, estado: EstadoPostulacion.RECHAZADA },
+        { $set: { estado: EstadoPostulacion.PENDIENTE } },
+      )
+      .exec();
+  }
+
+  rechazarPendientesPorPerfil(idPerfil) {
+    return this.rechazarPendientes({ idPerfil }, true);
   }
 
 }

@@ -16,6 +16,26 @@ function crearModelo() {
 }
 
 describe("consultas de matching", () => {
+  it("obtiene proyectos por varios ids en una sola consulta", async () => {
+    const model = crearModelo();
+
+    await new ProyectoRepository(model).obtenerPorIds(["p1", "p2"]);
+
+    expect(model.find).toHaveBeenCalledWith({
+      _id: { $in: ["p1", "p2"] },
+    });
+    expect(model.query.exec).toHaveBeenCalledTimes(1);
+  });
+
+  it("no consulta proyectos cuando no hay ids", async () => {
+    const model = crearModelo();
+
+    await expect(
+      new ProyectoRepository(model).obtenerPorIds([]),
+    ).resolves.toEqual([]);
+    expect(model.find).not.toHaveBeenCalled();
+  });
+
   it("excluye proyectos ya anotados en Mongo y mantiene el orden", async () => {
     const model = crearModelo();
     await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"]);

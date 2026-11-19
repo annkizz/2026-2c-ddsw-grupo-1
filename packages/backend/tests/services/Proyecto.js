@@ -28,6 +28,7 @@ describe("ProyectoService", () => {
   let colectivoRepository;
   let perfilRepository;
   let colaboracionRepository;
+  let postulacionRepository;
   let service;
   let colectivo;
 
@@ -53,10 +54,14 @@ describe("ProyectoService", () => {
     colaboracionRepository = {
       obtenerPorProyecto: jest.fn(async () => []),
     };
+    postulacionRepository = {
+      rechazarPendientesDeProyecto: jest.fn(async () => undefined),
+    };
     colectivoRepository = {
       buscarPorId: jest.fn(async (id) =>
         id === "col-1" ? colectivo : null,
       ),
+      buscarPorUsuario: jest.fn(async () => colectivo),
       esIdValido: jest.fn((id) => mongoose.isValidObjectId(id)),
       agregarProyecto: jest.fn(async () => undefined),
     };
@@ -71,12 +76,32 @@ describe("ProyectoService", () => {
       colectivoRepository,
       colaboracionRepository,
       perfilRepository,
+      postulacionRepository,
     );
+
+    // Los metodos que verifican que la cuenta sea dueña del colectivo reciben
+    // el usuario como ultimo argumento: el helper lo agrega solo.
+    service.cerrarProyecto = conUsuario("cerrarProyecto", 1);
+    service.actualizarAvance = conUsuario("actualizarAvance", 2);
+    service.actualizar = conUsuario("actualizar", 2);
+    service.configurarBusqueda = conUsuario("configurarBusqueda", 2);
   });
+
+  // crear() ahora exige la cuenta dueña del colectivo (chequeo de propiedad):
+  // los tests la inyectan aca para no repetirla en cada caso.
+  const crearProyecto = (datos) => service.crear(datos, { _id: "u-1" });
+
+  const conUsuario =
+    (metodo, posicion) =>
+    (...args) => {
+      const argumentos = [...args];
+      argumentos.splice(posicion, 0, { _id: "u-1" });
+      return service[metodo](...argumentos);
+    };
 
   describe("crear", () => {
     it("crea un proyecto activo, sin perfiles, ligado a su colectivo", async () => {
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -91,9 +116,21 @@ describe("ProyectoService", () => {
       expect(proyectoRepository.save).toHaveBeenCalledTimes(1);
     });
 
+    it("rechaza crear un proyecto para un colectivo ajeno", async () => {
+      // la cuenta logueada es dueña de otro colectivo (col-2), no de col-1
+      colectivoRepository.buscarPorUsuario.mockResolvedValueOnce({
+        _id: "col-2",
+      });
+
+      await expect(
+        crearProyecto({ idColectivo: "col-1", titulo: "T", descripcion: "D" }),
+      ).rejects.toMatchObject({ codigo: "ACCESO_DENEGADO" });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
     it("guarda los datos de apertura de búsqueda del proyecto", async () => {
       const fechaLimiteBusqueda = enUnaHora();
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -106,7 +143,7 @@ describe("ProyectoService", () => {
     });
 
     it("agrega el id del proyecto al colectivo a través del repositorio", async () => {
-      await service.crear({
+      await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -120,14 +157,14 @@ describe("ProyectoService", () => {
 
     it("falla si el colectivo no existe y no guarda nada", async () => {
       await expect(
-        service.crear({ idColectivo: "otro", titulo: "T", descripcion: "D" }),
+        crearProyecto({ idColectivo: "otro", titulo: "T", descripcion: "D" }),
       ).rejects.toMatchObject({ codigo: "COLECTIVO_NO_ENCONTRADO" });
       expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
 
     it("rechaza una fecha limite de cierre que ya paso", async () => {
       await expect(
-        service.crear({
+        crearProyecto({
           idColectivo: "col-1",
           titulo: "T",
           descripcion: "D",
@@ -139,7 +176,7 @@ describe("ProyectoService", () => {
 
     it("acepta una fecha limite futura", async () => {
       const fecha = enUnaHora();
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -149,7 +186,7 @@ describe("ProyectoService", () => {
     });
 
     it("por defecto la búsqueda queda cerrada y sin fecha límite", async () => {
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -162,7 +199,7 @@ describe("ProyectoService", () => {
 
     it("crea el proyecto con la búsqueda abierta hasta una fecha futura", async () => {
       const fecha = enUnaHora();
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -177,7 +214,7 @@ describe("ProyectoService", () => {
 
     it("rechaza una fecha límite de búsqueda que ya pasó y no guarda nada", async () => {
       await expect(
-        service.crear({
+        crearProyecto({
           idColectivo: "col-1",
           titulo: "T",
           descripcion: "D",
@@ -193,7 +230,7 @@ describe("ProyectoService", () => {
 
     it("rechaza una fecha límite de búsqueda si la búsqueda no está abierta", async () => {
       await expect(
-        service.crear({
+        crearProyecto({
           idColectivo: "col-1",
           titulo: "T",
           descripcion: "D",
@@ -208,7 +245,7 @@ describe("ProyectoService", () => {
     });
 
     it("deja el proyecto nuevo en 0% y sin enlaces", async () => {
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -476,6 +513,25 @@ describe("ProyectoService", () => {
         { idProyecto: "falla", error: "se cayo la base" },
       ]);
     });
+
+    it("rechaza las postulaciones pendientes de cada proyecto que cierra", async () => {
+      const bueno = proyectoActivo({ _id: "ok" });
+      const malo = proyectoActivo({ _id: "falla" });
+      proyectoRepository.obtenerVencidos.mockResolvedValue([bueno, malo]);
+      proyectoRepository.save.mockImplementation(async (p) => {
+        if (p._id === "falla") throw new Error("se cayo la base");
+        return p;
+      });
+
+      await service.cerrarProyectosVencidos();
+
+      expect(
+        postulacionRepository.rechazarPendientesDeProyecto,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        postulacionRepository.rechazarPendientesDeProyecto,
+      ).toHaveBeenCalledWith("ok");
+    });
   });
 
   it("publica colaboraciones sin filtrar la identidad cuando son anónimas", async () => {
@@ -535,7 +591,7 @@ describe("ProyectoService", () => {
         ciudad: "Córdoba",
       };
 
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -553,7 +609,7 @@ describe("ProyectoService", () => {
     it("la ubicacion propia manda sobre la del colectivo", async () => {
       colectivo.ubicacion = { provincia: "Córdoba", ciudad: "Córdoba" };
 
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -570,7 +626,7 @@ describe("ProyectoService", () => {
     });
 
     it("queda sin ubicacion si ni el proyecto ni el colectivo tienen", async () => {
-      const creado = await service.crear({
+      const creado = await crearProyecto({
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
@@ -581,7 +637,7 @@ describe("ProyectoService", () => {
 
     it("rechaza una provincia desconocida y no guarda nada", async () => {
       await expect(
-        service.crear({
+        crearProyecto({
           idColectivo: "col-1",
           titulo: "T",
           descripcion: "D",
@@ -649,6 +705,18 @@ describe("ProyectoService", () => {
           idColectivo: { _id: "col-2", nombre: "Colectivo Dos" },
           ubicacion: null,
         },
+        {
+          _id: "p-5",
+          titulo: "Proyecto CABA",
+          idColectivo: { _id: "col-3", nombre: "Colectivo CABA" },
+          ubicacion: {
+            codigoPais: "AR",
+            nombrePais: "Argentina",
+            codigoProvincia: "AR-C",
+            nombreProvincia: "Ciudad Autónoma de Buenos Aires",
+            ciudad: "Barracas",
+          },
+        },
       ]);
 
       const resultado = await service.obtenerUbicaciones();
@@ -674,6 +742,9 @@ describe("ProyectoService", () => {
       expect(
         resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
       ).not.toContain("p-4");
+      expect(
+        resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
+      ).not.toContain("p-5");
     });
 
     it("puede agrupar por pais sin cambiar el resto del contrato", async () => {

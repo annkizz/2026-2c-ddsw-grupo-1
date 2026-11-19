@@ -71,6 +71,7 @@ export class MatchingService {
           id: String(colaboradora._id),
           nombreFantasia: colaboradora.nombreFantasia,
           usuarioGitHub: colaboradora.usuarioGitHub,
+          aceptaMensajeria: colaboradora.aceptaMensajeria === true,
           presentacion: colaboradora.presentacion,
           tieneCoincidencia: evaluacion.tieneCoincidencia,
           requeridasCoincidentes: evaluacion.requeridasCoincidentes,
@@ -111,12 +112,18 @@ export class MatchingService {
       abiertos.map((p) => p._id),
     );
     const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
+    const perfilesPorProyecto = new Map();
+    for (const perfil of perfiles) {
+      const idProyecto = String(perfil.idProyecto);
+      const perfilesDelProyecto = perfilesPorProyecto.get(idProyecto) ?? [];
+      perfilesDelProyecto.push(perfil);
+      perfilesPorProyecto.set(idProyecto, perfilesDelProyecto);
+    }
 
     const resultados = [];
     for (const proyecto of abiertos) {
-      const perfilesDelProyecto = perfiles.filter(
-        (perfil) => String(perfil.idProyecto) === String(proyecto._id),
-      );
+      const perfilesDelProyecto =
+        perfilesPorProyecto.get(String(proyecto._id)) ?? [];
       const perfilesCompatibles = [];
       let puntaje = 0;
       let puntajeMaximo = 0;

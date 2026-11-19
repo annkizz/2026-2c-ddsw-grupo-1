@@ -19,12 +19,20 @@ export class ColaboradorRepository {
     return this.model.findOne({ usuario: idUsuario }).exec();
   }
 
+  obtenerPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.model
+      .find({ _id: { $in: ids } })
+      .select("_id nombreFantasia")
+      .exec();
+  }
+
   async encontrarPorHabilidadesRequeridas(titulos) {
     if (titulos.length === 0) return [];
     return this.model
       .find({ habilidades: { $in: titulos } })
       .select(
-        "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades",
+        "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades aceptaMensajeria",
       )
       .exec();
   }

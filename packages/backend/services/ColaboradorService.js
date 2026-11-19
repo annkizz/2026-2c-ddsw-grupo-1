@@ -5,6 +5,8 @@ import {
   HabilidadRepository,
   normalizarHabilidad,
 } from "../repositories/HabilidadRepository.js";
+import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 import { UsuarioService } from "./UsuarioService.js";
 
@@ -13,10 +15,14 @@ export class ColaboradorService {
     colaboradorRepository = new ColaboradorRepository(),
     habilidadRepository = new HabilidadRepository(),
     usuarioService = new UsuarioService(),
+    colaboracionRepository = new ColaboracionRepository(),
+    proyectoRepository = new ProyectoRepository(),
   ) {
     this.colaboradorRepository = colaboradorRepository;
     this.habilidadRepository = habilidadRepository;
     this.usuarioService = usuarioService;
+    this.colaboracionRepository = colaboracionRepository;
+    this.proyectoRepository = proyectoRepository;
   }
 
   // valida contra el catalogo y devuelve los titulos tal cual estan en el catalogo
@@ -117,6 +123,56 @@ export class ColaboradorService {
       );
     }
     return colaborador;
+  }
+
+  async obtenerMisColaboraciones(usuario) {
+    const colaborador = await this.obtenerPorUsuario(usuario);
+    const colaboraciones =
+      await this.colaboracionRepository.obtenerPorColaborador(
+        colaborador._id,
+      );
+    if (colaboraciones.length === 0) return [];
+
+    const idsProyectos = [
+      ...new Set(
+        colaboraciones.map((colaboracion) =>
+          String(colaboracion.idProyecto),
+        ),
+      ),
+    ];
+    const proyectos = await this.proyectoRepository.obtenerPorIds(idsProyectos);
+    const proyectosPorId = new Map(
+      proyectos.map((proyecto) => [String(proyecto._id), proyecto]),
+    );
+
+    return colaboraciones.map((colaboracion) => {
+      const idProyecto = String(colaboracion.idProyecto);
+      const proyecto = proyectosPorId.get(idProyecto);
+      if (!proyecto) {
+        throw new NotFoundError(
+          "No se encontró un proyecto de una colaboración",
+          "PROYECTO_NO_ENCONTRADO",
+        );
+      }
+
+      return {
+        idProyecto,
+        idPerfil: colaboracion.idPerfil
+          ? String(colaboracion.idPerfil)
+          : null,
+        fecha: colaboracion.fecha,
+        esAnonima: colaboracion.esAnonima ?? false,
+        proyecto: {
+          id: idProyecto,
+          titulo: proyecto.titulo,
+          descripcion: proyecto.descripcion,
+          estado: proyecto.estado,
+          fechaInicio: proyecto.fechaInicio,
+          fechaLimiteCierre: proyecto.fechaLimiteCierre,
+          porcentajeConcrecion: proyecto.porcentajeConcrecion,
+        },
+      };
+    });
   }
 
   async buscarOFallar(colaboradorId) {

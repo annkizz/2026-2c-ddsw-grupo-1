@@ -241,6 +241,55 @@ const swaggerSpec = {
         },
       },
     },
+    "/colaboradoras/me/colaboraciones": {
+      get: {
+        summary: "Obtiene las colaboraciones de la colaboradora autenticada",
+        description:
+          "Devuelve sus participaciones registradas, incluidas las de proyectos finalizados, con el resumen y el avance actual.",
+        responses: {
+          200: {
+            description: "Colaboraciones de la persona autenticada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idProyecto: { type: "string" },
+                      idPerfil: { type: "string", nullable: true },
+                      fecha: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      proyecto: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          titulo: { type: "string" },
+                          descripcion: { type: "string" },
+                          estado: { type: "string" },
+                          fechaInicio: {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          fechaLimiteCierre: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          porcentajeConcrecion: { type: "number" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "No hay una sesión válida" },
+          403: { description: "La sesión no pertenece a una colaboradora" },
+        },
+      },
+    },
     "/colaboradoras/{id}/proyectos": {
       get: {
         summary:
@@ -611,9 +660,11 @@ const swaggerSpec = {
             name: "provincia",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas.",
+              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas. Se puede repetir para buscar varias provincias.",
           },
           {
             name: "estado",
@@ -630,9 +681,11 @@ const swaggerSpec = {
             name: "idColectivo",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se combina con etiqueta, provincia, habilidad y estado.",
+              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se puede repetir para buscar varios colectivos.",
           },
           {
             name: "habilidad",
@@ -644,9 +697,20 @@ const swaggerSpec = {
             description:
               "Búsquedas: opcional. Filtra proyectos que tengan al menos un perfil con alguna de las habilidades indicadas (requeridas u opcionales). Se manda el título de la habilidad.",
           },
+          {
+            name: "modo",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["cualquiera"] },
+            description:
+              "Búsquedas: opcional. Con modo=cualquiera el proyecto entra si coincide en AL MENOS UNO de los filtros (habilidad, etiqueta, provincia o colectivo) y cada proyecto incluye 'coincidencias' indicando en qué coincidió. Sin este parámetro todos los filtros se combinan con AND.",
+          },
         ],
         responses: {
-          200: { description: "Lista de proyectos" },
+          200: {
+            description:
+              "Lista de proyectos. Con modo=cualquiera cada proyecto incluye coincidencias: [{ tipo: HABILIDAD|ETIQUETA|PROVINCIA|COLECTIVO, valor }]",
+          },
         },
       },
       post: {
@@ -912,6 +976,64 @@ const swaggerSpec = {
         },
       },
     },
+    "/proyectos/{idProyecto}/perfiles/{idPerfil}/invitaciones": {
+      post: {
+        summary: "Invita a una colaboradora a postularse a un perfil",
+        description:
+          "Requiere sesión autenticada como colectivo dueño del proyecto. La colaboradora debe aceptar mensajería y la búsqueda del proyecto y perfil debe estar abierta. La invitación aparece en su bandeja de notificaciones.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+          },
+          {
+            in: "path",
+            name: "idPerfil",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["idColaborador"],
+                properties: {
+                  idColaborador: { type: "string", format: "objectId" },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Invitación guardada en la bandeja de la colaboradora",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Notificacion" },
+              },
+            },
+          },
+          400: { description: "ID de colaboradora inválido" },
+          401: { description: "Sesión no autenticada" },
+          403: {
+            description:
+              "El colectivo no es dueño del proyecto o la colaboradora no acepta mensajería",
+          },
+          404: { description: "Proyecto, perfil o colaboradora no encontrada" },
+          409: {
+            description:
+              "Búsqueda cerrada, proyecto finalizado, postulación pendiente o colaboración existente",
+          },
+        },
+      },
+    },
     "/proyectos/{idProyecto}/postulaciones": {
       get: {
         security: [{ bearerAuth: [] }],
@@ -950,7 +1072,7 @@ const swaggerSpec = {
       patch: {
         summary: "Acepta o rechaza una postulación pendiente",
         description:
-          "Requiere sesión autenticada del colectivo dueño del proyecto.",
+          "Requiere sesión autenticada del colectivo dueño del proyecto. La colaboradora recibe una notificación interna con el resultado.",
         parameters: [
           {
             in: "path",
@@ -1470,40 +1592,46 @@ const swaggerSpec = {
     },
     "/notificaciones": {
       get: {
-        summary: "Lista notificaciones",
+        summary: "Lista las notificaciones de la cuenta autenticada",
         description:
-          "Devuelve las notificaciones más recientes primero. Se puede filtrar por colectivo, colaboradora o ambos.",
+          "Las cuentas COLECTIVO ven los mensajes e invitaciones enviados; las cuentas COLABORADOR ven mensajes, invitaciones y resultados de postulaciones. La lista se limita al perfil asociado a la sesión autenticada.",
         parameters: [
           {
             in: "query",
-            name: "idColectivo",
+            name: "pag",
             required: false,
-            schema: { type: "string" },
-            example: "c00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 1 },
           },
           {
             in: "query",
-            name: "idColaborador",
+            name: "limite",
             required: false,
-            schema: { type: "string" },
-            example: "b00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 10 },
           },
         ],
         responses: {
           200: {
             description:
-              "Lista de notificaciones. No incluye emails ni teléfonos.",
+              "Notificaciones paginadas. No incluye emails ni teléfonos.",
             content: {
               "application/json": {
                 schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Notificacion" },
+                  type: "object",
+                  properties: {
+                    notificaciones: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Notificacion" },
+                    },
+                    total: { type: "integer" },
+                    pag: { type: "integer" },
+                    totalPags: { type: "integer" },
+                  },
                 },
               },
             },
           },
-          400: {
-            description: "Filtros inválidos o no soportados",
+          403: {
+            description: "El usuario no tiene rol COLECTIVO ni COLABORADOR",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1515,7 +1643,7 @@ const swaggerSpec = {
       post: {
         summary: "Crea un mensaje interno para una colaboradora",
         description:
-          "Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
+          "Solo puede enviar el colectivo autenticado y únicamente desde su propio perfil. Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
         requestBody: {
           required: true,
           content: {
@@ -1524,7 +1652,6 @@ const swaggerSpec = {
                 $ref: "#/components/schemas/CrearNotificacion",
               },
               example: {
-                idColectivo: "c00000000000000000000001",
                 idColaborador: "b00000000000000000000001",
                 contenido: "Hola, queremos colaborar.",
               },
@@ -1542,8 +1669,12 @@ const swaggerSpec = {
                   id: "8f09d4b54eb34fc0a72a150",
                   fecha: "2026-10-15T04:20:00.000Z",
                   contenido: "Hola, queremos colaborar.",
+                  tipo: "MENSAJE",
                   idColectivo: "c00000000000000000000001",
                   idColaborador: "b00000000000000000000001",
+                  nombreColectivo: "Fundación Código",
+                  nombreColaborador: "Ada",
+                  leida: false,
                   envios: [
                     {
                       tipoDeContacto: "EMAIL",
@@ -1564,7 +1695,8 @@ const swaggerSpec = {
             },
           },
           403: {
-            description: "La colaboradora no aceptó mensajería",
+            description:
+              "El usuario no es un colectivo, intenta enviar desde otro colectivo o la colaboradora no aceptó mensajería",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1584,7 +1716,9 @@ const swaggerSpec = {
     },
     "/notificaciones/{id}": {
       get: {
-        summary: "Obtiene una notificación por ID",
+        summary: "Obtiene una notificación propia por ID",
+        description:
+          "Solo el colectivo emisor o la persona colaboradora destinataria pueden consultar la notificación.",
         parameters: [
           {
             in: "path",
@@ -1608,6 +1742,62 @@ const swaggerSpec = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "/notificaciones/colaboradora/{id}": {
+            get: {
+              summary: "Lista los mensajes propios de una persona colaboradora",
+              description:
+                "Ruta compatible con clientes anteriores. Solo puede acceder la persona autenticada dueña del perfil indicado.",
+              parameters: [
+                {
+                  in: "path",
+                  name: "id",
+                  required: true,
+                  schema: { type: "string" },
+                },
+                {
+                  in: "query",
+                  name: "pag",
+                  required: false,
+                  schema: { type: "integer", minimum: 1, default: 1 },
+                },
+                {
+                  in: "query",
+                  name: "limite",
+                  required: false,
+                  schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+                },
+              ],
+              responses: {
+                200: {
+                  description: "Mensajes recibidos por el perfil autenticado",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          notificaciones: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Notificacion" },
+                          },
+                          total: { type: "integer" },
+                          pag: { type: "integer" },
+                          totalPags: { type: "integer" },
+                        },
+                      },
+                    },
+                  },
+                },
+                404: {
+                  description: "Perfil no encontrado o no pertenece a la sesión",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Error" },
+                    },
+                  },
+                },
               },
             },
           },
@@ -1757,13 +1947,8 @@ const swaggerSpec = {
       },
       CrearNotificacion: {
         type: "object",
-        required: ["idColectivo", "idColaborador", "contenido"],
+        required: ["idColaborador", "contenido"],
         properties: {
-          idColectivo: {
-            type: "string",
-            description: "ID del colectivo emisor",
-            example: "c00000000000000000000001",
-          },
           idColaborador: {
             type: "string",
             description: "ID de la colaboradora destinataria",
@@ -1772,6 +1957,7 @@ const swaggerSpec = {
           contenido: {
             type: "string",
             minLength: 4,
+            maxLength: 2000,
             example: "Hola, queremos colaborar.",
           },
         },
@@ -1783,16 +1969,33 @@ const swaggerSpec = {
           "id",
           "fecha",
           "contenido",
+          "tipo",
           "idColectivo",
           "idColaborador",
+          "leida",
           "envios",
         ],
         properties: {
           id: { type: "string", description: "ObjectId de MongoDB" },
           fecha: { type: "string", format: "date-time" },
           contenido: { type: "string" },
+          tipo: {
+            type: "string",
+            enum: [
+              "MENSAJE",
+              "POSTULACION_ACEPTADA",
+              "POSTULACION_RECHAZADA",
+              "INVITACION_POSTULACION",
+            ],
+          },
           idColectivo: { type: "string", description: "ObjectId de MongoDB" },
           idColaborador: { type: "string", description: "ObjectId de MongoDB" },
+          idProyecto: { type: "string", description: "ObjectId de MongoDB" },
+          idPerfil: { type: "string", description: "ObjectId de MongoDB" },
+          idPostulacion: { type: "string", description: "ObjectId de MongoDB" },
+          nombreColectivo: { type: "string" },
+          nombreColaborador: { type: "string" },
+          leida: { type: "boolean" },
           envios: {
             type: "array",
             items: { $ref: "#/components/schemas/ResultadoEnvio" },

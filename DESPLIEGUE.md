@@ -1,17 +1,19 @@
 ## Despliegue
 
-El backend se ejecuta con **Docker Compose** sobre una máquina virtual con Ubuntu (Google Cloud). Compose levanta
-dos contenedores permanentes, la API (Node/Express) y la base de datos MongoDB, y tiene una tarea opcional que carga
-los datos iniciales (seed).
+La aplicación se ejecuta con **Docker Compose** sobre una máquina virtual con Ubuntu (Google Cloud). Un solo comando
+levanta MongoDB, carga la seed si todavía no se ejecutó en ese volumen, inicia la API y el frontend, y configura HTTPS
+con Caddy.
 
-**Dockerfile y Compose se complementan, no se reemplazan:** el `Dockerfile` es la receta para construir la imagen de la
-API, y `docker-compose.yml` describe cómo se levantan y conectan los contenedores (API + Mongo + volumen + variables).
+Los `Dockerfile` construyen las imágenes de API y frontend; Caddy obtiene y renueva automáticamente un certificado TLS
+para el dominio configurado.
 
-| Servicio | Qué es                                             | Notas                                                                                                                             |
-| -------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `mongo`  | MongoDB 7 (imagen oficial)                         | Con usuario y contraseña. **No publica ningún puerto**: solo la API puede conectarse. Los datos viven en el volumen `mongo-data`. |
-| `api`    | Backend Express (se construye con el `Dockerfile`) | Espera a que Mongo esté sano, tiene healthcheck (`/healthcheck`) y se reinicia sola si se cae. Puerto 3000.                       |
-| `seed`   | Carga de datos iniciales                           | Tarea de una sola ejecución, se corre a mano. No arranca con `up`.                                                                |
+| Servicio   | Qué es                  | Notas                                                                                    |
+| ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                                   |
+| `seed`     | Datos iniciales         | Corre antes de la API; carga la seed una sola vez por versión y base de datos.           |
+| `api`      | Backend Express         | Espera a que termine la seed; solo expone su puerto local en `127.0.0.1:3001`.           |
+| `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                                  |
+| `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.         |
 
 ### Requisitos en la VM
 
@@ -23,11 +25,12 @@ docker compose version
 Si falta Docker: `sudo apt update && sudo apt install -y docker.io docker-compose-v2` y
 `sudo usermod -aG docker $USER` (después cerrar la sesión SSH y volver a entrar).
 
-Además, el puerto **3000** de la VM tiene que estar abierto hacia afuera: en Google Cloud, una regla de firewall de
-entrada para `tcp:3000` en la red de la VM. **No abrir nunca el 27017** (Mongo).
+En Google Cloud, abrí los puertos **80 y 443** en el firewall de la VM para HTTP y HTTPS. No abras 27017 (Mongo),
+3001 (API) ni 3000 (frontend): esos puertos quedan internos o ligados a loopback.
 
-> La IP externa de la VM puede cambiar si se la apaga y se la vuelve a prender, salvo que se reserve como IP estática.
-> La API se sirve por **HTTP** (no HTTPS): `http://<IP>:3000`.
+Usá una IP externa estática para la VM. Registrá un subdominio gratuito (por ejemplo, en DuckDNS) y apuntalo a esa IP.
+Caddy necesita que el DNS resuelva correctamente y que los puertos 80/443 sean accesibles para emitir el certificado;
+comprobá ambos antes de levantar Compose.
 
 ### Obtener el proyecto
 
@@ -44,93 +47,102 @@ que se ven los últimos commits del equipo.
 ### Configurar las variables (una sola vez)
 
 El archivo `.env` va en la **raíz del proyecto**, al lado de `docker-compose.yml` (no en `packages/backend`: ese es solo
-para correr el backend sin Docker). **No se sube a git** (está en `.gitignore`), así que hay que crearlo en la VM:
+para correr el backend sin Docker). **No se sube a git** (está en `.gitignore`); crealo a partir de la plantilla:
 
 ```bash
-cat > .env <<'EOF'
-MONGO_USER=admin
-MONGO_PASSWORD=admin1234
-MONGODB_DB_NAME=codigo_a_voluntad
-API_PORT=3000
-ALLOWED_ORIGINS=
-EOF
+cp .env.example .env
+nano .env
 ```
 
-(Si el repositorio trae un `.env.example`, alcanza con `cp .env.example .env` y editarlo con `nano .env`).
+Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant y el recurso de API.
+`REACT_APP_LOGTO_RESOURCES` debe coincidir con `LOGTO_AUDIENCE`. En la VM, reemplazá también `ALLOWED_ORIGINS` por
+`https://<subdominio>`, y `APP_DOMAIN` por el subdominio sin `https://` ni rutas (por ejemplo, `miapp.duckdns.org`).
 
 | Variable                        | Para qué sirve                                                                                                                                                                      |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen.                                                                                                                  |
 | `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                                                                                                         |
-| `API_PORT`                      | Puerto de la VM por el que se accede a la API.                                                                                                                                      |
-| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. Vacío = cualquiera. Postman y Swagger no lo necesitan; solo importa cuando haya un frontend en otro origen. |
+| `API_PORT`                      | Puerto local de la API (3001); queda ligado a `127.0.0.1`, no se expone a la red.                                                                                                    |
+| `FRONTEND_PORT`                 | Puerto de loopback para pruebas locales (3000 por defecto); no se expone a la red.                                                                                                   |
+| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. En la VM: `https://<subdominio>`.                                                                           |
+| `LOGTO_ISSUER`                  | Emisor OIDC de Logto, por ejemplo `https://tenant.logto.app/oidc`.                                                                                                                   |
+| `LOGTO_JWKS_URL`                | URL de claves públicas de Logto, normalmente `https://tenant.logto.app/oidc/jwks`.                                                                                                   |
+| `LOGTO_AUDIENCE`                | Identificador del recurso de API; debe coincidir con `REACT_APP_LOGTO_RESOURCES`.                                                                                                   |
+| `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                                                                                                        |
+| `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                                                                                                  |
+| `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                                                                                                     |
+| `APP_DOMAIN`                    | Hostname del frontend. En la VM, Caddy lo usa para solicitar y renovar el certificado HTTPS.                                                                                        |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
+
+Para desarrollo local, copiá las variables `LOGTO_*` de `packages/backend/.env` y las `REACT_APP_LOGTO_*` de
+`packages/frontend/.env` al `.env` de la raíz. Compose usa estas últimas al compilar el frontend.
+En la consola de Logto, autorizá como callback `https://<subdominio>/callback` y como origen de la aplicación
+`https://<subdominio>`. Para desarrollo local, conservá también `http://localhost:3000/callback`.
 
 ### Levantar todo
 
 ```bash
 docker compose up -d --build
-docker compose ps
-docker compose logs --tail 20 api
+docker compose ps -a
+docker compose logs --tail 20 seed api frontend caddy
 ```
 
-- `--build` construye la imagen de la API con el `Dockerfile`. **Hay que usarlo siempre que cambie el código.**
+- `--build` construye las imágenes de API y frontend. **Usalo cuando cambie el código.**
 - `-d` deja todo corriendo de fondo.
-- **Esperado:** `mongo` y `api` en `healthy` (la API puede tardar hasta 30 segundos). En los logs: «MongoDB conectado» y
-  «Backend escuchando en puerto 3000».
+- **Esperado:** `mongo`, `api` y `frontend` en `healthy`; `seed` termina con código 0. Caddy queda levantado y solicita
+  el certificado automáticamente; la primera emisión puede tardar unos minutos.
 
-### Cargar los datos iniciales (seed)
+En la VM, abrí `https://<subdominio>`. En desarrollo local, el frontend sigue disponible en `http://localhost:3000`;
+la API en `http://localhost:3001`.
+
+### Actualizar los datos iniciales (seed)
 
 ```bash
-docker compose build          # solo si cambió el código del seed
-docker compose run --rm seed
+docker compose stop frontend api
+docker compose build seed     # si cambió el código de la seed
+docker compose run --rm -e SEED_FORCE=true seed
+docker compose up -d
 ```
 
-**Esperado:** `Seed listo: 12 habilidades, 3 colectivos, 4 proyectos, 5 perfiles, 3 logros, 7 colaboradoras, 2 colaboraciones`.
+La seed se carga automáticamente en una base nueva y no se vuelve a aplicar en cada `up`, para no borrar datos de prueba.
+El estado de carga se guarda en Mongo. `SEED_FORCE=true` vuelve a cargarla y reinicia los perfiles, colaboraciones y logros
+de los proyectos demo; los proyectos creados por la API quedan intactos. Si se publica una versión nueva de los datos,
+actualizá `idVersionSeed` en `packages/backend/seeds/seed.js` o forzá la carga en la VM.
 
-El seed se puede correr todas las veces que haga falta, y **deja las entidades del seed en un estado conocido**:
+**Esperado:** `Seed listo: 24 habilidades, 6 colectivos, 10 proyectos, 13 perfiles, 7 logros, 15 colaboradoras, 6 colaboraciones`.
+
+Los datos incluyen proyectos activos y finalizados, búsquedas abiertas y cerradas, ubicaciones en varias provincias,
+etiquetas, destacados vigentes y vencidos, avances, logros y colaboraciones anónimas y públicas.
 
 - Habilidades, colectivos, proyectos y colaboradoras se guardan por id fijo (no se duplican).
-- De los 4 proyectos del seed se borran y recrean los perfiles, las colaboraciones y los logros (se limpia lo agregado
-  probando). Los proyectos creados por la API quedan intactos.
 - `seed-proyecto-4` («Laboratorio de pruebas») se **cierra solo** 5 minutos después de correr el seed (cierre automático).
-  Para cambiar el tiempo: `docker compose run --rm -e SEED_CIERRE_MINUTOS=2 seed`. Al volver a correr el seed, se reabre.
+  Para cambiar el tiempo al forzar la seed: `docker compose run --rm -e SEED_FORCE=true -e SEED_CIERRE_MINUTOS=2 seed`.
+- Para probar postulaciones entre cuentas reales, registrá dos cuentas de Logto: una colaboradora y otra colectivo. Los
+  perfiles demo de la seed no están asociados a cuentas de Logto.
 
-**Ids fijos del seed:**
-
-| Qué                                            | Id                                                             |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| Colectivos                                     | `seed-colectivo-1` a `seed-colectivo-3`                        |
-| Proyectos                                      | `seed-proyecto-1` a `seed-proyecto-4` (el 3 está `FINALIZADO`) |
-| Colaboradoras                                  | `seed-colaboradora-1` a `seed-colaboradora-7`                  |
-| Perfil Tester / Analista de Datos (proyecto 1) | `5eed00000000000000000001` / `5eed00000000000000000002`        |
-| Perfil Frontend (proyecto 2)                   | `5eed00000000000000000003`                                     |
-| Perfil Backend (proyecto 3)                    | `5eed00000000000000000004`                                     |
-| Perfil Tester de carga (proyecto 4)            | `5eed00000000000000000005`                                     |
-| Logros (proyectos 1 y 3)                       | `5eed00000000000000000101`, `...102`, `...103`                 |
-
-Resultados esperados del matching con el seed:
-Tester → Luna Código · Analista → Martín · Frontend → Sofía · Tester de carga → Probadora · Proyecto 3 → 409.
-Kodama, Nico y Tomás no tienen proyectos sugeridos.
+Los IDs determinísticos, perfiles, logros y escenarios están definidos en `packages/backend/seeds/datosIniciales.js`.
+La seed de integración de Jest usa el conjunto base y no incorpora automáticamente estos escenarios adicionales.
 
 ### Verificar el despliegue
 
-Desde el navegador (reemplazar `<IP>` por la IP de la VM):
+Desde el navegador (reemplazar `<subdominio>` por el dominio configurado):
 
 ```text
-http://<IP>:3000/healthcheck     -> {"status":"ok", ...}
-http://<IP>:3000/api-docs        -> documentación Swagger
+https://<subdominio>/                 -> frontend React
+https://<subdominio>/api/healthcheck  -> {"status":"ok", ...}
+https://<subdominio>/api/api-docs     -> documentación Swagger
 ```
 
-Desde Postman, con una variable `base = http://<IP>:3000`, probar `GET {{base}}/proyectos` (4 proyectos con el seed) y el
-resto de los endpoints. Si se prefiere la terminal, desde la VM: `curl http://localhost:3000/proyectos`.
+Desde Postman, con una variable `base = https://<subdominio>/api`, probar `GET {{base}}/proyectos` (10 proyectos con la seed
+ampliada) y el resto de los endpoints. Si se prefiere la terminal, desde la VM:
+`curl http://localhost:3000/api/proyectos`.
 
 **Prueba de persistencia** (los datos deben sobrevivir):
 
 ```bash
-docker compose restart api          # reinicia solo la API
+docker compose restart api frontend # reinicia API y frontend
 docker compose down                 # apaga todo, conserva los datos
 docker compose up -d
 ```
@@ -183,7 +195,7 @@ db.colaboradoras.find(
 db.notificaciones.find().sort({ fecha: -1 }).limit(5);
 ```
 
-> Los medios de contacto están guardados en texto plano. Por eso Mongo no se expone: solo se accede por SSH a la VM.
+> Los medios de contacto están guardados en texto plano. Mongo no se expone a la red; el puerto solo escucha en loopback.
 
 Consulta de una sola línea (sin entrar a `mongosh`):
 
@@ -194,19 +206,13 @@ docker compose exec mongo mongosh -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authen
 
 **Opcional: MongoDB Compass desde tu compu, con un túnel SSH.**
 
-1. En `docker-compose.yml`, dentro del servicio `mongo`, agregar el puerto **solo para la propia VM**:
-   ```yaml
-   ports:
-     - "127.0.0.1:27017:27017"
-   ```
-   y aplicar con `docker compose up -d`. **Nunca** usar `0.0.0.0` ni abrir el 27017 en el firewall.
-2. Desde tu compu (con `gcloud` instalado), abrir el túnel:
+1. Desde tu compu (con `gcloud` instalado), abrir el túnel:
    ```bash
    gcloud compute ssh instancia-despliegue --zone southamerica-west1-b -- -N -L 27018:localhost:27017
    ```
-3. En Compass conectarse a: `mongodb://<MONGO_USER>:<MONGO_PASSWORD>@localhost:27018/codigo_a_voluntad?authSource=admin`
+2. En Compass conectarse a: `mongodb://<MONGO_USER>:<MONGO_PASSWORD>@localhost:27018/codigo_a_voluntad?authSource=admin`
 
-Cuando no se use más, sacar la línea `ports` y volver a hacer `docker compose up -d`.
+El puerto está ligado a `127.0.0.1`: **nunca** cambiarlo a `0.0.0.0` ni abrir el 27017 en el firewall.
 
 ### Notificaciones
 

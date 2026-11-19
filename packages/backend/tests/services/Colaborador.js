@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { ColaboradorService } from "../../services/ColaboradorService.js";
 import { NotFoundError } from "../../errors/AppError.js";
 
@@ -13,6 +13,8 @@ const catalogo = {
 describe("ColaboradorService", () => {
   let colaboradorRepository;
   let habilidadRepository;
+  let colaboracionRepository;
+  let proyectoRepository;
   let service;
 
   beforeEach(() => {
@@ -20,15 +22,25 @@ describe("ColaboradorService", () => {
       save: jest.fn(async (colaborador) => colaborador),
       obtenerTodos: jest.fn(async () => []),
       buscarPorId: jest.fn(async () => null),
+      buscarPorUsuario: jest.fn(async () => null),
     };
     habilidadRepository = {
       encontrarPorCodigos: jest.fn(async (codigos) =>
         codigos.map((codigo) => catalogo[codigo]).filter(Boolean),
       ),
     };
+    colaboracionRepository = {
+      obtenerPorColaborador: jest.fn(async () => []),
+    };
+    proyectoRepository = {
+      obtenerPorIds: jest.fn(async () => []),
+    };
     service = new ColaboradorService(
       colaboradorRepository,
       habilidadRepository,
+      undefined,
+      colaboracionRepository,
+      proyectoRepository,
     );
   });
 
@@ -97,5 +109,65 @@ describe("ColaboradorService", () => {
     expect(await service.obtenerTodos()).toEqual([{ _id: "c1" }]);
     expect(await service.obtenerPorId("c1")).toEqual({ _id: "c1" });
     expect(colaboradorRepository.buscarPorId).toHaveBeenCalledWith("c1");
+  });
+
+  it("devuelve las colaboraciones propias junto con el resumen actual de cada proyecto", async () => {
+    const fecha = new Date("2026-10-01T00:00:00.000Z");
+    colaboradorRepository.buscarPorUsuario.mockResolvedValue({
+      _id: "c1",
+    });
+    colaboracionRepository.obtenerPorColaborador.mockResolvedValue([
+      {
+        idProyecto: "p1",
+        idPerfil: "f1",
+        fecha,
+        esAnonima: true,
+      },
+    ]);
+    proyectoRepository.obtenerPorIds.mockResolvedValue([
+      {
+        _id: "p1",
+        titulo: "Proyecto solidario",
+        descripcion: "Descripción",
+        estado: "ACTIVO",
+        fechaInicio: new Date("2026-09-01T00:00:00.000Z"),
+        fechaLimiteCierre: null,
+        porcentajeConcrecion: 35,
+        datosInternos: "no se expone",
+      },
+    ]);
+
+    await expect(
+      service.obtenerMisColaboraciones({ _id: "u1" }),
+    ).resolves.toEqual([
+      {
+        idProyecto: "p1",
+        idPerfil: "f1",
+        fecha,
+        esAnonima: true,
+        proyecto: {
+          id: "p1",
+          titulo: "Proyecto solidario",
+          descripcion: "Descripción",
+          estado: "ACTIVO",
+          fechaInicio: new Date("2026-09-01T00:00:00.000Z"),
+          fechaLimiteCierre: null,
+          porcentajeConcrecion: 35,
+        },
+      },
+    ]);
+    expect(colaboradorRepository.buscarPorUsuario).toHaveBeenCalledWith("u1");
+    expect(colaboracionRepository.obtenerPorColaborador).toHaveBeenCalledWith(
+      "c1",
+    );
+    expect(proyectoRepository.obtenerPorIds).toHaveBeenCalledWith(["p1"]);
+  });
+
+  it("no consulta proyectos si la colaboradora todavía no tiene colaboraciones", async () => {
+    colaboradorRepository.buscarPorUsuario.mockResolvedValue({ _id: "c1" });
+    await expect(
+      service.obtenerMisColaboraciones({ _id: "u1" }),
+    ).resolves.toEqual([]);
+    expect(proyectoRepository.obtenerPorIds).not.toHaveBeenCalled();
   });
 });

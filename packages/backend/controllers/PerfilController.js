@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PerfilService } from "../services/PerfilService.js";
 
-export const perfilSchema = z
+export const perfilBaseSchema = z
   .object({
     descripcion: z.string().min(1),
     habilidadesRequeridas: z.array(z.string()).min(1),
@@ -12,8 +12,23 @@ export const perfilSchema = z
       horas: z.int().min(1),
       tipoColaboracion: z.enum(["GRATUITA", "INCENTIVO", "CONTRATACION"]),
     }),
-  })
-  .strict();
+  });
+
+export const perfilSchema = z.discriminatedUnion("tipoAceptacion", [
+        perfilBaseSchema.extend({ 
+          tipoAceptacion: z.literal("LLENAR_VACANTES"),
+          limiteColaboraciones: z.int().positive().min(1),}),
+        
+        perfilBaseSchema.extend({
+          tipoAceptacion: z.literal("SIN_LIMITE"),
+          limiteColaboraciones: z.null().default(null),
+        }),
+
+        perfilBaseSchema.extend({
+          tipoAceptacion: z.literal("MANUAL"),
+          limiteColaboraciones: z.int().positive().default(null),})
+
+]);
 
 export class PerfilController {
   constructor(perfilService = new PerfilService()) {
@@ -31,12 +46,17 @@ export class PerfilController {
     const perfilNuevo = await this.perfilService.crear(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(201).json(perfilNuevo);
   };
 
   eliminar = async (req, res) => {
-    await this.perfilService.eliminar(req.params.idProyecto, req.params.id);
+    await this.perfilService.eliminar(
+      req.params.idProyecto,
+      req.params.id,
+      req.usuario,
+    );
     res.status(204).send();
   };
 
@@ -53,6 +73,7 @@ export class PerfilController {
       req.params.idProyecto,
       req.params.id,
       req.body,
+      req.usuario,
     );
     res.status(200).json(perfil);
   };

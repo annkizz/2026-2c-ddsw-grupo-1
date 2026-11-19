@@ -29,12 +29,15 @@ import {
   FiUsers,
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import Markdown from '../../components/Markdown.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
   obtenerLogros,
   obtenerColaboraciones,
   crearPostulacion,
+  obtenerPostulaciones,
+  resolverPostulacion,
   crearLogro,
   configurarBusqueda,
   actualizarAvance,
@@ -44,8 +47,9 @@ import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fe
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
-import { codigoDeError } from '../../service/api';
+import { codigoDeError, mensajeDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
+import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
@@ -100,6 +104,14 @@ const DetalleProyecto = () => {
   const [errorPostulacion, setErrorPostulacion] = useState('');
   const [postulacionesEnviadas, setPostulacionesEnviadas] = useState({});
   const [postulacionesPendientes, setPostulacionesPendientes] = useState({});
+  const [misColaboraciones, setMisColaboraciones] = useState(null);
+  const [errorVerificarParticipacion, setErrorVerificarParticipacion] = useState('');
+  const [intentoVerificacion, setIntentoVerificacion] = useState(0);
+  const [postulacionesProyecto, setPostulacionesProyecto] = useState([]);
+  const [cargandoPostulaciones, setCargandoPostulaciones] = useState(false);
+  const [errorCargarPostulaciones, setErrorCargarPostulaciones] = useState('');
+  const [resolviendoPostulacionId, setResolviendoPostulacionId] = useState(null);
+  const [erroresResolucion, setErroresResolucion] = useState({});
 
   const [modalAvanceAbierto, setModalAvanceAbierto] = useState(false);
 
@@ -124,6 +136,11 @@ const DetalleProyecto = () => {
 
   const [avisoLinkedin, setAvisoLinkedin] = useState(null); // { severity, texto }
   const [publicandoId, setPublicandoId] = useState(null);
+  const esDueño = Boolean(
+    sesion?.idColectivo &&
+    proyecto?.idColectivo &&
+    String(proyecto.idColectivo) === String(sesion.idColectivo)
+  );
 
   const cargarPerfiles = useCallback(async () => {
     setErrorPerfiles(null);
@@ -214,7 +231,16 @@ const DetalleProyecto = () => {
   }
 
   const esFinalizado = proyecto.estado === 'FINALIZADO';
-  const esDueño = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  const yaColaboraEnProyecto = Boolean(
+    sesion?.rol === 'COLABORADOR' &&
+    misColaboraciones?.some(
+      (colaboracion) => String(colaboracion.idProyecto) === String(id),
+    ),
+  );
+  const verificandoParticipacion =
+    sesion?.rol === 'COLABORADOR' &&
+    misColaboraciones === null &&
+    !errorVerificarParticipacion;
   const avance = Math.min(100, Math.max(0, Number(proyecto.porcentajeConcrecion) || 0));
   const busquedaVigente = Boolean(proyecto.busquedaVigente);
   const fechaLimiteBusqueda = formatearFecha(proyecto.fechaLimiteBusqueda);
@@ -270,6 +296,47 @@ const DetalleProyecto = () => {
       }
     } finally {
       setGuardandoPostulacion(false);
+    }
+  };
+
+  const resolverSolicitud = async (postulacion, decision) => {
+    setResolviendoPostulacionId(postulacion.id);
+    setErroresResolucion((actuales) => ({
+      ...actuales,
+      [postulacion.id]: '',
+    }));
+    try {
+      const token = await getAccessToken();
+      const resuelta = await resolverPostulacion(
+        token,
+        id,
+        postulacion.id,
+        decision,
+      );
+      setPostulacionesProyecto((actuales) =>
+        actuales.map((actual) =>
+          actual.id === resuelta.id ? resuelta : actual,
+        ),
+      );
+      if (decision === 'ACEPTADA') {
+        setColaboraciones((actuales) =>
+          actuales === null
+            ? actuales
+            : [...actuales, { idPerfil: resuelta.idPerfil }],
+        );
+      }
+      await cargarPostulaciones();
+    } catch (error) {
+      const mensaje =
+        codigoDeError(error) === 'LIMITE_COLABORACIONES_ALCANZADO'
+          ? t('detalleProyecto.errorLimitePostulacion')
+          : mensajeDeError(error) || t('detalleProyecto.errorResolverPostulacion');
+      setErroresResolucion((actuales) => ({
+        ...actuales,
+        [postulacion.id]: mensaje,
+      }));
+    } finally {
+      setResolviendoPostulacionId(null);
     }
   };
 

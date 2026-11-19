@@ -81,6 +81,8 @@ const etiquetaController = new EtiquetaController(etiquetaService);
 
 const colectivoRepository = new ColectivoRepository();
 const colaboradorRepository = new ColaboradorRepository();
+const proyectoRepository = new ProyectoRepository();
+const colaboracionRepository = new ColaboracionRepository();
 const usuarioService = new UsuarioService(
   usuarioRepository,
   colectivoRepository,
@@ -98,13 +100,19 @@ const colaboradorService = new ColaboradorService(
   colaboradorRepository,
   habilidadRepository,
   usuarioService,
+  colaboracionRepository,
+  proyectoRepository,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
-const proyectoRepository = new ProyectoRepository();
-const colaboracionRepository = new ColaboracionRepository();
 const postulacionRepository = new PostulacionRepository();
 const perfilRepository = new PerfilRepository();
+const notificacionRepository = new NotificacionRepository();
+const notificacionService = new NotificacionService(
+  notificacionRepository,
+  colectivoRepository,
+  colaboradorRepository,
+);
 
 const proyectoService = new ProyectoService(
   proyectoRepository,
@@ -113,7 +121,9 @@ const proyectoService = new ProyectoService(
   colectivoRepository,
   colaboracionRepository,
   perfilRepository,
+  postulacionRepository,
   despachadorWebhooks,
+  notificacionService,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
@@ -130,6 +140,7 @@ const postulacionService = new PostulacionService(
   colaboracionRepository,
   postulacionRepository,
   despachadorWebhooks,
+  notificacionService,
 );
 const postulacionController = new PostulacionController(
   postulacionService,
@@ -159,12 +170,6 @@ const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedinService);
 const logroController = new LogroController(logroService);
 
-const notificacionRepository = new NotificacionRepository();
-const notificacionService = new NotificacionService(
-  notificacionRepository,
-  colectivoRepository,
-  colaboradorRepository,
-);
 const notificacionController = new NotificacionController(notificacionService);
 
 const matchingService = new MatchingService(

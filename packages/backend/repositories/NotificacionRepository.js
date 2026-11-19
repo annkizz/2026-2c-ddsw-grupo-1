@@ -6,22 +6,28 @@ export class NotificacionRepository {
     this.model = model;
   }
 
-  // filtro: { idColaborador?, idColectivo? }. Más nuevas primero.
-  obtenerTodos(filtro = {}) {
-    return this.model.find(filtro).sort({ fecha: -1 }).exec();
+  async obtenerTodosPaginado(filtro, pag, limite) {
+    const skip = (pag - 1) * limite;
+    const [notificaciones, total] = await Promise.all([
+      this.model
+        .find(filtro)
+        .sort({ fecha: -1 })
+        .skip(skip)
+        .limit(limite)
+        .exec(),
+      this.model.countDocuments(filtro).exec(),
+    ]);
+
+    return {
+      notificaciones,
+      total,
+      pag,
+      totalPags: Math.ceil(total / limite),
+    };
   }
 
-  async obternerTodosPaginado(pag, limite) {
-    const skipN = (pag - 1) * limite;
-
-    // Se puede hacer una query que incluya el dato del total de documentos
-    const notificaciones = await this.model.find({}).skip(skipN).limit(limite);
-
-    const total = await this.model.countDocuments({});
-
-    return {notificaciones, total, pag, totalPags: Math.ceil(total/limite)} ;
-
-
+  obtenerTodosPorColaboradora(id, pag, limite) {
+    return this.obtenerTodosPaginado({ idColaborador: id }, pag, limite);
   }
 
   buscarPorId(id) {
@@ -33,9 +39,14 @@ export class NotificacionRepository {
     const datos = {
       fecha: notificacion.fecha,
       contenido: notificacion.contenido,
+      tipo: notificacion.tipo,
       idColectivo: notificacion.idColectivo,
       idColaborador: notificacion.idColaborador,
+      idProyecto: notificacion.idProyecto,
+      idPerfil: notificacion.idPerfil,
+      idPostulacion: notificacion.idPostulacion,
       envios: notificacion.envios,
+      leida: notificacion.leida,
     };
 
     if (!notificacion.id) {

@@ -7,22 +7,14 @@ const objectIdSchema = z
 
 export const notificacionSchema = z
   .object({
-    contenido: z.string().trim().min(4),
-    idColectivo: objectIdSchema,
+    contenido: z.string().trim().min(4).max(2000),
     idColaborador: objectIdSchema,
-  })
-  .strict();
-
-export const notificacionFiltroSchema = z
-  .object({
-    idColectivo: objectIdSchema.optional(),
-    idColaborador: objectIdSchema.optional(),
   })
   .strict();
 
 export const notificacionPaginasSchema = z
   .object({
-    pag: z.number().positive(),
-    limite: z.number().positive(), 
+    pag: z.coerce.number().int().positive().default(1),
+    limite: z.coerce.number().int().min(1).max(50).default(10),
   })
   .strict();

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Perfil } from "../domain/Perfil.js";
 import { TipoCompromiso } from "../domain/TipoCompromiso.js";
 import { TipoColaboracion } from "../domain/TipoColaboracion.js";
+import { TipoAceptacion } from "../domain/TipoAceptacion.js";
 
 const perfilSchema = new mongoose.Schema(
   {
@@ -47,6 +48,18 @@ const perfilSchema = new mongoose.Schema(
         required: true,
       },
     },
+
+    tipoAceptacion: {
+      type: String,
+      enum: Object.values(TipoAceptacion),
+      required: true,
+    },    
+
+    busquedaAbierta: {
+      type: Boolean, 
+      default: true
+    }
+
   },
   { timestamps: true, collection: "perfiles" },
 );
