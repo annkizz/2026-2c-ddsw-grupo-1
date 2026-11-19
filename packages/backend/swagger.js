@@ -1534,9 +1534,9 @@ const swaggerSpec = {
     },
     "/notificaciones": {
       get: {
-        summary: "Lista las notificaciones de la colaboradora autenticada",
+        summary: "Lista los mensajes de la cuenta autenticada",
         description:
-          "Solo pueden consultar notificaciones los usuarios con rol COLABORADOR. La lista se limita a su propio perfil y las notificaciones más recientes aparecen primero.",
+          "Las cuentas COLECTIVO ven los mensajes enviados; las cuentas COLABORADOR ven los recibidos. La lista se limita al perfil asociado a la sesión autenticada.",
         parameters: [
           {
             in: "query",
@@ -1554,13 +1554,12 @@ const swaggerSpec = {
         responses: {
           200: {
             description:
-              "Notificaciones de la colaboradora autenticada. No incluye emails ni teléfonos.",
+              "Mensajes paginados. No incluye emails ni teléfonos.",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    idColaboradora: { type: "string" },
                     notificaciones: {
                       type: "array",
                       items: { $ref: "#/components/schemas/Notificacion" },
@@ -1574,7 +1573,7 @@ const swaggerSpec = {
             },
           },
           403: {
-            description: "El usuario no tiene rol COLABORADOR",
+            description: "El usuario no tiene rol COLECTIVO ni COLABORADOR",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1595,7 +1594,6 @@ const swaggerSpec = {
                 $ref: "#/components/schemas/CrearNotificacion",
               },
               example: {
-                idColectivo: "c00000000000000000000001",
                 idColaborador: "b00000000000000000000001",
                 contenido: "Hola, queremos colaborar.",
               },
@@ -1615,6 +1613,9 @@ const swaggerSpec = {
                   contenido: "Hola, queremos colaborar.",
                   idColectivo: "c00000000000000000000001",
                   idColaborador: "b00000000000000000000001",
+                  nombreColectivo: "Fundación Código",
+                  nombreColaborador: "Ada",
+                  leida: false,
                   envios: [
                     {
                       tipoDeContacto: "EMAIL",
@@ -1658,7 +1659,7 @@ const swaggerSpec = {
       get: {
         summary: "Obtiene una notificación propia por ID",
         description:
-          "Solo la colaboradora destinataria puede consultar la notificación.",
+          "Solo el colectivo emisor o la persona colaboradora destinataria pueden consultar la notificación.",
         parameters: [
           {
             in: "path",
@@ -1683,77 +1684,59 @@ const swaggerSpec = {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
               },
-              403: {
-                description: "La notificación pertenece a otra colaboradora",
-                content: {
-                  "application/json": {
-                    schema: { $ref: "#/components/schemas/Error" },
-                  },
-                },
-              },
             },
           },
-        },
-        "/notificaciones/colaboradora/{id}": {
-          get: {
-            summary: "Lista las notificaciones propias de una colaboradora",
-            description:
-              "Solo puede acceder el usuario COLABORADOR dueño del perfil indicado.",
-            parameters: [
-              {
-                in: "path",
-                name: "id",
-                required: true,
-                schema: { type: "string" },
-              },
-              {
-                in: "query",
-                name: "pag",
-                required: false,
-                schema: { type: "integer", minimum: 1, default: 1 },
-              },
-              {
-                in: "query",
-                name: "limite",
-                required: false,
-                schema: { type: "integer", minimum: 1, default: 10 },
-              },
-            ],
-            responses: {
-              200: {
-                description: "Notificaciones de la colaboradora autenticada",
-                content: {
-                  "application/json": {
-                    schema: {
-                      type: "object",
-                      properties: {
-                        idColaboradora: { type: "string" },
-                        notificaciones: {
-                          type: "array",
-                          items: { $ref: "#/components/schemas/Notificacion" },
+          "/notificaciones/colaboradora/{id}": {
+            get: {
+              summary: "Lista los mensajes propios de una persona colaboradora",
+              description:
+                "Ruta compatible con clientes anteriores. Solo puede acceder la persona autenticada dueña del perfil indicado.",
+              parameters: [
+                {
+                  in: "path",
+                  name: "id",
+                  required: true,
+                  schema: { type: "string" },
+                },
+                {
+                  in: "query",
+                  name: "pag",
+                  required: false,
+                  schema: { type: "integer", minimum: 1, default: 1 },
+                },
+                {
+                  in: "query",
+                  name: "limite",
+                  required: false,
+                  schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+                },
+              ],
+              responses: {
+                200: {
+                  description: "Mensajes recibidos por el perfil autenticado",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          notificaciones: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Notificacion" },
+                          },
+                          total: { type: "integer" },
+                          pag: { type: "integer" },
+                          totalPags: { type: "integer" },
                         },
-                        total: { type: "integer" },
-                        pag: { type: "integer" },
-                        totalPags: { type: "integer" },
                       },
                     },
                   },
                 },
-              },
-              403: {
-                description:
-                  "El usuario no tiene rol COLABORADOR o el perfil pertenece a otra persona",
-                content: {
-                  "application/json": {
-                    schema: { $ref: "#/components/schemas/Error" },
-                  },
-                },
-              },
-              404: {
-                description: "Colaboradora no encontrada",
-                content: {
-                  "application/json": {
-                    schema: { $ref: "#/components/schemas/Error" },
+                404: {
+                  description: "Perfil no encontrado o no pertenece a la sesión",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Error" },
+                    },
                   },
                 },
               },
@@ -1905,13 +1888,8 @@ const swaggerSpec = {
       },
       CrearNotificacion: {
         type: "object",
-        required: ["idColectivo", "idColaborador", "contenido"],
+        required: ["idColaborador", "contenido"],
         properties: {
-          idColectivo: {
-            type: "string",
-            description: "ID del colectivo emisor",
-            example: "c00000000000000000000001",
-          },
           idColaborador: {
             type: "string",
             description: "ID de la colaboradora destinataria",
@@ -1920,6 +1898,7 @@ const swaggerSpec = {
           contenido: {
             type: "string",
             minLength: 4,
+            maxLength: 2000,
             example: "Hola, queremos colaborar.",
           },
         },
@@ -1933,6 +1912,7 @@ const swaggerSpec = {
           "contenido",
           "idColectivo",
           "idColaborador",
+          "leida",
           "envios",
         ],
         properties: {
@@ -1941,6 +1921,9 @@ const swaggerSpec = {
           contenido: { type: "string" },
           idColectivo: { type: "string", description: "ObjectId de MongoDB" },
           idColaborador: { type: "string", description: "ObjectId de MongoDB" },
+          nombreColectivo: { type: "string" },
+          nombreColaborador: { type: "string" },
+          leida: { type: "boolean" },
           envios: {
             type: "array",
             items: { $ref: "#/components/schemas/ResultadoEnvio" },

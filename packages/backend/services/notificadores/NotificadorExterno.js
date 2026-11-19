@@ -3,8 +3,6 @@ import { TipoDeContacto } from "../../domain/TipoDeContacto.js";
 import { EmailNotificador } from "./EmailNotificador.js";
 import { TwilioNotificador } from "./TwilioNotificador.js";
 
-const MAX_DETALLE = 200;
-
 export function crearCanalesPorDefecto() {
   return {
     [TipoDeContacto.EMAIL]: new EmailNotificador(),
@@ -37,12 +35,12 @@ export class NotificadorExterno {
       return { tipoDeContacto, estado, ...(detalle && { detalle }) };
     } catch (error) {
       console.error(
-        `[notificaciones] fallo el envio por ${tipoDeContacto}: ${error.message}`,
+        `[notificaciones] Falló el envío por ${tipoDeContacto} (${error.name}).`,
       );
       return {
         tipoDeContacto,
         estado: EstadoEnvio.FALLIDO,
-        detalle: String(error.message).slice(0, MAX_DETALLE),
+        detalle: "No se pudo completar el envío por este medio.",
       };
     }
   }

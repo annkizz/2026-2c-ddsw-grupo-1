@@ -9,7 +9,7 @@ export function crearNotificacionRouter(notificacionController) {
 
   router
     .route("/")
-    .get(requerirRol(Rol.COLABORADOR), (req, res) =>
+    .get(requerirRol(Rol.COLECTIVO, Rol.COLABORADOR), (req, res) =>
       notificacionController.obtenerTodosPaginado(req, res),
     )
     .post(
@@ -20,7 +20,7 @@ export function crearNotificacionRouter(notificacionController) {
 
   router
     .route("/:id")
-    .get(requerirRol(Rol.COLABORADOR), (req, res) =>
+    .get(requerirRol(Rol.COLECTIVO, Rol.COLABORADOR), (req, res) =>
       notificacionController.obtenerPorId(req, res),
     );
   

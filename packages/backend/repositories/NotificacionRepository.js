@@ -6,37 +6,28 @@ export class NotificacionRepository {
     this.model = model;
   }
 
-  // filtro: { idColaborador?, idColectivo? }. Más nuevas primero.
-  obtenerTodos(filtro = {}) {
-    return this.model.find(filtro).sort({ fecha: -1 }).exec();
-  }
-
-  async obternerTodosPaginado(pag, limite) {
-    const skipN = (pag - 1) * limite;
-
-    // Se puede hacer una query que incluya el dato del total de documentos
-    const notificaciones = await this.model.find({}).skip(skipN).limit(limite);
-
-    const total = await this.model.countDocuments({});
-
-    return {notificaciones, total, pag, totalPags: Math.ceil(total/limite)} ;
-
-
-  }
-
-  async obtenerTodosPorColaboradora(id, pag, limite){
-
-    const skipN = (pag - 1) * limite;
-
-    // Query que incluye notificaciones paginadas + dato del total de notificaciones del Colaborador
-
+  async obtenerTodosPaginado(filtro, pag, limite) {
+    const skip = (pag - 1) * limite;
     const [notificaciones, total] = await Promise.all([
-          this.model.find({ idColaborador: id }).sort({fecha:-1}).select('-envios').skip(skipN).limit(limite).exec(),
-          this.model.countDocuments({idColaborador: id}),
-          ]);
+      this.model
+        .find(filtro)
+        .sort({ fecha: -1 })
+        .skip(skip)
+        .limit(limite)
+        .exec(),
+      this.model.countDocuments(filtro).exec(),
+    ]);
 
-    return {idColaboradora: id, notificaciones, total, pag, totalPags: Math.ceil(total/limite)} ;
+    return {
+      notificaciones,
+      total,
+      pag,
+      totalPags: Math.ceil(total / limite),
+    };
+  }
 
+  obtenerTodosPorColaboradora(id, pag, limite) {
+    return this.obtenerTodosPaginado({ idColaborador: id }, pag, limite);
   }
 
   buscarPorId(id) {
@@ -51,6 +42,7 @@ export class NotificacionRepository {
       idColectivo: notificacion.idColectivo,
       idColaborador: notificacion.idColaborador,
       envios: notificacion.envios,
+      leida: notificacion.leida,
     };
 
     if (!notificacion.id) {

@@ -71,6 +71,7 @@ export class MatchingService {
           id: String(colaboradora._id),
           nombreFantasia: colaboradora.nombreFantasia,
           usuarioGitHub: colaboradora.usuarioGitHub,
+          aceptaMensajeria: colaboradora.aceptaMensajeria === true,
           presentacion: colaboradora.presentacion,
           tieneCoincidencia: evaluacion.tieneCoincidencia,
           requeridasCoincidentes: evaluacion.requeridasCoincidentes,

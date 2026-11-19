@@ -78,6 +78,35 @@
   line-height: 1.5;
 }
 
+.notificaciones-contenido {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notificaciones-item .notificaciones-contenido p {
+  flex: none;
+  overflow-wrap: anywhere;
+}
+
+.notificaciones-contenido .notificaciones-contraparte {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.notificaciones-contenido time,
+.notificaciones-contenido ul {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notificaciones-contenido ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .notificaciones-punto {
   flex: 0 0 6px;
   width: 6px;

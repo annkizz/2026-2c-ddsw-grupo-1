@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { obtenerNotificacionesDeColaboradora } from '../../service/notificacionesService';
+import { obtenerNotificaciones } from '../../service/notificacionesService';
 import Notificaciones from './Notificaciones';
 
 jest.mock('../../hooks/useAuth.jsx', () => ({
@@ -11,20 +11,20 @@ jest.mock('../../hooks/useAuth.jsx', () => ({
 }));
 
 jest.mock('../../service/notificacionesService', () => ({
-  obtenerNotificacionesDeColaboradora: jest.fn(),
+  obtenerNotificaciones: jest.fn(),
 }));
 
 describe('Notificaciones', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useAuth.mockReturnValue({
-      sesion: { idColaborador: 'colaborador-1' },
+      sesion: { rol: 'COLABORADOR', idColaborador: 'colaborador-1' },
       getAccessToken: jest.fn().mockResolvedValue('token'),
     });
   });
 
-  it('muestra el estado vacío cuando no hay notificaciones', async () => {
-    obtenerNotificacionesDeColaboradora.mockResolvedValue({
+  it('muestra el estado vacío en la bandeja de una persona colaboradora', async () => {
+    obtenerNotificaciones.mockResolvedValue({
       notificaciones: [],
       totalPags: 0,
       pag: 1,
@@ -32,36 +32,77 @@ describe('Notificaciones', () => {
 
     render(<Notificaciones />);
 
-    expect(await screen.findByText('Aún no tenés notificaciones')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Cargar más' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Aún no recibiste mensajes')).toBeInTheDocument();
+    expect(obtenerNotificaciones).toHaveBeenCalledWith('token', {
+      pag: 1,
+      limite: 8,
+    });
   });
 
-  it('carga la página siguiente y agrega sus notificaciones', async () => {
-    obtenerNotificacionesDeColaboradora
+  it('carga más mensajes recibidos y conserva los ya mostrados', async () => {
+    obtenerNotificaciones
       .mockResolvedValueOnce({
-        notificaciones: [{ id: 'n-1', contenido: 'Te invitaron al proyecto', leida: false }],
+        notificaciones: [
+          {
+            id: 'n-1',
+            contenido: 'Te invitamos a participar.',
+            nombreColectivo: 'Fundación',
+            leida: false,
+          },
+        ],
         totalPags: 2,
         pag: 1,
       })
       .mockResolvedValueOnce({
-        notificaciones: [{ id: 'n-2', contenido: 'Aceptaron tu postulación', leida: true }],
+        notificaciones: [
+          {
+            id: 'n-2',
+            contenido: 'Nos gustaría conversar.',
+            nombreColectivo: 'Asamblea',
+            leida: true,
+          },
+        ],
         totalPags: 2,
         pag: 2,
       });
 
     render(<Notificaciones />);
 
-    expect(await screen.findByText('Te invitaron al proyecto')).toBeInTheDocument();
+    expect(await screen.findByText('Te invitamos a participar.')).toBeInTheDocument();
+    expect(screen.getByText('De Fundación')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Cargar más' }));
 
-    expect(await screen.findByText('Aceptaron tu postulación')).toBeInTheDocument();
-    expect(screen.getByText('Te invitaron al proyecto')).toBeInTheDocument();
+    expect(await screen.findByText('Nos gustaría conversar.')).toBeInTheDocument();
+    expect(screen.getByText('Te invitamos a participar.')).toBeInTheDocument();
     await waitFor(() => {
-      expect(obtenerNotificacionesDeColaboradora).toHaveBeenLastCalledWith(
-        'token',
-        'colaborador-1',
-        { pag: 2, limite: 8 },
-      );
+      expect(obtenerNotificaciones).toHaveBeenLastCalledWith('token', {
+        pag: 2,
+        limite: 8,
+      });
     });
+  });
+
+  it('muestra mensajes enviados y estado de los canales externos al colectivo', async () => {
+    useAuth.mockReturnValue({
+      sesion: { rol: 'COLECTIVO', idColectivo: 'colectivo-1' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+    });
+    obtenerNotificaciones.mockResolvedValue({
+      notificaciones: [
+        {
+          id: 'n-3',
+          contenido: 'Te invitamos al proyecto.',
+          nombreColaborador: 'Ada',
+          envios: [{ tipoDeContacto: 'EMAIL', estado: 'SIMULADO' }],
+        },
+      ],
+      totalPags: 1,
+      pag: 1,
+    });
+
+    render(<Notificaciones />);
+
+    expect(await screen.findByText('Para Ada')).toBeInTheDocument();
+    expect(screen.getByText('EMAIL: SIMULADO')).toBeInTheDocument();
   });
 });
