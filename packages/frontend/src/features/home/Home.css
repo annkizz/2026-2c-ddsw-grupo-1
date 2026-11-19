@@ -88,26 +88,325 @@
   margin-top: 22px;
 }
 
-.home-cambio button {
+.home-cambio .MuiButton-root {
   background: none;
   border: 0;
   margin-left: 6px;
-  font: inherit;
+  padding: 0;
   font-weight: 700;
-  color: var(--navy);
   text-decoration: underline;
-  cursor: pointer;
 }
 
-@media (max-width: 720px) {
+.home--dashboard {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+}
+
+.dashboard-colectivo {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+}
+
+.dashboard-encabezado {
+  margin-bottom: var(--space-3);
+}
+
+.dashboard-eyebrow {
+  margin: 0 0 var(--space-1);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.dashboard-encabezado h1 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-heading);
+}
+
+.dashboard-encabezado > p:last-child {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: var(--space-2);
+}
+
+.dashboard-card.MuiCard-root {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-card--destacada.MuiCard-root {
+  background: var(--color-info-light);
+}
+
+.dashboard-card .MuiCardContent-root {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  box-sizing: border-box;
+}
+
+.dashboard-card h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-heading);
+}
+
+.dashboard-card p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.dashboard-card .MuiCardContent-root > .MuiButton-root {
+  margin-top: auto;
+}
+
+.dashboard-icono {
+  display: grid;
+  width: var(--space-5);
+  height: var(--space-5);
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.dashboard-estado {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-muted);
+}
+
+.dashboard-contadores {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+}
+
+.dashboard-contadores > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.dashboard-contadores strong {
+  color: var(--color-text);
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-heading);
+}
+
+.dashboard-contadores span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.dashboard-contadores span svg {
+  color: var(--color-primary);
+}
+
+.dashboard-card--buscar.MuiCard-root {
+  grid-column: 1 / -1;
+}
+
+.dashboard-estado--perfil {
+  margin-top: var(--space-2);
+}
+
+.dashboard-alerta-perfil {
+  margin-top: var(--space-2);
+}
+
+.dashboard-card--perfil.MuiCard-root {
+  margin-top: var(--space-2);
+}
+
+.dashboard-card--perfil .MuiCardContent-root {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.dashboard-card--perfil .dashboard-icono {
+  flex: 0 0 var(--space-5);
+}
+
+.dashboard-progreso-contenido {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dashboard-progreso-contenido .MuiLinearProgress-root {
+  width: 100%;
+}
+
+.dashboard-empty-state {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dashboard-empty-state__icono {
+  display: grid;
+  width: var(--space-5);
+  height: var(--space-5);
+  flex: 0 0 var(--space-5);
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-info-light);
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.dashboard-empty-state__texto {
+  flex: 1;
+}
+
+.dashboard-empty-state__texto strong {
+  color: var(--color-text);
+}
+
+.dashboard-empty-state__texto p {
+  margin-top: var(--space-0-5);
+}
+
+.dashboard-empty-state--destacada {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.dashboard-empty-state--destacada .dashboard-empty-state__texto {
+  flex: initial;
+}
+
+.dashboard-grid--colaboradora {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+
+.dashboard-recomendaciones {
+  margin-top: var(--space-4);
+}
+
+.dashboard-recomendaciones__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.dashboard-recomendaciones__encabezado h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+}
+
+.dashboard-recomendaciones__encabezado p {
+  margin: var(--space-0-5) 0 0;
+  color: var(--color-muted);
+}
+
+.dashboard-recomendaciones__encabezado > svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.dashboard-recomendaciones-lista {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-recomendaciones-lista > li {
+  min-width: 0;
+}
+
+.dashboard-recomendaciones__ver-mas {
+  margin-top: var(--space-2) !important;
+}
+
+@media (max-width: 899.95px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-card--buscar.MuiCard-root {
+    grid-column: auto;
+  }
+
+  .dashboard-recomendaciones-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599.95px) {
   .home {
     display: block;
     padding: 0 16px;
   }
+
   .home-hero {
     display: none;
   }
+
   .home-login h2 {
     font-size: 30px;
+  }
+
+  .dashboard-colectivo {
+    padding: 0 var(--space-2);
+  }
+
+  .dashboard-encabezado h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .dashboard-empty-state {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-card--buscar .MuiButton-root,
+  .dashboard-card--ubicacion .MuiButton-root,
+  .dashboard-empty-state .MuiButton-root {
+    width: 100%;
+  }
+
+  .dashboard-card--perfil .MuiCardContent-root {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-recomendaciones-lista {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

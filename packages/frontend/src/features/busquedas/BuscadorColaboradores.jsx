@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@mui/material";
+import { Button, Skeleton } from "@mui/material";
 import CustomSelect from "../../components/CustomSelect/CustomSelect";
 import CardColaboradora from "../../components/CardColaboradora/CardColaboradora";
 import { useAuth } from "../../hooks/useAuth.jsx";
@@ -190,13 +190,14 @@ export default function BuscadorColaboradores() {
                 <p className="estado estado--error">
                   No pudimos cargar tus proyectos. ¿Está corriendo el backend?
                 </p>
-                <button
+                <Button
+                  variant="outlined"
                   type="button"
                   className="boton boton--secundario"
                   onClick={proyectosState.recargar}
                 >
                   Reintentar
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -225,13 +226,14 @@ export default function BuscadorColaboradores() {
                   <p className="estado estado--error">
                     No pudimos cargar los perfiles de este proyecto.
                   </p>
-                  <button
+                  <Button
+                    variant="outlined"
                     type="button"
                     className="boton boton--secundario"
                     onClick={perfilesState.recargar}
                   >
                     Reintentar
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -245,21 +247,23 @@ export default function BuscadorColaboradores() {
         </p>
 
         <div className="filtros__acciones">
-          <button
+          <Button
+            variant="outlined"
             type="button"
             className="boton boton--secundario"
             onClick={limpiarFiltros}
           >
             Limpiar filtros
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="contained"
             type="button"
             className="boton"
             onClick={buscar}
             disabled={!puedeBuscar}
           >
             Buscar
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -274,9 +278,14 @@ export default function BuscadorColaboradores() {
             <p className="estado">
               No tenés proyectos activos para buscar colaboradores.
             </p>
-            <Link className="boton boton--secundario" to="/proyectos/nuevo">
+            <Button
+              variant="outlined"
+              component={Link}
+              className="boton boton--secundario"
+              to="/proyectos/nuevo"
+            >
               Crear proyecto
-            </Link>
+            </Button>
           </div>
         )}
 
@@ -292,12 +301,14 @@ export default function BuscadorColaboradores() {
             <p className="estado">
               Este proyecto todavía no tiene perfiles cargados.
             </p>
-            <Link
+            <Button
+              variant="outlined"
+              component={Link}
               className="boton boton--secundario"
               to={`/proyectos/${idProyecto}/perfiles`}
             >
               Cargar perfiles
-            </Link>
+            </Button>
           </div>
         )}
 
@@ -336,13 +347,14 @@ export default function BuscadorColaboradores() {
               <p className="estado estado--error">
                 No pudimos buscar colaboradores para los perfiles elegidos.
               </p>
-              <button
+              <Button
+                variant="outlined"
                 type="button"
                 className="boton boton--secundario"
                 onClick={recargar}
               >
                 Reintentar
-              </button>
+              </Button>
             </div>
           )}
 

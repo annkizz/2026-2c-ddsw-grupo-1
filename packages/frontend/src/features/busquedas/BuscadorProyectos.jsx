@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Skeleton } from "@mui/material";
+import { Button, MenuItem, Select, Skeleton } from "@mui/material";
 import CustomSelect from "../../components/CustomSelect/CustomSelect";
 import CardProyecto from "../../components/CardProyecto/CardProyecto";
 import { PROVINCIAS } from "../../data/provincias";
@@ -217,13 +217,14 @@ export default function BuscadorProyectos() {
                 <p className="estado estado--error">
                   No pudimos cargar las habilidades.
                 </p>
-                <button
+                <Button
+                  variant="outlined"
                   type="button"
                   className="boton boton--secundario"
                   onClick={habilidadesState.recargar}
                 >
                   Reintentar
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -252,13 +253,14 @@ export default function BuscadorProyectos() {
                 <p className="estado estado--error">
                   No pudimos cargar las etiquetas.
                 </p>
-                <button
+                <Button
+                  variant="outlined"
                   type="button"
                   className="boton boton--secundario"
                   onClick={etiquetasState.recargar}
                 >
                   Reintentar
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -269,7 +271,8 @@ export default function BuscadorProyectos() {
         </p>
 
         <div className="filtros__acciones">
-          <button
+          <Button
+            variant="outlined"
             type="button"
             className="boton boton--secundario"
             aria-expanded={mostrarMas}
@@ -277,17 +280,18 @@ export default function BuscadorProyectos() {
             onClick={() => setMostrarMas((actual) => !actual)}
           >
             {mostrarMas ? "Ocultar más filtros" : "Más filtros"}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outlined"
             type="button"
             className="boton boton--secundario"
             onClick={limpiarFiltros}
           >
             Limpiar filtros
-          </button>
-          <button type="button" className="boton" onClick={buscar}>
+          </Button>
+          <Button variant="contained" type="button" className="boton" onClick={buscar}>
             Buscar
-          </button>
+          </Button>
         </div>
 
         {hayFiltros && (
@@ -335,23 +339,27 @@ export default function BuscadorProyectos() {
                   <p className="estado estado--error">
                     No pudimos cargar los colectivos.
                   </p>
-                  <button
+                  <Button
+                    variant="outlined"
                     type="button"
                     className="boton boton--secundario"
                     onClick={colectivosState.recargar}
                   >
                     Reintentar
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
 
             <div className="filtros__grupo">
-              <label className="selector__label" htmlFor="provincia">
+              <label className="selector__label" id="provincia-label" htmlFor="provincia">
                 Provincia
               </label>
-              <select
+              <Select
                 id="provincia"
+                labelId="provincia-label"
+                className="filtros__provincia"
+                displayEmpty
                 value={filtros.provincia}
                 onChange={(evento) =>
                   setFiltros((actual) => ({
@@ -360,13 +368,13 @@ export default function BuscadorProyectos() {
                   }))
                 }
               >
-                <option value="">Todas las provincias</option>
+                <MenuItem value="">Todas las provincias</MenuItem>
                 {PROVINCIAS.map((provincia) => (
-                  <option key={provincia.codigo} value={provincia.codigo}>
+                  <MenuItem key={provincia.codigo} value={provincia.codigo}>
                     {provincia.nombre}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         )}
@@ -408,13 +416,14 @@ export default function BuscadorProyectos() {
                 No pudimos calcular las recomendaciones. Podés buscar igual con
                 los filtros.
               </p>
-              <button
+              <Button
+                variant="outlined"
                 type="button"
                 className="boton boton--secundario"
                 onClick={coincidenciasState.recargar}
               >
                 Reintentar
-              </button>
+              </Button>
             </div>
           )}
 
@@ -429,13 +438,14 @@ export default function BuscadorProyectos() {
                       ? "No hay recomendaciones para un colectivo. Podés ver todos los proyectos activos."
                       : "Iniciá sesión como colaboradora para ver recomendaciones. También podés ver todos los proyectos activos."}
                 </p>
-                <button
+                <Button
+                  variant="outlined"
                   type="button"
                   className="boton boton--secundario"
                   onClick={verTodosLosProyectos}
                 >
                   Ver todos los proyectos activos
-                </button>
+                </Button>
               </div>
             )}
 
@@ -476,13 +486,14 @@ export default function BuscadorProyectos() {
                 No pudimos buscar proyectos. Revisá los filtros e intentá de
                 nuevo.
               </p>
-              <button
+              <Button
+                variant="outlined"
                 type="button"
                 className="boton boton--secundario"
                 onClick={resultadosState.recargar}
               >
                 Reintentar
-              </button>
+              </Button>
             </div>
           )}
 

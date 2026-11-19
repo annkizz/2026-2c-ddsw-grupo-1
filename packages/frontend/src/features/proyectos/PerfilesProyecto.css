@@ -16,7 +16,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--navy);
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -38,18 +38,18 @@
 .perfiles-header h1 {
   font-size: 28px;
   margin: 0 0 4px;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .perfiles-proyecto-nombre {
   font-size: 16px;
   font-weight: 600;
-  color: var(--navy);
+  color: var(--color-primary);
   margin: 0 0 4px;
 }
 
 .perfiles-header small {
-  color: var(--muted);
+  color: var(--color-muted);
   font-size: 14px;
 }
 
@@ -60,9 +60,9 @@
 }
 
 .perfil-card-admin {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -72,7 +72,7 @@
 .perfil-card-admin h3 {
   font-size: 18px;
   margin: 0;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .perfil-acciones-card {
@@ -80,7 +80,7 @@
   align-items: center;
   gap: 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .modal-titulo-flex {

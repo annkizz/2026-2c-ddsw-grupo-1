@@ -22,6 +22,11 @@ const DATOS_INICIALES = {
   descripcion: ''
 };
 const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'descripcion'];
+const AYUDAS_CAMPOS = {
+  nombre: 'Ej.: Colectivo La Semilla',
+  descripcion: 'Ej.: Acompañamos a familias del barrio con talleres de apoyo.'
+};
+
 const DatosColectivo = () => {
   const navigate = useNavigate();
   const { getAccessToken, recargarSesion } = useAuth();
@@ -50,7 +55,7 @@ const DatosColectivo = () => {
     value: datos[campo],
     onChange: setValorDe(campo),
     error: faltantes.includes(campo),
-    helperText: faltantes.includes(campo) ? 'Completá este campo.' : ' ',
+    helperText: faltantes.includes(campo) ? 'Completá este campo.' : AYUDAS_CAMPOS[campo],
     fullWidth: true,
     required: true
   });
@@ -98,58 +103,94 @@ const DatosColectivo = () => {
       <form onSubmit={guardar} noValidate>
         <Card variant="outlined" className="registro-card">
           <div className="registro-campos">
-            <TextField label="Nombre" placeholder="Nombre" {...propsDe('nombre')} />
-            <TextField select label="Tipo de colectivo" {...propsDe('tipoDeColectivo')}>
-              {TIPOS_COLECTIVO.map((tipo) => (
-                <MenuItem key={tipo.valor} value={tipo.valor}>
-                  {tipo.texto}
-                </MenuItem>
-              ))}
-            </TextField>
+            <div className="registro-campo">
+              <label
+                className="registro-campo__label"
+                htmlFor="registro-colectivo-nombre"
+              >
+                Nombre (obligatorio)
+              </label>
+              <TextField
+                id="registro-colectivo-nombre"
+                placeholder="Nombre del colectivo"
+                {...propsDe('nombre')}
+              />
+            </div>
+            <div className="registro-campo">
+              <label
+                className="registro-campo__label"
+                id="registro-colectivo-tipo-label"
+                htmlFor="registro-colectivo-tipo"
+              >
+                Tipo de colectivo (obligatorio)
+              </label>
+              <TextField
+                id="registro-colectivo-tipo"
+                select
+                slotProps={{ select: { labelId: 'registro-colectivo-tipo-label' } }}
+                {...propsDe('tipoDeColectivo')}
+              >
+                {TIPOS_COLECTIVO.map((tipo) => (
+                  <MenuItem key={tipo.valor} value={tipo.valor}>
+                    {tipo.texto}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </div>
 
             <UbicacionColectivo
               pais={datos.pais}
               provincia={datos.provincia}
               ciudad={datos.ciudad}
               onChange={(cambios) => setDatos((prev) => ({ ...prev, ...cambios }))}
+              labelsAbove
+              idPrefix="registro-colectivo-ubicacion"
             />
 
-            <CustomSelect
-              id="colectivo-etiquetas"
-              etiqueta="Etiquetas"
-              opciones={opcionesEtiquetas}
-              seleccion={datos.etiquetas}
-              multiple
-              maxSeleccion={ETIQUETAS_MAX}
-              permiteCrear
-              onSeleccionar={alternarEtiqueta}
-              onQuitar={alternarEtiqueta}
-              placeholder={
-                etiquetasState.cargando ? 'Cargando etiquetas…' : 'Buscá o escribí una etiqueta'
-              }
-              textoVacio={
-                etiquetasState.cargando
-                  ? 'Cargando etiquetas…'
-                  : 'No hay etiquetas con ese texto. Podés crear una nueva.'
-              }
-            />
+            <div className="registro-campo">
+              <CustomSelect
+                id="colectivo-etiquetas"
+                className="selector--registro"
+                etiqueta="Etiquetas"
+                opciones={opcionesEtiquetas}
+                seleccion={datos.etiquetas}
+                multiple
+                maxSeleccion={ETIQUETAS_MAX}
+                permiteCrear
+                onSeleccionar={alternarEtiqueta}
+                onQuitar={alternarEtiqueta}
+                placeholder={
+                  etiquetasState.cargando ? 'Cargando etiquetas…' : 'Buscá o escribí una etiqueta'
+                }
+                textoVacio={
+                  etiquetasState.cargando
+                    ? 'Cargando etiquetas…'
+                    : 'No hay etiquetas con ese texto. Podés crear una nueva.'
+                }
+              />
+              <small className="registro-ayuda">
+                Buscá etiquetas existentes o creá las tuyas (hasta {ETIQUETAS_MAX}) para que tu
+                colectivo aparezca en las búsquedas.
+              </small>
+            </div>
             {etiquetasState.error && (
               <Alert severity="warning">
                 No pudimos cargar las etiquetas existentes. Igual podés escribir etiquetas nuevas.
               </Alert>
             )}
-            <small className="registro-ayuda">
-              Buscá etiquetas existentes o creá las tuyas (hasta {ETIQUETAS_MAX}) para que tu
-              colectivo aparezca en las búsquedas.
-            </small>
 
-            <TextField
-              label="Descripción"
-              placeholder="Descripción del colectivo"
-              multiline
-              minRows={3}
-              {...propsDe('descripcion')}
-            />
+            <div className="registro-campo">
+              <label className="registro-campo__label" htmlFor="registro-colectivo-descripcion">
+                Descripción (obligatoria)
+              </label>
+              <TextField
+                id="registro-colectivo-descripcion"
+                placeholder="Describí el trabajo del colectivo"
+                multiline
+                minRows={3}
+                {...propsDe('descripcion')}
+              />
+            </div>
           </div>
         </Card>
 

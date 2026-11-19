@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { IconButton, InputBase } from "@mui/material";
 import { ETIQUETA_MAX, etiquetaLegible, normalizarEtiqueta } from "../../utils/etiquetas";
 import "./CustomSelect.css";
 
@@ -29,6 +30,7 @@ export default function CustomSelect({
   permiteCrear = false,
   maxSeleccion = Infinity,
   textoCrear = "Crear etiqueta",
+  className = "",
 }) {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState("");
@@ -175,7 +177,7 @@ export default function CustomSelect({
   };
 
   return (
-    <div className="selector" onBlur={alPerderFoco}>
+    <div className={["selector", className].filter(Boolean).join(" ")} onBlur={alPerderFoco}>
       <label className="selector__label" htmlFor={id}>
         {etiqueta}
       </label>
@@ -183,24 +185,26 @@ export default function CustomSelect({
       <div
         className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}
       >
-        <input
-          id={id}
-          type="text"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={abierto}
-          aria-controls={`${id}-lista`}
-          aria-activedescendant={
-            abierto && visibles[indiceActivo]
-              ? `${id}-opcion-${indiceActivo}`
-              : undefined
-          }
-          autoComplete="off"
+        <InputBase
+          className="selector__input"
           value={consulta}
           placeholder={placeholder}
           onChange={alCambiarTexto}
           onFocus={() => setAbierto(true)}
           onKeyDown={alPresionarTecla}
+          inputProps={{
+            id,
+            type: "text",
+            role: "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": abierto,
+            "aria-controls": `${id}-lista`,
+            "aria-activedescendant":
+              abierto && visibles[indiceActivo]
+                ? `${id}-opcion-${indiceActivo}`
+                : undefined,
+            autoComplete: "off",
+          }}
         />
         <span className="selector__flecha" aria-hidden="true">
           ▾
@@ -213,14 +217,14 @@ export default function CustomSelect({
             <span className="selector__seleccionada" key={opcion.valor}>
               {opcion.etiqueta}
               {puedeQuitar && (
-                <button
+                <IconButton
                   type="button"
                   className="selector__quitar"
                   aria-label={`Quitar ${opcion.etiqueta}`}
                   onClick={() => (onQuitar ?? onSeleccionar)?.(opcion.valor)}
                 >
                   ×
-                </button>
+                </IconButton>
               )}
             </span>
           ))}

@@ -10,27 +10,49 @@ import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
 // pidió GET /me, decidimos a dónde mandar a la persona.
 const Callback = () => {
   const navigate = useNavigate();
-  const { sesion, errorSesion, cargando, recargarSesion, cerrarSesion, iniciarSesion } = useAuth();
+  const {
+    isAuthenticated,
+    sesion,
+    errorSesion,
+    cargando,
+    recargarSesion,
+    cerrarSesion
+  } = useAuth();
   const { error: errorLogto } = useHandleSignInCallback(() => {});
 
   useEffect(() => {
     if (!sesion) return;
     navigate(
       sesion.tienePerfil
-        ? '/perfil'
+        ? sesion.rol === 'COLECTIVO' || sesion.rol === 'COLABORADOR'
+          ? '/'
+          : '/perfil'
         : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
       { replace: true }
     );
   }, [sesion, navigate]);
 
-  if (errorLogto) {
+  if (errorSesion || errorLogto) {
     return (
       <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
         <Alert severity="error">
-          No pudimos verificar tu sesión con el servidor: {errorSesion}
+          {errorSesion || 'No pudimos completar el inicio de sesión.'}
         </Alert>
-        <Button onClick={recargarSesion}>Reintentar</Button>
+        {errorSesion && <Button onClick={recargarSesion}>Reintentar</Button>}
         <Button onClick={cerrarSesion}>Salir</Button>
+      </div>
+    );
+  }
+
+  if (cargando) {
+    return <LoadingSplash message="Estamos verificando tus datos. Esperá un momento." />;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
+        <Alert severity="error">No se pudo completar el inicio de sesión. Volvé a intentarlo.</Alert>
+        <Button onClick={() => navigate('/', { replace: true })}>Volver al inicio</Button>
       </div>
     );
   }

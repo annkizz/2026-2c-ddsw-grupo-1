@@ -11,7 +11,7 @@
 
 .tipo-cuenta-sub {
   margin: 0 0 20px;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .tipo-cuenta-opcion {
@@ -23,7 +23,7 @@
   align-items: center;
   gap: 16px;
   padding: 20px 16px;
-  color: var(--navy);
+  color: var(--color-primary);
 }
 
 .tipo-cuenta-contenido > div {
@@ -32,11 +32,11 @@
 
 .tipo-cuenta-contenido strong {
   display: block;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .tipo-cuenta-contenido small {
-  color: var(--muted);
+  color: var(--color-muted);
   font-size: 14px;
 }
 

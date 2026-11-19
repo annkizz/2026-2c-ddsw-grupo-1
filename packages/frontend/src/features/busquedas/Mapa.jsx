@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { Button } from "@mui/material";
 import CardProyecto from "../../components/CardProyecto/CardProyecto";
 import { PROVINCIAS_MAPA } from "../../data/provinciasMapa";
 import { obtenerUbicacionesProyectos } from "../../service/proyectosService";
+import designTokens from "../../designTokens.js";
 import "./Busquedas.css";
 import "./Mapa.css";
 
@@ -13,9 +15,15 @@ const REGIONES = PROVINCIAS_MAPA.provincias.map((provincia) => ({
   labelY: provincia.labelY,
 }));
 
-const COLOR_SIN_PROYECTOS = "#e5e7eb";
+const COLOR_SIN_PROYECTOS = designTokens["--color-map-empty"];
 // Escala de 5 tonos (claro -> oscuro) segun cantidad de proyectos.
-const COLORES = ["#eef3f7", "#d7e2eb", "#a9c2d5", "#6f98b5", "#15324b"];
+const COLORES = [
+  designTokens["--color-map-1"],
+  designTokens["--color-map-2"],
+  designTokens["--color-map-3"],
+  designTokens["--color-map-4"],
+  designTokens["--color-map-5"],
+];
 
 function colorDeRegion(cantidad, maximo) {
   if (cantidad === 0) return COLOR_SIN_PROYECTOS;
@@ -85,13 +93,14 @@ export default function Mapa() {
       {error && (
         <div className="estado-bloque">
           <p className="estado estado--error">{error}</p>
-          <button
+          <Button
+            variant="outlined"
             type="button"
             className="boton boton--secundario"
             onClick={() => setIntento((actual) => actual + 1)}
           >
             Reintentar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -199,13 +208,15 @@ export default function Mapa() {
                     {grupos.map((grupo) => (
                       <tr key={grupo.codigo}>
                         <td>
-                          <button
+                          <Button
+                            variant="text"
+                            color="primary"
                             type="button"
                             className="enlace-tabla"
                             onClick={() => seleccionar(grupo.codigo)}
                           >
                             {grupo.nombre}
-                          </button>
+                          </Button>
                         </td>
                         <td>{grupo.cantidad}</td>
                       </tr>
@@ -220,13 +231,14 @@ export default function Mapa() {
             <section className="resultados">
               <div className="resultados__encabezado">
                 <h2>Proyectos en {grupoSeleccionado.nombre}</h2>
-                <button
+                <Button
+                  variant="outlined"
                   type="button"
                   className="boton boton--secundario"
                   onClick={() => setSeleccionada(null)}
                 >
                   Ver todas las provincias
-                </button>
+                </Button>
               </div>
               <ul className="tarjetas">
                 {grupoSeleccionado.proyectos.map((proyecto) => (

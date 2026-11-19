@@ -19,12 +19,12 @@
   display: block;
   width: 100%;
   height: auto;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  background: var(--color-map-background);
+  border-radius: var(--radius-lg);
 }
 
 .provincia {
-  stroke: var(--blanco);
+  stroke: var(--color-surface);
   stroke-width: 0.7;
   cursor: pointer;
   transition: opacity 0.15s ease, filter 0.15s ease;
@@ -36,18 +36,18 @@
 
 .provincia:focus {
   outline: none;
-  stroke: #111827;
+  stroke: var(--color-text);
   stroke-width: 1.6;
 }
 
 .provincia--activa {
-  stroke: #111827;
+  stroke: var(--color-text);
   stroke-width: 1.8;
 }
 
 .mapa__numero {
-  fill: #0f172a;
-  stroke: #ffffff;
+  fill: var(--color-text);
+  stroke: var(--color-surface);
   stroke-width: 3;
   paint-order: stroke;
   font-size: 16px;
@@ -57,7 +57,7 @@
 }
 
 .mapa__numero--cero {
-  fill: #64748b;
+  fill: var(--color-muted);
   stroke-width: 2;
   font-size: 12px;
   font-weight: 600;
@@ -70,29 +70,29 @@
   align-items: center;
   gap: 8px;
   margin-top: 12px;
-  color: var(--texto-suave);
+  color: var(--color-muted);
   font-size: 13px;
 }
 
 .leyenda__color {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
-  border: 1px solid var(--borde);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  background-color: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .tabla__caption {
   padding: 12px 14px;
-  color: var(--texto-suave);
+  color: var(--color-muted);
   font-size: 13px;
   text-align: left;
 }
@@ -101,28 +101,28 @@
 .tabla td {
   padding: 12px 14px;
   text-align: left;
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--color-border-subtle);
   font-size: 14px;
 }
 
 .tabla th {
-  background-color: #eef3f7;
+  background-color: var(--color-info-light);
   font-size: 13px;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .tabla tr:last-child td {
   border-bottom: 0;
 }
 
-.enlace-tabla {
+.enlace-tabla.MuiButton-root {
+  min-width: 0;
   padding: 0;
   border: 0;
   background: none;
-  color: var(--verde-oscuro);
-  font: inherit;
+  color: var(--color-primary-dark);
+  justify-content: flex-start;
   text-decoration: underline;
-  cursor: pointer;
 }
 
 @media (max-width: 760px) {

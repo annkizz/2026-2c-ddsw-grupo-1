@@ -38,7 +38,7 @@ const PerfilColaboradora = () => {
     return (
       <main className="perfil-publico">
         <Alert severity="error">{error || 'No encontramos este perfil.'}</Alert>
-        <Button onClick={() => navigate(-1)}>Volver</Button>
+        <Button variant="text" onClick={() => navigate(-1)}>Volver</Button>
       </main>
     );
   }
@@ -47,7 +47,7 @@ const PerfilColaboradora = () => {
 
   return (
     <main className="perfil-publico">
-      <Button className="perfil-publico-volver" onClick={() => navigate(-1)}>Volver</Button>
+      <Button className="perfil-publico-volver" variant="text" onClick={() => navigate(-1)}>Volver</Button>
       <Card className="perfil-publico-cabecera" variant="outlined">
         <p className="perfil-publico-tipo">PERSONA COLABORADORA</p>
         <h1>{colaboradora.nombreFantasia || nombre || 'Perfil de colaboradora'}</h1>

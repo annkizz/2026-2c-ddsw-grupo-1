@@ -1,26 +1,57 @@
 :root {
-  --bg: #f7f8f5;
-  --ink: #1c2732;
-  --muted: #55626f;
-  --navy: #15324b;
-  --accent: #e69f00;
-  --line: #d9dee2;
-  --font-head: 'Space Grotesk', system-ui, sans-serif;
+  --bg: var(--color-background);
+  --ink: var(--color-text);
+  --muted: var(--color-muted);
+  --navy: var(--color-primary);
+  --accent: var(--color-secondary);
+  --line: var(--color-border-subtle);
+  --font-head: var(--font-family-heading);
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-body);
+  line-height: var(--line-height-body);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-family-body);
+}
+
+button {
+  min-height: var(--control-min-height);
+  box-sizing: border-box;
+  border-radius: var(--radius-md);
 }
 
 h1,
 h2 {
-  font-family: var(--font-head);
+  font-family: var(--font-family-heading);
   letter-spacing: -0.01em;
+  line-height: var(--line-height-heading);
 }
 
 a {
-  color: var(--navy);
+  color: var(--color-primary);
+}
+
+:where(a, button, input, select, textarea, [role='button'], [tabindex]):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -2,9 +2,9 @@
 .resumen-perfil {
   margin: 24px 0 0;
   padding: 24px;
-  background-color: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
 }
 
 .resumen-perfil h2 {
@@ -13,7 +13,7 @@
 
 .resumen-perfil p {
   margin: 4px 0;
-  color: var(--texto);
+  color: var(--color-text);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -25,7 +25,7 @@
 
 .grupo-candidatas + .grupo-candidatas {
   padding-top: 24px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .grupo-candidatas > .tarjeta__meta {

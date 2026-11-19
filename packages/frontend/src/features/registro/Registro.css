@@ -18,20 +18,37 @@
 
 .registro-card.MuiCard-root {
   padding: 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 }
 
 .registro-campos {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-2);
+}
+
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.registro-campo__label,
+.selector--registro .selector__label {
+  display: block;
+  color: var(--color-text);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: var(--line-height-body);
 }
 
 .registro-ayuda {
-  margin-top: -6px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.4;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-body);
 }
 
 @media (max-width: 720px) {
@@ -62,17 +79,15 @@
   margin-top: 16px;
 }
 
-.medios-agregar {
+.medios-agregar.MuiButton-root {
   display: block;
   background: none;
   border: 0;
   padding: 0;
   margin: 8px 0 20px;
-  font: inherit;
   font-weight: 700;
-  color: var(--navy);
   text-decoration: underline;
-  cursor: pointer;
+  justify-content: flex-start;
 }
 
 .cuenta-creada.MuiCard-root {
@@ -84,16 +99,16 @@
   width: 64px;
   height: 64px;
   margin: 0 auto 20px;
-  border-radius: 50%;
-  background: #24734b;
-  color: white;
+  border-radius: var(--radius-pill);
+  background: var(--color-success);
+  color: var(--color-on-success);
   display: grid;
   place-items: center;
   font-size: 32px;
 }
 
 .cuenta-creada p {
-  color: var(--muted);
+  color: var(--color-muted);
   margin: 0;
 }
 

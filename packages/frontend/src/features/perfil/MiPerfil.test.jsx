@@ -61,6 +61,20 @@ describe('MiPerfil', () => {
     actualizarColaboradora.mockResolvedValue({});
   });
 
+  it('mantiene reconocible la sección activa en la navegación', async () => {
+    renderPerfil();
+
+    expect(await screen.findByRole('button', { name: '✓ Cuenta · Actual' }))
+      .toHaveAttribute('aria-current', 'location');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Perfil' }));
+
+    expect(screen.getByRole('button', { name: '✓ Perfil · Actual' }))
+      .toHaveAttribute('aria-current', 'location');
+    expect(screen.getByRole('button', { name: 'Cuenta' }))
+      .not.toHaveAttribute('aria-current');
+  });
+
   it('muestra errores resumidos y junto a cada campo inválido', async () => {
     obtenerMiPerfilColaboradora.mockResolvedValue({
       nombreFantasia: '',

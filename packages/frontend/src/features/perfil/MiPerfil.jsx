@@ -31,7 +31,9 @@ import {
   TIPOS_COLECTIVO,
 } from '../../service/colectivosService';
 import { mensajeDeError } from '../../service/api';
+import { camposFaltantesPerfilColaboradora } from '../../utils/perfilColaboradora';
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
+import { camposFaltantesPerfilColectivo } from '../../utils/perfilColectivo';
 import './MiPerfil.css';
 
 const PERFIL_VACIO = {
@@ -108,20 +110,24 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
   }
 
   if (esColaboradora) {
-    if (!datos.nombreFantasia.trim()) {
+    const camposFaltantes = new Set(
+      camposFaltantesPerfilColaboradora(datos).map(({ clave }) => clave),
+    );
+    if (camposFaltantes.has('nombreFantasia')) {
       agregar('nombreFantasia', 'Nombre de fantasía', 'El nombre de fantasía es obligatorio.', 'perfil', 'nombre-fantasia');
     }
-    if (datos.habilidades.length === 0) {
+    if (camposFaltantes.has('habilidades')) {
       agregar('habilidades', 'Habilidades', 'Elegí al menos una habilidad.', 'habilidades', 'mi-perfil-habilidades');
     }
   } else {
-    if (!datos.nombreColectivo.trim()) {
+    const camposFaltantes = new Set(camposFaltantesPerfilColectivo(datos).map(({ clave }) => clave));
+    if (camposFaltantes.has('nombreColectivo')) {
       agregar('nombreColectivo', 'Nombre del colectivo', 'El nombre del colectivo es obligatorio.', 'perfil', 'nombre-colectivo');
     }
-    if (!datos.tipoDeColectivo) {
+    if (camposFaltantes.has('tipoDeColectivo')) {
       agregar('tipoDeColectivo', 'Tipo de colectivo', 'Elegí el tipo de colectivo.', 'perfil', 'tipo-colectivo');
     }
-    if (!datos.descripcion.trim()) {
+    if (camposFaltantes.has('descripcion')) {
       agregar('descripcion', 'Descripción', 'La descripción es obligatoria.', 'perfil', 'descripcion-colectivo');
     }
     if (datos.etiquetas.length > ETIQUETAS_MAX) {
@@ -355,7 +361,8 @@ const MiPerfil = () => {
         <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
           <span>MI CUENTA</span>
           {secciones.map(([id, etiqueta]) => (
-            <button
+            <Button
+              variant="text"
               type="button"
               key={id}
               className={seccionActiva === id ? 'activo' : ''}
@@ -366,7 +373,7 @@ const MiPerfil = () => {
               aria-current={seccionActiva === id ? 'location' : undefined}
             >
               {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
-            </button>
+            </Button>
           ))}
           <small>Tus datos, bajo tu control.</small>
         </nav>
@@ -516,7 +523,7 @@ const MiPerfil = () => {
                 : 'Agregá etiquetas para describir las áreas de trabajo de tu colectivo.'}
             </p>
             {listado.error && (
-              <Alert severity="warning" action={<Button onClick={listado.recargar}>Reintentar</Button>}>
+              <Alert severity="warning" action={<Button variant="text" onClick={listado.recargar}>Reintentar</Button>}>
                 No pudimos cargar las opciones disponibles.
               </Alert>
             )}
@@ -584,6 +591,7 @@ const MiPerfil = () => {
             ))}
             <Button
               type="button"
+              variant="text"
               startIcon={<FiPlus />}
               onClick={() => cambiar('medios', [...datos.medios, { tipo: 'EMAIL', valor: '' }])}
             >

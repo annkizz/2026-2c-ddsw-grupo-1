@@ -409,11 +409,11 @@ const DetalleProyecto = () => {
               aria-label={t('detalleProyecto.seccionAvance')}
               sx={{
                 height: 8,
-                borderRadius: 4,
-                backgroundColor: 'var(--line)',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'var(--color-border-subtle)',
                 '& .MuiLinearProgress-bar': {
-                  backgroundColor: 'var(--navy)',
-                  borderRadius: 4,
+                  backgroundColor: 'var(--color-primary)',
+                  borderRadius: 'var(--radius-pill)',
                 },
               }}
             />

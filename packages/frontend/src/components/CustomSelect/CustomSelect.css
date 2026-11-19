@@ -1,6 +1,6 @@
 /* Selector con búsqueda para habilidades, etiquetas, colectivos y perfiles. */
 .selector__label {
-  color: var(--texto, #1c2732);
+  color: var(--color-text);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: normal;
@@ -20,36 +20,52 @@
   gap: 6px;
   min-height: 44px;
   padding: 4px 12px;
-  border: 1px solid var(--borde, #d9dee2);
-  border-radius: 6px;
-  background-color: var(--blanco, #ffffff);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  transition:
+    border-color var(--transition-fast) var(--transition-easing),
+    box-shadow var(--transition-fast) var(--transition-easing);
 }
 
 .selector__caja:focus-within,
 .selector__caja--abierto {
-  border-color: rgba(21, 50, 75, 0.6);
-  box-shadow: 0 0 0 3px rgba(21, 50, 75, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
 }
 
-.selector__caja input {
+.selector__caja .selector__input.MuiInputBase-root {
   min-width: 0;
   flex: 1;
+  color: var(--color-text);
+}
+
+.selector__caja .selector__input .MuiInputBase-input {
   padding: 4px 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--texto, #1c2732);
-  font: inherit;
   font-size: 14px;
 }
 
-.selector__caja input::placeholder {
-  color: #94a3b8;
+.selector__caja .MuiInputBase-input::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.selector--registro {
+  gap: var(--space-0-5);
+}
+
+.selector--registro .selector__caja {
+  min-height: var(--field-min-height);
+}
+
+.selector--registro .selector__caja .selector__input .MuiInputBase-input {
+  padding: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-body);
 }
 
 .selector__flecha {
-  color: var(--texto-suave, #55626f);
+  color: var(--color-muted);
   font-size: 12px;
   pointer-events: none;
 }
@@ -66,25 +82,26 @@
   align-items: center;
   gap: 4px;
   padding: 3px 6px 3px 10px;
-  border-radius: 4px;
-  background: var(--verde-claro, #eef3f7);
-  color: var(--verde-oscuro, #0f2537);
+  border-radius: var(--radius-xs);
+  background: var(--color-info-light);
+  color: var(--color-primary-dark);
   font-size: 12.5px;
   font-weight: 500;
 }
 
-.selector__quitar {
+.selector__quitar.MuiIconButton-root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 17px;
   height: 17px;
+  min-width: 17px;
+  min-height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--texto-suave, #55626f);
-  font: inherit;
+  color: var(--color-muted);
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
@@ -92,8 +109,8 @@
 
 .selector__quitar:hover,
 .selector__quitar:focus-visible {
-  background: rgba(15, 37, 55, 0.12);
-  color: var(--verde-oscuro, #0f2537);
+  background: var(--color-action-selected);
+  color: var(--color-primary-dark);
 }
 
 .selector__lista {
@@ -107,10 +124,10 @@
   padding: 4px 0;
   overflow-y: auto;
   list-style: none;
-  background-color: var(--blanco, #ffffff);
-  border: 1px solid var(--borde, #d9dee2);
-  border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .selector__opcion {
@@ -119,22 +136,22 @@
   gap: 8px;
   padding: 10px 12px;
   cursor: pointer;
-  color: var(--texto, #1c2732);
+  color: var(--color-text);
   font-size: 14px;
 }
 
 .selector__opcion:hover,
 .selector__opcion--activa {
-  background: var(--fondo, #f7f8f5);
+  background: var(--color-background);
 }
 
 .selector__opcion--elegida {
-  color: var(--verde-oscuro, #0f2537);
+  color: var(--color-primary-dark);
   font-weight: 600;
 }
 
 .selector__opcion--nueva {
-  color: var(--verde-oscuro, #0f2537);
+  color: var(--color-primary-dark);
 }
 
 .selector__opcion--nueva > span:first-child {
@@ -142,18 +159,18 @@
 }
 
 .selector__secundario {
-  color: var(--texto-suave, #55626f);
+  color: var(--color-muted);
   font-size: 12.5px;
   font-weight: 400;
 }
 
 .selector__tilde {
   margin-left: auto;
-  color: var(--verde, #15324b);
+  color: var(--color-primary);
 }
 
 .selector__vacio {
   padding: 12px;
-  color: var(--texto-suave, #55626f);
+  color: var(--color-muted);
   font-size: 14px;
 }

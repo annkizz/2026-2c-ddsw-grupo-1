@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@mui/material";
 import "../Card.css";
 
 const NOMBRE_SIN_ALIAS = "Colaboradora sin nombre público";
@@ -56,14 +57,15 @@ export default function CardColaboradora({ colaboradora }) {
       </p>
 
       <div className="tarjeta__acciones">
-        <button
+        <Button
+          variant="outlined"
           type="button"
           className="boton boton--secundario"
           disabled
           title="Requiere sesión y mensajería (próxima entrega)"
         >
           Contactar
-        </button>
+        </Button>
       </div>
     </li>
   );
