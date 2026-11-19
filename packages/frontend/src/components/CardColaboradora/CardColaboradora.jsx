@@ -1,7 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Chip } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from '@mui/material';
 import { FiCheckCircle, FiGithub, FiMail } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth.jsx';
+import { crearNotificacion } from '../../service/notificacionesService';
+import { invitarAColaborar } from '../../service/proyectosService';
+import { mensajeDeError } from '../../utils/mensajeDeError';
 import '../Card.css';
 
 const NOMBRE_SIN_ALIAS = 'Colaboradora sin nombre público';
@@ -22,9 +35,55 @@ const iniciales = (nombre) =>
     .map((parte) => parte[0]?.toUpperCase())
     .join('');
 
-export default function CardColaboradora({ colaboradora }) {
+export default function CardColaboradora({ colaboradora, idProyecto, idPerfil }) {
   const nombre = nombreVisible(colaboradora);
   const idTitulo = `card-colaboradora-${colaboradora.id ?? nombre}`;
+  const dialogTitleId = `dialogo-contacto-${colaboradora.id ?? nombre}`;
+  const { getAccessToken } = useAuth();
+  const [dialogoAbierto, setDialogoAbierto] = useState(false);
+  const [contenido, setContenido] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+  const [resultado, setResultado] = useState(null);
+  const [invitacionEnviada, setInvitacionEnviada] = useState(false);
+  const [errorInvitacion, setErrorInvitacion] = useState('');
+
+  const cerrarDialogo = () => {
+    setDialogoAbierto(false);
+    setContenido('');
+    setError('');
+    setResultado(null);
+  };
+
+  const enviarMensaje = async (evento) => {
+    evento.preventDefault();
+    setEnviando(true);
+    setError('');
+    try {
+      const token = await getAccessToken();
+      const respuesta = await crearNotificacion(token, {
+        idColaborador: colaboradora.id,
+        contenido: contenido.trim(),
+      });
+      setResultado(respuesta);
+    } catch (e) {
+      setError(mensajeDeError(e));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const invitar = async () => {
+    setErrorInvitacion('');
+    try {
+      const token = await getAccessToken();
+      await invitarAColaborar(token, idProyecto, idPerfil, colaboradora.id);
+      setInvitacionEnviada(true);
+    } catch (e) {
+      setErrorInvitacion(mensajeDeError(e));
+    }
+  };
+
   return (
     <li className="tarjeta" aria-labelledby={idTitulo}>
       <div className="tarjeta__media tarjeta__media--persona" aria-hidden="true">
@@ -71,12 +130,31 @@ export default function CardColaboradora({ colaboradora }) {
       </div>
 
       <div className="tarjeta__acciones">
-        <Button variant="outlined" type="button" startIcon={<FiMail aria-hidden="true" />} disabled aria-describedby={`${idTitulo}-contacto`}>
-          Contactar
+        <Button
+          variant="outlined"
+          type="button"
+          startIcon={<FiMail aria-hidden="true" />}
+          disabled={!colaboradora.aceptaMensajeria}
+          aria-describedby={`${idTitulo}-contacto`}
+          onClick={() => setDialogoAbierto(true)}
+        >
+          {colaboradora.aceptaMensajeria ? 'Contactar' : 'No acepta mensajes'}
         </Button>
         <span id={`${idTitulo}-contacto`} className="texto-secundario">
-          Disponible en una próxima entrega.
+          {colaboradora.aceptaMensajeria
+            ? 'Enviar un mensaje interno.'
+            : 'Esta persona no acepta mensajes internos.'}
         </span>
+        {idProyecto && idPerfil && (
+          <Button
+            variant="contained"
+            type="button"
+            disabled={!colaboradora.aceptaMensajeria || invitacionEnviada}
+            onClick={invitar}
+          >
+            {invitacionEnviada ? 'Invitación enviada' : 'Invitar a postularse'}
+          </Button>
+        )}
       </div>
       {invitacionEnviada && (
         <Alert severity="success" role="status">
@@ -158,12 +236,15 @@ export default function CardColaboradora({ colaboradora }) {
 }
 
 CardColaboradora.propTypes = {
+  idProyecto: PropTypes.string,
+  idPerfil: PropTypes.string,
   colaboradora: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     nombreFantasia: PropTypes.string,
     usuarioGitHub: PropTypes.string,
     pronombres: PropTypes.arrayOf(PropTypes.string),
     presentacion: PropTypes.string,
+    aceptaMensajeria: PropTypes.bool,
     tieneCoincidencia: PropTypes.bool,
     requeridasCoincidentes: PropTypes.arrayOf(PropTypes.string),
     opcionalesCoincidentes: PropTypes.arrayOf(PropTypes.string)

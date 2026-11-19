@@ -1,6 +1,6 @@
 import { t } from '../../i18n/t';
 import React, { useMemo, useState } from "react";
-import { Button, MenuItem, TextField } from "@mui/material";
+import { Button } from "@mui/material";
 import { FiFilter, FiRotateCcw, FiSearch } from "react-icons/fi";
 import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
 import AlertaError from "../../components/AlertaError/AlertaError.jsx";
@@ -46,6 +46,7 @@ export default function BuscadorProyectos() {
 
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
   const [filtrosAplicados, setFiltrosAplicados] = useState(null);
+  const [mostrarMas, setMostrarMas] = useState(false);
 
   const habilidadesState = useListado("/habilidades");
   const etiquetasState = useListado("/etiquetas");
@@ -265,42 +266,6 @@ export default function BuscadorProyectos() {
           </div>
         </div>
 
-        <div className="filtros__avanzados" id="filtros-avanzados">
-          <div className="filtros__grupo filtros__grupo--buscable">
-            <CustomSelect
-              id="colectivos"
-              etiqueta="Colectivos (opcional)"
-              opciones={opcionesColectivos}
-              seleccion={filtros.idColectivos}
-              multiple
-              onSeleccionar={alternarColectivo}
-              placeholder={
-                colectivosState.cargando
-                  ? "Cargando colectivos…"
-                  : "Buscá colectivos"
-              }
-              textoVacio={
-                colectivosState.cargando
-                  ? "Cargando colectivos…"
-                  : "No hay colectivos con ese texto."
-              }
-            />
-            {colectivosState.error && (
-              <div className="estado-bloque estado-bloque--compacto">
-                <p className="estado estado--error">
-                  No pudimos cargar los colectivos.
-                </p>
-                <button
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={colectivosState.recargar}
-                >
-                  Reintentar
-                </button>
-              </div>
-            )}
-          </div>
-
         <div className="filtros__acciones">
           <Button
             variant="outlined"
@@ -353,17 +318,16 @@ export default function BuscadorProyectos() {
           <div className="filtros__avanzados" id="filtros-avanzados">
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
-                id="colectivo"
-                etiqueta="Colectivos"
+                id="colectivos"
+                etiqueta="Colectivos (opcional)"
                 opciones={opcionesColectivos}
-                seleccion={[filtros.idColectivo]}
-                onSeleccionar={(valor) =>
-                  setFiltros((actual) => ({ ...actual, idColectivo: valor }))
-                }
+                seleccion={filtros.idColectivos}
+                multiple
+                onSeleccionar={alternarColectivo}
                 placeholder={
                   colectivosState.cargando
                     ? "Cargando colectivos…"
-                    : "Todos los colectivos"
+                    : "Buscá colectivos"
                 }
                 textoVacio={
                   colectivosState.cargando
@@ -376,29 +340,17 @@ export default function BuscadorProyectos() {
               )}
             </div>
 
-            <div className="filtros__grupo">
-              <TextField
-                id="provincia"
-                select
-                label="Provincia"
-                className="filtros__provincia"
-                slotProps={{ select: { displayEmpty: true } }}
-                fullWidth
-                value={filtros.provincia}
-                onChange={(evento) =>
-                  setFiltros((actual) => ({
-                    ...actual,
-                    provincia: evento.target.value,
-                  }))
-                }
-              >
-                <MenuItem value="">Todas las provincias</MenuItem>
-                {PROVINCIAS.map((provincia) => (
-                  <MenuItem key={provincia.codigo} value={provincia.codigo}>
-                    {provincia.nombre}
-                  </MenuItem>
-                ))}
-              </TextField>
+            <div className="filtros__grupo filtros__grupo--buscable">
+              <CustomSelect
+                id="provincias"
+                etiqueta="Provincias (opcional)"
+                opciones={opcionesProvincias}
+                seleccion={filtros.provincias}
+                multiple
+                onSeleccionar={alternarProvincia}
+                placeholder="Buscá una provincia"
+                textoVacio="No hay provincias con ese texto."
+              />
             </div>
           </div>
         )}

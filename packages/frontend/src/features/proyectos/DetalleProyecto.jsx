@@ -29,7 +29,6 @@ import {
   FiUsers,
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import Markdown from '../../components/Markdown.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
@@ -47,7 +46,7 @@ import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fe
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
-import { codigoDeError, mensajeDeError } from '../../service/api';
+import { codigoDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
 import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -105,11 +104,11 @@ const DetalleProyecto = () => {
   const [postulacionesEnviadas, setPostulacionesEnviadas] = useState({});
   const [postulacionesPendientes, setPostulacionesPendientes] = useState({});
   const [misColaboraciones, setMisColaboraciones] = useState(null);
-  const [errorVerificarParticipacion, setErrorVerificarParticipacion] = useState('');
+  const [errorVerificarParticipacion, setErrorVerificarParticipacion] = useState(null);
   const [intentoVerificacion, setIntentoVerificacion] = useState(0);
   const [postulacionesProyecto, setPostulacionesProyecto] = useState([]);
   const [cargandoPostulaciones, setCargandoPostulaciones] = useState(false);
-  const [errorCargarPostulaciones, setErrorCargarPostulaciones] = useState('');
+  const [errorCargarPostulaciones, setErrorCargarPostulaciones] = useState(null);
   const [resolviendoPostulacionId, setResolviendoPostulacionId] = useState(null);
   const [erroresResolucion, setErroresResolucion] = useState({});
 
@@ -190,9 +189,48 @@ const DetalleProyecto = () => {
     }
   }, [id, cargarPerfiles, cargarLogros, cargarColaboraciones]);
 
+  const cargarPostulaciones = useCallback(async () => {
+    if (!esDueño) return;
+    setCargandoPostulaciones(true);
+    setErrorCargarPostulaciones(null);
+    try {
+      const token = await getAccessToken();
+      setPostulacionesProyecto(await obtenerPostulaciones(token, id));
+    } catch (error) {
+      setErrorCargarPostulaciones(error);
+    } finally {
+      setCargandoPostulaciones(false);
+    }
+  }, [esDueño, getAccessToken, id]);
+
+  const verificarParticipacion = useCallback(async () => {
+    if (sesion?.rol !== 'COLABORADOR') {
+      setMisColaboraciones([]);
+      setErrorVerificarParticipacion(null);
+      return;
+    }
+
+    setMisColaboraciones(null);
+    setErrorVerificarParticipacion(null);
+    try {
+      const token = await getAccessToken();
+      setMisColaboraciones(await obtenerMisColaboraciones(token));
+    } catch (error) {
+      setErrorVerificarParticipacion(error);
+    }
+  }, [getAccessToken, sesion?.rol]);
+
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  useEffect(() => {
+    verificarParticipacion();
+  }, [verificarParticipacion, intentoVerificacion]);
+
+  useEffect(() => {
+    if (esDueño) cargarPostulaciones();
+  }, [esDueño, cargarPostulaciones]);
 
   const migasBase = [{ texto: t('detalleProyecto.proyectosMigas'), to: '/proyectos' }];
 
@@ -330,7 +368,7 @@ const DetalleProyecto = () => {
       const mensaje =
         codigoDeError(error) === 'LIMITE_COLABORACIONES_ALCANZADO'
           ? t('detalleProyecto.errorLimitePostulacion')
-          : mensajeDeError(error) || t('detalleProyecto.errorResolverPostulacion');
+          : mensajeDeError(error, t('detalleProyecto.errorResolverPostulacion'));
       setErroresResolucion((actuales) => ({
         ...actuales,
         [postulacion.id]: mensaje,
@@ -510,7 +548,13 @@ const DetalleProyecto = () => {
   };
 
   const textoBotonPostular = (perfil) =>
-    postulacionesEnviadas[perfil.id]
+    yaColaboraEnProyecto
+      ? t('detalleProyecto.yaColaboraEnProyecto')
+      : verificandoParticipacion
+        ? t('detalleProyecto.verificandoParticipacion')
+        : errorVerificarParticipacion
+          ? t('detalleProyecto.errorVerificarParticipacionCorto')
+          : postulacionesEnviadas[perfil.id]
       ? t('detalleProyecto.postulacionEnviada')
       : postulacionesPendientes[perfil.id]
         ? t('detalleProyecto.postulacionPendiente')
@@ -613,6 +657,13 @@ const DetalleProyecto = () => {
 
       <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
         <h2 id="detalle-perfiles-titulo">{t('detalleProyecto.seccionPerfiles')}</h2>
+        {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
+          <AlertaError
+            error={errorVerificarParticipacion}
+            titulo={t('detalleProyecto.errorVerificarParticipacion')}
+            onReintentar={() => setIntentoVerificacion((intento) => intento + 1)}
+          />
+        )}
         {errorPerfiles && (
           <AlertaError error={errorPerfiles} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={cargarPerfiles} />
         )}
@@ -706,6 +757,9 @@ const DetalleProyecto = () => {
                         !busquedaVigente ||
                         esDueño ||
                         authCargando ||
+                        yaColaboraEnProyecto ||
+                        verificandoParticipacion ||
+                        Boolean(errorVerificarParticipacion) ||
                         (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
                         Boolean(postulacionesEnviadas[perfil.id]) ||
                         Boolean(postulacionesPendientes[perfil.id]) ||
@@ -722,6 +776,127 @@ const DetalleProyecto = () => {
           </ul>
         )}
       </section>
+
+      {esDueño && (
+        <section className="detalle-seccion" aria-labelledby="detalle-postulaciones-titulo">
+          <h2 id="detalle-postulaciones-titulo">{t('detalleProyecto.seccionPostulaciones')}</h2>
+          <p className="texto-secundario">{t('detalleProyecto.ayudaPostulaciones')}</p>
+          {errorCargarPostulaciones && (
+            <AlertaError
+              error={errorCargarPostulaciones}
+              titulo={t('detalleProyecto.errorCargarPostulaciones')}
+              onReintentar={cargarPostulaciones}
+            />
+          )}
+          {cargandoPostulaciones ? (
+            <p role="status">{t('detalleProyecto.cargandoPostulaciones')}</p>
+          ) : !errorCargarPostulaciones && postulacionesProyecto.length === 0 ? (
+            <EstadoVacio
+              nivelTitulo="p"
+              titulo={t('detalleProyecto.sinPostulaciones')}
+            />
+          ) : (
+            <ul className="detalle-perfiles">
+              {postulacionesProyecto.map((postulacion) => {
+                const perfil = perfiles.find(
+                  (item) => String(item.id) === String(postulacion.idPerfil),
+                );
+                const ocupadas = (colaboraciones ?? []).filter(
+                  (item) => String(item.idPerfil) === String(postulacion.idPerfil),
+                ).length;
+                const sinVacantes =
+                  perfil?.limiteColaboraciones != null &&
+                  ocupadas >= perfil.limiteColaboraciones;
+                const colaboradora = postulacion.colaborador;
+                const nombreColaboradora =
+                  colaboradora?.nombreFantasia ||
+                  [colaboradora?.nombre, colaboradora?.apellido].filter(Boolean).join(' ') ||
+                  colaboradora?.usuarioGitHub ||
+                  t('detalleProyecto.nombreNoDisponible');
+                const pendiente = postulacion.estado === 'PENDIENTE';
+
+                return (
+                  <li key={postulacion.id} className="tarjeta perfil-buscado">
+                    <div className="tarjeta__cuerpo">
+                      <h3>{perfil?.descripcion ?? t('detalleProyecto.nombreNoDisponible')}</h3>
+                      {postulacion.fechaPostulacion && (
+                        <p className="texto-secundario">
+                          {t('detalleProyecto.fechaPostulacion', {
+                            fecha: formatearFecha(postulacion.fechaPostulacion),
+                          })}
+                        </p>
+                      )}
+                      {postulacion.esAnonima && (
+                        <p>{t('detalleProyecto.postulacionAnonima')}</p>
+                      )}
+                      {pendiente ? (
+                        <p>{t('detalleProyecto.identidadAlAceptar')}</p>
+                      ) : postulacion.estado === 'ACEPTADA' ? (
+                        <>
+                          <p>
+                            {t('detalleProyecto.colaboradoraAceptada')}: {nombreColaboradora}
+                          </p>
+                          <p className="perfil-buscado__etiqueta">
+                            {t('detalleProyecto.contactoColaboradora')}
+                          </p>
+                          {colaboradora?.mediosDeContacto?.length ? (
+                            <ul>
+                              {colaboradora.mediosDeContacto.map((medio, indice) => (
+                                <li key={`${medio.tipoDeContacto}-${indice}`}>
+                                  {medio.tipoDeContacto}: {medio.contacto}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
+                          )}
+                        </>
+                      ) : (
+                        <p>{t('detalleProyecto.estadoRechazada')}</p>
+                      )}
+                      {erroresResolucion[postulacion.id] && (
+                        <Alert severity="error" role="alert">
+                          {erroresResolucion[postulacion.id]}
+                        </Alert>
+                      )}
+                      {pendiente && sinVacantes && (
+                        <Alert severity="warning">
+                          {t('detalleProyecto.sinVacantesParaAceptar')}
+                        </Alert>
+                      )}
+                    </div>
+                    {pendiente && (
+                      <div className="tarjeta__acciones">
+                        <Button
+                          variant="contained"
+                          disabled={
+                            sinVacantes ||
+                            resolviendoPostulacionId === postulacion.id
+                          }
+                          loading={resolviendoPostulacionId === postulacion.id}
+                          onClick={() => resolverSolicitud(postulacion, 'ACEPTADA')}
+                        >
+                          {resolviendoPostulacionId === postulacion.id
+                            ? t('detalleProyecto.resolviendoPostulacion')
+                            : t('detalleProyecto.aceptarPostulacion')}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          disabled={resolviendoPostulacionId === postulacion.id}
+                          loading={resolviendoPostulacionId === postulacion.id}
+                          onClick={() => resolverSolicitud(postulacion, 'RECHAZADA')}
+                        >
+                          {t('detalleProyecto.rechazarPostulacion')}
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section className="detalle-seccion" aria-labelledby="detalle-enlaces-titulo">
         <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>
@@ -1089,6 +1264,7 @@ const DetalleProyecto = () => {
               busquedaSwitch ? t('formularioProyecto.ayudaFechaLimiteActiva') : t('formularioProyecto.ayudaFechaLimiteInactiva')
             )}
             disabled={guardandoBusqueda || esFinalizado || !busquedaSwitch}
+            slotProps={{ inputLabel: { shrink: true } }}
             fullWidth
           />
 

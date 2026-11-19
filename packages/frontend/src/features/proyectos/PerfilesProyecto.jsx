@@ -48,7 +48,23 @@ const PERFIL_VACIO = {
   horas: '',
   tipoColaboracion: 'GRATUITA',
   limiteColaboraciones: '',
+  tipoAceptacion: 'MANUAL',
 };
+
+export const construirPayloadPerfil = (form) => ({
+  descripcion: form.descripcion.trim(),
+  habilidadesRequeridas: form.habilidadesRequeridas,
+  habilidadesOpcionales: form.habilidadesOpcionales,
+  compromiso: {
+    tipoCompromiso: form.tipoCompromiso,
+    horas: Number(form.horas),
+    tipoColaboracion: form.tipoColaboracion,
+  },
+  tipoAceptacion: form.tipoAceptacion,
+  ...(form.limiteColaboraciones !== ''
+    ? { limiteColaboraciones: Number(form.limiteColaboraciones) }
+    : {}),
+});
 
 const PerfilesProyecto = () => {
   const { id } = useParams();
@@ -129,6 +145,7 @@ const PerfilesProyecto = () => {
       horas: String(perfil.compromiso.horas),
       tipoColaboracion: perfil.compromiso.tipoColaboracion,
       limiteColaboraciones: perfil.limiteColaboraciones ? String(perfil.limiteColaboraciones) : '',
+      tipoAceptacion: perfil.tipoAceptacion ?? 'MANUAL',
     });
     setErrores({});
     setErrorGuardar(null);
@@ -165,20 +182,7 @@ const PerfilesProyecto = () => {
     setErrorGuardar(null);
     try {
       const token = await getAccessToken();
-      const payload = {
-        descripcion: form.descripcion.trim(),
-        habilidadesRequeridas: form.habilidadesRequeridas,
-        habilidadesOpcionales: form.habilidadesOpcionales,
-        compromiso: {
-          tipoCompromiso: form.tipoCompromiso,
-          horas: Number(form.horas),
-          tipoColaboracion: form.tipoColaboracion,
-        },
-        // Sin límite: el campo no se manda
-        ...(form.limiteColaboraciones !== ''
-          ? { limiteColaboraciones: Number(form.limiteColaboraciones) }
-          : {}),
-      };
+      const payload = construirPayloadPerfil(form);
 
       if (perfilEditandoId) {
         await actualizarPerfil(token, id, perfilEditandoId, payload);
