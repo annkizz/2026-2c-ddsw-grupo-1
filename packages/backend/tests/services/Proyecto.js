@@ -28,6 +28,7 @@ describe("ProyectoService", () => {
   let colectivoRepository;
   let perfilRepository;
   let colaboracionRepository;
+  let postulacionRepository;
   let service;
   let colectivo;
 
@@ -53,6 +54,9 @@ describe("ProyectoService", () => {
     colaboracionRepository = {
       obtenerPorProyecto: jest.fn(async () => []),
     };
+    postulacionRepository = {
+      rechazarPendientesDeProyecto: jest.fn(async () => undefined),
+    };
     colectivoRepository = {
       buscarPorId: jest.fn(async (id) =>
         id === "col-1" ? colectivo : null,
@@ -72,6 +76,7 @@ describe("ProyectoService", () => {
       colectivoRepository,
       colaboracionRepository,
       perfilRepository,
+      postulacionRepository,
     );
 
     // Los metodos que verifican que la cuenta sea dueña del colectivo reciben
@@ -507,6 +512,25 @@ describe("ProyectoService", () => {
       expect(resultado.fallidos).toEqual([
         { idProyecto: "falla", error: "se cayo la base" },
       ]);
+    });
+
+    it("rechaza las postulaciones pendientes de cada proyecto que cierra", async () => {
+      const bueno = proyectoActivo({ _id: "ok" });
+      const malo = proyectoActivo({ _id: "falla" });
+      proyectoRepository.obtenerVencidos.mockResolvedValue([bueno, malo]);
+      proyectoRepository.save.mockImplementation(async (p) => {
+        if (p._id === "falla") throw new Error("se cayo la base");
+        return p;
+      });
+
+      await service.cerrarProyectosVencidos();
+
+      expect(
+        postulacionRepository.rechazarPendientesDeProyecto,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        postulacionRepository.rechazarPendientesDeProyecto,
+      ).toHaveBeenCalledWith("ok");
     });
   });
 

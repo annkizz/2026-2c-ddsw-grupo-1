@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { FiArrowLeft, FiInfo, FiLock, FiCheckCircle, FiShield } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import Markdown from '../../components/Markdown.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
@@ -359,7 +360,6 @@ const DetalleProyecto = () => {
       setPublicandoId(null);
     }
   };
-
 
   return (
       <div className="detalle-contenedor">

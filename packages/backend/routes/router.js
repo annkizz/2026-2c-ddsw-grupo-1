@@ -113,6 +113,7 @@ const proyectoService = new ProyectoService(
   colectivoRepository,
   colaboracionRepository,
   perfilRepository,
+  postulacionRepository,
   despachadorWebhooks,
 );
 const proyectoController = new ProyectoController(proyectoService);

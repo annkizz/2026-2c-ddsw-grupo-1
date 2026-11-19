@@ -19,6 +19,7 @@ import { ColaboradorService } from "./ColaboradorService.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
+import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { EventoWebhook } from "../domain/EventoWebhook.js";
 import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 
@@ -33,6 +34,7 @@ export class ProyectoService {
     colectivoRepository = new ColectivoRepository(),
     colaboracionRepository = new ColaboracionRepository(),
     perfilRepository = new PerfilRepository(),
+    postulacionRepository = new PostulacionRepository(),
     despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
@@ -41,6 +43,7 @@ export class ProyectoService {
     this.colectivoRepository = colectivoRepository;
     this.colaboracionRepository = colaboracionRepository;
     this.perfilRepository = perfilRepository;
+    this.postulacionRepository = postulacionRepository;
     this.despachadorWebhooks = despachadorWebhooks;
   }
 
@@ -213,18 +216,23 @@ export class ProyectoService {
     const yaEstabaFinalizado = proyecto.estaFinalizado();
     proyecto.cerrar();
     const guardado = await this.proyectoRepository.save(proyecto);
+    // Al cerrarse el proyecto, las postulaciones pendientes se rechazan.
     if (!yaEstabaFinalizado) {
-      this.despachadorWebhooks.emitir(
-        EventoWebhook.PROYECTO_CERRADO,
-        proyecto.idColectivo,
-        {
-          idProyecto: String(proyecto._id),
-          titulo: proyecto.titulo,
-          motivo,
-          fecha: new Date().toISOString(),
-        },
-      );
-    }
+    await this.postulacionRepository.rechazarPendientesDeProyecto(
+    proyecto._id,
+  );
+
+    this.despachadorWebhooks.emitir(
+    EventoWebhook.PROYECTO_CERRADO,
+    proyecto.idColectivo,
+    {
+      idProyecto: String(proyecto._id),
+      titulo: proyecto.titulo,
+      motivo,
+      fecha: new Date().toISOString(),
+    },
+  );
+}
     return guardado;
   }
 
