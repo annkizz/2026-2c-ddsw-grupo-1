@@ -142,4 +142,109 @@ describe("Dominio - Proyecto", () => {
       expect(proyecto.porcentajeConcrecion).toBe(0);
     });
   });
+
+    describe("búsqueda de colaboraciones", () => {
+    const conBusqueda = (
+      busquedaAbierta,
+      fechaLimiteBusqueda = null,
+      estado = "ACTIVO",
+    ) =>
+      new Proyecto(
+        "Titulo",
+        "Desc",
+        [],
+        estado,
+        new Date(),
+        null,
+        "col-1",
+        0,
+        null,
+        null,
+        busquedaAbierta,
+        fechaLimiteBusqueda,
+      );
+
+    it("guarda si la búsqueda está abierta y hasta cuándo", () => {
+      const fecha = enUnaHora();
+      const proyecto = conBusqueda(true, fecha);
+
+      expect(proyecto.busquedaAbierta).toBe(true);
+      expect(proyecto.fechaLimiteBusqueda).toBe(fecha);
+    });
+
+    it("está vigente si la búsqueda está abierta y no tiene fecha límite", () => {
+      expect(conBusqueda(true).busquedaVigente()).toBe(true);
+    });
+
+    it("está vigente si la búsqueda está abierta y la fecha límite es futura", () => {
+      expect(conBusqueda(true, enUnaHora()).busquedaVigente()).toBe(true);
+    });
+
+    it("no está vigente si la fecha límite ya pasó", () => {
+      expect(conBusqueda(true, haceUnaHora()).busquedaVigente()).toBe(false);
+    });
+
+    it("no está vigente si la búsqueda está cerrada", () => {
+      expect(conBusqueda(false).busquedaVigente()).toBe(false);
+    });
+
+    it("no está vigente si el proyecto está finalizado, aunque la búsqueda siga abierta", () => {
+      expect(conBusqueda(true, null, "FINALIZADO").busquedaVigente()).toBe(
+        false,
+      );
+    });
+
+    it("configurarBusqueda abre la búsqueda con su fecha límite", () => {
+      const proyecto = conBusqueda(false);
+      const fecha = enUnaHora();
+
+      proyecto.configurarBusqueda(true, fecha);
+
+      expect(proyecto.busquedaAbierta).toBe(true);
+      expect(proyecto.fechaLimiteBusqueda).toBe(fecha);
+    });
+
+    it("configurarBusqueda borra la fecha límite al cerrar la búsqueda", () => {
+      const proyecto = conBusqueda(true, enUnaHora());
+
+      proyecto.configurarBusqueda(false);
+
+      expect(proyecto.busquedaAbierta).toBe(false);
+      expect(proyecto.fechaLimiteBusqueda).toBeNull();
+    });
+  });
+
+  describe("edición", () => {
+    it("editarDatos cambia título y descripción y deja lo demás igual", () => {
+      const proyecto = crear();
+
+      proyecto.editarDatos({ titulo: "Nuevo", descripcion: "Nueva descripción" });
+
+      expect(proyecto.titulo).toBe("Nuevo");
+      expect(proyecto.descripcion).toBe("Nueva descripción");
+      expect(proyecto.idColectivo).toBe("col-1");
+      expect(proyecto.estado).toBe("ACTIVO");
+    });
+
+    it("editarDatos reemplaza las etiquetas cuando se envían", () => {
+      const proyecto = crear();
+
+      proyecto.editarDatos({
+        titulo: "Nuevo",
+        descripcion: "Nueva descripción",
+        etiquetas: ["salud", "comunidad"],
+      });
+
+      expect(proyecto.etiquetas).toEqual(["salud", "comunidad"]);
+    });
+
+    it("editarDatos sin etiquetas conserva las que ya tenía", () => {
+      const proyecto = crear();
+      proyecto.etiquetas = ["salud"];
+
+      proyecto.editarDatos({ titulo: "Nuevo", descripcion: "Nueva descripción" });
+
+      expect(proyecto.etiquetas).toEqual(["salud"]);
+    });
+  });
 });

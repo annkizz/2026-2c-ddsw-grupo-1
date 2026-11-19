@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Colectivo } from "../domain/Colectivo.js";
 import { TipoColectivo } from "../domain/TipoColectivo.js";
+import { medioDeContactoSchema } from "./medioDeContactoSchema.js";
 
 const ubicacionSchema = new mongoose.Schema(
   {
@@ -21,9 +22,19 @@ const colectivoSchema = new mongoose.Schema(
       enum: Object.values(TipoColectivo),
       required: true,
     },
+    etiquetas: { type: [String], default: [] },
+    aceptaMensajeria: { type: Boolean, default: false },
+    mediosDeContacto: { type: [medioDeContactoSchema], default: [] },
     proyectos: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Proyecto" }],
       default: [],
+    },
+    // cuenta duena del perfil (los colectivos del seed no tienen)
+    usuario: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Usuario",
+      unique: true,
+      sparse: true,
     },
   },
   { timestamps: true, collection: "colectivos" },

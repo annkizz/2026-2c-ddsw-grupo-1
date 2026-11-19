@@ -4,7 +4,7 @@ export class Perfil {
     habilidadesRequeridas,
     habilidadesOpcionales,
     compromiso,
-    limiteColaboraciones = null,
+    limiteColaboraciones = null;
     tipoAceptacion,
   ) 
   {
@@ -19,5 +19,23 @@ export class Perfil {
 
   cerrarBusqueda(){
     this.busquedaAbierta = false;
+
+  ) {
+    this.descripcion = descripcion;
+    this.habilidadesRequeridas = habilidadesRequeridas;
+    this.habilidadesOpcionales = habilidadesOpcionales;
+    this.compromiso = compromiso;
+    this.limiteColaboraciones = limiteColaboraciones;
+  }
+
+  tieneLimite() {
+    return this.limiteColaboraciones !== null;
+  }
+
+  tieneVacantes(colaboracionesActivas) {
+    return (
+      !this.tieneLimite() ||
+      colaboracionesActivas < this.limiteColaboraciones
+    );
   }
 }

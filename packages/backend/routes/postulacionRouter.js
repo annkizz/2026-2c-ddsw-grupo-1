@@ -4,32 +4,38 @@ import {
   crearPostulacionSchema,
   resolverPostulacionSchema,
 } from "../controllers/PostulacionController.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
 
-export function crearPostulacionRouter(postulacionController) {
+export function crearPostulacionRouter(
+  postulacionController,
+  autenticar,
+) {
   const router = express.Router({ mergeParams: true });
 
   router
     .route("/perfiles/:idPerfil/postulaciones")
-    .post(requireAuth, validate(crearPostulacionSchema), (req, res) =>
-      postulacionController.crear(req, res),
+    .post(
+      autenticar,
+      validate(crearPostulacionSchema),
+      (req, res) => postulacionController.crear(req, res),
     );
 
   router
     .route("/postulaciones")
-    .get(requireAuth, (req, res) =>
+    .get(autenticar, (req, res) =>
       postulacionController.obtenerPorProyecto(req, res),
     );
 
   router
     .route("/postulaciones/:idPostulacion")
-    .patch(requireAuth, validate(resolverPostulacionSchema), (req, res) =>
-      postulacionController.resolver(req, res),
+    .patch(
+      autenticar,
+      validate(resolverPostulacionSchema),
+      (req, res) => postulacionController.resolver(req, res),
     );
 
   router
     .route("/colaboraciones/:idColaborador")
-    .delete(requireAuth, (req, res) =>
+    .delete(autenticar, (req, res) =>
       postulacionController.darDeBaja(req, res),
     );
 

@@ -1,0 +1,74 @@
+.perfil-publico {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(900px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+  color: #23313f;
+}
+
+.perfil-publico-volver {
+  align-self: flex-start;
+}
+
+.perfil-publico-cabecera,
+.perfil-publico-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border-color: #dce3e8;
+}
+
+.perfil-publico-cabecera h1,
+.perfil-publico-seccion h2,
+.perfil-publico-cabecera p,
+.perfil-publico-seccion p {
+  margin: 0;
+}
+
+.perfil-publico-cabecera h1 {
+  font-size: 28px;
+}
+
+.perfil-publico-cabecera p,
+.perfil-publico-seccion p,
+.perfil-publico-privacidad {
+  color: #617180;
+}
+
+.perfil-publico-tipo {
+  color: #617180;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.perfil-publico-pronombres {
+  font-size: 14px;
+}
+
+.perfil-publico-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.perfil-publico-privacidad {
+  margin: 0;
+  font-size: 13px;
+}
+
+.perfil-publico-cargando {
+  min-height: 55vh;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 600px) {
+  .perfil-publico-cabecera,
+  .perfil-publico-seccion {
+    padding: 18px;
+  }
+}

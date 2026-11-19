@@ -5,7 +5,7 @@ import { EstadoPostulacion } from "../../domain/EstadoPostulacion.js";
 const ID_PROYECTO = "p-1";
 const ID_PERFIL = "f-1";
 const ID_COLABORADOR = "c-1";
-const actorColaboradora = { rol: "COLABORADORA", id: ID_COLABORADOR };
+const actorColaboradora = { rol: "COLABORADOR", id: ID_COLABORADOR };
 const actorColectivo = { rol: "COLECTIVO", id: "org-1" };
 
 const crearProyecto = (extra = {}) => ({
@@ -102,7 +102,6 @@ describe("PostulacionService", () => {
       const resultado = await service.crear(
         ID_PROYECTO,
         ID_PERFIL,
-        ID_COLABORADOR,
         true,
         actorColaboradora,
       );
@@ -124,7 +123,6 @@ describe("PostulacionService", () => {
       const resultado = await service.crear(
         ID_PROYECTO,
         ID_PERFIL,
-        ID_COLABORADOR,
         false,
         actorColaboradora,
       );
@@ -140,7 +138,6 @@ describe("PostulacionService", () => {
         service.crear(
           ID_PROYECTO,
           ID_PERFIL,
-          ID_COLABORADOR,
           false,
           actorColaboradora,
         ),
@@ -154,7 +151,6 @@ describe("PostulacionService", () => {
       await service.crear(
         ID_PROYECTO,
         ID_PERFIL,
-        ID_COLABORADOR,
         false,
         actorColaboradora,
       );
@@ -169,7 +165,6 @@ describe("PostulacionService", () => {
         service.crear(
           ID_PROYECTO,
           ID_PERFIL,
-          ID_COLABORADOR,
           false,
           actorColaboradora,
         ),
@@ -184,17 +179,16 @@ describe("PostulacionService", () => {
         service.crear(
           ID_PROYECTO,
           ID_PERFIL,
-          ID_COLABORADOR,
           false,
           actorColaboradora,
         ),
       ).rejects.toMatchObject({ codigo: "POSTULACION_YA_EXISTENTE" });
     });
 
-    it("no permite postular usando la identidad de otra colaboradora", async () => {
+    it("no permite que un colectivo cree una postulación", async () => {
       await expect(
-        service.crear(ID_PROYECTO, ID_PERFIL, ID_COLABORADOR, false, {
-          rol: "COLABORADORA",
+        service.crear(ID_PROYECTO, ID_PERFIL, false, {
+          rol: "COLECTIVO",
           id: "otra",
         }),
       ).rejects.toMatchObject({ codigo: "ACCESO_POSTULACION_DENEGADO" });

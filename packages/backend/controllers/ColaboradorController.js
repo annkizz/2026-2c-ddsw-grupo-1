@@ -22,8 +22,35 @@ export class ColaboradorController {
   }
 
   async crear(req, res) {
-    const colaboradorNuevo = await this.colaboradorService.crear(req.body);
-    res.status(201).json(this.toPublicDTO(colaboradorNuevo));
+    const colaboradorNuevo = await this.colaboradorService.crear(
+      req.body,
+      req.usuario,
+    );
+    res.status(201).json(this.toPrivateDTO(colaboradorNuevo));
+  }
+
+  async actualizar(req, res) {
+    const colaborador = await this.colaboradorService.actualizar(
+      req.params.id,
+      req.body,
+      req.usuario,
+    );
+    res.status(200).json(this.toPrivateDTO(colaborador));
+  }
+
+  async obtenerPorId(req, res) {
+    const colaborador = await this.colaboradorService.obtenerPorIdOFallar(
+      req.params.id,
+    );
+    res.status(200).json(this.toPublicDTO(colaborador));
+  }
+
+  // el perfil propio: incluye lo que no es publico (medios de contacto y consentimiento)
+  async obtenerPropia(req, res) {
+    const colaborador = await this.colaboradorService.obtenerPorUsuario(
+      req.usuario,
+    );
+    res.status(200).json(this.toPrivateDTO(colaborador));
   }
 
   obtenerTodos = async (req, res) => {
@@ -43,6 +70,17 @@ export class ColaboradorController {
       presentacion: colaborador.presentacion,
       pronombres: colaborador.pronombres,
       habilidades: colaborador.habilidades,
+    };
+  }
+
+  toPrivateDTO(colaborador) {
+    return {
+      ...this.toPublicDTO(colaborador),
+      aceptaMensajeria: colaborador.aceptaMensajeria,
+      mediosDeContacto: (colaborador.mediosDeContacto ?? []).map((medio) => ({
+        tipoDeContacto: medio.tipoDeContacto,
+        contacto: medio.contacto,
+      })),
     };
   }
 }

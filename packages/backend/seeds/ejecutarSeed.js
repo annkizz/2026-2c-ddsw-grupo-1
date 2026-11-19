@@ -3,6 +3,11 @@ import { Colectivo } from "../domain/Colectivo.js";
 import { Proyecto } from "../domain/Proyecto.js";
 import { Colaborador } from "../domain/Colaborador.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
+import { normalizarEtiquetas } from "../domain/etiquetas.js";
+import {
+  construirUbicacionDeProyecto,
+  ubicacionHeredadaDeColectivo,
+} from "../domain/provincias.js";
 
 //recibe los datos iniciales y los inserta usando repo real
 
@@ -39,6 +44,13 @@ export async function ejecutarSeed(
   const idsProyectosSeed = datos.proyectos.map((p) => p.id);
   await db.borrarDatosDeProyectos(idsProyectosSeed);
 
+  // req 15: la seed crea los colectivos despues de los proyectos, asi que el
+  // fallback de ubicacion se resuelve con un lookup en memoria de los datos.
+  const colectivosPorId = {};
+  for (const c of datos.colectivos) {
+    colectivosPorId[c.id] = c;
+  }
+
   for (const p of datos.proyectos) {
     for (const perfil of p.perfiles) {
       await db.guardarPerfil({ ...perfil, idProyecto: p.id });
@@ -56,6 +68,13 @@ export async function ejecutarSeed(
         p.porcentajeConcrecion,
         p.enlaceSistema,
         p.enlaceCodigoFuente,
+        p.busquedaAbierta ?? false,
+        p.fechaLimiteBusqueda ?? null,
+        normalizarEtiquetas(p.etiquetas), // req 34
+        // req 15: ubicacion propia o heredada del colectivo
+        p.ubicacion !== undefined
+          ? construirUbicacionDeProyecto(p.ubicacion)
+          : ubicacionHeredadaDeColectivo(colectivosPorId[p.idColectivo]),
       ),
       p.id,
     );
@@ -67,7 +86,13 @@ export async function ejecutarSeed(
 
   for (const c of datos.colectivos) {
     await colectivoRepository.save(
-      new Colectivo(c.nombre, c.descripcion, c.ubicacion, c.tipoDeColectivo),
+      new Colectivo(
+        c.nombre,
+        c.descripcion,
+        c.ubicacion,
+        c.tipoDeColectivo,
+        normalizarEtiquetas(c.etiquetas), // req 34
+      ),
       c.id,
     );
   }
@@ -82,7 +107,7 @@ export async function ejecutarSeed(
       c.idColaborador,
     );
     await colaboracionRepository.save(
-      new Colaboracion(proyecto, colaborador, c.fecha, c.esAnonima),
+      new Colaboracion(proyecto, colaborador, null, c.fecha, c.esAnonima),
     );
   }
 

@@ -59,6 +59,8 @@ SERVER_PORT=3001
 - **`ALLOWED_ORIGINS`**: Define los orígenes permitidos para las solicitudes CORS. Asegurate de incluir la URL donde se ejecuta tu frontend (por defecto, `http://localhost:3000` para Create React App). Cuando se haga el despliegue en nube acá se deberá incluir la URL donde se desplegó el frontend.
 - **`SERVER_PORT`**: El puerto en el que se ejecutará el servidor backend (ej. `8000`).
 
+La gestión de proyectos destacados requiere el rol `ADMINISTRADOR`. Este rol no se puede asignar mediante las rutas públicas de registro; debe habilitarlo el equipo operador directamente en el usuario correspondiente de MongoDB.
+
 ### 3\. Ejecución de la Aplicación
 
 Podés iniciar el frontend y el backend por separado o ambos a la vez:

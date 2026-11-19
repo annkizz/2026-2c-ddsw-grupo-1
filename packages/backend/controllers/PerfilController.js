@@ -46,12 +46,17 @@ export class PerfilController {
     const perfilNuevo = await this.perfilService.crear(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(201).json(perfilNuevo);
   };
 
   eliminar = async (req, res) => {
-    await this.perfilService.eliminar(req.params.idProyecto, req.params.id);
+    await this.perfilService.eliminar(
+      req.params.idProyecto,
+      req.params.id,
+      req.usuario,
+    );
     res.status(204).send();
   };
 
@@ -68,6 +73,7 @@ export class PerfilController {
       req.params.idProyecto,
       req.params.id,
       req.body,
+      req.usuario,
     );
     res.status(200).json(perfil);
   };

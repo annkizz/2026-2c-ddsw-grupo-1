@@ -114,6 +114,26 @@ describe("Validaciones - perfilSchema (zod)", () => {
     expect(perfilSchema.safeParse(datos).success).toBe(false);
   });
 
+  it("acepta un límite de colaboraciones entero", () => {
+    const datos = { ...perfilValido(), limiteColaboraciones: 2 };
+    expect(perfilSchema.safeParse(datos).success).toBe(true);
+  });
+
+  it("el límite de colaboraciones queda sin límite si se omite", () => {
+    const resultado = perfilSchema.safeParse(perfilValido());
+
+    expect(resultado.success).toBe(true);
+    expect(resultado.data.limiteColaboraciones).toBeNull();
+  });
+
+  it.each([0, -1, 2.5, "3"])(
+    "rechaza un límite de colaboraciones inválido (%p)",
+    (limite) => {
+      const datos = { ...perfilValido(), limiteColaboraciones: limite };
+      expect(perfilSchema.safeParse(datos).success).toBe(false);
+    },
+  );
+
   it("rechaza campos que no forman parte del perfil (strict)", () => {
     const datos = { ...perfilValido(), campoExtra: "x" };
     expect(perfilSchema.safeParse(datos).success).toBe(false);

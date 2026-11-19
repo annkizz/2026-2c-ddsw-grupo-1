@@ -1,4 +1,5 @@
 import { EstadoPostulacion } from "../domain/EstadoPostulacion.js";
+import { Rol } from "../domain/Rol.js";
 import { Postulacion } from "../domain/Postulacion.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 import {
@@ -13,6 +14,8 @@ import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { TipoAceptacion } from "../domain/TipoAceptacion.js";
+import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 
 export class PostulacionService {
   constructor(
@@ -21,12 +24,14 @@ export class PostulacionService {
     colaboradorService = new ColaboradorService(),
     colaboracionRepository = new ColaboracionRepository(),
     postulacionRepository = new PostulacionRepository(),
+    despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
     this.colaboradorService = colaboradorService;
     this.colaboracionRepository = colaboracionRepository;
     this.postulacionRepository = postulacionRepository;
+    this.despachadorWebhooks = despachadorWebhooks;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -48,7 +53,7 @@ export class PostulacionService {
 
   validarColectivoDelProyecto(actor, proyecto) {
     if (
-      actor?.rol !== "COLECTIVO" ||
+      actor?.rol !== Rol.COLECTIVO ||
       String(actor.id) !== String(proyecto.idColectivo)
     ) {
       throw new ForbiddenError(
@@ -58,11 +63,8 @@ export class PostulacionService {
     }
   }
 
-  validarColaboradora(actor, idColaborador) {
-    if (
-      actor?.rol !== "COLABORADORA" ||
-      String(actor.id) !== String(idColaborador)
-    ) {
+  validarColaboradora(actor) {
+    if (actor?.rol !== Rol.COLABORADOR || !actor.id) {
       throw new ForbiddenError(
         "Solo se puede postular la colaboradora autenticada",
         "ACCESO_POSTULACION_DENEGADO",
@@ -94,8 +96,9 @@ export class PostulacionService {
     );
   }
 
-  async crear(idProyecto, idPerfil, idColaborador, esAnonima = false, actor) {
-    this.validarColaboradora(actor, idColaborador);
+  async crear(idProyecto, idPerfil, esAnonima = false, actor) {
+    const idColaborador = actor?.id;
+    this.validarColaboradora(actor);
     const { proyecto, perfil } = await this.buscarProyectoYPerfil(
       idProyecto,
       idPerfil,
@@ -169,6 +172,17 @@ export class PostulacionService {
         );
       }
 
+      this.despachadorWebhooks.emitir(
+        EventoWebhook.POSTULACION_CREADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(guardada._id),
+          fecha: guardada.fechaPostulacion,
+        },
+      );
       return this.toDTO(guardada);
     } catch (error) {
       if (error.code === 11000) {
@@ -314,13 +328,32 @@ export class PostulacionService {
         new Colaboracion(
           proyecto,
           colaborador,
+          perfil,
           new Date(),
           postulacion.esAnonima,
-          perfil,
           postulacion,
         ),
       );
       colaboracionCreada = true;
+
+       const resultado = this.toDTO({
+        ...postulacion.toObject(),
+        estado: EstadoPostulacion.ACEPTADA,
+        idColaborador: colaborador,
+      });
+            this.despachadorWebhooks.emitir(
+        EventoWebhook.COLABORACION_ACEPTADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(idPostulacion),
+          esAnonima: Boolean(postulacion.esAnonima),
+          fecha: new Date().toISOString(),
+        },
+      );
+      return resultado;
     } catch (error) {
       const erroresRollback = [];
       if (colaboracionCreada) {
@@ -385,10 +418,10 @@ export class PostulacionService {
       );
     }
     const esColectivoPropietario =
-      actor?.rol === "COLECTIVO" &&
+      actor?.rol === Rol.COLECTIVO &&
       String(actor.id) === String(proyecto.idColectivo);
     const esColaboradoraDeLaColaboracion =
-      actor?.rol === "COLABORADORA" &&
+      actor?.rol === Rol.COLABORADOR &&
       String(actor.id) === String(idColaborador);
     if (!esColectivoPropietario && !esColaboradoraDeLaColaboracion) {
       throw new ForbiddenError(

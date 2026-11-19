@@ -95,6 +95,7 @@ describe("PerfilService", () => {
         limiteColaboraciones: null,
         tipoAceptacion: "MANUAL",
         compromiso: datosPerfil().compromiso,
+        limiteColaboraciones: null,
       });
     });
 
@@ -123,6 +124,21 @@ describe("PerfilService", () => {
       const resultado = await service.crear(ID_PROYECTO, datos);
 
       expect(resultado.habilidadesOpcionales).toEqual([]);
+    });
+
+        it("guarda el límite de colaboraciones cuando se indica", async () => {
+      const datos = { ...datosPerfil(), limiteColaboraciones: 2 };
+
+      const resultado = await service.crear(ID_PROYECTO, datos);
+
+      expect(perfilRepository.save.mock.calls[0][0].limiteColaboraciones).toBe(2);
+      expect(resultado.limiteColaboraciones).toBe(2);
+    });
+
+    it("sin límite indicado, el perfil queda sin límite (null)", async () => {
+      const resultado = await service.crear(ID_PROYECTO, datosPerfil());
+
+      expect(resultado.limiteColaboraciones).toBeNull();
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
@@ -232,6 +248,7 @@ describe("PerfilService", () => {
         limiteColaboraciones: null,
         tipoAceptacion: "MANUAL",
         compromiso: datosPerfil().compromiso,
+        limiteColaboraciones: null,
       });
     });
 
@@ -254,6 +271,16 @@ describe("PerfilService", () => {
       ).rejects.toMatchObject({
         codigo: "PERFIL_NO_ENCONTRADO",
       });
+    });
+
+    it("incluye el límite de colaboraciones en el DTO", async () => {
+      perfilRepository.buscarPorId.mockResolvedValue(
+        perfilGuardado({ limiteColaboraciones: 3 }),
+      );
+
+      const resultado = await service.obtenerPorId(ID_PROYECTO, "perfil-1");
+
+      expect(resultado.limiteColaboraciones).toBe(3);
     });
 
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
@@ -293,13 +320,32 @@ describe("PerfilService", () => {
 
       expect(perfilRepository.actualizar).toHaveBeenCalledWith(
         "perfil-1",
-        nuevosDatos(),
+        { ...nuevosDatos(), limiteColaboraciones: null },
       );
       expect(resultado).toEqual({
         id: "perfil-1",
         idProyecto: ID_PROYECTO,
         ...nuevosDatos(),
+        limiteColaboraciones: null,
       });
+    });
+
+    it("actualiza el límite de colaboraciones", async () => {
+      const resultado = await service.actualizar(ID_PROYECTO, "perfil-1", {
+        ...nuevosDatos(),
+        limiteColaboraciones: 4,
+      });
+
+      expect(perfilRepository.actualizar.mock.calls[0][1].limiteColaboraciones).toBe(4);
+      expect(resultado.limiteColaboraciones).toBe(4);
+    });
+
+    it("si no se indica el límite, el perfil queda sin límite porque el PUT reemplaza", async () => {
+      await service.actualizar(ID_PROYECTO, "perfil-1", nuevosDatos());
+
+      expect(
+        perfilRepository.actualizar.mock.calls[0][1].limiteColaboraciones,
+      ).toBeNull();
     });
 
     it("actualiza el límite sin agregar restricciones sobre las colaboraciones existentes", async () => {

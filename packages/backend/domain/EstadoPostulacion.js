@@ -1,5 +1,5 @@
-export const EstadoPostulacion = Object.freeze({
+export const EstadoPostulacion = {
   PENDIENTE: "PENDIENTE",
   ACEPTADA: "ACEPTADA",
   RECHAZADA: "RECHAZADA",
-});
+};

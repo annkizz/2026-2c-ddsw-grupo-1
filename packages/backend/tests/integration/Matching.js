@@ -104,6 +104,7 @@ describe("MatchingService.buscarColaboradorasParaPerfil (integración sobre la s
       id: LUNA,
       nombreFantasia: "Luna Código",
       pronombres: ["ella"],
+      puntaje: 3,
     });
     expect(resultado[0].requeridasCoincidentes).toEqual([
       "Testing E2E con Cypress",
@@ -209,10 +210,12 @@ describe("MatchingService.buscarProyectosParaColaboradora (integración sobre la
       await crearServicio().buscarProyectosParaColaboradora(LUNA);
 
     expect(resultado.map((p) => p.id)).toEqual([PROYECTO_TURNOS]);
+    expect(resultado[0].puntaje).toBe(3);
     expect(resultado[0].perfilesCompatibles).toEqual([
       expect.objectContaining({
         id: PERFIL_TESTER,
         requeridasCoincidentes: ["Testing E2E con Cypress"],
+        puntaje: 3,
       }),
     ]);
   });

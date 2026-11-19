@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ColectivoService } from "../services/ColectivoService.js";
+import { medioDeContactoSchema } from "../schemas/zod/medioDeContactoSchema.js";
 
 export const colectivoSchema = z
   .object({
@@ -18,6 +20,13 @@ export const colectivoSchema = z
         ciudad: z.string().optional(),
       })
       .optional(),
+    // req 34: lista opcional etiquetas
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
+    aceptaMensajeria: z.boolean().default(false),
+    mediosDeContacto: z.array(medioDeContactoSchema).default([]),
   })
   .strict();
 
@@ -27,12 +36,40 @@ export class ColectivoController {
   }
 
   async crear(req, res) {
-    const colectivoNuevo = await this.colectivoService.crear(req.body);
+    const colectivoNuevo = await this.colectivoService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(colectivoNuevo);
   }
 
+  async actualizar(req, res) {
+    const colectivo = await this.colectivoService.actualizar(
+      req.params.id,
+      req.body,
+      req.usuario,
+    );
+    res.status(200).json(colectivo);
+  }
+
+  async obtenerPorId(req, res) {
+    const colectivo = await this.colectivoService.obtenerPorId(req.params.id);
+    res.status(200).json(colectivo);
+  }
+
+  async obtenerPropio(req, res) {
+    const colectivo = await this.colectivoService.obtenerPorUsuario(req.usuario);
+    res.status(200).json(colectivo);
+  }
+
   async obtenerTodos(req, res) {
-    const colectivos = await this.colectivoService.obtenerTodos();
+const valores = req.query.etiqueta;
+    let lista = [];
+    if (valores !== undefined) {
+      lista = Array.isArray(valores) ? valores : [valores];
+    }
+    const filtros = lista.length > 0 ? { etiquetas: lista } : {};
+    const colectivos = await this.colectivoService.obtenerTodos(filtros);
     res.status(200).json(colectivos);
   }
 }
