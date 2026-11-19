@@ -8,7 +8,10 @@ export class NotificacionController {
   }
 
   crear = async (req, res) => {
-    const nuevaNotificacion = await this.notificacionService.crear(req.body);
+    const nuevaNotificacion = await this.notificacionService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(nuevaNotificacion);
   };
 
@@ -28,25 +31,36 @@ export class NotificacionController {
   };
  
   obtenerTodosPaginado = async (req, res) => {
-    const pag = req.query.pag;
-    const limite = req.query.limite;
-    /*
-    if (!resultado.success) {
-      throw new BadRequestError(
-        "No se le enviaron los datos necesarios",
-        "PAGINA_INVALIDA",
-      );
-    }*/
+    const pag = Number(req.query.pag) || 1;
+    const limite = Number(req.query.limite) || 10;
 
     const notificaciones = await this.notificacionService.obtenerTodosPaginado(
-      pag, limite,
+      req.usuario._id,
+      pag,
+      limite,
     );
     res.status(200).json(notificaciones);
   };  
 
+  obtenerTodosPorColaboradora = async (req, res) => {
+    const pag = Number(req.query.pag) || 1;
+    const limite = Number(req.query.limite) || 10; // Default
+    const idColaboradora = req.params.id;
+
+    const notificaciones = await this.notificacionService.obtenerTodosPorColaboradora(
+      idColaboradora,
+      pag,
+      limite,
+      req.usuario._id,
+    );
+    
+    res.status(200).json(notificaciones);    
+  }
+
   obtenerPorId = async (req, res) => {
     const notificacion = await this.notificacionService.obtenerPorId(
       req.params.id,
+      req.usuario._id,
     );
     res.status(200).json(notificacion);
   };
