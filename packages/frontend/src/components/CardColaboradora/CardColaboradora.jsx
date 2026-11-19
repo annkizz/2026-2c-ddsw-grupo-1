@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { useAuth } from "../../hooks/useAuth.jsx";
 import { crearNotificacion } from "../../service/notificacionesService";
+import { invitarAColaborar } from "../../service/proyectosService";
 import "../Card.css";
 
 const NOMBRE_SIN_ALIAS = "Colaboradora sin nombre público";
@@ -26,7 +27,11 @@ function listarHabilidades(habilidades) {
   return habilidades?.length > 0 ? habilidades.join(", ") : "ninguna";
 }
 
-export default function CardColaboradora({ colaboradora }) {
+export default function CardColaboradora({
+  colaboradora,
+  idProyecto,
+  idPerfil,
+}) {
   const { getAccessToken } = useAuth();
   const dialogTitleId = `dialogo-contacto-${useId()}`;
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
@@ -34,6 +39,9 @@ export default function CardColaboradora({ colaboradora }) {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState(null);
+  const [invitacionEnviada, setInvitacionEnviada] = useState(false);
+  const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
+  const [errorInvitacion, setErrorInvitacion] = useState("");
   const aceptaMensajeria = colaboradora.aceptaMensajeria === true;
 
   const cerrarDialogo = () => {
@@ -62,6 +70,28 @@ export default function CardColaboradora({ colaboradora }) {
       );
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const enviarInvitacion = async () => {
+    setEnviandoInvitacion(true);
+    setErrorInvitacion("");
+    try {
+      const token = await getAccessToken();
+      await invitarAColaborar(
+        token,
+        idProyecto,
+        idPerfil,
+        colaboradora.id,
+      );
+      setInvitacionEnviada(true);
+    } catch (requestError) {
+      setErrorInvitacion(
+        requestError?.response?.data?.error ??
+          "No pudimos enviar la invitación. Reintentá.",
+      );
+    } finally {
+      setEnviandoInvitacion(false);
     }
   };
 
@@ -105,6 +135,29 @@ export default function CardColaboradora({ colaboradora }) {
       </p>
 
       <div className="tarjeta__acciones">
+        {idProyecto && idPerfil && (
+          <button
+            type="button"
+            className="boton"
+            disabled={
+              !aceptaMensajeria || enviandoInvitacion || invitacionEnviada
+            }
+            title={
+              aceptaMensajeria
+                ? "Invitar a postularse a este perfil"
+                : "Esta persona no acepta mensajes ni invitaciones"
+            }
+            onClick={enviarInvitacion}
+          >
+            {invitacionEnviada
+              ? "Invitación enviada"
+              : enviandoInvitacion
+                ? "Enviando invitación…"
+                : aceptaMensajeria
+                  ? "Invitar a postularse"
+                  : "No acepta invitaciones"}
+          </button>
+        )}
         <button
           type="button"
           className="boton boton--secundario"
@@ -119,6 +172,12 @@ export default function CardColaboradora({ colaboradora }) {
           {aceptaMensajeria ? "Contactar" : "No acepta mensajes"}
         </button>
       </div>
+      {invitacionEnviada && (
+        <Alert severity="success" role="status">
+          La invitación quedó en la bandeja de notificaciones de la persona.
+        </Alert>
+      )}
+      {errorInvitacion && <Alert severity="error">{errorInvitacion}</Alert>}
 
       <Dialog
         open={dialogoAbierto}

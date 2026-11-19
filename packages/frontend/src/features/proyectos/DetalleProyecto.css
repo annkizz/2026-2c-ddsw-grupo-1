@@ -316,6 +316,118 @@
   font-weight: 600;
 }
 
+.detalle-postulaciones {
+  margin: 32px 0;
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.detalle-postulaciones-encabezado {
+  margin-bottom: 20px;
+}
+
+.detalle-postulaciones-encabezado h2 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.detalle-postulaciones-encabezado p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.detalle-postulaciones-estado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: var(--muted);
+}
+
+.detalle-postulaciones-lista {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.detalle-postulacion-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detalle-postulacion-card__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detalle-postulacion-card__encabezado h3 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.detalle-postulacion-card__encabezado p,
+.detalle-postulacion-identidad,
+.detalle-postulacion-colaboradora p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detalle-postulacion-estado {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f0f2f5;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.detalle-postulacion-estado.aceptada {
+  background: #edf7ed;
+  color: #1e6b3a;
+}
+
+.detalle-postulacion-estado.rechazada {
+  background: #fff0ef;
+  color: #a52a21;
+}
+
+.detalle-postulacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detalle-postulacion-colaboradora {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.detalle-postulacion-colaboradora a {
+  color: var(--navy);
+}
+
+.detalle-postulacion-colaboradora ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
 .postulacion-dialogo {
   display: flex;
   flex-direction: column;

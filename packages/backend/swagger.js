@@ -976,6 +976,64 @@ const swaggerSpec = {
         },
       },
     },
+    "/proyectos/{idProyecto}/perfiles/{idPerfil}/invitaciones": {
+      post: {
+        summary: "Invita a una colaboradora a postularse a un perfil",
+        description:
+          "Requiere sesión autenticada como colectivo dueño del proyecto. La colaboradora debe aceptar mensajería y la búsqueda del proyecto y perfil debe estar abierta. La invitación aparece en su bandeja de notificaciones.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+          },
+          {
+            in: "path",
+            name: "idPerfil",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["idColaborador"],
+                properties: {
+                  idColaborador: { type: "string", format: "objectId" },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Invitación guardada en la bandeja de la colaboradora",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Notificacion" },
+              },
+            },
+          },
+          400: { description: "ID de colaboradora inválido" },
+          401: { description: "Sesión no autenticada" },
+          403: {
+            description:
+              "El colectivo no es dueño del proyecto o la colaboradora no acepta mensajería",
+          },
+          404: { description: "Proyecto, perfil o colaboradora no encontrada" },
+          409: {
+            description:
+              "Búsqueda cerrada, proyecto finalizado, postulación pendiente o colaboración existente",
+          },
+        },
+      },
+    },
     "/proyectos/{idProyecto}/postulaciones": {
       get: {
         security: [{ bearerAuth: [] }],
@@ -1014,7 +1072,7 @@ const swaggerSpec = {
       patch: {
         summary: "Acepta o rechaza una postulación pendiente",
         description:
-          "Requiere sesión autenticada del colectivo dueño del proyecto.",
+          "Requiere sesión autenticada del colectivo dueño del proyecto. La colaboradora recibe una notificación interna con el resultado.",
         parameters: [
           {
             in: "path",
@@ -1534,9 +1592,9 @@ const swaggerSpec = {
     },
     "/notificaciones": {
       get: {
-        summary: "Lista los mensajes de la cuenta autenticada",
+        summary: "Lista las notificaciones de la cuenta autenticada",
         description:
-          "Las cuentas COLECTIVO ven los mensajes enviados; las cuentas COLABORADOR ven los recibidos. La lista se limita al perfil asociado a la sesión autenticada.",
+          "Las cuentas COLECTIVO ven los mensajes e invitaciones enviados; las cuentas COLABORADOR ven mensajes, invitaciones y resultados de postulaciones. La lista se limita al perfil asociado a la sesión autenticada.",
         parameters: [
           {
             in: "query",
@@ -1554,7 +1612,7 @@ const swaggerSpec = {
         responses: {
           200: {
             description:
-              "Mensajes paginados. No incluye emails ni teléfonos.",
+              "Notificaciones paginadas. No incluye emails ni teléfonos.",
             content: {
               "application/json": {
                 schema: {
@@ -1611,6 +1669,7 @@ const swaggerSpec = {
                   id: "8f09d4b54eb34fc0a72a150",
                   fecha: "2026-10-15T04:20:00.000Z",
                   contenido: "Hola, queremos colaborar.",
+                  tipo: "MENSAJE",
                   idColectivo: "c00000000000000000000001",
                   idColaborador: "b00000000000000000000001",
                   nombreColectivo: "Fundación Código",
@@ -1910,6 +1969,7 @@ const swaggerSpec = {
           "id",
           "fecha",
           "contenido",
+          "tipo",
           "idColectivo",
           "idColaborador",
           "leida",
@@ -1919,8 +1979,20 @@ const swaggerSpec = {
           id: { type: "string", description: "ObjectId de MongoDB" },
           fecha: { type: "string", format: "date-time" },
           contenido: { type: "string" },
+          tipo: {
+            type: "string",
+            enum: [
+              "MENSAJE",
+              "POSTULACION_ACEPTADA",
+              "POSTULACION_RECHAZADA",
+              "INVITACION_POSTULACION",
+            ],
+          },
           idColectivo: { type: "string", description: "ObjectId de MongoDB" },
           idColaborador: { type: "string", description: "ObjectId de MongoDB" },
+          idProyecto: { type: "string", description: "ObjectId de MongoDB" },
+          idPerfil: { type: "string", description: "ObjectId de MongoDB" },
+          idPostulacion: { type: "string", description: "ObjectId de MongoDB" },
           nombreColectivo: { type: "string" },
           nombreColaborador: { type: "string" },
           leida: { type: "boolean" },

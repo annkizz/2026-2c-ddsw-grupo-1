@@ -96,6 +96,17 @@
   font-weight: 700;
 }
 
+.notificaciones-contenido .notificaciones-tipo {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.notificaciones-enlace {
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .notificaciones-contenido time,
 .notificaciones-contenido ul {
   color: var(--muted);

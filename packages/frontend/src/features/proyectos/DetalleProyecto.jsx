@@ -21,6 +21,8 @@ import {
   obtenerLogros,
   obtenerColaboraciones,
   crearPostulacion,
+  obtenerPostulaciones,
+  resolverPostulacion,
   crearLogro,
   configurarBusqueda,
   actualizarAvance,
@@ -30,8 +32,9 @@ import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fe
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
 import './DetalleProyecto.css';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
-import { codigoDeError } from '../../service/api';
+import { codigoDeError, mensajeDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
+import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
@@ -64,6 +67,14 @@ const DetalleProyecto = () => {
   const [errorPostulacion, setErrorPostulacion] = useState('');
   const [postulacionesEnviadas, setPostulacionesEnviadas] = useState({});
   const [postulacionesPendientes, setPostulacionesPendientes] = useState({});
+  const [misColaboraciones, setMisColaboraciones] = useState(null);
+  const [errorVerificarParticipacion, setErrorVerificarParticipacion] = useState('');
+  const [intentoVerificacion, setIntentoVerificacion] = useState(0);
+  const [postulacionesProyecto, setPostulacionesProyecto] = useState([]);
+  const [cargandoPostulaciones, setCargandoPostulaciones] = useState(false);
+  const [errorCargarPostulaciones, setErrorCargarPostulaciones] = useState('');
+  const [resolviendoPostulacionId, setResolviendoPostulacionId] = useState(null);
+  const [erroresResolucion, setErroresResolucion] = useState({});
 
   const [modalAvanceAbierto, setModalAvanceAbierto] = useState(false);
 
@@ -86,6 +97,11 @@ const DetalleProyecto = () => {
 
   const [avisoLinkedin, setAvisoLinkedin] = useState(null); // { severity, texto }
   const [publicandoId, setPublicandoId] = useState(null);
+  const esDueño = Boolean(
+    sesion?.idColectivo &&
+    proyecto?.idColectivo &&
+    String(proyecto.idColectivo) === String(sesion.idColectivo)
+  );
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -111,6 +127,56 @@ const DetalleProyecto = () => {
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  const cargarPostulaciones = useCallback(async () => {
+    if (!esDueño) return;
+    setCargandoPostulaciones(true);
+    setErrorCargarPostulaciones('');
+    try {
+      const token = await getAccessToken();
+      setPostulacionesProyecto(await obtenerPostulaciones(token, id));
+    } catch (error) {
+      setErrorCargarPostulaciones(mensajeDeError(error));
+    } finally {
+      setCargandoPostulaciones(false);
+    }
+  }, [esDueño, getAccessToken, id]);
+
+  useEffect(() => {
+    if (esDueño) {
+      cargarPostulaciones();
+    } else {
+      setPostulacionesProyecto([]);
+      setErrorCargarPostulaciones('');
+      setCargandoPostulaciones(false);
+    }
+  }, [cargarPostulaciones, esDueño]);
+
+  useEffect(() => {
+    if (sesion?.rol !== 'COLABORADOR') {
+      setMisColaboraciones([]);
+      setErrorVerificarParticipacion('');
+      return undefined;
+    }
+
+    let vigente = true;
+    setMisColaboraciones(null);
+    setErrorVerificarParticipacion('');
+    const cargarMisColaboraciones = async () => {
+      try {
+        const token = await getAccessToken();
+        const colaboracionesPropias = await obtenerMisColaboraciones(token);
+        if (vigente) setMisColaboraciones(colaboracionesPropias);
+      } catch (error) {
+        if (vigente) setErrorVerificarParticipacion(mensajeDeError(error));
+      }
+    };
+    cargarMisColaboraciones();
+
+    return () => {
+      vigente = false;
+    };
+  }, [getAccessToken, intentoVerificacion, sesion?.rol]);
 
   if (cargando) {
     return (
@@ -149,7 +215,16 @@ const DetalleProyecto = () => {
   }
 
   const esFinalizado = proyecto.estado === 'FINALIZADO';
-  const esDueño = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  const yaColaboraEnProyecto = Boolean(
+    sesion?.rol === 'COLABORADOR' &&
+    misColaboraciones?.some(
+      (colaboracion) => String(colaboracion.idProyecto) === String(id),
+    ),
+  );
+  const verificandoParticipacion =
+    sesion?.rol === 'COLABORADOR' &&
+    misColaboraciones === null &&
+    !errorVerificarParticipacion;
   const avance = Math.min(100, Math.max(0, Number(proyecto.porcentajeConcrecion) || 0));
   const busquedaVigente = Boolean(proyecto.busquedaVigente);
   const fechaLimiteBusqueda = formatearFecha(proyecto.fechaLimiteBusqueda);
@@ -204,6 +279,47 @@ const DetalleProyecto = () => {
       }
     } finally {
       setGuardandoPostulacion(false);
+    }
+  };
+
+  const resolverSolicitud = async (postulacion, decision) => {
+    setResolviendoPostulacionId(postulacion.id);
+    setErroresResolucion((actuales) => ({
+      ...actuales,
+      [postulacion.id]: '',
+    }));
+    try {
+      const token = await getAccessToken();
+      const resuelta = await resolverPostulacion(
+        token,
+        id,
+        postulacion.id,
+        decision,
+      );
+      setPostulacionesProyecto((actuales) =>
+        actuales.map((actual) =>
+          actual.id === resuelta.id ? resuelta : actual,
+        ),
+      );
+      if (decision === 'ACEPTADA') {
+        setColaboraciones((actuales) =>
+          actuales === null
+            ? actuales
+            : [...actuales, { idPerfil: resuelta.idPerfil }],
+        );
+      }
+      await cargarPostulaciones();
+    } catch (error) {
+      const mensaje =
+        codigoDeError(error) === 'LIMITE_COLABORACIONES_ALCANZADO'
+          ? t('detalleProyecto.errorLimitePostulacion')
+          : mensajeDeError(error) || t('detalleProyecto.errorResolverPostulacion');
+      setErroresResolucion((actuales) => ({
+        ...actuales,
+        [postulacion.id]: mensaje,
+      }));
+    } finally {
+      setResolviendoPostulacionId(null);
     }
   };
 
@@ -483,6 +599,23 @@ const DetalleProyecto = () => {
                 {t('detalleProyecto.errorCargarVacantes')}
               </Alert>
             )}
+          {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => setIntentoVerificacion((intento) => intento + 1)}
+                >
+                  {t('detalleProyecto.reintentarVerificacion')}
+                </Button>
+              }
+            >
+              {t('detalleProyecto.errorVerificarParticipacion')}
+            </Alert>
+          )}
           <div className="detalle-perfiles-grid">
             {perfiles.length > 0 ? (
               perfiles.map((perfil) => {
@@ -559,6 +692,9 @@ const DetalleProyecto = () => {
                       esDueño ||
                       authCargando ||
                       (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
+                      yaColaboraEnProyecto ||
+                      verificandoParticipacion ||
+                      Boolean(errorVerificarParticipacion) ||
                       Boolean(postulacionesEnviadas[perfil.id]) ||
                       Boolean(postulacionesPendientes[perfil.id]) ||
                       vacantesDisponibles === 0
@@ -566,7 +702,13 @@ const DetalleProyecto = () => {
                     onClick={() => abrirPostulacion(perfil)}
                     sx={{ mt: 2 }}
                   >
-                    {postulacionesEnviadas[perfil.id]
+                    {yaColaboraEnProyecto
+                      ? t('detalleProyecto.yaColaboraEnProyecto')
+                      : verificandoParticipacion
+                        ? t('detalleProyecto.verificandoParticipacion')
+                        : errorVerificarParticipacion
+                          ? t('detalleProyecto.errorVerificarParticipacionCorto')
+                          : postulacionesEnviadas[perfil.id]
                       ? t('detalleProyecto.postulacionEnviada')
                       : postulacionesPendientes[perfil.id]
                         ? t('detalleProyecto.postulacionPendiente')
@@ -586,6 +728,202 @@ const DetalleProyecto = () => {
             )}
           </div>
         </div>
+
+        {esDueño && (
+          <section
+            className="detalle-postulaciones"
+            aria-labelledby="detalle-postulaciones-titulo"
+          >
+            <header className="detalle-postulaciones-encabezado">
+              <div>
+                <h2 id="detalle-postulaciones-titulo">
+                  {t('detalleProyecto.seccionPostulaciones')}
+                </h2>
+                <p>{t('detalleProyecto.ayudaPostulaciones')}</p>
+              </div>
+            </header>
+
+            {cargandoPostulaciones && (
+              <div className="detalle-postulaciones-estado" role="status">
+                <CircularProgress size={22} />
+                <span>{t('detalleProyecto.cargandoPostulaciones')}</span>
+              </div>
+            )}
+
+            {errorCargarPostulaciones && (
+              <Alert
+                severity="error"
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={cargarPostulaciones}
+                  >
+                    {t('detalleProyecto.reintentarPostulaciones')}
+                  </Button>
+                }
+              >
+                {errorCargarPostulaciones}
+              </Alert>
+            )}
+
+            {!cargandoPostulaciones &&
+              !errorCargarPostulaciones &&
+              postulacionesProyecto.length === 0 && (
+                <p className="texto-muted">
+                  {t('detalleProyecto.sinPostulaciones')}
+                </p>
+              )}
+
+            <div className="detalle-postulaciones-lista">
+              {postulacionesProyecto.map((postulacion) => {
+                const perfil = perfiles.find(
+                  (item) => String(item.id) === String(postulacion.idPerfil),
+                );
+                const colaboradora = postulacion.colaborador;
+                const nombre =
+                  [colaboradora?.nombre, colaboradora?.apellido]
+                    .filter(Boolean)
+                    .join(' ') ||
+                  colaboradora?.nombreFantasia ||
+                  t('detalleProyecto.nombreNoDisponible');
+                const fecha = formatearFecha(postulacion.fechaPostulacion);
+                const perfilCompleto =
+                  perfil?.limiteColaboraciones != null &&
+                  (colaboraciones === null ||
+                    colaboraciones.filter(
+                      (colaboracion) =>
+                        String(colaboracion.idPerfil) ===
+                        String(postulacion.idPerfil),
+                    ).length >= perfil.limiteColaboraciones);
+                const estadoTexto = {
+                  PENDIENTE: t('detalleProyecto.estadoPendiente'),
+                  ACEPTADA: t('detalleProyecto.estadoAceptada'),
+                  RECHAZADA: t('detalleProyecto.estadoRechazada'),
+                }[postulacion.estado] ?? postulacion.estado;
+
+                return (
+                  <article
+                    className="detalle-postulacion-card"
+                    key={postulacion.id}
+                    aria-label={`${perfil?.descripcion ?? t('detalleProyecto.seccionPerfiles')}: ${estadoTexto}`}
+                  >
+                    <div className="detalle-postulacion-card__encabezado">
+                      <div>
+                        <h3>
+                          {t('detalleProyecto.perfilPostulacion', {
+                            perfil:
+                              perfil?.descripcion ??
+                              t('detalleProyecto.nombreNoDisponible'),
+                          })}
+                        </h3>
+                        {fecha && (
+                          <p>
+                            {t('detalleProyecto.fechaPostulacion', { fecha })}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`detalle-postulacion-estado ${postulacion.estado.toLowerCase()}`}
+                      >
+                        {estadoTexto}
+                      </span>
+                    </div>
+
+                    {postulacion.estado === 'PENDIENTE' && (
+                      <>
+                        <p className="detalle-postulacion-identidad">
+                          {postulacion.esAnonima &&
+                            `${t('detalleProyecto.postulacionAnonima')} `}
+                          {t('detalleProyecto.identidadAlAceptar')}
+                        </p>
+                        {perfilCompleto && (
+                          <Alert severity="warning">
+                            {t('detalleProyecto.sinVacantesParaAceptar')}
+                          </Alert>
+                        )}
+                        {erroresResolucion[postulacion.id] && (
+                          <Alert severity="error">
+                            {erroresResolucion[postulacion.id]}
+                          </Alert>
+                        )}
+                        <div className="detalle-postulacion-acciones">
+                          <Button
+                            variant="contained"
+                            disabled={
+                              resolviendoPostulacionId !== null ||
+                              perfilCompleto ||
+                              esFinalizado
+                            }
+                            onClick={() =>
+                              resolverSolicitud(postulacion, 'ACEPTADA')
+                            }
+                          >
+                            {resolviendoPostulacionId === postulacion.id
+                              ? t('detalleProyecto.resolviendoPostulacion')
+                              : t('detalleProyecto.aceptarPostulacion')}
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            disabled={resolviendoPostulacionId !== null}
+                            onClick={() =>
+                              resolverSolicitud(postulacion, 'RECHAZADA')
+                            }
+                          >
+                            {resolviendoPostulacionId === postulacion.id
+                              ? t('detalleProyecto.resolviendoPostulacion')
+                              : t('detalleProyecto.rechazarPostulacion')}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {postulacion.estado === 'ACEPTADA' && colaboradora && (
+                      <div className="detalle-postulacion-colaboradora">
+                        <strong>
+                          {t('detalleProyecto.colaboradoraAceptada')}: {nombre}
+                        </strong>
+                        {colaboradora.pronombres?.length > 0 && (
+                          <p>
+                            {t('detalleProyecto.pronombresColaboradora')}:{' '}
+                            {colaboradora.pronombres.join(', ')}
+                          </p>
+                        )}
+                        {colaboradora.usuarioGitHub && (
+                          <p>
+                            {t('detalleProyecto.githubColaboradora')}:{' '}
+                            <a
+                              href={`https://github.com/${colaboradora.usuarioGitHub}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              @{colaboradora.usuarioGitHub}
+                            </a>
+                          </p>
+                        )}
+                        <div>
+                          <strong>{t('detalleProyecto.contactoColaboradora')}</strong>
+                          {colaboradora.mediosDeContacto?.length > 0 ? (
+                            <ul>
+                              {colaboradora.mediosDeContacto.map((medio, indice) => (
+                                <li key={`${medio.tipoDeContacto}-${indice}`}>
+                                  {medio.tipoDeContacto}: {medio.contacto}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <div className="detalle-enlaces-externos" style={{ margin: '24px 0' }}>
           <h2>{t('detalleProyecto.seccionEnlaces')}</h2>

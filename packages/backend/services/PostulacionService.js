@@ -16,6 +16,8 @@ import { PostulacionRepository } from "../repositories/PostulacionRepository.js"
 import { TipoAceptacion } from "../domain/TipoAceptacion.js";
 import { EventoWebhook } from "../domain/EventoWebhook.js";
 import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
+import { NotificacionService } from "./NotificacionService.js";
+import { TipoNotificacion } from "../domain/TipoNotificacion.js";
 
 export class PostulacionService {
   constructor(
@@ -25,6 +27,7 @@ export class PostulacionService {
     colaboracionRepository = new ColaboracionRepository(),
     postulacionRepository = new PostulacionRepository(),
     despachadorWebhooks = despachadorNulo,
+    notificacionService = new NotificacionService(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
@@ -32,6 +35,7 @@ export class PostulacionService {
     this.colaboracionRepository = colaboracionRepository;
     this.postulacionRepository = postulacionRepository;
     this.despachadorWebhooks = despachadorWebhooks;
+    this.notificacionService = notificacionService;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -209,6 +213,69 @@ export class PostulacionService {
     return postulaciones.map((postulacion) => this.toDTO(postulacion));
   }
 
+  async invitar(idProyecto, idPerfil, idColaborador, actor) {
+    const { proyecto, perfil } = await this.buscarProyectoYPerfil(
+      idProyecto,
+      idPerfil,
+    );
+    this.validarColectivoDelProyecto(actor, proyecto);
+    this.validarProyectoAbierto(proyecto);
+
+    if (!this.busquedaAbierta(proyecto) || perfil.busquedaAbierta === false) {
+      throw new ConflictError(
+        "La búsqueda de colaboraciones está cerrada",
+        "BUSQUEDA_CERRADA",
+      );
+    }
+
+    const colaboradora =
+      await this.colaboradorService.obtenerPorId(idColaborador);
+    if (!colaboradora) {
+      throw new NotFoundError(
+        "La persona colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+    if (!colaboradora.aceptaMensajeria) {
+      throw new ForbiddenError(
+        "La persona colaboradora no acepta invitaciones ni mensajes",
+        "COLABORADORA_NO_ACEPTA_MENSAJERIA",
+      );
+    }
+    if (
+      await this.colaboracionRepository.existeColaboracion(
+        idProyecto,
+        idColaborador,
+      )
+    ) {
+      throw new ConflictError(
+        "La persona ya participa de este proyecto",
+        "COLABORACION_YA_EXISTENTE",
+      );
+    }
+    if (
+      await this.postulacionRepository.existePendiente(
+        idProyecto,
+        idPerfil,
+        idColaborador,
+      )
+    ) {
+      throw new ConflictError(
+        "La persona ya tiene una postulación pendiente para este perfil",
+        "POSTULACION_YA_EXISTENTE",
+      );
+    }
+
+    return this.notificacionService.crearEventoSistema({
+      tipo: TipoNotificacion.INVITACION_POSTULACION,
+      contenido: `El colectivo te invita a postularte al perfil "${perfil.descripcion}" del proyecto "${proyecto.titulo}".`,
+      idColectivo: proyecto.idColectivo,
+      idColaborador: colaboradora._id ?? colaboradora.id,
+      idProyecto: proyecto._id,
+      idPerfil: perfil._id ?? perfil.id,
+    });
+  }
+
   async resolver(idProyecto, idPostulacion, decision, actor) {
     if (
       decision !== EstadoPostulacion.ACEPTADA &&
@@ -255,6 +322,31 @@ export class PostulacionService {
           "La postulación ya fue resuelta",
           "POSTULACION_YA_RESUELTA",
         );
+      }
+      try {
+        await this.notificacionService.notificarResolucionPostulacion(
+          proyecto,
+          rechazada,
+          EstadoPostulacion.RECHAZADA,
+        );
+      } catch (error) {
+        let resultado;
+        try {
+          resultado =
+            await this.postulacionRepository.reabrirSiRechazada(idPostulacion);
+        } catch (errorRollback) {
+          throw new AggregateError(
+            [error, errorRollback],
+            "Falló el rechazo y también su reversión",
+          );
+        }
+        if (resultado.modifiedCount !== 1) {
+          throw new AggregateError(
+            [error, new Error("No se pudo reabrir la postulación")],
+            "Falló el rechazo y también su reversión",
+          );
+        }
+        throw error;
       }
       return this.toDTO(rechazada);
     }
@@ -336,24 +428,12 @@ export class PostulacionService {
       );
       colaboracionCreada = true;
 
-       const resultado = this.toDTO({
-        ...postulacion.toObject(),
-        estado: EstadoPostulacion.ACEPTADA,
-        idColaborador: colaborador,
-      });
-            this.despachadorWebhooks.emitir(
-        EventoWebhook.COLABORACION_ACEPTADA,
-        proyecto.idColectivo,
-        {
-          idProyecto: String(proyecto._id),
-          tituloProyecto: proyecto.titulo,
-          idPerfil: String(perfil._id),
-          idPostulacion: String(idPostulacion),
-          esAnonima: Boolean(postulacion.esAnonima),
-          fecha: new Date().toISOString(),
-        },
+      await this.notificacionService.notificarResolucionPostulacion(
+        proyecto,
+        { ...postulacion, idColaborador: colaborador._id },
+        EstadoPostulacion.ACEPTADA,
+        perfil,
       );
-      return resultado;
     } catch (error) {
       const erroresRollback = [];
       if (colaboracionCreada) {
@@ -397,16 +477,40 @@ export class PostulacionService {
       await this.perfilRepository.actualizar(perfil._id, {
         busquedaAbierta: false,
       });
-      await this.postulacionRepository.rechazarPendientesPorPerfil(perfil._id);
+      const rechazadas =
+        await this.postulacionRepository.rechazarPendientesPorPerfil(
+          perfil._id,
+        );
+      for (const rechazada of rechazadas) {
+        await this.notificacionService.notificarResolucionPostulacion(
+          proyecto,
+          rechazada,
+          EstadoPostulacion.RECHAZADA,
+          perfil,
+        );
+      }
     }
 
-    return this.toDTO({
+    const resultado = this.toDTO({
       ...(typeof postulacion.toObject === "function"
         ? postulacion.toObject()
         : postulacion),
       estado: EstadoPostulacion.ACEPTADA,
       idColaborador: colaborador,
     });
+    this.despachadorWebhooks.emitir(
+      EventoWebhook.COLABORACION_ACEPTADA,
+      proyecto.idColectivo,
+      {
+        idProyecto: String(proyecto._id),
+        tituloProyecto: proyecto.titulo,
+        idPerfil: String(perfil._id),
+        idPostulacion: String(idPostulacion),
+        esAnonima: Boolean(postulacion.esAnonima),
+        fecha: new Date().toISOString(),
+      },
+    );
+    return resultado;
   }
 
   async darDeBaja(idProyecto, idColaborador, actor) {

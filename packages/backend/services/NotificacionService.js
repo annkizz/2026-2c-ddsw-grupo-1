@@ -1,6 +1,8 @@
 import { Rol } from "../domain/Rol.js";
+import { EstadoPostulacion } from "../domain/EstadoPostulacion.js";
 import { Notificacion } from "../domain/Notificacion.js";
 import { EstadoEnvio } from "../domain/EstadoEnvio.js";
+import { TipoNotificacion } from "../domain/TipoNotificacion.js";
 import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
 import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js";
@@ -25,8 +27,16 @@ export class NotificacionService {
       id: String(notificacion.id ?? notificacion._id),
       fecha: notificacion.fecha,
       contenido: notificacion.contenido,
+      tipo: notificacion.tipo ?? TipoNotificacion.MENSAJE,
       idColectivo: String(notificacion.idColectivo),
       idColaborador: String(notificacion.idColaborador),
+      ...(notificacion.idProyecto && {
+        idProyecto: String(notificacion.idProyecto),
+      }),
+      ...(notificacion.idPerfil && { idPerfil: String(notificacion.idPerfil) }),
+      ...(notificacion.idPostulacion && {
+        idPostulacion: String(notificacion.idPostulacion),
+      }),
       ...(nombres.nombreColectivo && {
         nombreColectivo: nombres.nombreColectivo,
       }),
@@ -120,6 +130,7 @@ export class NotificacionService {
 
     const notificacion = new Notificacion({
       contenido: datosNotificacion.contenido,
+      tipo: TipoNotificacion.MENSAJE,
       idColectivo: colectivo._id,
       idColaborador: colaboradora._id,
     });
@@ -165,6 +176,32 @@ export class NotificacionService {
     });
   }
 
+  async crearEventoSistema(datos) {
+    const notificacion = new Notificacion(datos);
+    const guardada = await this.notificacionRepository.save(notificacion);
+    return this.toDTO(guardada);
+  }
+
+  notificarResolucionPostulacion(proyecto, postulacion, estado, perfil) {
+    const aceptada = estado === EstadoPostulacion.ACEPTADA;
+    const detallePerfil = perfil?.descripcion
+      ? ` al perfil "${perfil.descripcion}"`
+      : "";
+
+    return this.crearEventoSistema({
+      tipo: aceptada
+        ? TipoNotificacion.POSTULACION_ACEPTADA
+        : TipoNotificacion.POSTULACION_RECHAZADA,
+      contenido: `Tu postulación${detallePerfil} del proyecto "${proyecto.titulo}" fue ${aceptada ? "aceptada" : "rechazada"}.`,
+      idColectivo: proyecto.idColectivo,
+      idColaborador:
+        postulacion.idColaborador?._id ?? postulacion.idColaborador,
+      idProyecto: proyecto._id,
+      idPerfil: postulacion.idPerfil,
+      idPostulacion: postulacion._id ?? postulacion.id,
+    });
+  }
+
   async obtenerPerfilPropio(usuario) {
     if (usuario?.rol === Rol.COLECTIVO) {
       const colectivo = await this.colectivoRepository.buscarPorUsuario(
@@ -177,7 +214,20 @@ export class NotificacionService {
         );
       }
       return {
-        filtro: { idColectivo: colectivo._id },
+        filtro: {
+          idColectivo: colectivo._id,
+          $or: [
+            {
+              tipo: {
+                $in: [
+                  TipoNotificacion.MENSAJE,
+                  TipoNotificacion.INVITACION_POSTULACION,
+                ],
+              },
+            },
+            { tipo: { $exists: false } },
+          ],
+        },
         idPropiedad: "idColectivo",
         idPerfil: colectivo._id,
       };

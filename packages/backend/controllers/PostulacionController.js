@@ -17,6 +17,12 @@ export const resolverPostulacionSchema = z
   })
   .strict();
 
+export const crearInvitacionSchema = z
+  .object({
+    idColaborador: z.string().trim().regex(/^[\da-f]{24}$/i),
+  })
+  .strict();
+
 export class PostulacionController {
   constructor(
     postulacionService = new PostulacionService(),
@@ -54,6 +60,17 @@ export class PostulacionController {
       actor,
     );
     res.status(201).json(postulacion);
+  };
+
+  invitar = async (req, res) => {
+    const actor = await this.obtenerActor(req);
+    const invitacion = await this.postulacionService.invitar(
+      req.params.idProyecto,
+      req.params.idPerfil,
+      req.body.idColaborador,
+      actor,
+    );
+    res.status(201).json(invitacion);
   };
 
   obtenerPorProyecto = async (req, res) => {

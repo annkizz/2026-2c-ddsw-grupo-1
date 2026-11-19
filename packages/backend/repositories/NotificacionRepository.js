@@ -39,8 +39,12 @@ export class NotificacionRepository {
     const datos = {
       fecha: notificacion.fecha,
       contenido: notificacion.contenido,
+      tipo: notificacion.tipo,
       idColectivo: notificacion.idColectivo,
       idColaborador: notificacion.idColaborador,
+      idProyecto: notificacion.idProyecto,
+      idPerfil: notificacion.idPerfil,
+      idPostulacion: notificacion.idPostulacion,
       envios: notificacion.envios,
       leida: notificacion.leida,
     };

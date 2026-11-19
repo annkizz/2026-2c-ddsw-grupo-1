@@ -21,7 +21,9 @@ import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { EstadoPostulacion } from "../domain/EstadoPostulacion.js";
 import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
+import { NotificacionService } from "./NotificacionService.js";
 
 const NIVELES_MAPA = new Set(["provincia", "pais"]);
 const ESTADOS_VALIDOS = new Set(Object.values(Estado));
@@ -36,6 +38,7 @@ export class ProyectoService {
     perfilRepository = new PerfilRepository(),
     postulacionRepository = new PostulacionRepository(),
     despachadorWebhooks = despachadorNulo,
+    notificacionService = new NotificacionService(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
@@ -45,6 +48,7 @@ export class ProyectoService {
     this.perfilRepository = perfilRepository;
     this.postulacionRepository = postulacionRepository;
     this.despachadorWebhooks = despachadorWebhooks;
+    this.notificacionService = notificacionService;
   }
 
   crear = async (datosProyecto, usuario) => {
@@ -218,21 +222,29 @@ export class ProyectoService {
     const guardado = await this.proyectoRepository.save(proyecto);
     // Al cerrarse el proyecto, las postulaciones pendientes se rechazan.
     if (!yaEstabaFinalizado) {
-    await this.postulacionRepository.rechazarPendientesDeProyecto(
-    proyecto._id,
-  );
+      const rechazadas =
+        await this.postulacionRepository.rechazarPendientesDeProyecto(
+          proyecto._id,
+        );
+      for (const rechazada of rechazadas) {
+        await this.notificacionService.notificarResolucionPostulacion(
+          proyecto,
+          rechazada,
+          EstadoPostulacion.RECHAZADA,
+        );
+      }
 
-    this.despachadorWebhooks.emitir(
-    EventoWebhook.PROYECTO_CERRADO,
-    proyecto.idColectivo,
-    {
-      idProyecto: String(proyecto._id),
-      titulo: proyecto.titulo,
-      motivo,
-      fecha: new Date().toISOString(),
-    },
-  );
-}
+      this.despachadorWebhooks.emitir(
+        EventoWebhook.PROYECTO_CERRADO,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          titulo: proyecto.titulo,
+          motivo,
+          fecha: new Date().toISOString(),
+        },
+      );
+    }
     return guardado;
   }
 

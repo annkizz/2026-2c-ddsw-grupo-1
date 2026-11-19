@@ -107,6 +107,12 @@ const colaboradorController = new ColaboradorController(colaboradorService);
 
 const postulacionRepository = new PostulacionRepository();
 const perfilRepository = new PerfilRepository();
+const notificacionRepository = new NotificacionRepository();
+const notificacionService = new NotificacionService(
+  notificacionRepository,
+  colectivoRepository,
+  colaboradorRepository,
+);
 
 const proyectoService = new ProyectoService(
   proyectoRepository,
@@ -117,6 +123,7 @@ const proyectoService = new ProyectoService(
   perfilRepository,
   postulacionRepository,
   despachadorWebhooks,
+  notificacionService,
 );
 const proyectoController = new ProyectoController(proyectoService);
 
@@ -133,6 +140,7 @@ const postulacionService = new PostulacionService(
   colaboracionRepository,
   postulacionRepository,
   despachadorWebhooks,
+  notificacionService,
 );
 const postulacionController = new PostulacionController(
   postulacionService,
@@ -162,12 +170,6 @@ const logroRepository = new LogroRepository();
 const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedinService);
 const logroController = new LogroController(logroService);
 
-const notificacionRepository = new NotificacionRepository();
-const notificacionService = new NotificacionService(
-  notificacionRepository,
-  colectivoRepository,
-  colaboradorRepository,
-);
 const notificacionController = new NotificacionController(notificacionService);
 
 const matchingService = new MatchingService(

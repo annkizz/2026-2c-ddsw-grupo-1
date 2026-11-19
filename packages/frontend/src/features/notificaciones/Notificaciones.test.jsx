@@ -10,6 +10,14 @@ jest.mock('../../hooks/useAuth.jsx', () => ({
   useAuth: jest.fn(),
 }));
 
+jest.mock('react-router-dom', () => {
+  const ReactActual = jest.requireActual('react');
+  return {
+    Link: ({ to, children, ...props }) =>
+      ReactActual.createElement('a', { href: to, ...props }, children),
+  };
+});
+
 jest.mock('../../service/notificacionesService', () => ({
   obtenerNotificaciones: jest.fn(),
 }));
@@ -32,7 +40,7 @@ describe('Notificaciones', () => {
 
     render(<Notificaciones />);
 
-    expect(await screen.findByText('Aún no recibiste mensajes')).toBeInTheDocument();
+    expect(await screen.findByText('Aún no recibiste notificaciones')).toBeInTheDocument();
     expect(obtenerNotificaciones).toHaveBeenCalledWith('token', {
       pag: 1,
       limite: 8,
@@ -104,5 +112,40 @@ describe('Notificaciones', () => {
 
     expect(await screen.findByText('Para Ada')).toBeInTheDocument();
     expect(screen.getByText('EMAIL: SIMULADO')).toBeInTheDocument();
+  });
+
+  it('muestra decisiones de postulación e invitaciones con enlaces útiles', async () => {
+    obtenerNotificaciones.mockResolvedValue({
+      notificaciones: [
+        {
+          id: 'n-1',
+          tipo: 'POSTULACION_ACEPTADA',
+          contenido: 'Tu postulación fue aceptada.',
+          nombreColectivo: 'Fundación',
+          idProyecto: 'proyecto-1',
+        },
+        {
+          id: 'n-2',
+          tipo: 'INVITACION_POSTULACION',
+          contenido: 'Te invitaron a postularte.',
+          nombreColectivo: 'Asamblea',
+          idProyecto: 'proyecto-2',
+        },
+      ],
+      totalPags: 1,
+      pag: 1,
+    });
+
+    render(<Notificaciones />);
+
+    expect(
+      await screen.findByText('Postulación aceptada'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Ver mis colaboraciones' }),
+    ).toHaveAttribute('href', '/mis-colaboraciones');
+    expect(
+      screen.getByRole('link', { name: 'Ver proyecto' }),
+    ).toHaveAttribute('href', '/proyectos/proyecto-2');
   });
 });

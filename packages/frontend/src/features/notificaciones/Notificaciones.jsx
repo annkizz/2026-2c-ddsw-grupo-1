@@ -1,10 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { mensajeDeError } from '../../service/api';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
 import './Notificaciones.css';
 
 const LIMITE_POR_PAGINA = 8;
+const ETIQUETAS_TIPO = {
+  MENSAJE: 'Mensaje',
+  POSTULACION_ACEPTADA: 'Postulación aceptada',
+  POSTULACION_RECHAZADA: 'Postulación rechazada',
+  INVITACION_POSTULACION: 'Invitación a postularse',
+};
 
 function mostrarFecha(fecha) {
   const valor = new Date(fecha);
@@ -69,7 +76,9 @@ const Notificaciones = () => {
   }, [cargarPagina]);
 
   const hayMas = pagina < totalPaginas;
-  const tituloBandeja = esColectivo ? 'Mensajes enviados' : 'Mensajes recibidos';
+  const tituloBandeja = esColectivo
+    ? 'Mensajes e invitaciones enviados'
+    : 'Notificaciones recibidas';
 
   return (
     <section className="notificaciones-pagina" aria-labelledby="notificaciones-titulo">
@@ -91,11 +100,15 @@ const Notificaciones = () => {
         ) : notificaciones.length === 0 ? (
           <div className="notificaciones-vacias">
             <div>
-              <h2>{esColectivo ? 'Aún no enviaste mensajes' : 'Aún no recibiste mensajes'}</h2>
+              <h2>
+                {esColectivo
+                  ? 'Aún no enviaste mensajes ni invitaciones'
+                  : 'Aún no recibiste notificaciones'}
+              </h2>
               <p>
                 {esColectivo
-                  ? 'Cuando contactes a una persona colaboradora, tus mensajes aparecerán acá.'
-                  : 'Cuando un colectivo te escriba, el mensaje aparecerá acá.'}
+                  ? 'Cuando contactes o invites a una persona colaboradora, aparecerá acá.'
+                  : 'Cuando un colectivo te escriba, te invite o resuelva tu postulación, aparecerá acá.'}
               </p>
             </div>
           </div>
@@ -103,11 +116,18 @@ const Notificaciones = () => {
           <>
             <ul className="notificaciones-lista">
               {notificaciones.map((notificacion) => {
-                const contenido = notificacion.contenido || 'Nuevo mensaje';
+                const contenido = notificacion.contenido || 'Nueva notificación';
+                const tipo = notificacion.tipo || 'MENSAJE';
                 const contraparte = esColectivo
                   ? notificacion.nombreColaborador || 'Persona colaboradora'
                   : notificacion.nombreColectivo || 'Colectivo';
                 const noLeida = notificacion.leida === false;
+                const enlace =
+                  tipo === 'POSTULACION_ACEPTADA'
+                    ? '/mis-colaboraciones'
+                    : notificacion.idProyecto
+                      ? `/proyectos/${notificacion.idProyecto}`
+                      : null;
 
                 return (
                   <li
@@ -121,7 +141,17 @@ const Notificaciones = () => {
                       <p className="notificaciones-contraparte">
                         {esColectivo ? `Para ${contraparte}` : `De ${contraparte}`}
                       </p>
+                      <p className="notificaciones-tipo">
+                        {ETIQUETAS_TIPO[tipo] || 'Notificación'}
+                      </p>
                       <p>{contenido}</p>
+                      {enlace && (
+                        <Link className="notificaciones-enlace" to={enlace}>
+                          {tipo === 'POSTULACION_ACEPTADA'
+                            ? 'Ver mis colaboraciones'
+                            : 'Ver proyecto'}
+                        </Link>
+                      )}
                       {mostrarFecha(notificacion.fecha) && (
                         <time dateTime={notificacion.fecha}>
                           {mostrarFecha(notificacion.fecha)}
