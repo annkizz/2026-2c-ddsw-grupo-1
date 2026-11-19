@@ -43,6 +43,12 @@ export function crearPostulacionRouter(
     );
 
   router
+    .route("/colaboraciones/gestion")
+    .get(autenticar, (req, res) =>
+      postulacionController.obtenerColaboracionesParaGestion(req, res),
+    );
+
+  router
     .route("/colaboraciones/:idColaborador")
     .delete(autenticar, (req, res) =>
       postulacionController.darDeBaja(req, res),

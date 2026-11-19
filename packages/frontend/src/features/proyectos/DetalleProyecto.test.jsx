@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import {
   crearPostulacion,
   obtenerColaboraciones,
+  obtenerColaboracionesParaGestion,
   obtenerLogros,
   obtenerPostulaciones,
   obtenerPerfiles,
@@ -45,6 +46,8 @@ jest.mock('react-router-dom', () => ({
 jest.mock('../../service/proyectosService', () => ({
   crearPostulacion: jest.fn(),
   obtenerColaboraciones: jest.fn(),
+  obtenerColaboracionesParaGestion: jest.fn(),
+  darDeBajaColaboracion: jest.fn(),
   obtenerLogros: jest.fn(),
   obtenerPostulaciones: jest.fn(),
   obtenerPerfiles: jest.fn(),
@@ -90,6 +93,7 @@ describe('DetalleProyecto - postulaciones', () => {
     ]);
     obtenerLogros.mockResolvedValue([]);
     obtenerColaboraciones.mockResolvedValue([]);
+    obtenerColaboracionesParaGestion.mockResolvedValue([]);
     obtenerPostulaciones.mockResolvedValue([]);
     obtenerMisColaboraciones.mockResolvedValue([]);
     crearPostulacion.mockResolvedValue({ id: 'postulacion-1', estado: 'PENDIENTE' });

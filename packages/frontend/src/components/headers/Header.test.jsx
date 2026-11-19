@@ -57,6 +57,8 @@ describe('Header', () => {
       'page',
     );
     expect(within(navegacion).queryByRole('link', { name: 'Mapa' })).not.toBeInTheDocument();
+    expect(within(navegacion).getByRole('link', { name: 'Mis colaboraciones' })).toHaveAttribute('href', '/mis-colaboraciones');
+    expect(within(navegacion).getByRole('link', { name: 'Mis postulaciones' })).toHaveAttribute('href', '/mis-postulaciones');
     expect(within(navegacion).getByRole('button', { name: 'Salir' })).toBeInTheDocument();
 
     fireEvent.keyDown(document.activeElement, { key: 'Escape', code: 'Escape' });
@@ -98,5 +100,7 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Mi perfil' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Proyectos' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Buscar colaboradores' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mis postulaciones' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mis colaboraciones' })).not.toBeInTheDocument();
   });
 });

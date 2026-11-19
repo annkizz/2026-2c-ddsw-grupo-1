@@ -1,7 +1,7 @@
 import { t } from '../../i18n/t';
 import React, { useMemo, useState } from "react";
 import { Button } from "@mui/material";
-import { FiFilter, FiRotateCcw, FiSearch } from "react-icons/fi";
+import { FiRotateCcw, FiSearch } from "react-icons/fi";
 import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
 import AlertaError from "../../components/AlertaError/AlertaError.jsx";
 import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
@@ -47,7 +47,6 @@ export default function BuscadorProyectos() {
 
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
   const [filtrosAplicados, setFiltrosAplicados] = useState(null);
-  const [mostrarMas, setMostrarMas] = useState(false);
 
   const habilidadesState = useListado("/habilidades");
   const etiquetasState = useListado("/etiquetas");
@@ -268,55 +267,6 @@ export default function BuscadorProyectos() {
           </div>
         </div>
 
-        <div className="filtros__acciones">
-          <Button
-            variant="outlined"
-            type="button"
-            aria-expanded={mostrarMas}
-            aria-controls="filtros-avanzados"
-            startIcon={<FiFilter aria-hidden="true" />}
-            onClick={() => setMostrarMas((actual) => !actual)}
-          >
-            {mostrarMas ? "Ocultar más filtros" : "Más filtros"}
-          </Button>
-          <Button
-            type="button"
-            variant="text"
-            startIcon={<FiRotateCcw aria-hidden="true" />}
-            onClick={limpiarFiltros}
-          >
-            Limpiar filtros
-          </Button>
-          <Button variant="contained" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
-            Buscar proyectos
-          </Button>
-        </div>
-
-        {hayFiltros && (
-          <p className="filtros__resumen">
-            {filtros.habilidades.length > 0 &&
-              `${filtros.habilidades.length} habilidad${
-                filtros.habilidades.length === 1 ? "" : "es"
-              } · `}
-            {filtros.etiquetas.length > 0 &&
-              `${filtros.etiquetas.length} etiqueta${
-                filtros.etiquetas.length === 1 ? "" : "s"
-              } · `}
-            {filtros.idColectivos.length > 0 &&
-              `${filtros.idColectivos.length} colectivo${
-                filtros.idColectivos.length === 1 ? "" : "s"
-              } · `}
-            {filtros.provincias.length > 0 &&
-              `${filtros.provincias.length} provincia${
-                filtros.provincias.length === 1 ? "" : "s"
-              } · `}
-            {filtrosPendientes
-              ? "presioná Buscar para aplicar"
-              : "filtros aplicados"}
-          </p>
-        )}
-
-        {mostrarMas && (
           <div className="filtros__avanzados" id="filtros-avanzados">
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
@@ -355,6 +305,42 @@ export default function BuscadorProyectos() {
               />
             </div>
           </div>
+        <div className="filtros__acciones">
+          <Button
+            type="button"
+            variant="text"
+            startIcon={<FiRotateCcw aria-hidden="true" />}
+            onClick={limpiarFiltros}
+          >
+            Limpiar filtros
+          </Button>
+          <Button variant="contained" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
+            Buscar proyectos
+          </Button>
+        </div>
+
+        {hayFiltros && (
+          <p className="filtros__resumen">
+            {filtros.habilidades.length > 0 &&
+              `${filtros.habilidades.length} habilidad${
+                filtros.habilidades.length === 1 ? "" : "es"
+              } · `}
+            {filtros.etiquetas.length > 0 &&
+              `${filtros.etiquetas.length} etiqueta${
+                filtros.etiquetas.length === 1 ? "" : "s"
+              } · `}
+            {filtros.idColectivos.length > 0 &&
+              `${filtros.idColectivos.length} colectivo${
+                filtros.idColectivos.length === 1 ? "" : "s"
+              } · `}
+            {filtros.provincias.length > 0 &&
+              `${filtros.provincias.length} provincia${
+                filtros.provincias.length === 1 ? "" : "s"
+              } · `}
+            {filtrosPendientes
+              ? "presioná Buscar para aplicar"
+              : "filtros aplicados"}
+          </p>
         )}
       </div>
 

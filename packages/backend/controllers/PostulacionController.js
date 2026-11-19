@@ -82,6 +82,15 @@ export class PostulacionController {
     res.status(200).json(postulaciones);
   };
 
+  obtenerColaboracionesParaGestion = async (req, res) => {
+    const actor = await this.obtenerActor(req);
+    const colaboraciones = await this.postulacionService.obtenerColaboracionesParaGestion(
+      req.params.idProyecto,
+      actor,
+    );
+    res.status(200).json(colaboraciones);
+  };
+
   resolver = async (req, res) => {
     const actor = await this.obtenerActor(req);
     const postulacion = await this.postulacionService.resolver(

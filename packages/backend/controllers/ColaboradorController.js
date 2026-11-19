@@ -61,6 +61,11 @@ export class ColaboradorController {
     res.status(200).json(colaboraciones);
   }
 
+  async obtenerMisPostulaciones(req, res) {
+    const postulaciones = await this.colaboradorService.obtenerMisPostulaciones(req.usuario);
+    res.status(200).json(postulaciones);
+  }
+
   obtenerTodos = async (req, res) => {
     let pag = null;
     let limite = null;

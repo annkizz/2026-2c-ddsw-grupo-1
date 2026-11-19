@@ -7,6 +7,7 @@ import {
 } from "../repositories/HabilidadRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
+import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
 import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 import { UsuarioService } from "./UsuarioService.js";
 
@@ -17,12 +18,14 @@ export class ColaboradorService {
     usuarioService = new UsuarioService(),
     colaboracionRepository = new ColaboracionRepository(),
     proyectoRepository = new ProyectoRepository(),
+    postulacionRepository = new PostulacionRepository(),
   ) {
     this.colaboradorRepository = colaboradorRepository;
     this.habilidadRepository = habilidadRepository;
     this.usuarioService = usuarioService;
     this.colaboracionRepository = colaboracionRepository;
     this.proyectoRepository = proyectoRepository;
+    this.postulacionRepository = postulacionRepository;
   }
 
   // valida contra el catalogo y devuelve los titulos tal cual estan en el catalogo
@@ -180,6 +183,38 @@ export class ColaboradorService {
           fechaLimiteCierre: proyecto.fechaLimiteCierre,
           porcentajeConcrecion: proyecto.porcentajeConcrecion,
         },
+      };
+    });
+  }
+
+  async obtenerMisPostulaciones(usuario) {
+    const colaborador = await this.obtenerPorUsuario(usuario);
+    const postulaciones = await this.postulacionRepository.obtenerPorColaborador(
+      colaborador._id,
+    );
+    if (postulaciones.length === 0) return [];
+
+    const idsProyectos = [...new Set(postulaciones.map((p) => String(p.idProyecto)))];
+    const proyectos = await this.proyectoRepository.obtenerPorIds(idsProyectos);
+    const proyectosPorId = new Map(proyectos.map((p) => [String(p._id), p]));
+
+    return postulaciones.map((postulacion) => {
+      const idProyecto = String(postulacion.idProyecto);
+      const proyecto = proyectosPorId.get(idProyecto);
+      if (!proyecto) {
+        throw new NotFoundError(
+          "No se encontró un proyecto de una postulación",
+          "PROYECTO_NO_ENCONTRADO",
+        );
+      }
+      return {
+        id: String(postulacion._id),
+        idProyecto,
+        idPerfil: String(postulacion.idPerfil),
+        estado: postulacion.estado,
+        fechaPostulacion: postulacion.fechaPostulacion,
+        esAnonima: postulacion.esAnonima,
+        proyecto: { id: idProyecto, titulo: proyecto.titulo, descripcion: proyecto.descripcion },
       };
     });
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Drawer, IconButton } from '@mui/material';
-import { FiBell, FiCode, FiHelpCircle, FiHome, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
+import { FiBell, FiCode, FiFileText, FiHelpCircle, FiHome, FiLogOut, FiMenu, FiUsers, FiUser, FiX } from 'react-icons/fi';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import BotonModoDaltonico from '../BotonModoDaltonico/BotonModoDaltonico.jsx';
@@ -16,12 +16,14 @@ const Header = () => {
   const esColectivo = sesion?.rol === 'COLECTIVO';
   const esColaboradora = sesion?.rol === 'COLABORADOR';
 
-  // Las funciones de cada rol se ofrecen desde el panel de Inicio (a 1 clic);
-  // el header deja lo transversal: Inicio, Notificaciones y Mi perfil.
   const enlaces =
     esColectivo || esColaboradora
       ? [
           { to: '/', texto: t('navegacion.inicio'), icono: <FiHome aria-hidden="true" />, exacto: true },
+          ...(esColaboradora ? [
+            { to: '/mis-colaboraciones', texto: t('navegacion.misColaboraciones'), icono: <FiUsers aria-hidden="true" /> },
+            { to: '/mis-postulaciones', texto: t('navegacion.misPostulaciones'), icono: <FiFileText aria-hidden="true" /> }
+          ] : []),
           { to: '/notificaciones', texto: t('navegacion.notificaciones'), icono: <FiBell aria-hidden="true" /> },
           { to: '/perfil', texto: t('navegacion.miPerfil'), icono: <FiUser aria-hidden="true" /> }
         ]

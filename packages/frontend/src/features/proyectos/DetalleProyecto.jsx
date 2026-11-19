@@ -34,6 +34,7 @@ import {
   obtenerPerfiles,
   obtenerLogros,
   obtenerColaboraciones,
+  obtenerColaboracionesParaGestion,
   crearPostulacion,
   obtenerPostulaciones,
   resolverPostulacion,
@@ -55,6 +56,7 @@ import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import ChipEstado from '../../components/ChipEstado/ChipEstado.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import DialogoBajaColaboracion from '../../components/DialogoBajaColaboracion/DialogoBajaColaboracion.jsx';
 import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
 import { EsqueletoDetalle } from '../../components/Esqueletos/Esqueletos.jsx';
 import { useNotificar } from '../../components/Notificador/Notificador.jsx';
@@ -95,6 +97,11 @@ const DetalleProyecto = () => {
   const [errorPerfiles, setErrorPerfiles] = useState(null);
   const [errorLogros, setErrorLogros] = useState(null);
   const [errorColaboraciones, setErrorColaboraciones] = useState(null);
+  const [colaboracionesGestion, setColaboracionesGestion] = useState([]);
+  const [cargandoGestion, setCargandoGestion] = useState(false);
+  const [errorGestion, setErrorGestion] = useState(null);
+  const [bajaSeleccionada, setBajaSeleccionada] = useState(null);
+  const [avisoBaja, setAvisoBaja] = useState('');
 
   const [modalPostulacionAbierto, setModalPostulacionAbierto] = useState(false);
   const [perfilPostulando, setPerfilPostulando] = useState(null);
@@ -220,6 +227,20 @@ const DetalleProyecto = () => {
     }
   }, [getAccessToken, sesion?.rol]);
 
+  const cargarColaboracionesGestion = useCallback(async () => {
+    if (!esDueño) return;
+    setCargandoGestion(true);
+    setErrorGestion(null);
+    try {
+      const token = await getAccessToken();
+      setColaboracionesGestion(await obtenerColaboracionesParaGestion(token, id));
+    } catch (error) {
+      setErrorGestion(error);
+    } finally {
+      setCargandoGestion(false);
+    }
+  }, [esDueño, getAccessToken, id]);
+
   useEffect(() => {
     cargar();
   }, [cargar]);
@@ -231,6 +252,10 @@ const DetalleProyecto = () => {
   useEffect(() => {
     if (esDueño) cargarPostulaciones();
   }, [esDueño, cargarPostulaciones]);
+
+  useEffect(() => {
+    if (esDueño) cargarColaboracionesGestion();
+  }, [esDueño, cargarColaboracionesGestion]);
 
   const migasBase = [{ texto: t('detalleProyecto.proyectosMigas'), to: '/proyectos' }];
 
@@ -655,6 +680,24 @@ const DetalleProyecto = () => {
         </section>
       )}
 
+      {!esDueño && (yaColaboraEnProyecto || avisoBaja) && (
+        <section className="detalle-bloque" aria-label={t('misColaboraciones.titulo')}>
+          {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+          {yaColaboraEnProyecto && (
+            <Button color="error" variant="outlined" disabled={!sesion?.idColaborador} onClick={() => {
+              setAvisoBaja('');
+              setBajaSeleccionada({
+                idProyecto: id,
+                idColaborador: sesion.idColaborador,
+                nombre: proyecto.titulo,
+              });
+            }}>
+              {t('bajaColaboracion.confirmarPropia')}
+            </Button>
+          )}
+        </section>
+      )}
+
       <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
         <h2 id="detalle-perfiles-titulo">{t('detalleProyecto.seccionPerfiles')}</h2>
         {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
@@ -897,6 +940,63 @@ const DetalleProyecto = () => {
           )}
         </section>
       )}
+
+      {esDueño && (
+        <section className="detalle-seccion" aria-labelledby="detalle-colaboraciones-titulo">
+          <h2 id="detalle-colaboraciones-titulo">{t('bajaColaboracion.tituloGestion')}</h2>
+          {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+          {errorGestion && (
+            <AlertaError error={errorGestion} titulo={t('bajaColaboracion.errorCarga')} onReintentar={cargarColaboracionesGestion} />
+          )}
+          {cargandoGestion ? (
+            <p role="status">{t('misColaboraciones.cargando')}</p>
+          ) : !errorGestion && colaboracionesGestion.length === 0 ? (
+            <EstadoVacio nivelTitulo="p" titulo={t('bajaColaboracion.vacio')} />
+          ) : !errorGestion && (
+            <ul className="detalle-perfiles">
+              {colaboracionesGestion.map((colaboracion) => {
+                const nombre = colaboracion.nombreFantasia ||
+                  [colaboracion.nombre, colaboracion.apellido].filter(Boolean).join(' ') ||
+                  colaboracion.usuarioGitHub || t('detalleProyecto.nombreNoDisponible');
+                const perfil = perfiles.find((item) => String(item.id) === String(colaboracion.idPerfil));
+                return (
+                  <li key={colaboracion.idColaborador} className="tarjeta perfil-buscado">
+                    <div className="tarjeta__cuerpo">
+                      <h3>{nombre}</h3>
+                      {perfil && <p>{perfil.descripcion}</p>}
+                      {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
+                    </div>
+                    <div className="tarjeta__acciones">
+                      <Button color="error" variant="outlined" onClick={() => {
+                        setAvisoBaja('');
+                        setBajaSeleccionada({ idProyecto: id, idColaborador: colaboracion.idColaborador, nombre });
+                      }}>
+                        {t('bajaColaboracion.confirmarColectivo')}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <DialogoBajaColaboracion
+        propia={!esDueño}
+        seleccion={bajaSeleccionada}
+        onCerrar={() => setBajaSeleccionada(null)}
+        onConfirmada={({ idColaborador }) => {
+          if (esDueño) {
+            setColaboracionesGestion((actuales) => actuales.filter((item) => item.idColaborador !== idColaborador));
+            setAvisoBaja(t('bajaColaboracion.exitoColectivo'));
+          } else {
+            setMisColaboraciones((actuales) => actuales.filter((item) => String(item.idProyecto) !== String(id)));
+            setAvisoBaja(t('bajaColaboracion.exitoPropia'));
+          }
+          cargarColaboraciones();
+        }}
+      />
 
       <section className="detalle-seccion" aria-labelledby="detalle-enlaces-titulo">
         <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>

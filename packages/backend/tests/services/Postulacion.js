@@ -74,6 +74,7 @@ describe("PostulacionService", () => {
       contarPorPerfil: jest.fn(async () => 0),
       crearDesdePostulacion: jest.fn(async () => undefined),
       darDeBaja: jest.fn(async () => null),
+      obtenerPorProyecto: jest.fn(async () => []),
     };
     postulacionRepository = {
       save: jest.fn(async (postulacion) => ({
@@ -95,6 +96,30 @@ describe("PostulacionService", () => {
       colaboracionRepository,
       postulacionRepository,
     );
+  });
+
+  describe("gestión de colaboraciones", () => {
+    it("permite solo al colectivo dueño consultar colaboraciones, incluidas las anónimas", async () => {
+      colaboracionRepository.obtenerPorProyecto.mockResolvedValue([
+        { idColaborador: colaborador, idPerfil: ID_PERFIL, esAnonima: true },
+      ]);
+
+      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, actorColectivo))
+        .resolves.toEqual([{
+          idColaborador: ID_COLABORADOR,
+          idPerfil: ID_PERFIL,
+          nombreFantasia: "Dev",
+          nombre: undefined,
+          apellido: undefined,
+          usuarioGitHub: undefined,
+          esAnonima: true,
+        }]);
+      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, actorColaboradora))
+        .rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
+      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, { rol: "COLECTIVO", id: "otro" }))
+        .rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
+      expect(colaboracionRepository.obtenerPorProyecto).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("crear", () => {

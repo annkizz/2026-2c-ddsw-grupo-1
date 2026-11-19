@@ -33,6 +33,11 @@ export const obtenerMisColaboraciones = async (token) => {
   return response.data;
 };
 
+export const obtenerMisPostulaciones = async (token) => {
+  const response = await api.get('/colaboradoras/me/postulaciones', conToken(token));
+  return response.data;
+};
+
 export const actualizarColaboradora = async (token, id, datos) => {
   const response = await api.put(`/colaboradoras/${id}`, datos, conToken(token));
   return response.data;

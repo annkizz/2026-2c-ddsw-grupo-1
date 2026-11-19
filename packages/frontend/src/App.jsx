@@ -14,6 +14,7 @@ import RegistroColaboradora from './features/registro/RegistroColaboradora.jsx';
 import ListaProyectos from './features/proyectos/ListaProyectos.jsx';
 import DetalleProyecto from './features/proyectos/DetalleProyecto.jsx';
 import MisColaboraciones from './features/colaboraciones/MisColaboraciones.jsx';
+import MisPostulaciones from './features/colaboraciones/MisPostulaciones.jsx';
 import PerfilColaboradora from './features/colaboradoras/PerfilColaboradora.jsx';
 import PerfilColectivo from './features/colectivos/PerfilColectivo.jsx';
 import Notificaciones from './features/notificaciones/Notificaciones.jsx';
@@ -90,6 +91,16 @@ function App() {
                     <RequiereAuth>
                       <RequiereRol roles={['COLABORADOR']}>
                         <MisColaboraciones />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
+                <Route
+                  path="/mis-postulaciones"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLABORADOR']}>
+                        <MisPostulaciones />
                       </RequiereRol>
                     </RequiereAuth>
                   }

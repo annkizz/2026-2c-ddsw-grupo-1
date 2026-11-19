@@ -214,6 +214,30 @@ export class PostulacionService {
     return postulaciones.map((postulacion) => this.toDTO(postulacion));
   }
 
+  async obtenerColaboracionesParaGestion(idProyecto, actor) {
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+    if (!proyecto) {
+      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+    }
+    this.validarColectivoDelProyecto(actor, proyecto);
+    const colaboraciones = await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
+    return colaboraciones.map((colaboracion) => {
+      const colaborador = colaboracion.idColaborador;
+      if (!colaborador) {
+        throw new NotFoundError("Colaboradora no encontrada", "COLABORADORA_NO_ENCONTRADA");
+      }
+      return {
+        idColaborador: String(colaborador._id),
+        idPerfil: colaboracion.idPerfil ? String(colaboracion.idPerfil) : null,
+        nombreFantasia: colaborador.nombreFantasia,
+        nombre: colaborador.nombre,
+        apellido: colaborador.apellido,
+        usuarioGitHub: colaborador.usuarioGitHub,
+        esAnonima: colaboracion.esAnonima,
+      };
+    });
+  }
+
   async invitar(idProyecto, idPerfil, idColaborador, actor) {
     const { proyecto, perfil } = await this.buscarProyectoYPerfil(
       idProyecto,

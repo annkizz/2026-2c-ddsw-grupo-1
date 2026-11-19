@@ -15,6 +15,19 @@ export const obtenerColaboraciones = async (idProyecto) => {
   return response.data;
 };
 
+export const obtenerColaboracionesParaGestion = async (token, idProyecto) => {
+  const response = await api.get(`/proyectos/${idProyecto}/colaboraciones/gestion`, conToken(token));
+  return response.data;
+};
+
+export const darDeBajaColaboracion = async (token, idProyecto, idColaborador) => {
+  const response = await api.delete(
+    `/proyectos/${idProyecto}/colaboraciones/${idColaborador}`,
+    conToken(token)
+  );
+  return response.data;
+};
+
 export const crearPostulacion = async (token, idProyecto, idPerfil, postulacion) => {
   const response = await api.post(
     `/proyectos/${idProyecto}/perfiles/${idPerfil}/postulaciones`,

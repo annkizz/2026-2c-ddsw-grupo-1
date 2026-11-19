@@ -34,6 +34,13 @@ export class PostulacionRepository {
       .exec();
   }
 
+  obtenerPorColaborador(idColaborador) {
+    return this.model
+      .find({ idColaborador })
+      .sort({ fechaPostulacion: -1 })
+      .exec();
+  }
+
   existePendiente(idProyecto, idPerfil, idColaborador) {
     return this.model.exists({
       idProyecto,

@@ -28,6 +28,12 @@ export function crearColaboradorRouter(colaboradorController, autenticar) {
     );
 
   router
+    .route("/me/postulaciones")
+    .get(autenticar, requerirRol(Rol.COLABORADOR), (req, res) =>
+      colaboradorController.obtenerMisPostulaciones(req, res),
+    );
+
+  router
     .route("/:id")
     .get((req, res) => colaboradorController.obtenerPorId(req, res))
     .put(
