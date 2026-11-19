@@ -15,7 +15,8 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { FiCheck, FiLock, FiPlus, FiX } from 'react-icons/fi';
+import { FiCheck, FiLock, FiX } from 'react-icons/fi';
+import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -343,7 +344,7 @@ const MiPerfil = () => {
   const etiquetas = esColaboradora ? datos.habilidades : datos.etiquetas;
 
   return (
-    <div className="mi-perfil">
+    <div className={`mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
       <Link to="/proyectos" className="mi-perfil-volver">‹ Volver a mi cuenta</Link>
       <header className="mi-perfil-cabecera">
         <h1>Tu perfil de {esColaboradora ? 'colaboradora' : 'colectivo'}</h1>
@@ -357,26 +358,30 @@ const MiPerfil = () => {
         </Alert>
       )}
 
-      <div className="mi-perfil-disposicion">
-        <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
-          <span>MI CUENTA</span>
-          {secciones.map(([id, etiqueta]) => (
-            <Button
-              variant="text"
-              type="button"
-              key={id}
-              className={seccionActiva === id ? 'activo' : ''}
-              onClick={() => {
-                setSeccionActiva(id);
-                document.getElementById(`mi-perfil-${id}`)?.scrollIntoView?.({ behavior: 'smooth' });
-              }}
-              aria-current={seccionActiva === id ? 'location' : undefined}
-            >
-              {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
-            </Button>
-          ))}
-          <small>Tus datos, bajo tu control.</small>
-        </nav>
+      <div
+        className={`mi-perfil-disposicion${esColaboradora ? '' : ' mi-perfil-disposicion--sin-nav'}`}
+      >
+        {esColaboradora && (
+          <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
+            <span>MI CUENTA</span>
+            {secciones.map(([id, etiqueta]) => (
+              <Button
+                variant="text"
+                type="button"
+                key={id}
+                className={seccionActiva === id ? 'activo' : ''}
+                onClick={() => {
+                  setSeccionActiva(id);
+                  document.getElementById(`mi-perfil-${id}`)?.scrollIntoView?.({ behavior: 'smooth' });
+                }}
+                aria-current={seccionActiva === id ? 'location' : undefined}
+              >
+                {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
+              </Button>
+            ))}
+            <small>Tus datos, bajo tu control.</small>
+          </nav>
+        )}
 
         <div className="mi-perfil-contenido">
           {Object.keys(errores).length > 0 && (
@@ -589,14 +594,9 @@ const MiPerfil = () => {
                 </IconButton>
               </div>
             ))}
-            <Button
-              type="button"
-              variant="text"
-              startIcon={<FiPlus />}
+            <AgregarMedioContactoButton
               onClick={() => cambiar('medios', [...datos.medios, { tipo: 'EMAIL', valor: '' }])}
-            >
-              Agregar medio de contacto
-            </Button>
+            />
             <FormControlLabel
               control={
                 <Checkbox

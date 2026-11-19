@@ -75,6 +75,32 @@ describe('MiPerfil', () => {
       .not.toHaveAttribute('aria-current');
   });
 
+  it('oculta la navegación lateral en el perfil del colectivo', async () => {
+    useAuth.mockReturnValue({
+      sesion: { rol: 'COLECTIVO', idColectivo: 'colectivo-1' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      obtenerEmailCuenta: jest.fn().mockResolvedValue('colectivo@example.org'),
+      cambiarContrasena: jest.fn(),
+    });
+    useListado.mockReturnValue({ datos: [], cargando: false, error: null, recargar: jest.fn() });
+    obtenerMiPerfilColectivo.mockResolvedValue({
+      nombre: 'Colectivo Ejemplo',
+      descripcion: 'Descripción',
+      tipoDeColectivo: 'ONG',
+      etiquetas: [],
+      mediosDeContacto: [],
+    });
+
+    renderPerfil();
+
+    expect(await screen.findByRole('heading', { name: 'Tu perfil de colectivo' }))
+      .toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Secciones de mi perfil' }))
+      .not.toBeInTheDocument();
+    expect(document.querySelector('.mi-perfil-disposicion--sin-nav'))
+      .toBeInTheDocument();
+  });
+
   it('muestra errores resumidos y junto a cada campo inválido', async () => {
     obtenerMiPerfilColaboradora.mockResolvedValue({
       nombreFantasia: '',

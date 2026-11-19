@@ -22,6 +22,11 @@
   margin: 0 0 28px 250px;
 }
 
+.mi-perfil--colectivo .mi-perfil-cabecera,
+.mi-perfil--colectivo .mi-perfil-estado {
+  margin-left: 0;
+}
+
 .mi-perfil-cabecera h1 {
   margin: 0 0 8px;
   font-size: 28px;
@@ -49,6 +54,10 @@
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+}
+
+.mi-perfil-disposicion--sin-nav {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .mi-perfil-nav {

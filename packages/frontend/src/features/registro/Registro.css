@@ -80,14 +80,7 @@
 }
 
 .medios-agregar.MuiButton-root {
-  display: block;
-  background: none;
-  border: 0;
-  padding: 0;
   margin: 8px 0 20px;
-  font-weight: 700;
-  text-decoration: underline;
-  justify-content: flex-start;
 }
 
 .cuenta-creada.MuiCard-root {

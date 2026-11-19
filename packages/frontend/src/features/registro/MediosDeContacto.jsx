@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
+import { Alert, Card, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
 import { FiLock, FiX } from 'react-icons/fi';
+import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import { TIPOS_CONTACTO } from '../../service/colaboradorasService';
 
@@ -106,14 +107,10 @@ const MediosDeContacto = ({
           </div>
         ))}
 
-        <Button
-          variant="text"
-          type="button"
+        <AgregarMedioContactoButton
           className="medios-agregar"
           onClick={agregarMedio}
-        >
-          + Agregar medio de contacto
-        </Button>
+        />
 
         <FormControlLabel
           control={
