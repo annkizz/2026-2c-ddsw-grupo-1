@@ -1,115 +1,129 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import "../Card.css";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Button, Chip } from '@mui/material';
+import { FiArrowRight, FiCheckCircle, FiFolder, FiMapPin, FiUsers } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import ChipEstado from '../ChipEstado/ChipEstado.jsx';
+import '../Card.css';
 
 function describirCompromiso(compromiso) {
-  if (!compromiso) return "Compromiso no informado";
-  const horas = compromiso.horas ?? "?";
-  const frecuencia = (compromiso.tipoCompromiso ?? "").toLowerCase();
-  const colaboracion = (compromiso.tipoColaboracion ?? "").toLowerCase();
-  return `${horas} ${horas === 1 ? "hora" : "horas"} ${frecuencia} · colaboración ${colaboracion}`;
+  if (!compromiso) return 'Compromiso no informado';
+  const horas = compromiso.horas ?? '?';
+  const frecuencia = (compromiso.tipoCompromiso ?? '').toLowerCase();
+  const colaboracion = (compromiso.tipoColaboracion ?? '').toLowerCase();
+  return `${horas} ${horas === 1 ? 'hora' : 'horas'} ${frecuencia} · colaboración ${colaboracion}`;
 }
 
 function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(", ") : "ninguna";
+  return habilidades?.length > 0 ? habilidades.join(', ') : 'ninguna';
 }
 
+// Card de proyecto: media → título → meta → CTA (patrón de grilla tipo marketplace).
 export default function CardProyecto({ proyecto, nombreColectivo }) {
-  const perfilesCompatibles =
-    proyecto.coincidencia?.perfilesCompatibles ??
-    proyecto.perfilesCompatibles ??
-    [];
+  const perfilesCompatibles = proyecto.coincidencia?.perfilesCompatibles ?? proyecto.perfilesCompatibles ?? [];
   const tieneCoincidencia = perfilesCompatibles.length > 0;
   const etiquetas = proyecto.etiquetas ?? [];
+  const idTitulo = `card-proyecto-${proyecto.id}`;
 
   return (
-    <li className="tarjeta">
-      <div className="tarjeta__encabezado">
-        <h3>
-          <Link className="tarjeta__enlace" to={`/proyectos/${proyecto.id}`}>
-            {proyecto.titulo}
-          </Link>
-        </h3>
-        {proyecto.estado && (
-          <span
-            className={`etiqueta-estado ${
-              proyecto.estado === "FINALIZADO"
-                ? "etiqueta-estado--finalizado"
-                : "etiqueta-estado--activo"
-            }`}
-          >
-            {proyecto.estado}
-          </span>
-        )}
+    <li className="tarjeta" aria-labelledby={idTitulo}>
+      <div className="tarjeta__media" aria-hidden="true">
+        <FiFolder />
       </div>
 
-      {tieneCoincidencia && (
-        <p>
-          <span className="etiqueta-estado etiqueta-estado--coincide">
-            Coincide con tu perfil
-          </span>
-        </p>
-      )}
+      <div className="tarjeta__cuerpo">
+        <div className="tarjeta__encabezado">
+          <h3 id={idTitulo}>
+            <Link className="tarjeta__enlace" to={`/proyectos/${proyecto.id}`}>
+              {proyecto.titulo}
+            </Link>
+          </h3>
+          {proyecto.estado && <ChipEstado estado={proyecto.estado} />}
+        </div>
 
-      {proyecto.descripcion && <p>{proyecto.descripcion}</p>}
+        {tieneCoincidencia && (
+          <Chip
+            className="tarjeta__chip-destacado"
+            color="success"
+            icon={<FiCheckCircle aria-hidden="true" />}
+            label="Coincide con tu perfil"
+          />
+        )}
 
-      {etiquetas.length > 0 && (
-        <p className="tarjeta__etiquetas">
-          {etiquetas.map((etiqueta) => (
-            <span key={etiqueta} className="etiqueta">
-              {etiqueta.replaceAll("_", " ")}
-            </span>
-          ))}
-        </p>
-      )}
+        {proyecto.descripcion && <p className="tarjeta__descripcion">{proyecto.descripcion}</p>}
 
-      {proyecto.ubicacion !== undefined && (
-        <p className="tarjeta__meta">
-          {proyecto.ubicacion
-            ? `${proyecto.ubicacion.nombreProvincia}${
-                proyecto.ubicacion.ciudad
-                  ? ` · ${proyecto.ubicacion.ciudad}`
-                  : ""
-              }`
-            : "Sin ubicación"}
-        </p>
-      )}
-
-      {nombreColectivo && (
-        <p className="tarjeta__meta">Colectivo: {nombreColectivo}</p>
-      )}
-
-      {tieneCoincidencia && (
-        <div className="coincidencia">
-          <p className="tarjeta__meta">
-            <strong>Perfiles compatibles:</strong>
-          </p>
-          <ul className="lista-perfiles">
-            {perfilesCompatibles.map((perfil) => (
-              <li key={perfil.id}>
-                <strong>{perfil.descripcion}</strong> ·{" "}
-                {describirCompromiso(perfil.compromiso)}
-                <br />
-                Requeridas en común:{" "}
-                {listarHabilidades(perfil.requeridasCoincidentes)}
-                <br />
-                Opcionales en común:{" "}
-                {listarHabilidades(perfil.opcionalesCoincidentes)}
+        {etiquetas.length > 0 && (
+          <ul className="tarjeta__etiquetas" aria-label="Etiquetas">
+            {etiquetas.map((etiqueta) => (
+              <li key={etiqueta}>
+                <Chip label={etiqueta.replaceAll('_', ' ')} />
               </li>
             ))}
           </ul>
+        )}
+
+        <div className="tarjeta__metas">
+          {proyecto.ubicacion !== undefined && (
+            <p className="tarjeta__meta">
+              <FiMapPin aria-hidden="true" />
+              <span>
+                {proyecto.ubicacion
+                  ? `${proyecto.ubicacion.nombreProvincia}${proyecto.ubicacion.ciudad ? ` · ${proyecto.ubicacion.ciudad}` : ''}`
+                  : 'Sin ubicación'}
+              </span>
+            </p>
+          )}
+          {nombreColectivo && (
+            <p className="tarjeta__meta">
+              <FiUsers aria-hidden="true" />
+              <span>Colectivo: {nombreColectivo}</span>
+            </p>
+          )}
         </div>
-      )}
+
+        {tieneCoincidencia && (
+          <div className="coincidencia">
+            <h4 className="coincidencia__titulo">Perfiles compatibles</h4>
+            <ul className="lista-perfiles">
+              {perfilesCompatibles.map((perfil) => (
+                <li key={perfil.id}>
+                  <strong>{perfil.descripcion}</strong> · {describirCompromiso(perfil.compromiso)}
+                  <br />
+                  Requeridas en común: {listarHabilidades(perfil.requeridasCoincidentes)}
+                  <br />
+                  Opcionales en común: {listarHabilidades(perfil.opcionalesCoincidentes)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       <div className="tarjeta__acciones">
-        <Link
-          className="tarjeta__ver"
+        <Button
+          component={Link}
           to={`/proyectos/${proyecto.id}`}
+          variant="outlined"
+          endIcon={<FiArrowRight aria-hidden="true" />}
           aria-label={`Ver proyecto: ${proyecto.titulo}`}
         >
-          + Ver proyecto
-        </Link>
+          Ver proyecto
+        </Button>
       </div>
     </li>
   );
 }
+
+CardProyecto.propTypes = {
+  proyecto: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    titulo: PropTypes.string,
+    descripcion: PropTypes.string,
+    estado: PropTypes.string,
+    etiquetas: PropTypes.arrayOf(PropTypes.string),
+    ubicacion: PropTypes.shape({ nombreProvincia: PropTypes.string, ciudad: PropTypes.string }),
+    coincidencia: PropTypes.shape({ perfilesCompatibles: PropTypes.array }),
+    perfilesCompatibles: PropTypes.array
+  }).isRequired,
+  nombreColectivo: PropTypes.string
+};

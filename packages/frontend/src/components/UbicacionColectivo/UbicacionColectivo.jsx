@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Alert, Autocomplete, MenuItem, TextField } from '@mui/material';
 import { PROVINCIAS } from '../../data/provincias';
 
@@ -161,7 +162,7 @@ const UbicacionColectivo = ({
             <>
               {errorCiudades ? (
                 <>
-                  <Alert severity="warning">{errorCiudades}</Alert>
+                  <Alert severity="warning" role="alert">{errorCiudades}</Alert>
                   {envolverCampo(
                     'Ciudad o localidad (opcional)',
                     ids.ciudad,
@@ -171,7 +172,7 @@ const UbicacionColectivo = ({
                       label={labelsAbove ? undefined : 'Ciudad o localidad (opcional)'}
                       value={ciudad}
                       onChange={(evento) => onChange({ ciudad: evento.target.value })}
-                      helperText={labelsAbove ? 'Ej.: Rosario' : undefined}
+                      placeholder="Ej.: Rosario"
                       fullWidth
                     />,
                   )}
@@ -196,7 +197,7 @@ const UbicacionColectivo = ({
                         placeholder={
                           cargandoCiudades ? 'Cargando ciudades…' : 'Elegí una ciudad o localidad'
                         }
-                        helperText={labelsAbove ? 'Ej.: Rosario' : undefined}
+                        
                       />
                     )}
                   />,
@@ -216,10 +217,10 @@ const UbicacionColectivo = ({
             <TextField
               id={ids.pais}
               label={labelsAbove ? undefined : 'País (opcional)'}
-              placeholder="Escribí el país"
+              placeholder="Ej.: Uruguay"
               value={pais}
               onChange={(evento) => onChange({ pais: evento.target.value })}
-              helperText={labelsAbove ? 'Ej.: Uruguay' : undefined}
+              
               fullWidth
             />,
           )}
@@ -230,10 +231,10 @@ const UbicacionColectivo = ({
             <TextField
               id={ids.provincia}
               label={labelsAbove ? undefined : 'Provincia o región (opcional)'}
-              placeholder="Escribí la provincia o región"
+              placeholder="Ej.: Canelones"
               value={provincia}
               onChange={(evento) => onChange({ provincia: evento.target.value })}
-              helperText={labelsAbove ? 'Ej.: Canelones' : undefined}
+              
               fullWidth
             />,
           )}
@@ -244,10 +245,10 @@ const UbicacionColectivo = ({
             <TextField
               id={ids.ciudad}
               label={labelsAbove ? undefined : 'Ciudad (opcional)'}
-              placeholder="Escribí la ciudad"
+              placeholder="Ej.: Montevideo"
               value={ciudad}
               onChange={(evento) => onChange({ ciudad: evento.target.value })}
-              helperText={labelsAbove ? 'Ej.: Montevideo' : undefined}
+              
               fullWidth
             />,
           )}
@@ -255,6 +256,15 @@ const UbicacionColectivo = ({
       )}
     </>
   );
+};
+
+UbicacionColectivo.propTypes = {
+  pais: PropTypes.string,
+  provincia: PropTypes.string,
+  ciudad: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  labelsAbove: PropTypes.bool,
+  idPrefix: PropTypes.string,
 };
 
 export default UbicacionColectivo;

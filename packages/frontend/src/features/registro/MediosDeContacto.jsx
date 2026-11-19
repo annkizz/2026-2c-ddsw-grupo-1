@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Alert, Card, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
-import { FiLock, FiX } from 'react-icons/fi';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { Alert, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
+import { FiAlertCircle, FiLock, FiTrash2 } from 'react-icons/fi';
 import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import { TIPOS_CONTACTO } from '../../service/colaboradorasService';
@@ -11,21 +12,21 @@ const CELULAR_REGEX = /^\+\d{10,15}$/; // igual que el backend, pero tolerando e
 const REGLAS = {
   EMAIL: {
     etiqueta: 'Dirección de email',
-    ejemplo: 'nombre@dominio.com',
+    ejemplo: 'Ej.: nombre@dominio.com',
     esValido: (valor) => EMAIL_REGEX.test(valor.trim()),
-    mensaje: 'Ingresá un email válido. Ej.: nombre@dominio.com.'
+    mensaje: 'Ingresá un email válido, por ejemplo nombre@dominio.com'
   },
   WHATSAPP: {
     etiqueta: 'Número de WhatsApp',
-    ejemplo: '+54 9 11 4567 8901',
+    ejemplo: 'Ej.: +54 9 11 4567 8901',
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono válido con código de país.'
+    mensaje: 'Ingresá un teléfono con código de país, por ejemplo +54 9 11 4567 8901'
   },
   SMS: {
     etiqueta: 'Número de celular',
-    ejemplo: '+54 9 11 4567 8901',
+    ejemplo: 'Ej.: +54 9 11 4567 8901',
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono válido con código de país.'
+    mensaje: 'Ingresá un teléfono con código de país, por ejemplo +54 9 11 4567 8901'
   }
 };
 
@@ -64,53 +65,77 @@ const MediosDeContacto = ({
       if (!REGLAS[medio.tipo].esValido(medio.valor)) invalidos.push(i);
     });
     setConError(invalidos);
-    if (invalidos.length === 0) onSiguiente();
+    if (invalidos.length > 0) {
+      document.getElementById(`medio-valor-${invalidos[0]}`)?.focus();
+      return;
+    }
+    onSiguiente();
   };
 
   return (
     <form onSubmit={terminar} noValidate>
-      <Card variant="outlined" className="registro-card">
-        <h2>Cómo podemos contactarte</h2>
-        <Alert severity="warning" icon={<FiLock />} sx={{ marginBottom: 2 }}>
+      <section className="registro-card" aria-labelledby="paso-contacto-titulo">
+        <h2 id="paso-contacto-titulo">Cómo podemos contactarte</h2>
+        <Alert severity="info" icon={<FiLock aria-hidden="true" />}>
           Tus medios de contacto son privados y no se muestran públicamente.
         </Alert>
 
-        {datos.medios.length === 0 && (
-          <>
-            <strong>Medios de contacto (opcional)</strong>
-            <p className="medios-vacio">
-              Todavía no agregaste medios de contacto. Podés continuar sin completar este paso.
-            </p>
-          </>
+        {datos.medios.length === 0 ? (
+          <p className="texto-secundario">
+            <strong>Medios de contacto (opcional).</strong> Todavía no agregaste medios de contacto. Podés continuar sin
+            completar este paso.
+          </p>
+        ) : (
+          <ul className="medios-lista" aria-label="Medios de contacto">
+            {datos.medios.map((medio, i) => (
+              <li className="medios-fila" key={i}>
+                <TextField
+                  id={`medio-tipo-${i}`}
+                  select
+                  label="Tipo"
+                  value={medio.tipo}
+                  onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}
+                  fullWidth
+                >
+                  {TIPOS_CONTACTO.map((tipo) => (
+                    <MenuItem key={tipo.valor} value={tipo.valor}>
+                      {tipo.texto}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  id={`medio-valor-${i}`}
+                  label={REGLAS[medio.tipo].etiqueta}
+                  placeholder={REGLAS[medio.tipo].ejemplo}
+                  value={medio.valor}
+                  onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
+                  onBlur={() => {
+                    if (medio.valor && !REGLAS[medio.tipo].esValido(medio.valor) && !conError.includes(i)) {
+                      setConError([...conError, i]);
+                    }
+                  }}
+                  error={conError.includes(i)}
+                  helperText={
+                    conError.includes(i) ? (
+                      <>
+                        <FiAlertCircle aria-hidden="true" />
+                        <span>{REGLAS[medio.tipo].mensaje}</span>
+                      </>
+                    ) : undefined
+                  }
+                  fullWidth
+                />
+                <IconButton aria-label={`Quitar medio de contacto ${i + 1}`} onClick={() => quitarMedio(i)}>
+                  <FiTrash2 aria-hidden="true" />
+                </IconButton>
+              </li>
+            ))}
+          </ul>
         )}
 
-        {datos.medios.map((medio, i) => (
-          <div className="medios-fila" key={i}>
-            <TextField select label="Tipo" value={medio.tipo} onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}>
-              {TIPOS_CONTACTO.map((tipo) => (
-                <MenuItem key={tipo.valor} value={tipo.valor}>
-                  {tipo.texto}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label={REGLAS[medio.tipo].etiqueta}
-              placeholder={REGLAS[medio.tipo].ejemplo}
-              value={medio.valor}
-              onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
-              error={conError.includes(i)}
-              helperText={conError.includes(i) ? REGLAS[medio.tipo].mensaje : ' '}
-            />
-            <IconButton aria-label="Quitar medio de contacto" onClick={() => quitarMedio(i)}>
-              <FiX />
-            </IconButton>
-          </div>
-        ))}
-
-        <AgregarMedioContactoButton
-          className="medios-agregar"
-          onClick={agregarMedio}
-        />
+        <div>
+          <AgregarMedioContactoButton onClick={agregarMedio} />
+        </div>
 
         <FormControlLabel
           control={
@@ -121,10 +146,10 @@ const MediosDeContacto = ({
           }
           label="Acepto recibir mensajes internos de la plataforma cuando haya proyectos relacionados con mis habilidades."
         />
-      </Card>
+      </section>
 
       {error && (
-        <Alert severity="error" sx={{ marginTop: 2 }}>
+        <Alert severity="error" role="alert" className="registro-error">
           {error}
         </Alert>
       )}
@@ -132,6 +157,16 @@ const MediosDeContacto = ({
       <AccionesRegistro onVolver={onVolver} siguiente={siguiente} guardando={guardando} />
     </form>
   );
+};
+
+MediosDeContacto.propTypes = {
+  datos: PropTypes.object.isRequired,
+  setDatos: PropTypes.func.isRequired,
+  onVolver: PropTypes.func,
+  onSiguiente: PropTypes.func.isRequired,
+  siguiente: PropTypes.node,
+  guardando: PropTypes.bool,
+  error: PropTypes.node
 };
 
 export default MediosDeContacto;

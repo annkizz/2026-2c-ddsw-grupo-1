@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Card, MenuItem, TextField } from '@mui/material';
+import { Alert, MenuItem, TextField } from '@mui/material';
+import { FiAlertCircle } from 'react-icons/fi';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
 import { TIPOS_COLECTIVO, crearColectivo } from '../../service/colectivosService';
-import { mensajeDeError } from '../../service/api';
+import { mensajeDeError } from '../../utils/mensajeDeError';
 import { ETIQUETAS_MAX } from '../../utils/etiquetas';
 import { borrarTipo } from './tipoElegido';
 import './Registro.css';
@@ -23,8 +26,18 @@ const DATOS_INICIALES = {
 };
 const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'descripcion'];
 const AYUDAS_CAMPOS = {
-  nombre: 'Ej.: Colectivo La Semilla',
-  descripcion: 'Ej.: Acompañamos a familias del barrio con talleres de apoyo.'
+  nombre: 'Es el nombre que van a ver las personas colaboradoras.',
+  descripcion: 'Contá qué hacen y a quiénes acompañan.'
+};
+const ERRORES_CAMPOS = {
+  nombre: 'Ingresá el nombre del colectivo',
+  tipoDeColectivo: 'Elegí un tipo de colectivo',
+  descripcion: 'Escribí una descripción del colectivo'
+};
+const IDS = {
+  nombre: 'registro-colectivo-nombre',
+  tipoDeColectivo: 'registro-colectivo-tipo',
+  descripcion: 'registro-colectivo-descripcion'
 };
 
 const DatosColectivo = () => {
@@ -35,6 +48,7 @@ const DatosColectivo = () => {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
   const [registroCreado, setRegistroCreado] = useState(false);
+  const [intento, setIntento] = useState(0);
   const etiquetasState = useListado('/etiquetas');
 
   const setValorDe = (campo) => (e) => {
@@ -55,7 +69,14 @@ const DatosColectivo = () => {
     value: datos[campo],
     onChange: setValorDe(campo),
     error: faltantes.includes(campo),
-    helperText: faltantes.includes(campo) ? 'Completá este campo.' : AYUDAS_CAMPOS[campo],
+    helperText: faltantes.includes(campo) ? (
+      <>
+        <FiAlertCircle aria-hidden="true" />
+        <span>{ERRORES_CAMPOS[campo]}</span>
+      </>
+    ) : (
+      AYUDAS_CAMPOS[campo]
+    ),
     fullWidth: true,
     required: true
   });
@@ -69,6 +90,7 @@ const DatosColectivo = () => {
     e.preventDefault();
     const sinCompletar = OBLIGATORIOS.filter((campo) => datos[campo].trim() === '');
     setFaltantes(sinCompletar);
+    setIntento((n) => n + 1);
     if (sinCompletar.length > 0) return;
 
     setGuardando(true);
@@ -91,116 +113,94 @@ const DatosColectivo = () => {
       borrarTipo();
       navigate('/perfil');
     } catch (e) {
-      setError(mensajeDeError(e));
+      setError(mensajeDeError(e, 'No pudimos registrar el colectivo. Tus datos siguen acá.'));
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <div className="registro">
-      <h1>Registrar Colectivo</h1>
+    <div className="contenedor-pagina contenedor-pagina--formulario registro">
+      <EncabezadoPagina
+        titulo="Registrar tu colectivo"
+        subtitulo="Paso 2 de 2: contanos sobre tu colectivo para que las personas colaboradoras lo conozcan."
+      />
       <form onSubmit={guardar} noValidate>
-        <Card variant="outlined" className="registro-card">
-          <div className="registro-campos">
-            <div className="registro-campo">
-              <label
-                className="registro-campo__label"
-                htmlFor="registro-colectivo-nombre"
-              >
-                Nombre (obligatorio)
-              </label>
-              <TextField
-                id="registro-colectivo-nombre"
-                placeholder="Nombre del colectivo"
-                {...propsDe('nombre')}
-              />
-            </div>
-            <div className="registro-campo">
-              <label
-                className="registro-campo__label"
-                id="registro-colectivo-tipo-label"
-                htmlFor="registro-colectivo-tipo"
-              >
-                Tipo de colectivo (obligatorio)
-              </label>
-              <TextField
-                id="registro-colectivo-tipo"
-                select
-                slotProps={{
-                  select: { labelId: 'registro-colectivo-tipo-label', displayEmpty: true }
-                }}
-                {...propsDe('tipoDeColectivo')}
-              >
-                <MenuItem value="" disabled>
-                  <span className="select-placeholder">Seleccioná un tipo de colectivo</span>
-                </MenuItem>
-                {TIPOS_COLECTIVO.map((tipo) => (
-                  <MenuItem key={tipo.valor} value={tipo.valor}>
-                    {tipo.texto}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
+        <ResumenErrores
+          errores={faltantes.map((campo) => ({ campoId: IDS[campo], mensaje: ERRORES_CAMPOS[campo] }))}
+          intento={intento}
+        />
+        <section className="registro-card" aria-labelledby="registro-colectivo-datos">
+          <h2 id="registro-colectivo-datos">Datos del colectivo</h2>
+          <p className="registro-card__intro">Los campos obligatorios están indicados.</p>
+          <TextField
+            id="registro-colectivo-nombre"
+            label="Nombre (obligatorio)"
+            placeholder="Ej.: Colectivo La Semilla"
+            {...propsDe('nombre')}
+          />
+          <TextField
+            id="registro-colectivo-tipo"
+            select
+            label="Tipo de colectivo (obligatorio)"
+            slotProps={{ select: { displayEmpty: true } }}
+            {...propsDe('tipoDeColectivo')}
+          >
+            <MenuItem value="" disabled>
+              <span className="select-placeholder">Seleccioná un tipo de colectivo</span>
+            </MenuItem>
+            {TIPOS_COLECTIVO.map((tipo) => (
+              <MenuItem key={tipo.valor} value={tipo.valor}>
+                {tipo.texto}
+              </MenuItem>
+            ))}
+          </TextField>
 
-            <UbicacionColectivo
-              pais={datos.pais}
-              provincia={datos.provincia}
-              ciudad={datos.ciudad}
-              onChange={(cambios) => setDatos((prev) => ({ ...prev, ...cambios }))}
-              labelsAbove
-              idPrefix="registro-colectivo-ubicacion"
+          <UbicacionColectivo
+            pais={datos.pais}
+            provincia={datos.provincia}
+            ciudad={datos.ciudad}
+            onChange={(cambios) => setDatos((prev) => ({ ...prev, ...cambios }))}
+            labelsAbove
+            idPrefix="registro-colectivo-ubicacion"
+          />
+
+          <div>
+            <CustomSelect
+              id="colectivo-etiquetas"
+              etiqueta="Etiquetas (opcional)"
+              opciones={opcionesEtiquetas}
+              seleccion={datos.etiquetas}
+              multiple
+              maxSeleccion={ETIQUETAS_MAX}
+              permiteCrear
+              onSeleccionar={alternarEtiqueta}
+              onQuitar={alternarEtiqueta}
+              ayuda={`Buscá etiquetas existentes o creá las tuyas (hasta ${ETIQUETAS_MAX}) para que tu colectivo aparezca en las búsquedas.`}
+              placeholder={etiquetasState.cargando ? 'Cargando etiquetas…' : 'Ej.: Alimentos'}
+              textoVacio={
+                etiquetasState.cargando ? 'Cargando etiquetas…' : 'No hay etiquetas con ese texto. Podés crear una nueva.'
+              }
             />
-
-            <div className="registro-campo">
-              <CustomSelect
-                id="colectivo-etiquetas"
-                className="selector--registro"
-                etiqueta="Etiquetas"
-                opciones={opcionesEtiquetas}
-                seleccion={datos.etiquetas}
-                multiple
-                maxSeleccion={ETIQUETAS_MAX}
-                permiteCrear
-                onSeleccionar={alternarEtiqueta}
-                onQuitar={alternarEtiqueta}
-                placeholder={
-                  etiquetasState.cargando ? 'Cargando etiquetas…' : 'Buscá o escribí una etiqueta'
-                }
-                textoVacio={
-                  etiquetasState.cargando
-                    ? 'Cargando etiquetas…'
-                    : 'No hay etiquetas con ese texto. Podés crear una nueva.'
-                }
-              />
-              <small className="registro-ayuda">
-                Buscá etiquetas existentes o creá las tuyas (hasta {ETIQUETAS_MAX}) para que tu
-                colectivo aparezca en las búsquedas.
-              </small>
-            </div>
             {etiquetasState.error && (
-              <Alert severity="warning">
+              <Alert severity="warning" className="registro-aviso">
                 No pudimos cargar las etiquetas existentes. Igual podés escribir etiquetas nuevas.
               </Alert>
             )}
-
-            <div className="registro-campo">
-              <label className="registro-campo__label" htmlFor="registro-colectivo-descripcion">
-                Descripción (obligatoria)
-              </label>
-              <TextField
-                id="registro-colectivo-descripcion"
-                placeholder="Describí el trabajo del colectivo"
-                multiline
-                minRows={4}
-                {...propsDe('descripcion')}
-              />
-            </div>
           </div>
-        </Card>
+
+          <TextField
+            id="registro-colectivo-descripcion"
+            label="Descripción (obligatoria)"
+            placeholder="Ej.: Acompañamos a familias del barrio con talleres de apoyo escolar."
+            multiline
+            minRows={4}
+            {...propsDe('descripcion')}
+          />
+        </section>
 
         {error && (
-          <Alert severity="error" sx={{ marginTop: 2 }}>
+          <Alert severity="error" role="alert" className="registro-error">
             {error}
           </Alert>
         )}
@@ -210,7 +210,7 @@ const DatosColectivo = () => {
             borrarTipo();
             navigate('/');
           }}
-          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
+          siguiente={registroCreado ? 'Verificar registro' : 'Registrar colectivo'}
           guardando={guardando}
         />
       </form>

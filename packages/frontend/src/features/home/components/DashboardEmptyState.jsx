@@ -1,31 +1,45 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { Button } from '@mui/material';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiInbox } from 'react-icons/fi';
+import EstadoVacio from '../../../components/EstadoVacio/EstadoVacio.jsx';
 
+// Estado vacío dentro de una card del panel: misma pieza EstadoVacio, en su versión compacta.
 const DashboardEmptyState = ({
-  icon,
+  icon = FiInbox,
   title,
   description,
   actionLabel,
   onAction,
   className = '',
   actionVariant = 'outlined',
+  nivelTitulo = 'h3',
 }) => (
-  <div className={`dashboard-empty-state ${className}`.trim()}>
-    {icon && (
-      <span className="dashboard-empty-state__icono" aria-hidden="true">
-        {icon}
-      </span>
-    )}
-    <div className="dashboard-empty-state__texto">
-      <strong>{title}</strong>
-      <p>{description}</p>
-    </div>
-    {actionLabel && (
-      <Button variant={actionVariant} onClick={onAction} endIcon={<FiArrowRight />}>
-        {actionLabel}
-      </Button>
-    )}
-  </div>
+  <EstadoVacio
+    className={`estado-vacio--compacto ${className}`.trim()}
+    icono={icon}
+    titulo={title}
+    descripcion={description}
+    nivelTitulo={nivelTitulo}
+    accion={
+      actionLabel ? (
+        <Button variant={actionVariant} onClick={onAction} endIcon={<FiArrowRight aria-hidden="true" />}>
+          {actionLabel}
+        </Button>
+      ) : null
+    }
+  />
 );
+
+DashboardEmptyState.propTypes = {
+  icon: PropTypes.elementType,
+  title: PropTypes.node.isRequired,
+  description: PropTypes.node,
+  actionLabel: PropTypes.node,
+  onAction: PropTypes.func,
+  className: PropTypes.string,
+  actionVariant: PropTypes.oneOf(['contained', 'outlined', 'text']),
+  nivelTitulo: PropTypes.oneOf(['h2', 'h3']),
+};
 
 export default DashboardEmptyState;

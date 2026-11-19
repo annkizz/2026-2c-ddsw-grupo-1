@@ -1,23 +1,29 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert,
   Button,
-  CircularProgress,
-  Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
+  InputAdornment,
   LinearProgress,
-  Snackbar,
   TextField,
 } from '@mui/material';
-import { FiPlus, FiEye, FiEdit2, FiCheck, FiInfo, FiLock, FiFolder } from 'react-icons/fi';
+import { FiPlus, FiEye, FiEdit2, FiFolder, FiLock, FiSearch, FiXCircle, FiCheck, FiCalendar } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerProyectos, cerrarProyecto } from '../../service/proyectosService';
 import { t } from '../../i18n/t';
 import { formatearFecha } from '../../utils/fechas';
-import './ListaProyectos copy.css';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
+import ChipEstado from '../../components/ChipEstado/ChipEstado.jsx';
+import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import { EsqueletoGrilla } from '../../components/Esqueletos/Esqueletos.jsx';
+import { useNotificar } from '../../components/Notificador/Notificador.jsx';
+import '../../components/Card.css';
+import './ListaProyectos.css';
 
 const filtros = [
   { labelKey: 'proyectos.todos', value: 'TODOS' },
@@ -30,6 +36,7 @@ const estadoDe = (proyecto) => (proyecto.estado === 'FINALIZADO' ? 'FINALIZADO' 
 const ListaProyectos = () => {
   const { sesion, getAccessToken } = useAuth();
   const navigate = useNavigate();
+  const notificar = useNotificar();
   const idColectivo = sesion?.idColectivo;
   const esColectivo = Boolean(idColectivo);
 
@@ -37,18 +44,18 @@ const ListaProyectos = () => {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('TODOS');
   const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState('');
+  const [errorCarga, setErrorCarga] = useState(null);
   const [proyectoACerrar, setProyectoACerrar] = useState(null);
   const [cerrando, setCerrando] = useState(false);
-  const [notificacion, setNotificacion] = useState({ mensaje: '', severidad: 'success' });
+  const [errorCierre, setErrorCierre] = useState(null);
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
-    setErrorCarga('');
+    setErrorCarga(null);
     try {
       setProyectos(await obtenerProyectos());
     } catch (error) {
-      setErrorCarga(error.response?.data?.error || t('proyectos.errorCarga'));
+      setErrorCarga(error);
     } finally {
       setCargando(false);
     }
@@ -73,231 +80,241 @@ const ListaProyectos = () => {
     );
   }, [proyectosBase, busqueda, filtroEstado]);
 
+  const abrirCierre = (proyecto) => {
+    setErrorCierre(null);
+    setProyectoACerrar(proyecto);
+  };
+
   const manejarCierreProyecto = async () => {
     if (!proyectoACerrar) return;
     setCerrando(true);
+    setErrorCierre(null);
     try {
       const token = await getAccessToken();
       const actualizado = await cerrarProyecto(token, proyectoACerrar.id);
       setProyectos((actual) => actual.map((p) => (p.id === actualizado.id ? actualizado : p)));
       setProyectoACerrar(null);
-      setNotificacion({ mensaje: t('proyectos.exitoCierre'), severidad: 'success' });
+      notificar({ mensaje: t('proyectos.exitoCierre') });
     } catch (error) {
-      setNotificacion({
-        mensaje: error.response?.data?.error || t('proyectos.errorCierre'),
-        severidad: 'error',
-      });
+      // El diálogo queda abierto con el error y la opción de reintentar.
+      setErrorCierre(error);
     } finally {
       setCerrando(false);
     }
   };
 
-  const cerrarNotificacion = () => setNotificacion({ mensaje: '', severidad: 'success' });
+  const botonCrear = esColectivo ? (
+    <Button variant="contained" onClick={() => navigate('/proyectos/nuevo')} startIcon={<FiPlus aria-hidden="true" />}>
+      {t('proyectos.crearProyecto')}
+    </Button>
+  ) : null;
 
   return (
-    <div className="proyectos-contenedor">
-      <div className="proyectos-intro">
-        <div>
-          <h1>{esColectivo ? t('proyectos.titulo') : t('proyectos.tituloPublico')}</h1>
-          <p>{esColectivo ? t('proyectos.subtitulo') : t('proyectos.subtituloPublico')}</p>
-        </div>
-        {esColectivo && (
-          <Button
-            variant="contained"
-            onClick={() => navigate('/proyectos/nuevo')}
-            startIcon={<FiPlus />}
-            className="proyectos-boton-crear"
-          >
-            {t('proyectos.crearProyecto')}
-          </Button>
-        )}
-      </div>
+    <div className="contenedor-pagina">
+      <EncabezadoPagina
+        titulo={esColectivo ? t('proyectos.titulo') : t('proyectos.tituloPublico')}
+        subtitulo={esColectivo ? t('proyectos.subtitulo') : t('proyectos.subtituloPublico')}
+        accion={botonCrear}
+        migas={esColectivo ? [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('proyectos.titulo') }] : undefined}
+      />
 
-      <div className="proyectos-filtros">
-        <div className="proyectos-campo-busqueda">
-          <label htmlFor="busqueda-titulo">{t('proyectos.buscarTitulo')}</label>
-          <TextField
-            id="busqueda-titulo"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder={t('proyectos.placeholderBusqueda')}
-            fullWidth
-            size="small"
-          />
-        </div>
-        <fieldset className="proyectos-grupo-estado">
+      <div className="filtros-barra" role="search" aria-label="Filtrar proyectos">
+        <TextField
+          id="busqueda-titulo"
+          className="filtros-barra__busqueda"
+          label={t('proyectos.buscarTitulo')}
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder={t('proyectos.placeholderBusqueda')}
+          fullWidth
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FiSearch aria-hidden="true" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <fieldset className="filtro-segmentado">
           <legend>{t('proyectos.estado')}</legend>
-          <div className="proyectos-opciones-estado">
-            {filtros.map((filtro) => (
-              <Button
-                key={filtro.value}
-                variant={filtroEstado === filtro.value ? 'contained' : 'outlined'}
-                onClick={() => setFiltroEstado(filtro.value)}
-                aria-pressed={filtroEstado === filtro.value}
-                size="small"
-              >
-                {t(filtro.labelKey)}
-              </Button>
-            ))}
+          <div className="filtro-segmentado__opciones">
+            {filtros.map((filtro) => {
+              const activo = filtroEstado === filtro.value;
+              return (
+                <Button
+                  key={filtro.value}
+                  variant="outlined"
+                  className={`filtro-segmentado__opcion${activo ? ' filtro-segmentado__opcion--activa' : ''}`}
+                  onClick={() => setFiltroEstado(filtro.value)}
+                  aria-pressed={activo}
+                  startIcon={activo ? <FiCheck aria-hidden="true" /> : null}
+                >
+                  {t(filtro.labelKey)}
+                </Button>
+              );
+            })}
           </div>
         </fieldset>
       </div>
 
       {cargando ? (
-        <div className="proyectos-mensaje-estado" role="status">
-          <CircularProgress />
-          <p>{t('proyectos.cargando')}</p>
-        </div>
+        <EsqueletoGrilla etiqueta={t('proyectos.cargando')} />
       ) : errorCarga ? (
-        <div className="proyectos-mensaje-estado">
-          <Alert severity="error">{errorCarga}</Alert>
-          <Button variant="outlined" onClick={cargarDatos} sx={{ mt: 2 }}>
-            {t('proyectos.reintentar')}
-          </Button>
-        </div>
+        <AlertaError error={errorCarga} titulo="No pudimos cargar los proyectos" onReintentar={cargarDatos} />
       ) : proyectosBase.length === 0 ? (
-        <div className="proyectos-mensaje-estado">
-          <p>
-            <strong>{esColectivo ? t('proyectos.sinProyectos') : t('proyectos.sinResultados')}</strong>
-          </p>
-          {esColectivo && (
-            <>
-              <p>{t('proyectos.sinProyectosSub')}</p>
-              <Button variant="contained" onClick={() => navigate('/proyectos/nuevo')}>
+        <EstadoVacio
+          icono={FiFolder}
+          titulo={esColectivo ? t('proyectos.sinProyectos') : t('proyectos.sinResultados')}
+          descripcion={esColectivo ? t('proyectos.sinProyectosSub') : undefined}
+          accion={
+            esColectivo ? (
+              <Button variant="outlined" onClick={() => navigate('/proyectos/nuevo')} startIcon={<FiPlus aria-hidden="true" />}>
                 {t('proyectos.crearProyecto')}
               </Button>
-            </>
-          )}
-        </div>
+            ) : null
+          }
+        />
       ) : (
         <>
-          <p className="proyectos-conteo" aria-live="polite">
+          <p className="contador-resultados" aria-live="polite">
             {proyectosVisibles.length === 1
               ? t('proyectos.unProyecto')
               : t('proyectos.variosProyectos', { cantidad: proyectosVisibles.length })}
           </p>
 
           {proyectosVisibles.length === 0 ? (
-            <div className="proyectos-mensaje-estado">
-              <p>{t('proyectos.sinResultados')}</p>
-            </div>
+            <EstadoVacio
+              icono={FiSearch}
+              titulo={t('proyectos.sinResultados')}
+              descripcion="Probá con otra palabra o cambiá el filtro de estado."
+              accion={
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setBusqueda('');
+                    setFiltroEstado('TODOS');
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              }
+            />
           ) : (
-            <div className="proyectos-grid">
+            <ul className="tarjetas">
               {proyectosVisibles.map((proyecto) => {
                 const esFinalizado = estadoDe(proyecto) === 'FINALIZADO';
                 const avance = Math.min(100, Math.max(0, Number(proyecto.porcentajeConcrecion) || 0));
                 const cierre = formatearFecha(proyecto.fechaLimiteCierre);
                 const esDueño = esColectivo && proyecto.idColectivo === idColectivo;
+                const idTitulo = `lista-proyecto-${proyecto.id}`;
 
                 return (
-                  <div key={proyecto.id} className="proyecto-card">
-                    <span className={`proyecto-badge ${esFinalizado ? 'finalizado' : 'activo'}`}>
-                      {esFinalizado ? <FiCheck /> : <FiInfo />}
-                      {esFinalizado ? t('proyectos.finalizado') : t('proyectos.activo')}
-                    </span>
-                    <h2>{proyecto.titulo}</h2>
-                    <div className="proyecto-progreso-seccion">
-                      <div className="proyecto-progreso-cabecera">
-                        <span>{t('proyectos.avance')}</span>
-                        <span>{avance} %</span>
+                  <li key={proyecto.id} className="tarjeta" aria-labelledby={idTitulo}>
+                    <div className="tarjeta__cuerpo">
+                      <div className="tarjeta__encabezado">
+                        <h2 id={idTitulo} className="tarjeta__titulo">
+                          {proyecto.titulo}
+                        </h2>
+                        <ChipEstado estado={esFinalizado ? 'FINALIZADO' : 'ACTIVO'} />
                       </div>
-                      <LinearProgress
-                        variant="determinate"
-                        value={avance}
-                        aria-label={t('proyectos.avance')}
-                      />
-                    </div>
-                    <div className="proyecto-meta">
-                      <div>
-                        {proyecto.busquedaVigente ? <FiFolder /> : <FiLock />}
-                        <span>
-                          {proyecto.busquedaVigente
-                            ? t('proyectos.busquedaAbierta')
-                            : t('proyectos.busquedaCerrada')}
-                        </span>
+                      <div className="proyecto-progreso">
+                        <div className="proyecto-progreso__cabecera">
+                          <span>{t('proyectos.avance')}</span>
+                          <span>{avance} %</span>
+                        </div>
+                        <LinearProgress variant="determinate" value={avance} aria-label={t('proyectos.avance')} />
                       </div>
-                      <small>
-                        {esFinalizado
-                          ? t('proyectos.proyectoFinalizado')
-                          : cierre
-                          ? t('proyectos.cierreProgramado', { fecha: cierre })
-                          : t('proyectos.sinCierreProgramado')}
-                      </small>
+                      <div className="tarjeta__metas">
+                        <p className="tarjeta__meta">
+                          {proyecto.busquedaVigente ? <FiFolder aria-hidden="true" /> : <FiLock aria-hidden="true" />}
+                          <span>
+                            {proyecto.busquedaVigente ? t('proyectos.busquedaAbierta') : t('proyectos.busquedaCerrada')}
+                          </span>
+                        </p>
+                        <p className="tarjeta__meta">
+                          <FiCalendar aria-hidden="true" />
+                          <span>
+                            {esFinalizado
+                              ? t('proyectos.proyectoFinalizado')
+                              : cierre
+                                ? t('proyectos.cierreProgramado', { fecha: cierre })
+                                : t('proyectos.sinCierreProgramado')}
+                          </span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="proyecto-acciones">
+                    <div className="tarjeta__acciones">
                       <Button
                         variant="outlined"
-                        size="small"
                         onClick={() => navigate(`/proyectos/${proyecto.id}`)}
-                        startIcon={<FiEye />}
+                        startIcon={<FiEye aria-hidden="true" />}
+                        aria-label={`Ver proyecto: ${proyecto.titulo}`}
                       >
-                        {t('proyectos.ver')}
+                        Ver proyecto
                       </Button>
                       {esDueño && (
                         <Button
                           variant="text"
-                          size="small"
                           onClick={() => navigate(`/proyectos/${proyecto.id}/editar`)}
-                          startIcon={<FiEdit2 />}
+                          startIcon={<FiEdit2 aria-hidden="true" />}
+                          aria-label={`Editar proyecto: ${proyecto.titulo}`}
                         >
-                          {t('proyectos.editar')}
+                          Editar proyecto
                         </Button>
                       )}
                       {esDueño && !esFinalizado && (
                         <Button
                           variant="text"
-                          size="small"
                           color="error"
-                          onClick={() => setProyectoACerrar(proyecto)}
+                          startIcon={<FiXCircle aria-hidden="true" />}
+                          onClick={() => abrirCierre(proyecto)}
+                          aria-label={`Cerrar proyecto: ${proyecto.titulo}`}
                         >
                           {t('proyectos.cerrarProyecto')}
                         </Button>
                       )}
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </>
       )}
 
-      <Dialog open={Boolean(proyectoACerrar)} onClose={() => !cerrando && setProyectoACerrar(null)}>
-        <DialogTitle>{t('proyectos.modalCerrarTitulo')}</DialogTitle>
+      <Dialogo
+        open={Boolean(proyectoACerrar)}
+        onClose={() => !cerrando && setProyectoACerrar(null)}
+        aria-labelledby="dialogo-cerrar-titulo"
+        aria-describedby="dialogo-cerrar-descripcion"
+      >
+        <DialogTitle id="dialogo-cerrar-titulo">{t('proyectos.modalCerrarTitulo')}</DialogTitle>
         <DialogContent>
-          <p>
-            {proyectoACerrar ? t('proyectos.mensajeCerrar', { titulo: proyectoACerrar.titulo }) : ''}
-          </p>
-          <p>
+          <DialogContentText id="dialogo-cerrar-descripcion">
+            {proyectoACerrar ? t('proyectos.mensajeCerrar', { titulo: proyectoACerrar.titulo }) : ''}{' '}
             <strong>{t('proyectos.advertenciaPermanente')}</strong>
-          </p>
+          </DialogContentText>
+          {errorCierre && (
+            <AlertaError className="dialogo-alerta" error={errorCierre} titulo="No pudimos cerrar el proyecto" />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setProyectoACerrar(null)} disabled={cerrando}>
+          <Button variant="outlined" onClick={() => setProyectoACerrar(null)} disabled={cerrando}>
             {t('proyectos.cancelar')}
           </Button>
           <Button
             variant="contained"
             color="error"
             onClick={manejarCierreProyecto}
-            disabled={cerrando}
-            startIcon={cerrando ? <CircularProgress size={18} color="inherit" /> : null}
+            loading={cerrando}
+            startIcon={<FiXCircle aria-hidden="true" />}
           >
             {cerrando ? t('proyectos.cerrando') : t('proyectos.cerrarProyecto')}
           </Button>
         </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={Boolean(notificacion.mensaje)}
-        autoHideDuration={4500}
-        onClose={cerrarNotificacion}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={cerrarNotificacion} severity={notificacion.severidad} variant="filled">
-          {notificacion.mensaje}
-        </Alert>
-      </Snackbar>
+      </Dialogo>
     </div>
   );
 };

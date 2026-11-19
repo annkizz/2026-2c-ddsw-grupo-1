@@ -1,0 +1,59 @@
+import { t } from '../i18n/t';
+
+// Clasifica un error (de axios u otro) sin mostrar nunca el texto del backend,
+// error.message ni códigos internos. Cada tipo tiene su texto en es.json (errores.*).
+export const TIPOS_ERROR = {
+  sinConexion: 'sinConexion',
+  sesionVencida: 'sesionVencida',
+  sinPermisos: 'sinPermisos',
+  noEncontrado: 'noEncontrado',
+  validacion: 'validacion',
+  conflicto: 'conflicto',
+  servidor: 'servidor',
+  inesperado: 'inesperado'
+};
+
+const estaOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+
+export const clasificarError = (error) => {
+  if (!error) return TIPOS_ERROR.inesperado;
+  if (estaOffline()) return TIPOS_ERROR.sinConexion;
+
+  const status = error.response?.status;
+  if (!status) {
+    const esDeRed =
+      error.code === 'ERR_NETWORK' ||
+      error.code === 'ECONNABORTED' ||
+      error.message === 'Network Error' ||
+      Boolean(error.request);
+    return esDeRed ? TIPOS_ERROR.sinConexion : TIPOS_ERROR.inesperado;
+  }
+  if (status === 401) return TIPOS_ERROR.sesionVencida;
+  if (status === 403) return TIPOS_ERROR.sinPermisos;
+  if (status === 404) return TIPOS_ERROR.noEncontrado;
+  if (status === 409) return TIPOS_ERROR.conflicto;
+  if (status === 400 || status === 422) return TIPOS_ERROR.validacion;
+  if (status >= 500) return TIPOS_ERROR.servidor;
+  return TIPOS_ERROR.inesperado;
+};
+
+// { tipo, mensaje, accion } donde accion es 'iniciarSesion', 'reintentar' o null.
+export const describirError = (error) => {
+  const tipo = clasificarError(error);
+  const accion =
+    tipo === TIPOS_ERROR.sesionVencida
+      ? 'iniciarSesion'
+      : [TIPOS_ERROR.sinConexion, TIPOS_ERROR.servidor, TIPOS_ERROR.inesperado, TIPOS_ERROR.conflicto].includes(tipo)
+        ? 'reintentar'
+        : null;
+  return { tipo, mensaje: t(`errores.${tipo}`), accion };
+};
+
+// Texto listo para mostrar. Si se pasa un contexto ("No pudimos guardar el perfil."),
+// se antepone a la explicación del tipo de error.
+export const mensajeDeError = (error, contexto) => {
+  const { mensaje } = describirError(error);
+  return contexto ? `${contexto} ${mensaje}` : mensaje;
+};
+
+export default mensajeDeError;

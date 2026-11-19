@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { IconButton, InputBase } from "@mui/material";
+import { FiAlertCircle, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { ETIQUETA_MAX, etiquetaLegible, normalizarEtiqueta } from "../../utils/etiquetas";
 import "./CustomSelect.css";
 
@@ -31,6 +33,8 @@ export default function CustomSelect({
   maxSeleccion = Infinity,
   textoCrear = "Crear etiqueta",
   className = "",
+  ayuda,
+  error,
 }) {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState("");
@@ -176,15 +180,20 @@ export default function CustomSelect({
     }
   };
 
+  const idAyuda = ayuda ? `${id}-ayuda` : undefined;
+  const idError = error ? `${id}-error` : undefined;
+  const describidoPor = [idError, idAyuda].filter(Boolean).join(" ") || undefined;
+
   return (
-    <div className={["selector", className].filter(Boolean).join(" ")} onBlur={alPerderFoco}>
+    <div
+      className={["selector", error ? "selector--error" : "", className].filter(Boolean).join(" ")}
+      onBlur={alPerderFoco}
+    >
       <label className="selector__label" htmlFor={id}>
         {etiqueta}
       </label>
 
-      <div
-        className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}
-      >
+      <div className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}>
         <InputBase
           className="selector__input"
           value={consulta}
@@ -200,22 +209,32 @@ export default function CustomSelect({
             "aria-expanded": abierto,
             "aria-controls": `${id}-lista`,
             "aria-activedescendant":
-              abierto && visibles[indiceActivo]
-                ? `${id}-opcion-${indiceActivo}`
-                : undefined,
+              abierto && visibles[indiceActivo] ? `${id}-opcion-${indiceActivo}` : undefined,
+            "aria-invalid": error ? true : undefined,
+            "aria-describedby": describidoPor,
             autoComplete: "off",
           }}
         />
-        <span className="selector__flecha" aria-hidden="true">
-          ▾
-        </span>
+        <FiChevronDown className="selector__flecha" aria-hidden="true" />
       </div>
 
+      {error && (
+        <p className="selector__error" id={idError}>
+          <FiAlertCircle aria-hidden="true" />
+          <span>{error}</span>
+        </p>
+      )}
+      {ayuda && (
+        <p className="selector__ayuda" id={idAyuda}>
+          {ayuda}
+        </p>
+      )}
+
       {seleccionadas.length > 0 && (
-        <div className="selector__seleccion" aria-live="polite">
+        <ul className="selector__seleccion" aria-live="polite" aria-label={`Elegidas en ${typeof etiqueta === "string" ? etiqueta : "este campo"}`}>
           {seleccionadas.map((opcion) => (
-            <span className="selector__seleccionada" key={opcion.valor}>
-              {opcion.etiqueta}
+            <li key={opcion.valor} className="selector__seleccionada">
+              <span>{opcion.etiqueta}</span>
               {puedeQuitar && (
                 <IconButton
                   type="button"
@@ -223,12 +242,12 @@ export default function CustomSelect({
                   aria-label={`Quitar ${opcion.etiqueta}`}
                   onClick={() => (onQuitar ?? onSeleccionar)?.(opcion.valor)}
                 >
-                  ×
+                  <FiX aria-hidden="true" />
                 </IconButton>
               )}
-            </span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {abierto && (
@@ -240,9 +259,7 @@ export default function CustomSelect({
         >
           {visibles.length === 0 ? (
             <li className="selector__vacio">
-              {alcanzoMaximo && permiteCrear
-                ? `Llegaste al máximo de ${maxSeleccion} etiquetas.`
-                : textoVacio}
+              {alcanzoMaximo && permiteCrear ? `Llegaste al máximo de ${maxSeleccion} etiquetas.` : textoVacio}
             </li>
           ) : (
             visibles.map((opcion, indice) => {
@@ -253,11 +270,9 @@ export default function CustomSelect({
                   id={`${id}-opcion-${indice}`}
                   role="option"
                   aria-selected={activa}
-                  className={`selector__opcion${
-                    indice === indiceActivo ? " selector__opcion--activa" : ""
-                  }${activa ? " selector__opcion--elegida" : ""}${
-                    opcion.esNueva ? " selector__opcion--nueva" : ""
-                  }`}
+                  className={`selector__opcion${indice === indiceActivo ? " selector__opcion--activa" : ""}${
+                    activa ? " selector__opcion--elegida" : ""
+                  }${opcion.esNueva ? " selector__opcion--nueva" : ""}`}
                   onMouseDown={(evento) => evento.preventDefault()}
                   onClick={() => seleccionar(opcion)}
                 >
@@ -268,18 +283,10 @@ export default function CustomSelect({
                   ) : (
                     <>
                       <span>{opcion.etiqueta}</span>
-                      {opcion.secundario && (
-                        <span className="selector__secundario">
-                          {opcion.secundario}
-                        </span>
-                      )}
+                      {opcion.secundario && <span className="selector__secundario">{opcion.secundario}</span>}
                     </>
                   )}
-                  {activa && (
-                    <span className="selector__tilde" aria-hidden="true">
-                      ✓
-                    </span>
-                  )}
+                  {activa && <FiCheck className="selector__tilde" aria-hidden="true" />}
                 </li>
               );
             })
@@ -289,3 +296,21 @@ export default function CustomSelect({
     </div>
   );
 }
+
+CustomSelect.propTypes = {
+  id: PropTypes.string.isRequired,
+  etiqueta: PropTypes.node.isRequired,
+  opciones: PropTypes.array,
+  seleccion: PropTypes.array,
+  multiple: PropTypes.bool,
+  onSeleccionar: PropTypes.func,
+  onQuitar: PropTypes.func,
+  placeholder: PropTypes.string,
+  textoVacio: PropTypes.node,
+  permiteCrear: PropTypes.bool,
+  maxSeleccion: PropTypes.number,
+  textoCrear: PropTypes.string,
+  className: PropTypes.string,
+  ayuda: PropTypes.node,
+  error: PropTypes.node,
+};

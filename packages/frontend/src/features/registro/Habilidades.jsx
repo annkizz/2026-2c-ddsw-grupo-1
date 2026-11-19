@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Alert, Button, Card } from '@mui/material';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { Alert } from '@mui/material';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { useListado } from '../../hooks/useListado';
 
@@ -28,15 +30,19 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
     if (habilidadesState.cargando) return;
     if (habilidadesState.error || opciones.length === 0 || datos.habilidades.length === 0) {
       setError(true);
+      document.getElementById('registro-habilidades')?.focus();
       return;
     }
     onSiguiente();
   };
 
+  const sinOpciones = error && !habilidadesState.error && opciones.length === 0;
+
   return (
     <form onSubmit={siguiente} noValidate>
-      <Card variant="outlined" className="registro-card">
-        <h2>Indicá tus habilidades</h2>
+      <section className="registro-card" aria-labelledby="paso-habilidades-titulo">
+        <h2 id="paso-habilidades-titulo">Indicá tus habilidades</h2>
+        <p className="registro-card__intro">Elegí al menos una. Las usamos para recomendarte proyectos.</p>
         <CustomSelect
           id="registro-habilidades"
           etiqueta="Habilidades"
@@ -44,34 +50,34 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
           seleccion={datos.habilidades}
           multiple
           onSeleccionar={alternar}
-          placeholder={
-            habilidadesState.cargando ? 'Cargando habilidades…' : 'Buscá una habilidad disponible'
-          }
-          textoVacio={
-            habilidadesState.cargando
-              ? 'Cargando habilidades…'
-              : 'No hay habilidades con ese texto.'
-          }
+          ayuda="Podés buscar escribiendo parte del nombre."
+          error={error && !habilidadesState.error && !sinOpciones ? 'Elegí al menos una habilidad disponible.' : undefined}
+          placeholder={habilidadesState.cargando ? 'Cargando habilidades…' : 'Ej.: React'}
+          textoVacio={habilidadesState.cargando ? 'Cargando habilidades…' : 'No hay habilidades con ese texto.'}
         />
         {habilidadesState.error && (
-          <Alert
-            severity="error"
-            action={<Button onClick={habilidadesState.recargar}>Reintentar</Button>}
-          >
-            No pudimos cargar las habilidades disponibles. Volvé a intentarlo antes de continuar.
+          <AlertaError
+            error={habilidadesState.error}
+            titulo="No pudimos cargar las habilidades disponibles"
+            onReintentar={habilidadesState.recargar}
+          />
+        )}
+        {sinOpciones && (
+          <Alert severity="warning" role="alert">
+            No hay habilidades disponibles para registrar el perfil.
           </Alert>
         )}
-        {error && !habilidadesState.error && (
-          <Alert severity="warning">
-            {opciones.length === 0
-              ? 'No hay habilidades disponibles para registrar el perfil.'
-              : 'Elegí al menos una habilidad disponible.'}
-          </Alert>
-        )}
-      </Card>
+      </section>
       <AccionesRegistro onVolver={onVolver} siguiente="Siguiente" />
     </form>
   );
+};
+
+Habilidades.propTypes = {
+  datos: PropTypes.object.isRequired,
+  setDatos: PropTypes.func.isRequired,
+  onVolver: PropTypes.func,
+  onSiguiente: PropTypes.func.isRequired
 };
 
 export default Habilidades;

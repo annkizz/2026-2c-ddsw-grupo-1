@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { crearColaboradora } from '../../service/colaboradorasService';
-import { mensajeDeError } from '../../service/api';
+import { mensajeDeError } from '../../utils/mensajeDeError';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import PasosRegistro from '../../components/PasosRegistro/PasosRegistro.jsx';
 import { borrarTipo } from './tipoElegido';
 import DatosColaboradora from './DatosColaboradora.jsx';
 import Habilidades from './Habilidades.jsx';
 import MediosDeContacto from './MediosDeContacto.jsx';
 import './Registro.css';
+
+const PASOS = ['Tus datos', 'Habilidades', 'Contacto'];
 
 const DATOS_INICIALES = {
   nombreFantasia: '',
@@ -53,15 +57,20 @@ const RegistroColaboradora = () => {
       borrarTipo();
       navigate('/perfil');
     } catch (e) {
-      setError(mensajeDeError(e));
+      setError(mensajeDeError(e, 'No pudimos crear tu perfil. Tus datos siguen acá.'));
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <div className="registro">
-      <h1>Registrar Colaboradora</h1>
+    <div className="contenedor-pagina contenedor-pagina--formulario registro">
+      <EncabezadoPagina
+        titulo="Crear tu perfil de colaboradora"
+        subtitulo="Con estos datos los colectivos te encuentran y te recomendamos proyectos."
+      >
+        <PasosRegistro pasos={PASOS} actual={paso} />
+      </EncabezadoPagina>
       {paso === 1 && (
         <DatosColaboradora
           datos={datos}
@@ -87,7 +96,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
+          siguiente={registroCreado ? 'Verificar registro' : 'Crear mi perfil'}
           guardando={guardando}
           error={error}
         />

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, CircularProgress } from '@mui/material';
-import { FiMapPin, FiSearch, FiUsers } from 'react-icons/fi';
+import { Button, Skeleton } from '@mui/material';
+import { FiArrowRight, FiMapPin, FiSearch } from 'react-icons/fi';
 import CardProyecto from '../../components/CardProyecto/CardProyecto.jsx';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import { EsqueletoGrilla } from '../../components/Esqueletos/Esqueletos.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
 import { obtenerMiPerfilColaboradora } from '../../service/colaboradorasService';
@@ -23,7 +26,7 @@ const DashboardColaboradora = () => {
   );
   const [camposFaltantes, setCamposFaltantes] = useState([]);
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
-  const [errorPerfil, setErrorPerfil] = useState('');
+  const [errorPerfil, setErrorPerfil] = useState(null);
   const [intentoPerfil, setIntentoPerfil] = useState(0);
 
   useEffect(() => {
@@ -31,7 +34,7 @@ const DashboardColaboradora = () => {
 
     const cargarPerfil = async () => {
       setCargandoPerfil(true);
-      setErrorPerfil('');
+      setErrorPerfil(null);
       try {
         const token = await getAccessToken();
         const perfil = await obtenerMiPerfilColaboradora(token);
@@ -44,14 +47,7 @@ const DashboardColaboradora = () => {
           );
         }
       } catch (error) {
-        if (vigente) {
-          setErrorPerfil(
-            error?.response?.data?.error ||
-              (error?.message && error.message !== 'Network Error'
-                ? error.message
-                : 'No pudimos comprobar si tu perfil está completo. Intentá nuevamente.'),
-          );
-        }
+        if (vigente) setErrorPerfil(error);
       } finally {
         if (vigente) setCargandoPerfil(false);
       }
@@ -68,18 +64,16 @@ const DashboardColaboradora = () => {
   const proyectosRecomendados = recomendacionesState.datos.slice(0, 3);
 
   return (
-    <div className="home home--dashboard">
-      <section
-        className="dashboard-colectivo dashboard-colaboradora"
-        aria-labelledby="dashboard-titulo"
-      >
-        <div className="dashboard-encabezado">
-          <p className="dashboard-eyebrow">Tu espacio de colaboradora</p>
-          <h1 id="dashboard-titulo">Encontrá un proyecto para aportar</h1>
-          <p>Explorá oportunidades según tus habilidades o buscá por ubicación.</p>
-        </div>
+    <div className="contenedor-pagina home--dashboard">
+      <section className="dashboard" aria-labelledby="dashboard-titulo">
+        <EncabezadoPagina
+          id="dashboard-titulo"
+          antetitulo="Tu espacio de colaboradora"
+          titulo="Encontrá un proyecto para aportar"
+          subtitulo="Explorá oportunidades según tus habilidades o buscá por ubicación."
+        />
 
-        <div className="dashboard-grid dashboard-grid--colaboradora">
+        <div className="dashboard-grid">
           <DashboardCard
             className="dashboard-card--destacada"
             icon={<FiSearch />}
@@ -88,8 +82,8 @@ const DashboardColaboradora = () => {
           >
             <Button
               variant="contained"
-              size="large"
               onClick={() => navigate('/buscar-proyectos')}
+              startIcon={<FiSearch aria-hidden="true" />}
             >
               Explorar proyectos
             </Button>
@@ -101,11 +95,7 @@ const DashboardColaboradora = () => {
             title="Explorar por ubicación"
             description="Descubrí proyectos activos en el mapa y elegí una provincia."
           >
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/mapa')}
-              endIcon={<FiMapPin />}
-            >
+            <Button variant="outlined" onClick={() => navigate('/mapa')} startIcon={<FiMapPin aria-hidden="true" />}>
               Abrir mapa
             </Button>
           </DashboardCard>
@@ -113,39 +103,31 @@ const DashboardColaboradora = () => {
 
         <section className="dashboard-recomendaciones" aria-labelledby="recomendaciones-titulo">
           <div className="dashboard-recomendaciones__encabezado">
-            <div>
-              <h2 id="recomendaciones-titulo">Recomendados para vos</h2>
-              <p>
-                Proyectos que coinciden con las habilidades de tu perfil. Podés ajustar la búsqueda
-                en cualquier momento.
-              </p>
-            </div>
-            <FiUsers aria-hidden="true" />
+            <h2 id="recomendaciones-titulo">Recomendados para vos</h2>
+            <p>
+              Proyectos que coinciden con las habilidades de tu perfil. Podés ajustar la búsqueda en
+              cualquier momento.
+            </p>
           </div>
 
           {!idColaborador ? (
-            <Alert severity="error">
-              No pudimos identificar tu perfil para cargar recomendaciones. Volvé a iniciar sesión.
-            </Alert>
+            <AlertaError
+              titulo="No pudimos identificar tu perfil para cargar recomendaciones"
+              mensaje="Volvé a iniciar sesión para continuar."
+            />
           ) : recomendacionesState.cargando ? (
-            <div className="dashboard-estado" role="status" aria-live="polite">
-              <CircularProgress size={20} aria-label="Cargando proyectos recomendados" />
-              <span>Buscando proyectos para vos…</span>
-            </div>
+            <EsqueletoGrilla cantidad={3} etiqueta="Buscando proyectos para vos…" />
           ) : recomendacionesState.error ? (
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" size="small" onClick={recomendacionesState.recargar}>
-                  Reintentar
-                </Button>
-              }
+            <AlertaError
+              error={recomendacionesState.error}
+              titulo="No pudimos cargar las recomendaciones"
+              onReintentar={recomendacionesState.recargar}
             >
-              No pudimos cargar las recomendaciones. Podés abrir el buscador para explorar proyectos.
-            </Alert>
+              <span> Mientras tanto, podés abrir el buscador para explorar proyectos.</span>
+            </AlertaError>
           ) : proyectosRecomendados.length === 0 ? (
             <DashboardEmptyState
-              icon={<FiSearch />}
+              icon={FiSearch}
               title="Todavía no encontramos coincidencias"
               description="Explorá los proyectos activos y ajustá tus filtros para encontrar dónde aportar."
               actionLabel="Explorar proyectos"
@@ -153,7 +135,7 @@ const DashboardColaboradora = () => {
             />
           ) : (
             <>
-              <ul className="dashboard-recomendaciones-lista">
+              <ul className="tarjetas dashboard-recomendaciones-lista">
                 {proyectosRecomendados.map((proyecto) => (
                   <CardProyecto key={proyecto.id} proyecto={proyecto} />
                 ))}
@@ -161,7 +143,7 @@ const DashboardColaboradora = () => {
               <Button
                 variant="outlined"
                 onClick={() => navigate('/buscar-proyectos')}
-                className="dashboard-recomendaciones__ver-mas"
+                endIcon={<FiArrowRight aria-hidden="true" />}
               >
                 Ver más proyectos
               </Button>
@@ -170,26 +152,17 @@ const DashboardColaboradora = () => {
         </section>
 
         {cargandoPerfil ? (
-          <div className="dashboard-estado dashboard-estado--perfil" role="status" aria-live="polite">
-            <CircularProgress size={20} aria-label="Comprobando perfil" />
-            <span>Comprobando si falta completar tu perfil…</span>
+          <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
+            <span className="visualmente-oculto">Comprobando si falta completar tu perfil…</span>
+            <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
           </div>
         ) : errorPerfil ? (
-          <Alert
+          <AlertaError
             className="dashboard-alerta-perfil"
-            severity="error"
-            action={
-              <Button
-                color="inherit"
-                size="small"
-                onClick={() => setIntentoPerfil((intento) => intento + 1)}
-              >
-                Reintentar
-              </Button>
-            }
-          >
-            {errorPerfil}
-          </Alert>
+            error={errorPerfil}
+            titulo="No pudimos comprobar si tu perfil está completo"
+            onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
+          />
         ) : camposFaltantes.length > 0 ? (
           <IndicadorProgresoPerfil
             completados={completados}

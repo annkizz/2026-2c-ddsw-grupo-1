@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Drawer, IconButton } from '@mui/material';
-import { FiBell, FiCode, FiHelpCircle, FiMenu, FiUser, FiX } from 'react-icons/fi';
+import { FiBell, FiCode, FiHelpCircle, FiHome, FiLogOut, FiMenu, FiUser, FiX } from 'react-icons/fi';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import BotonModoDaltonico from '../BotonModoDaltonico/BotonModoDaltonico.jsx';
+import { t } from '../../i18n/t';
 import './Header.css';
+
+import { RUTA_AYUDA, irAAyuda } from '../../utils/rutasUI';
 
 const Header = () => {
   const { isAuthenticated, sesion, cerrarSesion } = useAuth();
@@ -12,29 +16,35 @@ const Header = () => {
   const esColectivo = sesion?.rol === 'COLECTIVO';
   const esColaboradora = sesion?.rol === 'COLABORADOR';
 
-  const enlaces = esColectivo || esColaboradora
-    ? [
-        { to: '/notificaciones', texto: 'Notificaciones', icono: <FiBell aria-hidden="true" /> },
-        { to: '/perfil', texto: 'Mi perfil', icono: <FiUser aria-hidden="true" /> }
-      ]
-    : [
-        { to: '/proyectos', texto: 'Proyectos' },
-        { to: '/buscar-proyectos', texto: 'Buscar proyectos' },
-        { to: '/mapa', texto: 'Mapa' },
-        { to: '/notificaciones', texto: 'Notificaciones' },
-        { to: '/perfil', texto: 'Mi perfil' }
-      ];
+  // Las funciones de cada rol se ofrecen desde el panel de Inicio (a 1 clic);
+  // el header deja lo transversal: Inicio, Notificaciones y Mi perfil.
+  const enlaces =
+    esColectivo || esColaboradora
+      ? [
+          { to: '/', texto: t('navegacion.inicio'), icono: <FiHome aria-hidden="true" />, exacto: true },
+          { to: '/notificaciones', texto: t('navegacion.notificaciones'), icono: <FiBell aria-hidden="true" /> },
+          { to: '/perfil', texto: t('navegacion.miPerfil'), icono: <FiUser aria-hidden="true" /> }
+        ]
+      : [
+          { to: '/proyectos', texto: t('navegacion.proyectos') },
+          { to: '/buscar-proyectos', texto: t('navegacion.buscarProyectos') },
+          { to: '/mapa', texto: t('navegacion.mapa') },
+          { to: '/notificaciones', texto: t('navegacion.notificaciones') },
+          { to: '/perfil', texto: t('navegacion.miPerfil') }
+        ];
 
   const cerrarMenu = () => setMenuAbierto(false);
   const salir = () => {
     cerrarMenu();
     cerrarSesion();
   };
+
   const renderEnlaces = () =>
-    enlaces.map(({ to, texto, icono }) => (
+    enlaces.map(({ to, texto, icono, exacto }) => (
       <NavLink
         key={to}
         to={to}
+        end={exacto}
         onClick={cerrarMenu}
         className={({ isActive }) => `header-nav-link${isActive ? ' activo' : ''}`}
       >
@@ -43,38 +53,62 @@ const Header = () => {
       </NavLink>
     ));
 
+  const enlaceAyuda = (clase) => (
+    <Link
+      className={clase}
+      to={RUTA_AYUDA}
+      onClick={() => {
+        cerrarMenu();
+        irAAyuda();
+      }}
+    >
+      <FiHelpCircle aria-hidden="true" />
+      <span>{t('navegacion.ayuda')}</span>
+    </Link>
+  );
+
   return (
     <header className="header">
-      <Link to="/" className="header-logo">
-        <span className="header-logo-mark">
-          <FiCode aria-hidden="true" />
-        </span>
-        <span className="header-logo-texto">Código a Voluntad</span>
-      </Link>
+      <div className="header__contenido">
+        <Link to="/" className="header-logo">
+          <span className="header-logo-mark" aria-hidden="true">
+            <FiCode />
+          </span>
+          <span className="header-logo-texto">Código a Voluntad</span>
+        </Link>
 
-      {conPerfil ? (
-        <nav className="header-nav header-nav--desktop" aria-label="Navegación principal">
-          {renderEnlaces()}
-          <Button className="header-nav-salir" variant="text" onClick={cerrarSesion}>
-            Salir
-          </Button>
-        </nav>
-      ) : (
-        <a className="header-ayuda header-ayuda--desktop" href="#ayuda">
-          <FiHelpCircle aria-hidden="true" />
-          <span>¿Necesitás ayuda?</span>
-        </a>
-      )}
+        {conPerfil ? (
+          <nav className="header-nav header-nav--desktop" aria-label={t('navegacion.principal')}>
+            {renderEnlaces()}
+          </nav>
+        ) : (
+          <div className="header-nav header-nav--desktop">{enlaceAyuda('header-ayuda')}</div>
+        )}
 
-      <IconButton
-        className="header-menu-toggle"
-        aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
-        aria-expanded={menuAbierto}
-        aria-controls={menuAbierto ? 'header-navegacion-movil' : undefined}
-        onClick={() => setMenuAbierto((abierto) => !abierto)}
-      >
-        {menuAbierto ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-      </IconButton>
+        <div className="header-usuario header-usuario--desktop">
+          <BotonModoDaltonico className="header-modo-color" />
+          {conPerfil && (
+            <Button
+              className="header-nav-salir"
+              variant="text"
+              startIcon={<FiLogOut aria-hidden="true" />}
+              onClick={cerrarSesion}
+            >
+              {t('navegacion.salir')}
+            </Button>
+          )}
+        </div>
+
+        <IconButton
+          className="header-menu-toggle"
+          aria-label={menuAbierto ? t('navegacion.cerrarMenu') : t('navegacion.abrirMenu')}
+          aria-expanded={menuAbierto}
+          aria-controls={menuAbierto ? 'header-navegacion-movil' : undefined}
+          onClick={() => setMenuAbierto((abierto) => !abierto)}
+        >
+          {menuAbierto ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+        </IconButton>
+      </div>
 
       <Drawer
         anchor="right"
@@ -86,30 +120,31 @@ const Header = () => {
       >
         <div className="header-drawer">
           <div className="header-drawer-encabezado">
-            <h2 id="header-menu-titulo">Menú</h2>
-            <IconButton aria-label="Cerrar menú" onClick={cerrarMenu}>
+            <h2 id="header-menu-titulo">{t('navegacion.menu')}</h2>
+            <IconButton aria-label={t('navegacion.cerrarMenu')} onClick={cerrarMenu}>
               <FiX aria-hidden="true" />
             </IconButton>
           </div>
-          <nav
-            id="header-navegacion-movil"
-            className="header-nav header-nav--mobile"
-            aria-label="Navegación principal"
-          >
+          <nav id="header-navegacion-movil" className="header-nav header-nav--mobile" aria-label={t('navegacion.principal')}>
             {conPerfil ? (
               <>
                 {renderEnlaces()}
-                <Button className="header-nav-salir" variant="text" onClick={salir}>
-                  Salir
+                <Button
+                  className="header-nav-salir"
+                  variant="text"
+                  startIcon={<FiLogOut aria-hidden="true" />}
+                  onClick={salir}
+                >
+                  {t('navegacion.salir')}
                 </Button>
               </>
             ) : (
-              <a className="header-nav-link header-ayuda-movil" href="#ayuda" onClick={cerrarMenu}>
-                <FiHelpCircle aria-hidden="true" />
-                <span>¿Necesitás ayuda?</span>
-              </a>
+              enlaceAyuda('header-nav-link header-ayuda-movil')
             )}
           </nav>
+          <div className="header-drawer-preferencias" role="group" aria-label={t('navegacion.preferencias')}>
+            <BotonModoDaltonico className="header-modo-color" />
+          </div>
         </div>
       </Drawer>
     </header>

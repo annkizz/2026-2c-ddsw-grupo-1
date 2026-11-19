@@ -1,46 +1,43 @@
-.tipo-cuenta-titulo {
+.tipo-cuenta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.tipo-cuenta-titulo h2 {
-  margin: 0;
-  font-size: 30px;
+.tipo-cuenta-opcion.MuiCard-root {
+  box-shadow: none;
 }
 
-.tipo-cuenta-sub {
-  margin: 0 0 20px;
-  color: var(--color-muted);
-}
-
-.tipo-cuenta-opcion {
-  margin-bottom: 12px;
+.tipo-cuenta-opcion.MuiCard-root:hover {
+  border-color: var(--color-primary);
 }
 
 .tipo-cuenta-contenido {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 16px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-2);
   color: var(--color-primary);
+  font-size: var(--icon-size-lg);
 }
 
 .tipo-cuenta-contenido > div {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-body);
 }
 
 .tipo-cuenta-contenido strong {
-  display: block;
   color: var(--color-text);
 }
 
 .tipo-cuenta-contenido small {
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: var(--font-size-secundario);
 }
 
 .tipo-cuenta-contenido svg {
-  font-size: 22px;
   flex: none;
 }

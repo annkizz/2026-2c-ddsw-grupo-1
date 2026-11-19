@@ -1,127 +1,44 @@
-.perfiles-contenedor {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 16px 48px;
-  box-sizing: border-box;
-}
-
-.perfiles-estado {
-  min-height: 50vh;
-  display: grid;
-  place-items: center;
-}
-
-.perfiles-volver {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-}
-
-.perfiles-volver:hover {
-  text-decoration: underline;
-}
-
-.perfiles-header {
+/* Gestión de perfiles del proyecto */
+.perfil-admin__bloque {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.perfil-admin__datos {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+}
+
+.perfil-admin__datos > div {
+  display: flex;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }
 
-.perfiles-header h1 {
-  font-size: 28px;
-  margin: 0 0 4px;
-  color: var(--color-text);
-}
-
-.perfiles-proyecto-nombre {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin: 0 0 4px;
-}
-
-.perfiles-header small {
+.perfil-admin__datos dt {
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: var(--font-size-secundario);
 }
 
-.perfiles-grid {
+.perfil-admin__datos dd {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+
+.form-fila-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  align-items: start;
+  gap: var(--space-2);
 }
 
-.perfil-card-admin {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.perfil-card-admin h3 {
-  font-size: 18px;
-  margin: 0;
-  color: var(--color-text);
-}
-
-.perfil-acciones-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.modal-titulo-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-titulo-flex h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.modal-formulario {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 8px;
-}
-
-.form-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.modal-acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-@media (max-width: 760px) {
-  .perfiles-header {
-    flex-direction: column;
-  }
-  .perfiles-grid {
-    grid-template-columns: 1fr;
-  }
-  .form-row-2 {
-    grid-template-columns: 1fr;
+@media (max-width: 599.95px) {
+  .form-fila-2 {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

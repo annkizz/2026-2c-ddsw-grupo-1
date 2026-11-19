@@ -1,10 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Alert,
-  Button,
-  CircularProgress,
-} from '@mui/material';
+import { Button, Skeleton } from '@mui/material';
 import {
   FiArrowRight,
   FiCheck,
@@ -12,7 +8,10 @@ import {
   FiFolder,
   FiPlus,
   FiRepeat,
+  FiSearch,
+  FiUserPlus,
   FiUsers,
+  FiEdit3,
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerMiPerfilColectivo } from '../../service/colectivosService';
@@ -21,12 +20,33 @@ import {
   CAMPOS_REQUERIDOS_COLECTIVO,
   camposFaltantesPerfilColectivo,
 } from '../../utils/perfilColectivo';
+import { ID_AYUDA } from '../../utils/rutasUI';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import DashboardCard from './components/DashboardCard.jsx';
 import DashboardEmptyState from './components/DashboardEmptyState.jsx';
 import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
 import DashboardColaboradora from './DashboardColaboradora.jsx';
 import TipoCuenta from '../registro/TipoCuenta.jsx';
 import './Home.css';
+
+const PASOS_AYUDA = [
+  {
+    icono: FiUserPlus,
+    titulo: 'Creá tu cuenta',
+    texto: 'Elegí si te sumás como colectivo o como persona colaboradora. El registro tiene pocos pasos.',
+  },
+  {
+    icono: FiEdit3,
+    titulo: 'Completá tu perfil',
+    texto: 'Contá qué hace tu colectivo o qué habilidades tenés: así las coincidencias son mejores.',
+  },
+  {
+    icono: FiRepeat,
+    titulo: 'Conectá con proyectos',
+    texto: 'Los colectivos publican proyectos y perfiles; las personas colaboradoras los encuentran y se postulan.',
+  },
+];
 
 const Home = () => {
   const navigate = useNavigate();
@@ -41,11 +61,11 @@ const Home = () => {
   const [eligiendoTipo, setEligiendoTipo] = useState(false);
   const [proyectos, setProyectos] = useState([]);
   const [cargandoProyectos, setCargandoProyectos] = useState(true);
-  const [errorProyectos, setErrorProyectos] = useState('');
+  const [errorProyectos, setErrorProyectos] = useState(null);
   const [intentoCarga, setIntentoCarga] = useState(0);
   const [camposPerfilFaltantes, setCamposPerfilFaltantes] = useState([]);
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
-  const [errorPerfil, setErrorPerfil] = useState('');
+  const [errorPerfil, setErrorPerfil] = useState(null);
   const [intentoPerfil, setIntentoPerfil] = useState(0);
   const esDashboardColectivo = sesion?.rol === 'COLECTIVO' && sesion?.tienePerfil;
   const esDashboardColaboradora = sesion?.rol === 'COLABORADOR' && sesion?.tienePerfil;
@@ -57,13 +77,20 @@ const Home = () => {
     }
   }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
 
+  // "¿Necesitás ayuda?" lleva a /#como-funciona: al llegar, se desplaza a esa sección.
+  useEffect(() => {
+    if (window.location.hash === `#${ID_AYUDA}`) {
+      document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: 'start' });
+    }
+  }, []);
+
   useEffect(() => {
     if (!esDashboardColectivo) return undefined;
     let vigente = true;
 
     const cargarProyectos = async () => {
       setCargandoProyectos(true);
-      setErrorProyectos('');
+      setErrorProyectos(null);
       try {
         if (!sesion.idColectivo) {
           throw new Error('No pudimos identificar tu colectivo para cargar los proyectos.');
@@ -78,14 +105,7 @@ const Home = () => {
           setProyectos(resultado.filter((proyecto) => proyecto.idColectivo === sesion.idColectivo));
         }
       } catch (error) {
-        if (vigente) {
-          const mensajeError =
-            error?.response?.data?.error ||
-            (error?.message && error.message !== 'Network Error'
-              ? error.message
-              : 'No pudimos cargar tus proyectos. Revisá tu conexión e intentá de nuevo.');
-          setErrorProyectos(mensajeError);
-        }
+        if (vigente) setErrorProyectos(error);
       } finally {
         if (vigente) setCargandoProyectos(false);
       }
@@ -103,7 +123,7 @@ const Home = () => {
 
     const cargarPerfil = async () => {
       setCargandoPerfil(true);
-      setErrorPerfil('');
+      setErrorPerfil(null);
       try {
         const token = await getAccessToken();
         const perfil = await obtenerMiPerfilColectivo(token);
@@ -117,14 +137,7 @@ const Home = () => {
           );
         }
       } catch (error) {
-        if (vigente) {
-          setErrorPerfil(
-            error?.response?.data?.error ||
-              (error?.message && error.message !== 'Network Error'
-                ? error.message
-                : 'No pudimos comprobar si tu perfil está completo. Intentá nuevamente.'),
-          );
-        }
+        if (vigente) setErrorPerfil(error);
       } finally {
         if (vigente) setCargandoPerfil(false);
       }
@@ -144,13 +157,14 @@ const Home = () => {
     const finalizados = proyectos.filter((proyecto) => proyecto.estado === 'FINALIZADO').length;
 
     return (
-      <div className="home home--dashboard">
-        <section className="dashboard-colectivo" aria-labelledby="dashboard-titulo">
-          <div className="dashboard-encabezado">
-            <p className="dashboard-eyebrow">Espacio de tu colectivo</p>
-            <h1 id="dashboard-titulo">¿Qué querés impulsar hoy?</h1>
-            <p>Publicá proyectos, revisá su estado y encontrá colaboradoras.</p>
-          </div>
+      <div className="contenedor-pagina home--dashboard">
+        <section className="dashboard" aria-labelledby="dashboard-titulo">
+          <EncabezadoPagina
+            id="dashboard-titulo"
+            antetitulo="Espacio de tu colectivo"
+            titulo="¿Qué querés impulsar hoy?"
+            subtitulo="Publicá proyectos, revisá su estado y encontrá colaboradoras."
+          />
 
           <div className="dashboard-grid">
             <DashboardCard
@@ -165,77 +179,68 @@ const Home = () => {
             >
               {sinProyectos ? (
                 <DashboardEmptyState
-                  icon={<FiPlus />}
+                  icon={FiPlus}
                   title="Empezá por tu primer proyecto"
                   description="Un proyecto cuenta qué necesita tu colectivo para sumar personas colaboradoras."
                   actionLabel="Crear mi primer proyecto"
                   actionVariant="contained"
                   onAction={() => navigate('/proyectos/nuevo')}
-                  className="dashboard-empty-state--destacada"
+                  nivelTitulo="h2"
                 />
               ) : (
                 <Button
                   variant="contained"
-                  size="large"
                   onClick={() => navigate('/proyectos/nuevo')}
-                  startIcon={<FiArrowRight />}
+                  startIcon={<FiPlus aria-hidden="true" />}
                 >
                   Publicar proyecto
                 </Button>
               )}
             </DashboardCard>
 
-            <DashboardCard
-              className="dashboard-card--proyectos"
-              icon={<FiFolder />}
-              title="Estado de tus proyectos"
-            >
-                {cargandoProyectos ? (
-                  <div className="dashboard-estado" role="status" aria-live="polite">
-                    <CircularProgress size={20} aria-label="Cargando proyectos" />
-                    <span>Cargando tus proyectos…</span>
-                  </div>
-                ) : errorProyectos ? (
-                  <Alert
-                    severity="error"
-                    action={
-                      <Button
-                        color="inherit"
-                        size="small"
-                        onClick={() => setIntentoCarga((intento) => intento + 1)}
-                      >
-                        Reintentar
-                      </Button>
-                    }
-                  >
-                    {errorProyectos}
-                  </Alert>
-                ) : sinProyectos ? (
-                  <DashboardEmptyState
-                    title="Aún no hay proyectos publicados"
-                    description="Cuando publiques el primero, acá vas a ver cuántos están activos y finalizados."
-                  />
-                ) : (
-                  <>
-                    <div className="dashboard-contadores" aria-live="polite">
-                      <div>
-                        <strong>{activos}</strong>
-                        <span><FiArrowRight aria-hidden="true" /> Activos</span>
-                      </div>
-                      <div>
-                        <strong>{finalizados}</strong>
-                        <span><FiCheck aria-hidden="true" /> Finalizados</span>
-                      </div>
+            <DashboardCard className="dashboard-card--proyectos" icon={<FiFolder />} title="Estado de tus proyectos">
+              {cargandoProyectos ? (
+                <div className="dashboard-contadores" aria-busy="true" role="status">
+                  <span className="visualmente-oculto">Cargando tus proyectos…</span>
+                  {[0, 1].map((i) => (
+                    <div key={i} aria-hidden="true">
+                      <Skeleton variant="text" width="var(--space-6)" height="var(--space-6)" />
+                      <Skeleton variant="text" width="var(--space-10)" />
                     </div>
-                    <Button
-                      variant="outlined"
-                      onClick={() => navigate('/proyectos')}
-                      endIcon={<FiArrowRight />}
-                    >
-                      Ver mis proyectos
-                    </Button>
-                  </>
-                )}
+                  ))}
+                </div>
+              ) : errorProyectos ? (
+                <AlertaError
+                  error={errorProyectos}
+                  titulo="No pudimos cargar tus proyectos"
+                  onReintentar={() => setIntentoCarga((intento) => intento + 1)}
+                />
+              ) : sinProyectos ? (
+                <DashboardEmptyState
+                  title="Aún no hay proyectos publicados"
+                  description="Cuando publiques el primero, acá vas a ver cuántos están activos y finalizados."
+                />
+              ) : (
+                <>
+                  <div className="dashboard-contadores" aria-live="polite">
+                    <div>
+                      <strong>{activos}</strong>
+                      <span>
+                        <FiArrowRight aria-hidden="true" /> Activos
+                      </span>
+                    </div>
+                    <div>
+                      <strong>{finalizados}</strong>
+                      <span>
+                        <FiCheck aria-hidden="true" /> Finalizados
+                      </span>
+                    </div>
+                  </div>
+                  <Button variant="outlined" onClick={() => navigate('/proyectos')} endIcon={<FiArrowRight aria-hidden="true" />}>
+                    Ver mis proyectos
+                  </Button>
+                </>
+              )}
             </DashboardCard>
 
             <DashboardCard
@@ -244,37 +249,28 @@ const Home = () => {
               title="Encontrar colaboradoras"
               description="Explorá perfiles y habilidades para sumar a tu iniciativa."
             >
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/buscar-colaboradores')}
-                  endIcon={<FiArrowRight />}
-                >
-                  Buscar colaboradoras
-                </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/buscar-colaboradores')}
+                startIcon={<FiSearch aria-hidden="true" />}
+              >
+                Buscar colaboradoras
+              </Button>
             </DashboardCard>
           </div>
 
           {cargandoPerfil ? (
-            <div className="dashboard-estado dashboard-estado--perfil" role="status" aria-live="polite">
-              <CircularProgress size={20} aria-label="Comprobando perfil" />
-              <span>Comprobando si falta completar tu perfil…</span>
+            <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
+              <span className="visualmente-oculto">Comprobando si falta completar tu perfil…</span>
+              <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
             </div>
           ) : errorPerfil ? (
-            <Alert
+            <AlertaError
               className="dashboard-alerta-perfil"
-              severity="error"
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={() => setIntentoPerfil((intento) => intento + 1)}
-                >
-                  Reintentar
-                </Button>
-              }
-            >
-              {errorPerfil}
-            </Alert>
+              error={errorPerfil}
+              titulo="No pudimos comprobar si tu perfil está completo"
+              onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
+            />
           ) : camposPerfilFaltantes.length > 0 ? (
             <IndicadorProgresoPerfil
               completados={CAMPOS_REQUERIDOS_COLECTIVO.length - camposPerfilFaltantes.length}
@@ -291,45 +287,74 @@ const Home = () => {
   }
 
   return (
-    <div className="home">
-      <section className="home-hero">
-        <p className="home-eyebrow">Tecnología con propósito</p>
-        <h1>El código es mejor cuando nos conecta.</h1>
-        <p className="home-lead">Unimos a colectivos que necesitan software con personas que quieren colaborar.</p>
-        <div className="home-pares">
-          <span><FiCode /> Personas</span>
-          <FiRepeat />
-          <span><FiUsers /> Colectivos</span>
-        </div>
-        <small>Software compartido. Impacto colectivo.</small>
-      </section>
+    <div className="contenedor-pagina home">
+      <div className="home-portada">
+        <section className="home-hero" aria-labelledby="home-titulo">
+          <EncabezadoPagina
+            id="home-titulo"
+            className="encabezado-pagina--hero"
+            antetitulo="Tecnología con propósito"
+            titulo="El código es mejor cuando nos conecta."
+            subtitulo="Unimos a colectivos que necesitan software con personas que quieren colaborar."
+          />
+          <div className="home-pares" aria-hidden="true">
+            <span>
+              <FiCode /> Personas
+            </span>
+            <FiRepeat />
+            <span>
+              <FiUsers /> Colectivos
+            </span>
+          </div>
+          <p className="texto-secundario">Software compartido. Impacto colectivo.</p>
+        </section>
 
-      <section className="home-login">
-        <h2>Iniciar sesión</h2>
-        <p className="home-sub">Qué bueno encontrarte de nuevo.</p>
-        {/* El email y la contraseña se piden en la pantalla de Logto */}
-        <Button
-          variant="contained"
-          fullWidth
-          size="large"
-          onClick={iniciarSesion}
-          disabled={cargando && !errorLogto}
-          startIcon={cargando && !errorLogto ? <CircularProgress size={18} color="inherit" /> : null}
-          endIcon={cargando && !errorLogto ? null : <FiArrowRight />}
-        >
-          {cargando && !errorLogto ? 'Ingresando…' : 'Ingresar'}
-        </Button>
-        {errorLogto && (
-          <Alert severity="error" sx={{ marginTop: 2 }}>
-            No pudimos abrir el inicio de sesión de Logto: {errorLogto.message}
-          </Alert>
-        )}
-        <p className="home-cambio">
-          ¿Primera vez acá?
-          <Button variant="text" onClick={() => setEligiendoTipo(true)}>
-            Crear una cuenta
+        <section className="home-login" aria-labelledby="home-login-titulo">
+          <h2 id="home-login-titulo">Iniciar sesión</h2>
+          <p className="home-sub">Qué bueno encontrarte de nuevo.</p>
+          {/* El email y la contraseña se piden en la pantalla de Logto */}
+          <Button
+            variant="contained"
+            fullWidth
+            size="large"
+            onClick={iniciarSesion}
+            loading={cargando && !errorLogto}
+            endIcon={cargando && !errorLogto ? null : <FiArrowRight aria-hidden="true" />}
+          >
+            {cargando && !errorLogto ? 'Ingresando…' : 'Ingresar'}
           </Button>
-        </p>
+          {errorLogto && (
+            <AlertaError
+              className="home-login__error"
+              error={errorLogto}
+              titulo="No pudimos abrir el inicio de sesión"
+            />
+          )}
+          <p className="home-cambio">
+            ¿Primera vez acá?
+            <Button variant="text" onClick={() => setEligiendoTipo(true)}>
+              Crear una cuenta
+            </Button>
+          </p>
+        </section>
+      </div>
+
+      <section id={ID_AYUDA} className="home-ayuda" aria-labelledby="home-ayuda-titulo" tabIndex={-1}>
+        <h2 id="home-ayuda-titulo">Cómo funciona</h2>
+        <p className="home-ayuda__intro">Tres pasos para empezar a colaborar.</p>
+        <ol className="home-ayuda__pasos">
+          {PASOS_AYUDA.map(({ icono: Icono, titulo, texto }, indice) => (
+            <li key={titulo} className="home-ayuda__paso">
+              <span className="home-ayuda__icono" aria-hidden="true">
+                <Icono />
+              </span>
+              <h3>
+                <span className="home-ayuda__numero">Paso {indice + 1}.</span> {titulo}
+              </h3>
+              <p>{texto}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {eligiendoTipo && (

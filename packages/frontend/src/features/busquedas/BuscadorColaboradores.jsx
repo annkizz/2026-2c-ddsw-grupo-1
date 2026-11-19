@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Skeleton } from "@mui/material";
+import { Button } from "@mui/material";
+import { FiRotateCcw, FiSearch } from "react-icons/fi";
+import PropTypes from "prop-types";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
+import { EsqueletoGrilla, EsqueletoLista } from "../../components/Esqueletos/Esqueletos.jsx";
+import "../../components/Card.css";
+import "../proyectos/ListaProyectos.css";
+
 import CustomSelect from "../../components/CustomSelect/CustomSelect";
 import CardColaboradora from "../../components/CardColaboradora/CardColaboradora";
 import { useAuth } from "../../hooks/useAuth.jsx";
@@ -25,13 +34,10 @@ function listarHabilidades(habilidades) {
 function ResumenPerfil({ perfil }) {
   return (
     <div className="resumen-perfil">
-      <h2>{perfil.descripcion}</h2>
+      <h3>{perfil.descripcion}</h3>
       <p className="tarjeta__meta">
         Proyecto:{" "}
-        <Link
-          className="tarjeta__enlace"
-          to={`/proyectos/${perfil.idProyecto}`}
-        >
+        <Link to={`/proyectos/${perfil.idProyecto}`}>
           {perfil.proyecto?.titulo ?? "Ver proyecto"}
         </Link>
       </p>
@@ -47,6 +53,17 @@ function ResumenPerfil({ perfil }) {
     </div>
   );
 }
+
+ResumenPerfil.propTypes = {
+  perfil: PropTypes.shape({
+    descripcion: PropTypes.string,
+    idProyecto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    proyecto: PropTypes.shape({ titulo: PropTypes.string }),
+    compromiso: PropTypes.object,
+    habilidadesRequeridas: PropTypes.arrayOf(PropTypes.string),
+    habilidadesOpcionales: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
+};
 
 export default function BuscadorColaboradores() {
   const { sesion } = useAuth();
@@ -158,14 +175,14 @@ export default function BuscadorColaboradores() {
       : "No encontramos personas con las habilidades requeridas para este perfil (o ya están anotadas en el proyecto).";
 
   return (
-    <section className="pagina">
-      <h1>Buscar colaboradores</h1>
-      <p className="pagina__bajada">
-        Elegí uno de tus proyectos y el perfil que necesitás cubrir. La búsqueda
-        revisa solo los perfiles de ese proyecto.
-      </p>
+    <div className="contenedor-pagina">
+      <EncabezadoPagina
+        titulo="Buscar colaboradoras"
+        subtitulo="Elegí uno de tus proyectos y el perfil que necesitás cubrir. La búsqueda revisa solo los perfiles de ese proyecto."
+        migas={[{ texto: "Inicio", to: "/" }, { texto: "Buscar colaboradoras" }]}
+      />
 
-      <div className="filtros filtros--busqueda">
+      <div className="filtros filtros--busqueda" role="search" aria-label="Filtros de colaboradoras">
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
@@ -177,7 +194,7 @@ export default function BuscadorColaboradores() {
               placeholder={
                 proyectosState.cargando
                   ? "Cargando proyectos…"
-                  : "Buscá uno de tus proyectos"
+                  : "Ej.: Portal de turnos"
               }
               textoVacio={
                 proyectosState.cargando
@@ -186,19 +203,7 @@ export default function BuscadorColaboradores() {
               }
             />
             {proyectosState.error && (
-              <div className="estado-bloque estado-bloque--compacto">
-                <p className="estado estado--error">
-                  No pudimos cargar tus proyectos. ¿Está corriendo el backend?
-                </p>
-                <Button
-                  variant="outlined"
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={proyectosState.recargar}
-                >
-                  Reintentar
-                </Button>
-              </div>
+              <AlertaError error={proyectosState.error} titulo="No pudimos cargar tus proyectos" onReintentar={proyectosState.recargar} />
             )}
           </div>
 
@@ -213,7 +218,7 @@ export default function BuscadorColaboradores() {
                 placeholder={
                   perfilesState.cargando
                     ? "Cargando perfiles…"
-                    : "Buscá por perfil"
+                    : "Ej.: Tester"
                 }
                 textoVacio={
                   perfilesState.cargando
@@ -222,19 +227,7 @@ export default function BuscadorColaboradores() {
                 }
               />
               {perfilesState.error && (
-                <div className="estado-bloque estado-bloque--compacto">
-                  <p className="estado estado--error">
-                    No pudimos cargar los perfiles de este proyecto.
-                  </p>
-                  <Button
-                    variant="outlined"
-                    type="button"
-                    className="boton boton--secundario"
-                    onClick={perfilesState.recargar}
-                  >
-                    Reintentar
-                  </Button>
-                </div>
+                <AlertaError error={perfilesState.error} titulo="No pudimos cargar los perfiles de este proyecto" onReintentar={perfilesState.recargar} />
               )}
             </div>
           )}
@@ -248,9 +241,9 @@ export default function BuscadorColaboradores() {
 
         <div className="filtros__acciones">
           <Button
-            variant="outlined"
             type="button"
-            className="boton boton--secundario"
+            variant="text"
+            startIcon={<FiRotateCcw aria-hidden="true" />}
             onClick={limpiarFiltros}
           >
             Limpiar filtros
@@ -258,58 +251,42 @@ export default function BuscadorColaboradores() {
           <Button
             variant="contained"
             type="button"
-            className="boton"
             onClick={buscar}
             disabled={!puedeBuscar}
+            startIcon={<FiSearch aria-hidden="true" />}
           >
-            Buscar
+            Buscar colaboradoras
           </Button>
         </div>
       </div>
 
       {proyectosState.cargando && (
-        <p className="estado">Cargando tus proyectos activos…</p>
+        <EsqueletoLista cantidad={2} etiqueta="Cargando tus proyectos activos…" />
       )}
 
       {!proyectosState.cargando &&
         !proyectosState.error &&
         proyectosState.datos.length === 0 && (
-          <div className="estado-bloque">
-            <p className="estado">
-              No tenés proyectos activos para buscar colaboradores.
-            </p>
-            <Button
+          <EstadoVacio nivelTitulo="p" titulo="No tenés proyectos activos para buscar colaboradores." accion={<Button
               variant="outlined"
               component={Link}
-              className="boton boton--secundario"
               to="/proyectos/nuevo"
-            >
-              Crear proyecto
-            </Button>
-          </div>
+            >Crear proyecto</Button>} />
         )}
 
       {idProyecto !== "" && perfilesState.cargando && (
-        <p className="estado">Cargando los perfiles de este proyecto…</p>
+        <EsqueletoLista cantidad={2} etiqueta="Cargando los perfiles de este proyecto…" />
       )}
 
       {idProyecto !== "" &&
         !perfilesState.cargando &&
         !perfilesState.error &&
         perfiles.length === 0 && (
-          <div className="estado-bloque">
-            <p className="estado">
-              Este proyecto todavía no tiene perfiles cargados.
-            </p>
-            <Button
+          <EstadoVacio nivelTitulo="p" titulo="Este proyecto todavía no tiene perfiles cargados." accion={<Button
               variant="outlined"
               component={Link}
-              className="boton boton--secundario"
               to={`/proyectos/${idProyecto}/perfiles`}
-            >
-              Cargar perfiles
-            </Button>
-          </div>
+            >Cargar perfiles</Button>} />
         )}
 
       {busquedaIniciada && (
@@ -330,36 +307,15 @@ export default function BuscadorColaboradores() {
           </div>
 
           {cargando && (
-            <>
-              <p className="estado" role="status">
-                Buscando personas que coincidan…
-              </p>
-              <div className="tarjetas" aria-hidden="true">
-                {[0, 1, 2].map((indice) => (
-                  <Skeleton key={indice} variant="rounded" height={190} />
-                ))}
-              </div>
-            </>
+            <EsqueletoGrilla cantidad={3} etiqueta="Buscando personas que coincidan…" />
           )}
 
           {error && (
-            <div className="estado-bloque">
-              <p className="estado estado--error">
-                No pudimos buscar colaboradores para los perfiles elegidos.
-              </p>
-              <Button
-                variant="outlined"
-                type="button"
-                className="boton boton--secundario"
-                onClick={recargar}
-              >
-                Reintentar
-              </Button>
-            </div>
+            <AlertaError error={error} titulo="No pudimos buscar colaboradores para los perfiles elegidos" onReintentar={recargar} />
           )}
 
           {!cargando && !error && grupos.length === 0 && (
-            <p className="estado" role="status" aria-live="polite">
+            <p className="contador-resultados" role="status" aria-live="polite">
               {mensajeVacio}
             </p>
           )}
@@ -390,6 +346,6 @@ export default function BuscadorColaboradores() {
 
         </section>
       )}
-    </section>
+    </div>
   );
 }

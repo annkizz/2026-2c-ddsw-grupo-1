@@ -1,3 +1,5 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { Card, CardContent } from '@mui/material';
 
 const DashboardCard = ({ className = '', icon, title, description, children }) => (
@@ -14,5 +16,13 @@ const DashboardCard = ({ className = '', icon, title, description, children }) =
     </CardContent>
   </Card>
 );
+
+DashboardCard.propTypes = {
+  className: PropTypes.string,
+  icon: PropTypes.node,
+  title: PropTypes.node,
+  description: PropTypes.node,
+  children: PropTypes.node,
+};
 
 export default DashboardCard;
