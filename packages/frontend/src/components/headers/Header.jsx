@@ -19,11 +19,14 @@ const Header = () => {
 
       {conPerfil ? (
         <nav className="header-nav">
-          <Link to="/proyectos">Proyectos</Link>
           {esColectivo ? (
-            <Link to="/buscar-colaboradores">Buscar colaboradores</Link>
+            <>
+              <Link to="/proyectos">Proyectos</Link>
+              <Link to="/buscar-colaboradores">Buscar colaboradores</Link>
+            </>
           ) : (
             <>
+              <Link to="/mis-colaboraciones">Mis colaboraciones</Link>
               <Link to="/buscar-proyectos">Buscar proyectos</Link>
               <Link to="/mapa">Mapa</Link>
             </>

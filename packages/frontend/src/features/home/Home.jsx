@@ -13,7 +13,11 @@ const Home = () => {
 
   // Solo las cuentas con perfil salen del inicio automáticamente.
   useEffect(() => {
-    if (sesion?.tienePerfil) navigate('/perfil', { replace: true });
+    if (sesion?.tienePerfil) {
+      const destino =
+        sesion.rol === 'COLABORADOR' ? '/mis-colaboraciones' : '/perfil';
+      navigate(destino, { replace: true });
+    }
   }, [sesion, navigate]);
 
   return (

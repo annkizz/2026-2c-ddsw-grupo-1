@@ -58,4 +58,23 @@ describe('acceso a inicio de sesión desde Home', () => {
     expect(registrarse).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it('redirige a la colaboradora con perfil a sus colaboraciones', () => {
+    const navigate = jest.fn();
+    useNavigate.mockReturnValue(navigate);
+    useAuth.mockReturnValue({
+      cargando: false,
+      isAuthenticated: true,
+      sesion: { tienePerfil: true, rol: 'COLABORADOR' },
+      errorLogto: undefined,
+      iniciarSesion: jest.fn(),
+      registrarse: jest.fn(),
+    });
+
+    render(<Home />);
+
+    expect(navigate).toHaveBeenCalledWith('/mis-colaboraciones', {
+      replace: true,
+    });
+  });
 });

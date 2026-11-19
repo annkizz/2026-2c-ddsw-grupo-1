@@ -36,6 +36,14 @@ export class ColaboracionRepository {
       .exec();
   }
 
+  obtenerPorColaborador(idColaborador) {
+    return this.colaboracionModel
+      .find({ idColaborador })
+      .select("idProyecto idPerfil fecha esAnonima")
+      .sort({ fecha: -1 })
+      .exec();
+  }
+
   save(colaboracion) {
     return this.colaboracionModel
       .findOneAndUpdate(

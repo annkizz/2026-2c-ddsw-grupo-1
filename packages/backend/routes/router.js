@@ -81,6 +81,8 @@ const etiquetaController = new EtiquetaController(etiquetaService);
 
 const colectivoRepository = new ColectivoRepository();
 const colaboradorRepository = new ColaboradorRepository();
+const proyectoRepository = new ProyectoRepository();
+const colaboracionRepository = new ColaboracionRepository();
 const usuarioService = new UsuarioService(
   usuarioRepository,
   colectivoRepository,
@@ -98,11 +100,11 @@ const colaboradorService = new ColaboradorService(
   colaboradorRepository,
   habilidadRepository,
   usuarioService,
+  colaboracionRepository,
+  proyectoRepository,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
-const proyectoRepository = new ProyectoRepository();
-const colaboracionRepository = new ColaboracionRepository();
 const postulacionRepository = new PostulacionRepository();
 const perfilRepository = new PerfilRepository();
 

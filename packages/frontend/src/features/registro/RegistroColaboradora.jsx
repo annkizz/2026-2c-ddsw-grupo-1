@@ -51,7 +51,7 @@ const RegistroColaboradora = () => {
       }
 
       borrarTipo();
-      navigate('/perfil');
+      navigate('/mis-colaboraciones');
     } catch (e) {
       setError(mensajeDeError(e));
     } finally {

@@ -241,6 +241,55 @@ const swaggerSpec = {
         },
       },
     },
+    "/colaboradoras/me/colaboraciones": {
+      get: {
+        summary: "Obtiene las colaboraciones de la colaboradora autenticada",
+        description:
+          "Devuelve sus participaciones registradas, incluidas las de proyectos finalizados, con el resumen y el avance actual.",
+        responses: {
+          200: {
+            description: "Colaboraciones de la persona autenticada",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idProyecto: { type: "string" },
+                      idPerfil: { type: "string", nullable: true },
+                      fecha: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      proyecto: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          titulo: { type: "string" },
+                          descripcion: { type: "string" },
+                          estado: { type: "string" },
+                          fechaInicio: {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          fechaLimiteCierre: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          porcentajeConcrecion: { type: "number" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "No hay una sesión válida" },
+          403: { description: "La sesión no pertenece a una colaboradora" },
+        },
+      },
+    },
     "/colaboradoras/{id}/proyectos": {
       get: {
         summary:

@@ -17,7 +17,9 @@ const Callback = () => {
     if (!sesion) return;
     navigate(
       sesion.tienePerfil
-        ? '/perfil'
+        ? sesion.rol === 'COLABORADOR'
+          ? '/mis-colaboraciones'
+          : '/perfil'
         : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
       { replace: true }
     );

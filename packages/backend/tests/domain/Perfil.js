@@ -51,6 +51,27 @@ describe("Dominio - Perfil", () => {
 
     expect(perfil.habilidadesOpcionales).toEqual([]);
   });
+
+  it("mantiene la búsqueda abierta al crearse y permite cerrarla", () => {
+    const perfil = new Perfil(
+      "Tester",
+      ["Testing E2E con Cypress"],
+      [],
+      compromiso,
+      2,
+      "MANUAL",
+    );
+
+    expect(perfil.tipoAceptacion).toBe("MANUAL");
+    expect(perfil.busquedaAbierta).toBe(true);
+
+    perfil.cerrarBusqueda();
+
+    expect(perfil.busquedaAbierta).toBe(false);
+    expect(perfil.tieneLimite()).toBe(true);
+    expect(perfil.tieneVacantes(1)).toBe(true);
+    expect(perfil.tieneVacantes(2)).toBe(false);
+  });
 });
 
 describe("Dominio - Compromiso y enums de perfil", () => {

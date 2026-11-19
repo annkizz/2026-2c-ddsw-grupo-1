@@ -50,6 +50,20 @@
     "sinProyectosSub": "Creá el primero para que las personas colaboradoras lo encuentren.",
     "advertenciaPermanente": "Esta acción es permanente y no se puede deshacer."
   },
+  "misColaboraciones": {
+    "titulo": "Mis colaboraciones",
+    "subtitulo": "Seguí los proyectos en los que participás y mirá cómo avanzan.",
+    "cargando": "Cargando tus colaboraciones…",
+    "reintentar": "Reintentar",
+    "vacioTitulo": "Todavía no colaborás en ningún proyecto",
+    "vacioDescripcion": "Explorá los proyectos abiertos y encontrá dónde sumar tus habilidades.",
+    "buscarProyectos": "Buscar proyectos",
+    "unaColaboracion": "1 colaboración",
+    "variasColaboraciones": "{cantidad} colaboraciones",
+    "avance": "Avance del proyecto",
+    "participandoDesde": "Colaborando desde {fecha}",
+    "verDetalle": "Ver detalle y avance"
+  },
   "formularioProyecto": {
     "volver": "Mis proyectos",
     "tituloCrear": "Crear proyecto",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -45,6 +45,8 @@ const avisoDePublicacion = (publicacion) =>
 const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const rutaVolver = location.state?.volverA ?? '/proyectos';
   const { sesion, getAccessToken, isAuthenticated, cargando: authCargando, iniciarSesion } = useAuth();
   const linkedin = useLinkedin(sesion?.rol === 'COLECTIVO');
 
@@ -123,7 +125,7 @@ const DetalleProyecto = () => {
     const noEncontrado = errorCarga === 'NO_ENCONTRADO';
     return (
       <div className="detalle-contenedor">
-        <Link to="/proyectos" className="detalle-volver">
+        <Link to={rutaVolver} className="detalle-volver">
           <FiArrowLeft /> <span>{t('detalleProyecto.volverALista')}</span>
         </Link>
         <div className="detalle-tarjeta-error" role="alert">
@@ -363,7 +365,7 @@ const DetalleProyecto = () => {
 
   return (
       <div className="detalle-contenedor">
-        <Link to="/proyectos" className="detalle-volver">
+        <Link to={rutaVolver} className="detalle-volver">
           <FiArrowLeft /> <span>{t('detalleProyecto.volverALista')}</span>
         </Link>
 
@@ -380,7 +382,9 @@ const DetalleProyecto = () => {
             </div>
 
             <h1>{proyecto.titulo}</h1>
-            <p className="detalle-descripcion">{proyecto.descripcion}</p>
+            <Markdown className="detalle-descripcion">
+              {proyecto.descripcion}
+            </Markdown>
 
             <div className="detalle-fechas-grid">
               <div>

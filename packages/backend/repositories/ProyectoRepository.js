@@ -35,6 +35,11 @@ export class ProyectoRepository {
     return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
   }
 
+  obtenerPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.proyectoModel.find({ _id: { $in: ids } }).exec();
+  }
+
   buscarPorAlMenosUno(filtros = {}) {
     const condiciones = [];
 

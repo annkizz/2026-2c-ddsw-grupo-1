@@ -15,6 +15,11 @@ jest.mock('../../hooks/useAuth.jsx', () => ({
   useAuth: jest.fn(),
 }));
 
+jest.mock('../../components/Markdown.jsx', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('react-router-dom', () => ({
   Link: ({ children, to, ...props }) => (
     <a href={to} {...props}>
@@ -22,6 +27,7 @@ jest.mock('react-router-dom', () => ({
     </a>
   ),
   useNavigate: () => jest.fn(),
+  useLocation: () => ({ state: null }),
   useParams: () => ({ id: 'proyecto-1' }),
 }));
 

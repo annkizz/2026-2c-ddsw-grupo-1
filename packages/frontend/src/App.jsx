@@ -12,6 +12,7 @@ import DatosColectivo from './features/registro/DatosColectivo.jsx';
 import RegistroColaboradora from './features/registro/RegistroColaboradora.jsx';
 import ListaProyectos from './features/proyectos/ListaProyectos.jsx';
 import DetalleProyecto from './features/proyectos/DetalleProyecto.jsx';
+import MisColaboraciones from './features/colaboraciones/MisColaboraciones.jsx';
 import PerfilColaboradora from './features/colaboradoras/PerfilColaboradora.jsx';
 import PerfilColectivo from './features/colectivos/PerfilColectivo.jsx';
 import Notificaciones from './features/notificaciones/Notificaciones.jsx';
@@ -73,6 +74,16 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/proyectos" element={<ListaProyectos />} />
                 <Route path="/proyectos/:id" element={<DetalleProyecto />} />
+                <Route
+                  path="/mis-colaboraciones"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLABORADOR']}>
+                        <MisColaboraciones />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
                 <Route
                   path="/buscar-proyectos"
                   element={

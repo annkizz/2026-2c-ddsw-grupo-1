@@ -51,6 +51,21 @@ describe('destino del callback de Logto', () => {
     expect(navigate).toHaveBeenCalledWith('/perfil', { replace: true });
   });
 
+  it('lleva a la colaboradora a sus colaboraciones después de iniciar sesión', () => {
+    useAuth.mockReturnValue({
+      sesion: { tienePerfil: true, rol: 'COLABORADOR' },
+      errorSesion: false,
+      recargarSesion: jest.fn(),
+      cerrarSesion: jest.fn(),
+    });
+
+    render(<Callback />);
+
+    expect(navigate).toHaveBeenCalledWith('/mis-colaboraciones', {
+      replace: true,
+    });
+  });
+
   it('continúa el formulario elegido antes de registrarse en Logto', () => {
     sessionStorage.setItem('tipoDeCuenta', 'colectivo');
     render(<Callback />);
