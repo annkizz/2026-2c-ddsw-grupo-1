@@ -1,4 +1,5 @@
 import { agregarDocumentacionDeAuth } from "./swaggerAuth.js";
+import { agregarDocumentacionDeWebhooks } from "./swaggerWebhooks.js";
 
 const swaggerDefinition = {
   openapi: "3.0.0",
@@ -184,7 +185,8 @@ const swaggerSpec = {
         ],
         responses: {
           200: {
-            description: "Lista de colaboradoras compatibles con el perfil",
+            description:
+              "Lista de colaboradoras compatibles con el perfil, ordenada por puntaje descendente",
             content: {
               "application/json": {
                 schema: {
@@ -201,6 +203,21 @@ const swaggerSpec = {
                       },
                       presentacion: { type: "string" },
                       tieneCoincidencia: { type: "boolean" },
+                      puntaje: {
+                        type: "integer",
+                        description:
+                          "2 por cada habilidad requerida en común + 1 por cada opcional",
+                      },
+                      puntajeMaximo: {
+                        type: "integer",
+                        description:
+                          "Máximo posible del perfil: 2 por requerida + 1 por opcional",
+                      },
+                      porcentajeCobertura: {
+                        type: "integer",
+                        description:
+                          "Puntaje alcanzado sobre el máximo posible del perfil",
+                      },
                       requeridasCoincidentes: {
                         type: "array",
                         items: { type: "string" },
@@ -241,7 +258,8 @@ const swaggerSpec = {
         ],
         responses: {
           200: {
-            description: "Lista de proyectos compatibles",
+            description:
+              "Lista de proyectos compatibles, ordenada por puntaje descendente",
             content: {
               "application/json": {
                 schema: {
@@ -252,6 +270,26 @@ const swaggerSpec = {
                       id: { type: "string" },
                       titulo: { type: "string" },
                       descripcion: { type: "string" },
+                      puntaje: {
+                        type: "integer",
+                        description:
+                          "Suma del puntaje de todos los perfiles compatibles",
+                      },
+                      puntajeMaximo: {
+                        type: "integer",
+                        description:
+                          "Suma del máximo posible de los perfiles con requeridas del proyecto",
+                      },
+                      porcentajeCobertura: {
+                        type: "integer",
+                        description:
+                          "Puntaje alcanzado sobre el máximo posible del proyecto",
+                      },
+                      porcentajeRequeridas: {
+                        type: "integer",
+                        description:
+                          "Habilidades requeridas cubiertas sobre el total de requeridas del proyecto",
+                      },
                       perfilesCompatibles: {
                         type: "array",
                         items: {
@@ -262,6 +300,21 @@ const swaggerSpec = {
                             compromiso: {
                               type: "object",
                               additionalProperties: true,
+                            },
+                            puntaje: {
+                              type: "integer",
+                              description:
+                                "2 por cada requerida en común + 1 por cada opcional",
+                            },
+                            puntajeMaximo: {
+                              type: "integer",
+                              description:
+                                "Máximo posible del perfil: 2 por requerida + 1 por opcional",
+                            },
+                            porcentajeCobertura: {
+                              type: "integer",
+                              description:
+                                "Puntaje alcanzado sobre el máximo posible del perfil",
                             },
                             requeridasCoincidentes: {
                               type: "array",
@@ -558,9 +611,11 @@ const swaggerSpec = {
             name: "provincia",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas.",
+              "req 15: opcional. Filtra por provincia (nombre o codigo ISO 3166-2:AR). Ignora acentos y mayusculas. Se puede repetir para buscar varias provincias.",
           },
           {
             name: "estado",
@@ -577,9 +632,11 @@ const swaggerSpec = {
             name: "idColectivo",
             in: "query",
             required: false,
-            schema: { type: "string" },
+            schema: { type: "array", items: { type: "string" } },
+            style: "form",
+            explode: true,
             description:
-              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se combina con etiqueta, provincia, habilidad y estado.",
+              "Búsquedas: opcional. Filtra por el id del colectivo dueño del proyecto. Se puede repetir para buscar varios colectivos.",
           },
           {
             name: "habilidad",
@@ -591,9 +648,20 @@ const swaggerSpec = {
             description:
               "Búsquedas: opcional. Filtra proyectos que tengan al menos un perfil con alguna de las habilidades indicadas (requeridas u opcionales). Se manda el título de la habilidad.",
           },
+          {
+            name: "modo",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["cualquiera"] },
+            description:
+              "Búsquedas: opcional. Con modo=cualquiera el proyecto entra si coincide en AL MENOS UNO de los filtros (habilidad, etiqueta, provincia o colectivo) y cada proyecto incluye 'coincidencias' indicando en qué coincidió. Sin este parámetro todos los filtros se combinan con AND.",
+          },
         ],
         responses: {
-          200: { description: "Lista de proyectos" },
+          200: {
+            description:
+              "Lista de proyectos. Con modo=cualquiera cada proyecto incluye coincidencias: [{ tipo: HABILIDAD|ETIQUETA|PROVINCIA|COLECTIVO, valor }]",
+          },
         },
       },
       post: {
@@ -672,6 +740,16 @@ const swaggerSpec = {
           404: {
             description: "El colectivo no existe",
           },
+        },
+      },
+    },
+    "/proyectos/destacados": {
+      get: {
+        summary: "Obtiene proyectos destacados vigentes",
+        description:
+          "Devuelve proyectos activos cuyo periodo de destacado todavía no venció, ordenados por fecha de vencimiento más próxima.",
+        responses: {
+          200: { description: "Lista pública de proyectos destacados" },
         },
       },
     },
@@ -963,6 +1041,61 @@ const swaggerSpec = {
               "El actor autenticado no puede dar de baja esta colaboración",
           },
           409: { description: "La colaboración ya fue dada de baja" },
+        },
+      },
+    },
+    "/proyectos/{idProyecto}/destacado": {
+      patch: {
+        summary: "Configura o quita el destacado de un proyecto",
+        description:
+          "Requiere un token Bearer de un usuario con rol ADMINISTRADOR. Al destacar, la fecha de vencimiento es obligatoria y futura; los proyectos finalizados no pueden destacarse.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                oneOf: [
+                  {
+                    type: "object",
+                    required: ["destacado", "destacadoHasta"],
+                    properties: {
+                      destacado: { type: "boolean", enum: [true] },
+                      destacadoHasta: {
+                        type: "string",
+                        format: "date-time",
+                      },
+                    },
+                    additionalProperties: false,
+                  },
+                  {
+                    type: "object",
+                    required: ["destacado"],
+                    properties: {
+                      destacado: { type: "boolean", enum: [false] },
+                    },
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Destacado actualizado" },
+          400: { description: "Fecha inválida o vencimiento no futuro" },
+          401: { description: "Sesión no autenticada" },
+          403: { description: "La cuenta no pertenece al equipo administrativo" },
+          404: { description: "Proyecto no encontrado" },
+          409: { description: "No se puede destacar un proyecto finalizado" },
         },
       },
     },
@@ -1259,7 +1392,7 @@ const swaggerSpec = {
         },
       },
       put: {
-        summary: "Edita el título y la descripción de un proyecto",
+        summary: "Edita el título, la descripción y las etiquetas de un proyecto",
         parameters: [
           {
             in: "path",
@@ -1281,6 +1414,14 @@ const swaggerSpec = {
                   descripcion: {
                     type: "string",
                     example: "Sitio para que voluntarias y voluntarios reserven turnos.",
+                  },
+                  etiquetas: {
+                    type: "array",
+                    maxItems: 10,
+                    items: { type: "string", maxLength: 30 },
+                    example: ["Accesibilidad Web", "Salud"],
+                    description:
+                      "req 34: Lista de etiquetas personalizadas (max 10, de 1 a 30 caracteres c/u).",
                   },
                 },
                 additionalProperties: false,
@@ -1344,40 +1485,47 @@ const swaggerSpec = {
     },
     "/notificaciones": {
       get: {
-        summary: "Lista notificaciones",
+        summary: "Lista las notificaciones de la colaboradora autenticada",
         description:
-          "Devuelve las notificaciones más recientes primero. Se puede filtrar por colectivo, colaboradora o ambos.",
+          "Solo pueden consultar notificaciones los usuarios con rol COLABORADOR. La lista se limita a su propio perfil y las notificaciones más recientes aparecen primero.",
         parameters: [
           {
             in: "query",
-            name: "idColectivo",
+            name: "pag",
             required: false,
-            schema: { type: "string" },
-            example: "c00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 1 },
           },
           {
             in: "query",
-            name: "idColaborador",
+            name: "limite",
             required: false,
-            schema: { type: "string" },
-            example: "b00000000000000000000001",
+            schema: { type: "integer", minimum: 1, default: 10 },
           },
         ],
         responses: {
           200: {
             description:
-              "Lista de notificaciones. No incluye emails ni teléfonos.",
+              "Notificaciones de la colaboradora autenticada. No incluye emails ni teléfonos.",
             content: {
               "application/json": {
                 schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Notificacion" },
+                  type: "object",
+                  properties: {
+                    idColaboradora: { type: "string" },
+                    notificaciones: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Notificacion" },
+                    },
+                    total: { type: "integer" },
+                    pag: { type: "integer" },
+                    totalPags: { type: "integer" },
+                  },
                 },
               },
             },
           },
-          400: {
-            description: "Filtros inválidos o no soportados",
+          403: {
+            description: "El usuario no tiene rol COLABORADOR",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1389,7 +1537,7 @@ const swaggerSpec = {
       post: {
         summary: "Crea un mensaje interno para una colaboradora",
         description:
-          "Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
+          "Solo puede enviar el colectivo autenticado y únicamente desde su propio perfil. Requiere que la colaboradora haya aceptado mensajería. Se guarda el mensaje interno antes de intentar el envío por los medios de contacto guardados para ella. Cada intento se informa en envios: si un canal no tiene configuración, su estado será SIMULADO; los fallos se informan como FALLIDO. La respuesta nunca incluye los destinos de contacto.",
         requestBody: {
           required: true,
           content: {
@@ -1438,7 +1586,8 @@ const swaggerSpec = {
             },
           },
           403: {
-            description: "La colaboradora no aceptó mensajería",
+            description:
+              "El usuario no es un colectivo, intenta enviar desde otro colectivo o la colaboradora no aceptó mensajería",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -1458,7 +1607,9 @@ const swaggerSpec = {
     },
     "/notificaciones/{id}": {
       get: {
-        summary: "Obtiene una notificación por ID",
+        summary: "Obtiene una notificación propia por ID",
+        description:
+          "Solo la colaboradora destinataria puede consultar la notificación.",
         parameters: [
           {
             in: "path",
@@ -1482,6 +1633,80 @@ const swaggerSpec = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+              },
+              403: {
+                description: "La notificación pertenece a otra colaboradora",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "/notificaciones/colaboradora/{id}": {
+          get: {
+            summary: "Lista las notificaciones propias de una colaboradora",
+            description:
+              "Solo puede acceder el usuario COLABORADOR dueño del perfil indicado.",
+            parameters: [
+              {
+                in: "path",
+                name: "id",
+                required: true,
+                schema: { type: "string" },
+              },
+              {
+                in: "query",
+                name: "pag",
+                required: false,
+                schema: { type: "integer", minimum: 1, default: 1 },
+              },
+              {
+                in: "query",
+                name: "limite",
+                required: false,
+                schema: { type: "integer", minimum: 1, default: 10 },
+              },
+            ],
+            responses: {
+              200: {
+                description: "Notificaciones de la colaboradora autenticada",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        idColaboradora: { type: "string" },
+                        notificaciones: {
+                          type: "array",
+                          items: { $ref: "#/components/schemas/Notificacion" },
+                        },
+                        total: { type: "integer" },
+                        pag: { type: "integer" },
+                        totalPags: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+              403: {
+                description:
+                  "El usuario no tiene rol COLABORADOR o el perfil pertenece a otra persona",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
+              },
+              404: {
+                description: "Colaboradora no encontrada",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Error" },
+                  },
+                },
               },
             },
           },
@@ -1701,5 +1926,6 @@ const swaggerSpec = {
 };
 
 agregarDocumentacionDeAuth(swaggerSpec);
+agregarDocumentacionDeWebhooks(swaggerSpec);
 
 export default swaggerSpec;

@@ -79,7 +79,17 @@ const construirApp = () => {
   app.use(express.json());
   app.use(
     "/proyectos",
-    crearProyectoRouter(proyectoController, perfilController),
+    crearProyectoRouter(
+      proyectoController,
+      perfilController,
+      null,
+      (req, res, next) => {
+        // La suite no valida JWT: simula una colectiva autenticada, que es el
+        // rol que exigen las rutas de perfiles de proyecto.
+        req.usuario = { rol: "COLECTIVO" };
+        next();
+      },
+    ),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);
@@ -213,6 +223,132 @@ describe("búsqueda de proyectos activos (GET /proyectos?estado=...)", () => {
     expect(filtrado.body.map((proyecto) => proyecto.id)).toEqual([
       PROYECTO_MAPA,
     ]);
+  });
+});
+
+describe("búsqueda con al menos una coincidencia (GET /proyectos?modo=cualquiera)", () => {
+  it("devuelve proyectos que coinciden en al menos un filtro y detalla qué coincidió", async () => {
+    const { status, body } = await request(app).get(
+      `/proyectos?modo=cualquiera&estado=ACTIVO&habilidad=${encodeURIComponent(
+        "React",
+      )}&etiqueta=salud`,
+    );
+
+    expect(status).toBe(200);
+    // Mapa entra por la habilidad, Portal por la etiqueta: alcanza con una.
+    expect(body.map((proyecto) => proyecto.id).sort()).toEqual(
+      [PROYECTO_MAPA, PROYECTO_PORTAL].sort(),
+    );
+
+    const mapa = body.find((proyecto) => proyecto.id === PROYECTO_MAPA);
+    expect(mapa.coincidencias).toEqual([
+      { tipo: "HABILIDAD", valor: "React" },
+    ]);
+
+    const portal = body.find((proyecto) => proyecto.id === PROYECTO_PORTAL);
+    expect(portal.coincidencias).toEqual([
+      { tipo: "ETIQUETA", valor: "salud" },
+    ]);
+  });
+
+  it("acumula todas las coincidencias de un mismo proyecto", async () => {
+    const { status, body } = await request(app).get(
+      `/proyectos?modo=cualquiera&estado=ACTIVO&habilidad=${encodeURIComponent(
+        "React",
+      )}&etiqueta=accesibilidad_web&provincia=AR-M`,
+    );
+
+    expect(status).toBe(200);
+    // Mapa coincide en los tres filtros; Laboratorio entra sólo por Mendoza.
+    expect(body.map((proyecto) => proyecto.id).sort()).toEqual(
+      [PROYECTO_MAPA, PROYECTO_LABORATORIO].sort(),
+    );
+
+    const mapa = body.find((proyecto) => proyecto.id === PROYECTO_MAPA);
+    expect(mapa.coincidencias).toHaveLength(3);
+    expect(mapa.coincidencias).toEqual(
+      expect.arrayContaining([
+        { tipo: "HABILIDAD", valor: "React" },
+        { tipo: "ETIQUETA", valor: "accesibilidad_web" },
+        { tipo: "PROVINCIA", valor: "Mendoza" },
+      ]),
+    );
+
+    const laboratorio = body.find(
+      (proyecto) => proyecto.id === PROYECTO_LABORATORIO,
+    );
+    expect(laboratorio.coincidencias).toEqual([
+      { tipo: "PROVINCIA", valor: "Mendoza" },
+    ]);
+  });
+
+  it("acepta varias provincias y varios colectivos", async () => {
+    const provincias = await request(app).get(
+      "/proyectos?modo=cualquiera&provincia=AR-X&provincia=AR-B",
+    );
+    expect(provincias.status).toBe(200);
+    expect(provincias.body.map((proyecto) => proyecto.id).sort()).toEqual(
+      [PROYECTO_INVENTARIO, PROYECTO_PORTAL].sort(),
+    );
+
+    const colectivos = await request(app).get(
+      `/proyectos?modo=cualquiera&estado=ACTIVO&idColectivo=${COLECTIVO_MANOS}&idColectivo=c00000000000000000000003`,
+    );
+    expect(colectivos.status).toBe(200);
+    expect(colectivos.body.map((proyecto) => proyecto.id).sort()).toEqual(
+      [PROYECTO_PORTAL, PROYECTO_LABORATORIO, PROYECTO_MAPA].sort(),
+    );
+
+    const mapa = colectivos.body.find(
+      (proyecto) => proyecto.id === PROYECTO_MAPA,
+    );
+    expect(mapa.coincidencias).toEqual([
+      { tipo: "COLECTIVO", valor: "Datos para Todos" },
+    ]);
+  });
+
+  it("normaliza el id del colectivo antes de informar la coincidencia", async () => {
+    const { status, body } = await request(app).get(
+      `/proyectos?modo=cualquiera&idColectivo=${COLECTIVO_MANOS.toUpperCase()}`,
+    );
+
+    expect(status).toBe(200);
+    expect(body.flatMap((proyecto) => proyecto.coincidencias)).toContainEqual({
+      tipo: "COLECTIVO",
+      valor: "Fundación Manos Solidarias",
+    });
+  });
+
+  it("devuelve vacío si la habilidad pedida no existe en ningún perfil", async () => {
+    const { status, body } = await request(app).get(
+      `/proyectos?modo=cualquiera&habilidad=${encodeURIComponent(
+        "Habilidad inexistente",
+      )}`,
+    );
+
+    expect(status).toBe(200);
+    expect(body).toEqual([]);
+  });
+
+  it("responde 400 si una provincia o un colectivo no son válidos", async () => {
+    const provincia = await request(app).get(
+      "/proyectos?modo=cualquiera&provincia=NoExiste",
+    );
+    expect(provincia.status).toBe(400);
+
+    const colectivo = await request(app).get(
+      "/proyectos?modo=cualquiera&idColectivo=no-es-un-id",
+    );
+    expect(colectivo.status).toBe(400);
+  });
+
+  it("responde 400 si el modo de búsqueda no está soportado", async () => {
+    const { status, body } = await request(app).get(
+      "/proyectos?modo=desconocido",
+    );
+
+    expect(status).toBe(400);
+    expect(body.codigo).toBe("MODO_BUSQUEDA_INVALIDO");
   });
 });
 

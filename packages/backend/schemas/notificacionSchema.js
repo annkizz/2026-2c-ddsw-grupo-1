@@ -33,6 +33,7 @@ const notificacionSchema = new mongoose.Schema(
       index: true,
     },
     envios: { type: [envioSchema], default: [] },
+    leida: { type: Boolean, required: true, default: false},
   },
   { timestamps: true, collection: "notificaciones" },
 );

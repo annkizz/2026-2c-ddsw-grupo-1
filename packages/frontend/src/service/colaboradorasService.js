@@ -25,33 +25,36 @@ export const obtenerMiPerfilColaboradora = async (token) => {
   return response.data;
 };
 
+export const actualizarColaboradora = async (token, id, datos) => {
+  const response = await api.put(`/colaboradoras/${id}`, datos, conToken(token));
+  return response.data;
+};
+
 export const obtenerProyectosDeColaboradora = async (id) => {
   const response = await api.get(`/colaboradoras/${id}/proyectos`);
   return response.data;
 };
 
 // Recibe lo que cargó el formulario y arma el body que valida el backend
+const armarBodyColaboradora = (formulario) => ({
+  nombreFantasia: formulario.nombreFantasia.trim() || undefined,
+  usuarioGitHub: formulario.usuarioGitHub.trim() || undefined,
+  nombre: formulario.nombre.trim() || undefined,
+  apellido: formulario.apellido.trim() || undefined,
+  presentacion: formulario.presentacion.trim() || undefined,
+  pronombres: formulario.pronombres
+    .split(',')
+    .map((pronombre) => pronombre.trim())
+    .filter((pronombre) => pronombre !== ''),
+  habilidades: formulario.habilidades,
+  aceptaMensajeria: formulario.aceptaMensajeria,
+  mediosDeContacto: formulario.medios.map((medio) => ({
+    tipoDeContacto: medio.tipo,
+    contacto: medio.tipo === 'EMAIL' ? medio.valor.trim() : sinSeparadores(medio.valor)
+  }))
+});
+
 export const crearColaboradora = async (token, formulario) => {
-  const response = await api.post(
-    '/colaboradoras',
-    {
-      nombreFantasia: formulario.nombreFantasia.trim() || undefined,
-      usuarioGitHub: formulario.usuarioGitHub.trim() || undefined,
-      nombre: formulario.nombre.trim() || undefined,
-      apellido: formulario.apellido.trim() || undefined,
-      presentacion: formulario.presentacion.trim() || undefined,
-      pronombres: formulario.pronombres
-        .split(',')
-        .map((pronombre) => pronombre.trim())
-        .filter((pronombre) => pronombre !== ''),
-      habilidades: formulario.habilidades,
-      aceptaMensajeria: formulario.aceptaMensajeria,
-      mediosDeContacto: formulario.medios.map((medio) => ({
-        tipoDeContacto: medio.tipo,
-        contacto: medio.tipo === 'EMAIL' ? medio.valor.trim() : sinSeparadores(medio.valor)
-      }))
-    },
-    conToken(token)
-  );
+  const response = await api.post('/colaboradoras', armarBodyColaboradora(formulario), conToken(token));
   return response.data;
 };

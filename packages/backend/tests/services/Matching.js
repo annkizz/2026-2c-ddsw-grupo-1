@@ -30,7 +30,7 @@ describe("MatchingService", () => {
       obtenerAbiertosParaMatching: jest.fn(async () => [proyecto]),
     };
     const perfilRepository = {
-      obtenerCompatiblesPorProyectos: jest.fn(async () => [perfil]),
+      obtenerPorProyectos: jest.fn(async () => [perfil]),
     };
     const colaboracionRepository = {
       obtenerIdsProyectosDeColaborador: jest.fn(async () => []),
@@ -49,6 +49,10 @@ describe("MatchingService", () => {
         id: String(idProyecto),
         titulo: "Proyecto React",
         descripcion: "Descripción",
+        puntaje: 2,
+        puntajeMaximo: 2,
+        porcentajeCobertura: 100,
+        porcentajeRequeridas: 100,
         perfilesCompatibles: [
           {
             id: String(idPerfil),
@@ -56,6 +60,9 @@ describe("MatchingService", () => {
             compromiso: perfil.compromiso,
             requeridasCoincidentes: ["React"],
             opcionalesCoincidentes: [],
+            puntaje: 2,
+            puntajeMaximo: 2,
+            porcentajeCobertura: 100,
           },
         ],
       },
@@ -63,9 +70,9 @@ describe("MatchingService", () => {
     expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(
       [],
     );
-    expect(
-      perfilRepository.obtenerCompatiblesPorProyectos,
-    ).toHaveBeenCalledWith([idProyecto], ["React"]);
+    expect(perfilRepository.obtenerPorProyectos).toHaveBeenCalledWith([
+      idProyecto,
+    ]);
   });
 });
 
@@ -83,7 +90,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
       ]),
     };
     const perfilRepository = {
-      obtenerCompatiblesPorProyectos: jest.fn().mockResolvedValue([
+      obtenerPorProyectos: jest.fn().mockResolvedValue([
         {
           _id: "f1",
           idProyecto: "p1",
@@ -117,6 +124,10 @@ describe("MatchingService con al menos una habilidad requerida", () => {
         id: "p1",
         titulo: "Compatible",
         descripcion: "D1",
+        puntaje: 4,
+        puntajeMaximo: 5,
+        porcentajeCobertura: 80,
+        porcentajeRequeridas: 100,
         perfilesCompatibles: [
           {
             id: "f1",
@@ -124,6 +135,9 @@ describe("MatchingService con al menos una habilidad requerida", () => {
             compromiso: { horas: 5 },
             requeridasCoincidentes: ["React", "SQL"],
             opcionalesCoincidentes: [],
+            puntaje: 4,
+            puntajeMaximo: 5,
+            porcentajeCobertura: 80,
           },
         ],
       },
@@ -131,11 +145,18 @@ describe("MatchingService con al menos una habilidad requerida", () => {
         id: "p2",
         titulo: "Incompatible",
         descripcion: "D2",
+        puntaje: 2,
+        puntajeMaximo: 4,
+        porcentajeCobertura: 50,
+        porcentajeRequeridas: 50,
         perfilesCompatibles: [
           {
             id: "f2",
             requeridasCoincidentes: ["React"],
             opcionalesCoincidentes: [],
+            puntaje: 2,
+            puntajeMaximo: 4,
+            porcentajeCobertura: 50,
           },
         ],
       },
@@ -143,16 +164,68 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(
       ["p3"],
     );
-    expect(
-      perfilRepository.obtenerCompatiblesPorProyectos,
-    ).toHaveBeenCalledWith(["p1", "p2"], ["React", "SQL"]);
-    expect(
-      perfilRepository.obtenerCompatiblesPorProyectos,
-    ).toHaveBeenCalledTimes(1);
+    expect(perfilRepository.obtenerPorProyectos).toHaveBeenCalledWith([
+      "p1",
+      "p2",
+    ]);
+    expect(perfilRepository.obtenerPorProyectos).toHaveBeenCalledTimes(1);
+  });
+
+  it("ordena por cobertura: gana el proyecto que la persona cubre completo", async () => {
+    const colaboradorRepository = {
+      buscarPorId: jest
+        .fn()
+        .mockResolvedValue({ habilidades: ["React", "SQL"] }),
+    };
+    const proyectoRepository = {
+      obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([
+        { _id: "grande", titulo: "Muchas requeridas", descripcion: "D1" },
+        { _id: "chico", titulo: "Pocas requeridas", descripcion: "D2" },
+      ]),
+    };
+    const perfilRepository = {
+      obtenerPorProyectos: jest.fn().mockResolvedValue([
+        {
+          _id: "f-grande",
+          idProyecto: "grande",
+          habilidadesRequeridas: [
+            "React",
+            "Java",
+            "Python",
+            "Go",
+            "Rust",
+            "C++",
+            "Kotlin",
+          ],
+          habilidadesOpcionales: [],
+        },
+        {
+          _id: "f-chico",
+          idProyecto: "chico",
+          habilidadesRequeridas: ["React"],
+          habilidadesOpcionales: [],
+        },
+      ]),
+    };
+    const service = new MatchingService(
+      colaboradorRepository,
+      proyectoRepository,
+      perfilRepository,
+      { obtenerIdsProyectosDeColaborador: jest.fn().mockResolvedValue([]) },
+    );
+
+    const resultados = await service.buscarProyectosParaColaboradora("c1");
+
+    expect(resultados.map((proyecto) => proyecto.id)).toEqual([
+      "chico",
+      "grande",
+    ]);
+    expect(resultados[0].porcentajeRequeridas).toBe(100);
+    expect(resultados[1].porcentajeRequeridas).toBe(14);
   });
 
   it("no consulta perfiles cuando no hay proyectos candidatos", async () => {
-    const perfilRepository = { obtenerCompatiblesPorProyectos: jest.fn() };
+    const perfilRepository = { obtenerPorProyectos: jest.fn() };
     const service = new MatchingService(
       {
         buscarPorId: jest.fn().mockResolvedValue({ habilidades: ["React"] }),
@@ -164,9 +237,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     await expect(
       service.buscarProyectosParaColaboradora("c1"),
     ).resolves.toEqual([]);
-    expect(
-      perfilRepository.obtenerCompatiblesPorProyectos,
-    ).not.toHaveBeenCalled();
+    expect(perfilRepository.obtenerPorProyectos).not.toHaveBeenCalled();
   });
 
   it("no busca proyectos si la persona no tiene habilidades", async () => {
@@ -222,11 +293,13 @@ describe("MatchingService con al menos una habilidad requerida", () => {
       id: "c1",
       tieneCoincidencia: true,
       requeridasCoincidentes: ["React", "SQL"],
+      puntaje: 4,
     });
     expect(resultados[1]).toMatchObject({
       id: "c2",
       tieneCoincidencia: true,
       requeridasCoincidentes: ["React"],
+      puntaje: 3,
     });
     expect(resultados[0]).not.toHaveProperty("mediosDeContacto");
     expect(

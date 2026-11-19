@@ -24,7 +24,7 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
     };
     perfilRepository = {
       buscarPorId: jest.fn(),
-      obtenerCompatiblesPorProyectos: jest.fn(),
+      obtenerPorProyectos: jest.fn(),
     };
     colaboracionRepository = {
       obtenerIdsProyectosDeColaborador: jest.fn(),
@@ -51,7 +51,7 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
       proyectoRepository.obtenerAbiertosParaMatching.mockResolvedValue([
         { _id: ID_PROYECTO, titulo: "Proyecto React", descripcion: "Front" },
       ]);
-      perfilRepository.obtenerCompatiblesPorProyectos.mockResolvedValue([
+      perfilRepository.obtenerPorProyectos.mockResolvedValue([
         {
           _id: ID_PERFIL,
           idProyecto: ID_PROYECTO,
@@ -72,6 +72,10 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
           id: ID_PROYECTO,
           titulo: "Proyecto React",
           descripcion: "Front",
+          puntaje: 2,
+          puntajeMaximo: 2,
+          porcentajeCobertura: 100,
+          porcentajeRequeridas: 100,
           perfilesCompatibles: [
             {
               id: ID_PERFIL,
@@ -79,6 +83,9 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
               compromiso: { tipoCompromiso: "MENSUALES", horas: 5 },
               requeridasCoincidentes: ["React"],
               opcionalesCoincidentes: [],
+              puntaje: 2,
+              puntajeMaximo: 2,
+              porcentajeCobertura: 100,
             },
           ],
         },
@@ -116,7 +123,7 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
       expect(
-        perfilRepository.obtenerCompatiblesPorProyectos,
+        perfilRepository.obtenerPorProyectos,
       ).not.toHaveBeenCalled();
     });
   });

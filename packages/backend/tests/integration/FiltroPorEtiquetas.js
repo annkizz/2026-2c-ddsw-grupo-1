@@ -9,6 +9,7 @@ import {
 } from "@jest/globals";
 import { ProyectoModel } from "../../schemas/proyectoSchema.js";
 import { ColectivoModel } from "../../schemas/colectivoSchema.js";
+import { UsuarioModel } from "../../schemas/usuarioSchema.js";
 import { ProyectoService } from "../../services/ProyectoService.js";
 import { ColectivoService } from "../../services/ColectivoService.js";
 import { EtiquetaService } from "../../services/EtiquetaService.js";
@@ -104,12 +105,22 @@ describe("Filtro por etiquetas (req 34, integración sobre la seed)", () => {
   });
 
   it("crea un proyecto con etiquetas y despues se lo encuentra por ellas", async () => {
-    const creado = await new ProyectoService().crear({
-      idColectivo: "c00000000000000000000001",
-      titulo: "Telemedicina para barrios",
-      descripcion: "Consultas remotas con material del hospital del barrio.",
-      etiquetas: ["Comunidad Virtual", "comunidad_virtual", "Salud"],
-    });
+    // crear() exige que la cuenta sea dueña del colectivo (chequeo de propiedad)
+    const usuario = await UsuarioModel.create({ logtoId: "test-colectivo" });
+    await ColectivoModel.updateOne(
+      { _id: "c00000000000000000000001" },
+      { usuario: usuario._id },
+    );
+
+    const creado = await new ProyectoService().crear(
+      {
+        idColectivo: "c00000000000000000000001",
+        titulo: "Telemedicina para barrios",
+        descripcion: "Consultas remotas con material del hospital del barrio.",
+        etiquetas: ["Comunidad Virtual", "comunidad_virtual", "Salud"],
+      },
+      usuario,
+    );
 
     expect(creado.etiquetas).toEqual(["comunidad_virtual", "salud"]);
 

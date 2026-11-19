@@ -18,11 +18,11 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
-  obtenerHabilidades,
   crearPerfil,
   actualizarPerfil,
   eliminarPerfil,
-} from '../../service/proyectos';
+} from '../../service/proyectosService';
+import { obtenerHabilidades } from '../../service/habilidadesService';
 import { t } from '../../i18n/t';
 import {
   TIPOS_COMPROMISO,
@@ -222,8 +222,8 @@ const PerfilesProyecto = () => {
     );
   }
 
-  const esOtroColectivo = sesion?.idColectivo && proyecto.idColectivo !== sesion.idColectivo;
-  if (esOtroColectivo) {
+  const esDueno = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  if (!esDueno) {
     return (
       <div className="perfiles-contenedor">
         <Link to={`/proyectos/${id}`} className="perfiles-volver">

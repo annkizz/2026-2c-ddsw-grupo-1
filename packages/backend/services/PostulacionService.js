@@ -13,6 +13,9 @@ import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
 import { PerfilRepository } from "../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { PostulacionRepository } from "../repositories/PostulacionRepository.js";
+import { TipoAceptacion } from "../domain/TipoAceptacion.js";
+import { EventoWebhook } from "../domain/EventoWebhook.js";
+import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 
 export class PostulacionService {
   constructor(
@@ -21,12 +24,14 @@ export class PostulacionService {
     colaboradorService = new ColaboradorService(),
     colaboracionRepository = new ColaboracionRepository(),
     postulacionRepository = new PostulacionRepository(),
+    despachadorWebhooks = despachadorNulo,
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
     this.colaboradorService = colaboradorService;
     this.colaboracionRepository = colaboracionRepository;
     this.postulacionRepository = postulacionRepository;
+    this.despachadorWebhooks = despachadorWebhooks;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -106,6 +111,12 @@ export class PostulacionService {
         "BUSQUEDA_CERRADA",
       );
     }
+    if (perfil.busquedaAbierta === false) {
+      throw new ConflictError(
+        "La búsqueda de colaboraciones para este perfil está cerrada",
+        "BUSQUEDA_CERRADA",
+      );
+    }
 
     const colaborador =
       await this.colaboradorService.obtenerPorId(idColaborador);
@@ -150,6 +161,28 @@ export class PostulacionService {
     );
     try {
       const guardada = await this.postulacionRepository.save(postulacion);
+
+      if (
+        perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE
+      ) {
+        return await this.aceptarPostulacion(
+          proyecto,
+          guardada,
+          idProyecto,
+        );
+      }
+
+      this.despachadorWebhooks.emitir(
+        EventoWebhook.POSTULACION_CREADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(guardada._id),
+          fecha: guardada.fechaPostulacion,
+        },
+      );
       return this.toDTO(guardada);
     } catch (error) {
       if (error.code === 11000) {
@@ -196,8 +229,8 @@ export class PostulacionService {
     }
     this.validarColectivoDelProyecto(actor, proyecto);
 
-    const postulacion =
-      await this.postulacionRepository.buscarPorId(idPostulacion);
+    const postulacion = await this.postulacionRepository.buscarPorId(idPostulacion);
+
     if (!postulacion || String(postulacion.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError(
         "Postulación no encontrada",
@@ -226,7 +259,13 @@ export class PostulacionService {
       return this.toDTO(rechazada);
     }
 
+    return this.aceptarPostulacion(proyecto, postulacion, idProyecto);
+  }
+
+  async aceptarPostulacion(proyecto, postulacion, idProyecto) {
     this.validarProyectoAbierto(proyecto);
+    const idPostulacion = String(postulacion._id ?? postulacion.id);
+
     const perfil = await this.perfilRepository.buscarPorId(
       postulacion.idPerfil,
     );
@@ -244,7 +283,7 @@ export class PostulacionService {
         "La colaboradora ya participó de este proyecto",
         "COLABORACION_YA_EXISTENTE",
       );
-    }
+    }    
 
     const colaboracionesActivas =
       await this.colaboracionRepository.contarPorPerfil(perfil._id);
@@ -259,6 +298,8 @@ export class PostulacionService {
     }
 
     let postulacionAceptada = false;
+    let colaboracionCreada = false;
+    let colaborador;
     try {
       const aceptada =
         await this.postulacionRepository.actualizarEstadoSiPendiente(
@@ -273,7 +314,7 @@ export class PostulacionService {
       }
       postulacionAceptada = true;
 
-      const colaborador = await this.colaboradorService.obtenerPorId(
+      colaborador = await this.colaboradorService.obtenerPorId(
         postulacion.idColaborador,
       );
       if (!colaborador) {
@@ -293,14 +334,38 @@ export class PostulacionService {
           postulacion,
         ),
       );
+      colaboracionCreada = true;
 
-      return this.toDTO({
+       const resultado = this.toDTO({
         ...postulacion.toObject(),
         estado: EstadoPostulacion.ACEPTADA,
         idColaborador: colaborador,
       });
+            this.despachadorWebhooks.emitir(
+        EventoWebhook.COLABORACION_ACEPTADA,
+        proyecto.idColectivo,
+        {
+          idProyecto: String(proyecto._id),
+          tituloProyecto: proyecto.titulo,
+          idPerfil: String(perfil._id),
+          idPostulacion: String(idPostulacion),
+          esAnonima: Boolean(postulacion.esAnonima),
+          fecha: new Date().toISOString(),
+        },
+      );
+      return resultado;
     } catch (error) {
       const erroresRollback = [];
+      if (colaboracionCreada) {
+        try {
+          await this.colaboracionRepository.darDeBaja(
+            idProyecto,
+            postulacion.idColaborador,
+          );
+        } catch (errorRollback) {
+          erroresRollback.push(errorRollback);
+        }
+      }
       if (postulacionAceptada) {
         try {
           const resultado =
@@ -322,6 +387,26 @@ export class PostulacionService {
       }
       throw error;
     }
+
+    if (
+      perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES &&
+      perfil.limiteColaboraciones != null &&
+      (await this.colaboracionRepository.contarPorPerfil(perfil._id)) >=
+        perfil.limiteColaboraciones
+    ) {
+      await this.perfilRepository.actualizar(perfil._id, {
+        busquedaAbierta: false,
+      });
+      await this.postulacionRepository.rechazarPendientesPorPerfil(perfil._id);
+    }
+
+    return this.toDTO({
+      ...(typeof postulacion.toObject === "function"
+        ? postulacion.toObject()
+        : postulacion),
+      estado: EstadoPostulacion.ACEPTADA,
+      idColaborador: colaborador,
+    });
   }
 
   async darDeBaja(idProyecto, idColaborador, actor) {
@@ -400,4 +485,5 @@ export class PostulacionService {
 
     return dto;
   }
+
 }

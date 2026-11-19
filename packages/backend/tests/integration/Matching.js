@@ -17,6 +17,7 @@ import { ProyectoModel } from "../../schemas/proyectoSchema.js";
 import { ColaboradorModel } from "../../schemas/colaboradorSchema.js";
 import { PerfilModel } from "../../schemas/perfilSchema.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
+import { TipoAceptacion } from "../../domain/TipoAceptacion.js";
 import { crearAppDeMatching } from "./utils/buildApp.js";
 import {
   conectarALaBaseDePrueba,
@@ -103,6 +104,7 @@ describe("MatchingService.buscarColaboradorasParaPerfil (integración sobre la s
       id: LUNA,
       nombreFantasia: "Luna Código",
       pronombres: ["ella"],
+      puntaje: 3,
     });
     expect(resultado[0].requeridasCoincidentes).toEqual([
       "Testing E2E con Cypress",
@@ -208,10 +210,12 @@ describe("MatchingService.buscarProyectosParaColaboradora (integración sobre la
       await crearServicio().buscarProyectosParaColaboradora(LUNA);
 
     expect(resultado.map((p) => p.id)).toEqual([PROYECTO_TURNOS]);
+    expect(resultado[0].puntaje).toBe(3);
     expect(resultado[0].perfilesCompatibles).toEqual([
       expect.objectContaining({
         id: PERFIL_TESTER,
         requeridasCoincidentes: ["Testing E2E con Cypress"],
+        puntaje: 3,
       }),
     ]);
   });
@@ -354,6 +358,7 @@ describe("MatchingService con al menos una habilidad requerida (integración)", 
         horas: 5,
         tipoColaboracion: "GRATUITA",
       },
+      tipoAceptacion: TipoAceptacion.MANUAL,
     });
   };
 

@@ -37,6 +37,8 @@ const proyectoSchema = new mongoose.Schema(
     fechaLimiteBusqueda: { type: Date, default: null },
     etiquetas: { type: [String], default: [] },
     ubicacion: { type: ubicacionSchema, default: null },
+    destacado: { type: Boolean, default: false },
+    destacadoHasta: { type: Date, default: null },
   },
   { timestamps: true, collection: "proyectos" },
 );

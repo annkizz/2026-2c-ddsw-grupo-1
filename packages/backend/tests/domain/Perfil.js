@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { Perfil } from "../../domain/Perfil.js";
 import { Compromiso } from "../../domain/Compromiso.js";
 import { TipoCompromiso } from "../../domain/TipoCompromiso.js";

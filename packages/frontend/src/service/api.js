@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001'
 });
 
 // El backend pide "Authorization: Bearer <token>" en todo lo que modifica datos
@@ -12,5 +12,7 @@ export const conToken = (token) => ({
 // El backend responde { error, codigo, timestamp }
 export const mensajeDeError = (error) =>
   error.response?.data?.error ?? 'No pudimos conectarnos con el servidor';
+
+export const codigoDeError = (error) => error.response?.data?.codigo
 
 export default api;

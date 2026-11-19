@@ -9,3 +9,11 @@ export const obtenerNotificacion = async (token, id) => {
   const response = await api.get(`/notificaciones/${id}`, conToken(token));
   return response.data;
 };
+
+export const obtenerNotificacionesDeColaboradora = async (token, id, params) => {
+  const response = await api.get(`/notificaciones/colaboradora/${id}`, {
+    ...conToken(token),
+    params,
+  });
+  return response.data;
+};

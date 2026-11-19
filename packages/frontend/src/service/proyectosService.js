@@ -15,6 +15,15 @@ export const obtenerColaboraciones = async (idProyecto) => {
   return response.data;
 };
 
+export const crearPostulacion = async (token, idProyecto, idPerfil, postulacion) => {
+  const response = await api.post(
+    `/proyectos/${idProyecto}/perfiles/${idPerfil}/postulaciones`,
+    postulacion,
+    conToken(token)
+  );
+  return response.data;
+};
+
 export const sumarColaboradora = async (token, idProyecto, idColaborador) => {
   const response = await api.post(`/proyectos/${idProyecto}/colaboraciones`, { idColaborador }, conToken(token));
   return response.data;
@@ -67,6 +76,12 @@ export const obtenerProyectoPorId = async (idProyecto) => {
   return response.data;
 };
 
+// agrupacion de proyectos activos por ubicación para el mapa
+export const obtenerUbicacionesProyectos = async (params) => {
+  const response = await api.get('/proyectos/ubicaciones', { params });
+  return response.data;
+};
+
 export const actualizarProyecto = async (token, idProyecto, proyecto) => {
   const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
   return response.data;
@@ -83,5 +98,14 @@ export const programarCierre = async (token, idProyecto, fechaLimiteCierre) => {
 
 export const actualizarAvance = async (token, idProyecto, datos) => {
   const response = await api.patch(`/proyectos/${idProyecto}/avance`, datos, conToken(token));
+  return response.data;
+};
+
+export const publicarLogroEnLinkedin = async (token, idProyecto, idLogro) => {
+  const response = await api.post(
+    `/proyectos/${idProyecto}/logros/${idLogro}/linkedin`,
+    null,
+    conToken(token)
+  );
   return response.data;
 };

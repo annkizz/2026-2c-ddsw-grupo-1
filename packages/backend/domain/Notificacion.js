@@ -13,6 +13,7 @@ export class Notificacion {
     this.idColectivo = idColectivo;
     this.idColaborador = idColaborador;
     this.envios = envios;
+    this.leida = false;
   }
 
   registrarEnvio(envio) {

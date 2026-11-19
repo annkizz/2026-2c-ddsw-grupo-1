@@ -9,6 +9,13 @@ import './TipoCuenta.css';
 // - Como ruta /registro/tipo: sin props, sigue con el formulario del tipo elegido.
 const TipoCuenta = ({ onElegir, onCerrar }) => {
   const navigate = useNavigate();
+  const cerrar = () => {
+    if (onCerrar) {
+      onCerrar();
+    } else {
+      navigate('/');
+    }
+  };
 
   const elegir = (tipo) => {
     guardarTipo(tipo);
@@ -20,14 +27,12 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
   };
 
   return (
-    <Dialog open onClose={onCerrar} fullWidth maxWidth="sm">
+    <Dialog open onClose={cerrar} fullWidth maxWidth="sm">
       <DialogTitle className="tipo-cuenta-titulo">
-        <h2>Crear una cuenta</h2>
-        {onCerrar && (
-          <IconButton aria-label="Cerrar" onClick={onCerrar}>
-            <FiX />
-          </IconButton>
-        )}
+        <span>Crear una cuenta</span>
+        <IconButton aria-label="Cerrar" onClick={cerrar}>
+          <FiX />
+        </IconButton>
       </DialogTitle>
       <DialogContent>
         <p className="tipo-cuenta-sub">¿Cómo querés sumarte a la comunidad?</p>

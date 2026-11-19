@@ -30,16 +30,28 @@ const RegistroColaboradora = () => {
   const [datos, setDatos] = useState(DATOS_INICIALES);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
+  const [registroCreado, setRegistroCreado] = useState(false);
 
   const guardar = async () => {
     setGuardando(true);
     setError(null);
     try {
-      const token = await getAccessToken();
-      await crearColaboradora(token, datos);
-      await recargarSesion();
+      if (!registroCreado) {
+        const token = await getAccessToken();
+        await crearColaboradora(token, datos);
+        setRegistroCreado(true);
+      }
+
+      const nuevaSesion = await recargarSesion();
+      if (!nuevaSesion?.tienePerfil) {
+        setError(
+          'El servidor no confirmó el perfil. Podés volver a intentar verificarlo sin reenviar el formulario.'
+        );
+        return;
+      }
+
       borrarTipo();
-      navigate('/registro/listo');
+      navigate('/perfil');
     } catch (e) {
       setError(mensajeDeError(e));
     } finally {
@@ -54,7 +66,10 @@ const RegistroColaboradora = () => {
         <DatosColaboradora
           datos={datos}
           setDatos={setDatos}
-          onVolver={() => navigate('/registro/tipo')}
+          onVolver={() => {
+            borrarTipo();
+            navigate('/');
+          }}
           onSiguiente={() => setPaso(2)}
         />
       )}
@@ -72,6 +87,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
+          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
           guardando={guardando}
           error={error}
         />

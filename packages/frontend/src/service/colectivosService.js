@@ -18,22 +18,61 @@ export const obtenerColectivoPorId = async (id) => {
   return response.data;
 };
 
-// El formulario tiene un solo campo "ubicacion"; el backend espera { pais, provincia, ciudad }
+const armarUbicacion = (formulario, ubicacionAnterior = {}) => {
+  const ubicacionFormulario = formulario.ubicacion;
+  let ubicacion;
+  if (ubicacionFormulario && typeof ubicacionFormulario === 'object') {
+    ubicacion = ubicacionFormulario;
+  } else if (
+    formulario.pais !== undefined ||
+    formulario.provincia !== undefined ||
+    formulario.ciudad !== undefined
+  ) {
+    ubicacion = {
+      pais: formulario.pais,
+      provincia: formulario.provincia,
+      ciudad: formulario.ciudad
+    };
+  } else {
+    ubicacion = {
+      ...(ubicacionAnterior ?? {}),
+      ...(typeof ubicacionFormulario === 'string' ? { ciudad: ubicacionFormulario } : {})
+    };
+  }
+  return Object.fromEntries(
+    Object.entries(ubicacion)
+      .filter(([, valor]) => typeof valor === 'string' && valor.trim() !== '')
+      .map(([campo, valor]) => [campo, valor.trim()])
+  );
+};
+
+const armarBodyColectivo = (formulario, ubicacionAnterior) => {
+  const ubicacion = armarUbicacion(formulario, ubicacionAnterior);
+  return {
+    nombre: formulario.nombre.trim(),
+    descripcion: formulario.descripcion.trim(),
+    tipoDeColectivo: formulario.tipoDeColectivo,
+    ...(Object.keys(ubicacion).length > 0 ? { ubicacion } : {}),
+    ...(formulario.etiquetas?.length > 0 ? { etiquetas: formulario.etiquetas } : {})
+  };
+};
+
 export const crearColectivo = async (token, formulario) => {
-  const response = await api.post(
-    '/colectivos',
-    {
-      nombre: formulario.nombre.trim(),
-      descripcion: formulario.descripcion.trim(),
-      tipoDeColectivo: formulario.tipoDeColectivo,
-      ubicacion: { ciudad: formulario.ubicacion.trim() }
-    },
+  const response = await api.post('/colectivos', armarBodyColectivo(formulario), conToken(token));
+  return response.data;
+};
+
+// PUT reemplaza el documento completo: hay que mandar todos los campos (incluidas las etiquetas)
+export const actualizarColectivo = async (token, id, formulario, ubicacionAnterior) => {
+  const response = await api.put(
+    `/colectivos/${id}`,
+    armarBodyColectivo(formulario, ubicacionAnterior),
     conToken(token)
   );
   return response.data;
 };
 
-export const actualizarColectivo = async (token, id, datos) => {
-  const response = await api.put(`/colectivos/${id}`, datos, conToken(token));
+export const obtenerMiPerfilColectivo = async (token) => {
+  const response = await api.get('/colectivos/me', conToken(token));
   return response.data;
 };

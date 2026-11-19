@@ -35,6 +35,49 @@ export class ProyectoRepository {
     return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
   }
 
+  buscarPorAlMenosUno(filtros = {}) {
+    const condiciones = [];
+
+    if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
+      condiciones.push({ etiquetas: { $in: filtros.etiquetas } });
+    }
+    if (filtros.provincias !== undefined && filtros.provincias.length > 0) {
+      condiciones.push({
+        "ubicacion.codigoProvincia": { $in: filtros.provincias },
+      });
+    }
+    if (filtros.idColectivos !== undefined && filtros.idColectivos.length > 0) {
+      condiciones.push({ idColectivo: { $in: filtros.idColectivos } });
+    }
+    if (Array.isArray(filtros.idsProyectos)) {
+      condiciones.push({ _id: { $in: filtros.idsProyectos } });
+    }
+
+    const query = {};
+    if (filtros.estado !== undefined && filtros.estado !== null) {
+      query.estado = filtros.estado;
+    }
+    if (condiciones.length > 0) {
+      query.$or = condiciones;
+    } else if (filtros.hayFiltrosDeBusqueda) {
+      // Se pidieron filtros pero ninguno puede coincidir: no hay resultados.
+      return Promise.resolve([]);
+    }
+
+    return this.proyectoModel.find(query).sort({ fechaInicio: -1 }).exec();
+  }
+
+  obtenerDestacados(ahora = new Date()) {
+    return this.proyectoModel
+      .find({
+        estado: Estado.ACTIVO,
+        destacado: true,
+        destacadoHasta: { $gt: ahora },
+      })
+      .sort({ destacadoHasta: 1, fechaInicio: -1 })
+      .exec();
+  }
+
   obtenerActivosParaMapa() {
     return this.proyectoModel
       .find({ estado: Estado.ACTIVO })
@@ -119,6 +162,8 @@ export class ProyectoRepository {
           fechaLimiteBusqueda: unProyecto.fechaLimiteBusqueda,
           etiquetas: unProyecto.etiquetas,
           ubicacion: unProyecto.ubicacion,
+          destacado: unProyecto.destacado ?? false,
+          destacadoHasta: unProyecto.destacadoHasta ?? null,
         },
         {
           upsert: true,

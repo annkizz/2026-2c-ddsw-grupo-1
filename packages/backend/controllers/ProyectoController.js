@@ -54,6 +54,10 @@ export const proyectoEdicionSchema = z
   .object({
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
   })
   .strict();
 
@@ -64,33 +68,69 @@ export const busquedaSchema = z
   })
   .strict();
 
+export const destacarProyectoSchema = z.union([
+  z
+    .object({
+      destacado: z.literal(true),
+      destacadoHasta: z.coerce.date(),
+    })
+    .strict(),
+  z
+    .object({
+      destacado: z.literal(false),
+    })
+    .strict(),
+]);
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
   }
 
   crear = async (req, res) => {
-    const proyectoNuevo = await this.proyectoService.crear(req.body);
+    const proyectoNuevo = await this.proyectoService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(proyectoNuevo);
   };
 
   obtenerTodos = async (req, res) => {
     const etiquetas = valoresComoLista(req.query.etiqueta);
     const filtros = etiquetas.length > 0 ? { etiquetas } : {};
+    // modo=cualquiera
+    if (req.query.modo !== undefined) {
+      filtros.modo = primerValor(req.query.modo);
+    }
     if (req.query.provincia !== undefined) {
       filtros.provincia = primerValor(req.query.provincia);
+      filtros.provincias = valoresComoLista(req.query.provincia);
     }
     if (req.query.estado !== undefined) {
       filtros.estado = primerValor(req.query.estado);
     }
     if (req.query.idColectivo !== undefined) {
       filtros.idColectivo = primerValor(req.query.idColectivo);
+      filtros.idColectivos = valoresComoLista(req.query.idColectivo);
     }
     if (req.query.habilidad !== undefined) {
       filtros.habilidades = valoresComoLista(req.query.habilidad);
     }
     const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
+  };
+
+  obtenerDestacados = async (req, res) => {
+    const proyectos = await this.proyectoService.obtenerDestacados();
+    res.status(200).json(proyectos);
+  };
+
+  configurarDestacado = async (req, res) => {
+    const proyecto = await this.proyectoService.configurarDestacado(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
   };
 
   obtenerUbicaciones = async (req, res) => {
@@ -119,6 +159,7 @@ export class ProyectoController {
     const avance = await this.proyectoService.actualizarAvance(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(200).json(avance);
   }
@@ -136,7 +177,7 @@ export class ProyectoController {
     }
 
     const proyectoCerrado =
-      await this.proyectoService.cerrarProyecto(proyectoId);
+      await this.proyectoService.cerrarProyecto(proyectoId, req.usuario);
     res.status(200).json(proyectoCerrado);
   }
 
@@ -151,6 +192,7 @@ export class ProyectoController {
     const proyecto = await this.proyectoService.actualizar(
       req.params.idProyecto,
       req.body,
+      req.usuario
     );
     res.status(200).json(proyecto);
   }
@@ -159,6 +201,7 @@ export class ProyectoController {
     const proyecto = await this.proyectoService.configurarBusqueda(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(200).json(proyecto);
   }
