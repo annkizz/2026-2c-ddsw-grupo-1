@@ -151,6 +151,7 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     const proyectos = body.flatMap((grupo) => grupo.proyectos);
 
     expect(body.some((grupo) => grupo.codigo === "AR-X")).toBe(false);
+    expect(body.some((grupo) => grupo.codigo === "AR-C")).toBe(false);
     expect(proyectos.map((proyecto) => proyecto.id)).not.toContain(
       PROYECTO_INVENTARIO,
     );

@@ -705,6 +705,18 @@ describe("ProyectoService", () => {
           idColectivo: { _id: "col-2", nombre: "Colectivo Dos" },
           ubicacion: null,
         },
+        {
+          _id: "p-5",
+          titulo: "Proyecto CABA",
+          idColectivo: { _id: "col-3", nombre: "Colectivo CABA" },
+          ubicacion: {
+            codigoPais: "AR",
+            nombrePais: "Argentina",
+            codigoProvincia: "AR-C",
+            nombreProvincia: "Ciudad Autónoma de Buenos Aires",
+            ciudad: "Barracas",
+          },
+        },
       ]);
 
       const resultado = await service.obtenerUbicaciones();
@@ -730,6 +742,9 @@ describe("ProyectoService", () => {
       expect(
         resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
       ).not.toContain("p-4");
+      expect(
+        resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
+      ).not.toContain("p-5");
     });
 
     it("puede agrupar por pais sin cambiar el resto del contrato", async () => {

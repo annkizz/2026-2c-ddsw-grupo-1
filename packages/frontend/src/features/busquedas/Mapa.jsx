@@ -5,13 +5,15 @@ import { obtenerUbicacionesProyectos } from "../../service/proyectosService";
 import "./Busquedas.css";
 import "./Mapa.css";
 
-const REGIONES = PROVINCIAS_MAPA.provincias.map((provincia) => ({
-  codigo: provincia.codigoProvincia,
-  nombre: provincia.nombreProvincia,
-  path: provincia.path,
-  labelX: provincia.labelX,
-  labelY: provincia.labelY,
-}));
+const REGIONES = PROVINCIAS_MAPA.provincias
+  .filter((provincia) => provincia.codigoProvincia !== "AR-C")
+  .map((provincia) => ({
+    codigo: provincia.codigoProvincia,
+    nombre: provincia.nombreProvincia,
+    path: provincia.path,
+    labelX: provincia.labelX,
+    labelY: provincia.labelY,
+  }));
 
 const COLOR_SIN_PROYECTOS = "#e5e7eb";
 // Escala de 5 tonos (claro -> oscuro) segun cantidad de proyectos.

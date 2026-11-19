@@ -533,6 +533,9 @@ export class ProyectoService {
       if (region === null) {
         continue;
       }
+      if (nivel === "provincia" && region.codigo === "AR-C") {
+        continue;
+      }
 
       let grupo = grupos.get(region.codigo);
       if (grupo === undefined) {
