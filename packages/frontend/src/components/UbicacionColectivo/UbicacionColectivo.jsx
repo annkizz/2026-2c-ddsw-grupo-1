@@ -109,12 +109,19 @@ const UbicacionColectivo = ({
           id={ids.pais}
           select
           label={labelsAbove ? undefined : 'País (opcional)'}
-          slotProps={labelsAbove ? { select: { labelId: `${ids.pais}-label` } } : undefined}
+          slotProps={{
+            select: {
+              labelId: labelsAbove ? `${ids.pais}-label` : undefined,
+              displayEmpty: true
+            }
+          }}
           value={paisSeleccionado}
           onChange={cambiarPais}
           fullWidth
         >
-          <MenuItem value="">Sin especificar</MenuItem>
+          <MenuItem value="">
+            <span className="select-placeholder">Seleccioná un país</span>
+          </MenuItem>
           <MenuItem value="Argentina">Argentina</MenuItem>
           <MenuItem value={OTRO_PAIS}>Otro país</MenuItem>
         </TextField>,
@@ -130,14 +137,19 @@ const UbicacionColectivo = ({
               id={ids.provincia}
               select
               label={labelsAbove ? undefined : 'Provincia (opcional)'}
-              slotProps={
-                labelsAbove ? { select: { labelId: `${ids.provincia}-label` } } : undefined
-              }
+              slotProps={{
+                select: {
+                  labelId: labelsAbove ? `${ids.provincia}-label` : undefined,
+                  displayEmpty: true
+                }
+              }}
               value={provincia}
               onChange={(evento) => onChange({ provincia: evento.target.value, ciudad: '' })}
               fullWidth
             >
-              <MenuItem value="">Sin especificar</MenuItem>
+              <MenuItem value="">
+                <span className="select-placeholder">Seleccioná una provincia</span>
+              </MenuItem>
               {PROVINCIAS_ARGENTINAS.map(({ codigo, nombre }) => (
                 <MenuItem key={codigo} value={nombre}>
                   {nombre}

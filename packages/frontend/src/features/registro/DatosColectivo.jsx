@@ -127,9 +127,14 @@ const DatosColectivo = () => {
               <TextField
                 id="registro-colectivo-tipo"
                 select
-                slotProps={{ select: { labelId: 'registro-colectivo-tipo-label' } }}
+                slotProps={{
+                  select: { labelId: 'registro-colectivo-tipo-label', displayEmpty: true }
+                }}
                 {...propsDe('tipoDeColectivo')}
               >
+                <MenuItem value="" disabled>
+                  <span className="select-placeholder">Seleccioná un tipo de colectivo</span>
+                </MenuItem>
                 {TIPOS_COLECTIVO.map((tipo) => (
                   <MenuItem key={tipo.valor} value={tipo.valor}>
                     {tipo.texto}
@@ -187,7 +192,7 @@ const DatosColectivo = () => {
                 id="registro-colectivo-descripcion"
                 placeholder="Describí el trabajo del colectivo"
                 multiline
-                minRows={3}
+                minRows={4}
                 {...propsDe('descripcion')}
               />
             </div>

@@ -258,6 +258,12 @@ const theme = createTheme({
           fontSize: token('font-size-md'),
           lineHeight: token('line-height-body'),
           color: token('color-text')
+        },
+        input: {
+          '&::placeholder': {
+            color: token('color-muted'),
+            opacity: 1
+          }
         }
       }
     },
@@ -268,6 +274,9 @@ const theme = createTheme({
           borderRadius: token('radius-md'),
           backgroundColor: token('color-surface'),
           fontFamily: token('font-family-body'),
+          '&.MuiOutlinedInput-multiline': {
+            padding: 0
+          },
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: token('color-border-subtle')
           },
@@ -284,6 +293,10 @@ const theme = createTheme({
           color: token('color-text'),
           fontSize: token('font-size-md'),
           lineHeight: token('line-height-body')
+        },
+        inputMultiline: {
+          boxSizing: 'border-box',
+          padding: token('space-2')
         }
       }
     },
@@ -313,7 +326,10 @@ const theme = createTheme({
           minHeight: 'auto',
           padding: `${token('space-1')} ${token('space-4')} ${token('space-1')} ${token('space-2')}`,
           fontSize: token('font-size-md'),
-          lineHeight: token('line-height-body')
+          lineHeight: token('line-height-body'),
+          '& .select-placeholder': {
+            color: token('color-muted')
+          }
         }
       }
     },
