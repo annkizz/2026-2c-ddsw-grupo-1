@@ -1,18 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Alert,
+  AlertTitle,
   Button,
-  CircularProgress,
-  Dialog,
+  Chip,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   LinearProgress,
   Switch,
   TextField,
 } from '@mui/material';
-import { FiArrowLeft, FiInfo, FiLock, FiCheckCircle, FiShield } from 'react-icons/fi';
+import {
+  FiAlertCircle,
+  FiBarChart2,
+  FiCheckCircle,
+  FiEdit2,
+  FiExternalLink,
+  FiLinkedin,
+  FiLock,
+  FiPlus,
+  FiSearch,
+  FiSend,
+  FiSettings,
+  FiShield,
+  FiUsers,
+} from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import Markdown from '../../components/Markdown.jsx';
 import {
@@ -30,26 +45,44 @@ import {
 import { t } from '../../i18n/t';
 import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
-import './DetalleProyecto.css';
+import { mensajeDeError } from '../../utils/mensajeDeError';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
 import { codigoDeError, mensajeDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
 import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import ChipEstado from '../../components/ChipEstado/ChipEstado.jsx';
+import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
+import { EsqueletoDetalle } from '../../components/Esqueletos/Esqueletos.jsx';
+import { useNotificar } from '../../components/Notificador/Notificador.jsx';
+import './DetalleProyecto.css';
 
 const ES_ENLACE = /^https?:\/\/\S+$/i;
 
+// El detalle técnico del proveedor no se muestra: solo el resultado en lenguaje claro.
 const avisoDePublicacion = (publicacion) =>
   publicacion.estado === 'ENVIADO'
     ? { severity: 'success', texto: t('linkedin.okPublicado') }
-    : { severity: 'warning', texto: publicacion.detalle || t('linkedin.falloPublicacion') };
+    : { severity: 'warning', texto: t('linkedin.falloPublicacion') };
+
+const mensajeCampo = (error, ayuda) =>
+  error ? (
+    <>
+      <FiAlertCircle aria-hidden="true" />
+      <span>{error}</span>
+    </>
+  ) : (
+    ayuda
+  );
 
 const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const rutaVolver = location.state?.volverA ?? '/proyectos';
+  const notificar = useNotificar();
   const { sesion, getAccessToken, isAuthenticated, cargando: authCargando, iniciarSesion } = useAuth();
   const linkedin = useLinkedin(sesion?.rol === 'COLECTIVO');
 
@@ -58,7 +91,11 @@ const DetalleProyecto = () => {
   const [colaboraciones, setColaboraciones] = useState(null);
   const [logros, setLogros] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState(null); // null | 'NO_ENCONTRADO' | 'ERROR'
+  const [errorCarga, setErrorCarga] = useState(null); // null | 'NO_ENCONTRADO' | error
+  // Errores por bloque: antes se ocultaban devolviendo [] o null.
+  const [errorPerfiles, setErrorPerfiles] = useState(null);
+  const [errorLogros, setErrorLogros] = useState(null);
+  const [errorColaboraciones, setErrorColaboraciones] = useState(null);
 
   const [modalPostulacionAbierto, setModalPostulacionAbierto] = useState(false);
   const [perfilPostulando, setPerfilPostulando] = useState(null);
@@ -82,17 +119,19 @@ const DetalleProyecto = () => {
   const [formAvance, setFormAvance] = useState({ porcentaje: '', enlaceSistema: '', enlaceCodigoFuente: '' });
   const [erroresAvance, setErroresAvance] = useState({});
   const [guardandoAvance, setGuardandoAvance] = useState(false);
-  const [errorAvance, setErrorAvance] = useState('');
+  const [avisoAvance, setAvisoAvance] = useState('');
+  const [errorAvance, setErrorAvance] = useState(null);
 
   const [modalBusquedaAbierto, setModalBusquedaAbierto] = useState(false);
   const [busquedaSwitch, setBusquedaSwitch] = useState(false);
   const [fechaBusqueda, setFechaBusqueda] = useState('');
   const [errorFechaBusqueda, setErrorFechaBusqueda] = useState('');
   const [guardandoBusqueda, setGuardandoBusqueda] = useState(false);
-  const [errorBusqueda, setErrorBusqueda] = useState('');
+  const [errorBusqueda, setErrorBusqueda] = useState(null);
 
-  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarLogroEnLinkedin : false });
-  const [errorLogro, setErrorLogro] = useState('');
+  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarLogroEnLinkedin: false });
+  const [erroresLogro, setErroresLogro] = useState({});
+  const [errorLogro, setErrorLogro] = useState(null);
   const [guardandoLogro, setGuardandoLogro] = useState(false);
 
   const [avisoLinkedin, setAvisoLinkedin] = useState(null); // { severity, texto }
@@ -103,86 +142,64 @@ const DetalleProyecto = () => {
     String(proyecto.idColectivo) === String(sesion.idColectivo)
   );
 
+  const cargarPerfiles = useCallback(async () => {
+    setErrorPerfiles(null);
+    try {
+      setPerfiles(await obtenerPerfiles(id));
+    } catch (error) {
+      setPerfiles([]);
+      setErrorPerfiles(error);
+    }
+  }, [id]);
+
+  const cargarLogros = useCallback(async () => {
+    setErrorLogros(null);
+    try {
+      setLogros(await obtenerLogros(id));
+    } catch (error) {
+      setLogros([]);
+      setErrorLogros(error);
+    }
+  }, [id]);
+
+  const cargarColaboraciones = useCallback(async () => {
+    setErrorColaboraciones(null);
+    try {
+      setColaboraciones(await obtenerColaboraciones(id));
+    } catch (error) {
+      setColaboraciones(null);
+      setErrorColaboraciones(error);
+    }
+  }, [id]);
+
   const cargar = useCallback(async () => {
     setCargando(true);
     setErrorCarga(null);
     try {
-      const [dataProyecto, dataPerfiles, dataLogros, dataColaboraciones] = await Promise.all([
+      const [dataProyecto] = await Promise.all([
         obtenerProyectoPorId(id),
-        obtenerPerfiles(id).catch(() => []),
-        obtenerLogros(id).catch(() => []),
-        obtenerColaboraciones(id).catch(() => null),
+        cargarPerfiles(),
+        cargarLogros(),
+        cargarColaboraciones(),
       ]);
       setProyecto(dataProyecto);
-      setPerfiles(dataPerfiles);
-      setLogros(dataLogros);
-      setColaboraciones(dataColaboraciones);
     } catch (error) {
-      setErrorCarga(error.response?.status === 404 ? 'NO_ENCONTRADO' : 'ERROR');
+      setErrorCarga(error.response?.status === 404 ? 'NO_ENCONTRADO' : error);
     } finally {
       setCargando(false);
     }
-  }, [id]);
+  }, [id, cargarPerfiles, cargarLogros, cargarColaboraciones]);
 
   useEffect(() => {
     cargar();
   }, [cargar]);
 
-  const cargarPostulaciones = useCallback(async () => {
-    if (!esDueño) return;
-    setCargandoPostulaciones(true);
-    setErrorCargarPostulaciones('');
-    try {
-      const token = await getAccessToken();
-      setPostulacionesProyecto(await obtenerPostulaciones(token, id));
-    } catch (error) {
-      setErrorCargarPostulaciones(mensajeDeError(error));
-    } finally {
-      setCargandoPostulaciones(false);
-    }
-  }, [esDueño, getAccessToken, id]);
-
-  useEffect(() => {
-    if (esDueño) {
-      cargarPostulaciones();
-    } else {
-      setPostulacionesProyecto([]);
-      setErrorCargarPostulaciones('');
-      setCargandoPostulaciones(false);
-    }
-  }, [cargarPostulaciones, esDueño]);
-
-  useEffect(() => {
-    if (sesion?.rol !== 'COLABORADOR') {
-      setMisColaboraciones([]);
-      setErrorVerificarParticipacion('');
-      return undefined;
-    }
-
-    let vigente = true;
-    setMisColaboraciones(null);
-    setErrorVerificarParticipacion('');
-    const cargarMisColaboraciones = async () => {
-      try {
-        const token = await getAccessToken();
-        const colaboracionesPropias = await obtenerMisColaboraciones(token);
-        if (vigente) setMisColaboraciones(colaboracionesPropias);
-      } catch (error) {
-        if (vigente) setErrorVerificarParticipacion(mensajeDeError(error));
-      }
-    };
-    cargarMisColaboraciones();
-
-    return () => {
-      vigente = false;
-    };
-  }, [getAccessToken, intentoVerificacion, sesion?.rol]);
+  const migasBase = [{ texto: t('detalleProyecto.proyectosMigas'), to: '/proyectos' }];
 
   if (cargando) {
     return (
-      <div className="detalle-estado" role="status">
-        <CircularProgress />
-        <p>{t('detalleProyecto.cargando')}</p>
+      <div className="contenedor-pagina">
+        <EsqueletoDetalle etiqueta={t('detalleProyecto.cargando')} />
       </div>
     );
   }
@@ -190,26 +207,25 @@ const DetalleProyecto = () => {
   if (errorCarga || !proyecto) {
     const noEncontrado = errorCarga === 'NO_ENCONTRADO';
     return (
-      <div className="detalle-contenedor">
-        <Link to={rutaVolver} className="detalle-volver">
-          <FiArrowLeft /> <span>{t('detalleProyecto.volverALista')}</span>
-        </Link>
-        <div className="detalle-tarjeta-error" role="alert">
-          <FiInfo size={24} />
-          <h2>
-            {noEncontrado
-              ? t('detalleProyecto.noEncontradoTitulo')
-              : t('detalleProyecto.errorCargaTitulo')}
-          </h2>
-          <p>
-            {noEncontrado ? t('detalleProyecto.noEncontradoSub') : t('detalleProyecto.errorCargaSub')}
-          </p>
-          {!noEncontrado && (
-            <Button variant="outlined" onClick={cargar}>
-              {t('detalleProyecto.reintentar')}
-            </Button>
-          )}
-        </div>
+      <div className="contenedor-pagina contenedor-pagina--lectura">
+        <EncabezadoPagina
+          titulo={noEncontrado ? t('detalleProyecto.noEncontradoTitulo') : t('detalleProyecto.errorCargaTitulo')}
+          migas={[...migasBase, { texto: t('detalleProyecto.noEncontradoTitulo') }]}
+        />
+        {noEncontrado ? (
+          <EstadoVacio
+            icono={FiSearch}
+            titulo={t('detalleProyecto.noEncontradoTitulo')}
+            descripcion={t('detalleProyecto.noEncontradoSub')}
+            accion={
+              <Button component={Link} to="/proyectos" variant="outlined">
+                {t('detalleProyecto.volverALista')}
+              </Button>
+            }
+          />
+        ) : (
+          <AlertaError error={errorCarga} titulo={t('detalleProyecto.errorCargaTitulo')} onReintentar={cargar} />
+        )}
       </div>
     );
   }
@@ -256,6 +272,7 @@ const DetalleProyecto = () => {
         ...actuales,
         [perfilPostulando.id]: true,
       }));
+      notificar({ mensaje: t('detalleProyecto.exitoPostulacion') });
     } catch (error) {
       const codigo = error.response?.data?.codigo;
       const traducciones = {
@@ -269,7 +286,7 @@ const DetalleProyecto = () => {
       setErrorPostulacion(
         codigo && traducciones[codigo]
           ? t(`detalleProyecto.${traducciones[codigo]}`)
-          : t('detalleProyecto.errorServidorPostulacion')
+          : mensajeDeError(error, t('detalleProyecto.errorPostulacionContexto'))
       );
       if (codigo === 'POSTULACION_YA_EXISTENTE') {
         setPostulacionesPendientes((actuales) => ({
@@ -328,7 +345,7 @@ const DetalleProyecto = () => {
     setBusquedaSwitch(Boolean(proyecto.busquedaAbierta));
     setFechaBusqueda(aInputFecha(proyecto.fechaLimiteBusqueda));
     setErrorFechaBusqueda('');
-    setErrorBusqueda('');
+    setErrorBusqueda(null);
     setModalBusquedaAbierto(true);
   };
 
@@ -336,11 +353,12 @@ const DetalleProyecto = () => {
     const fechaCambio = fechaBusqueda !== aInputFecha(proyecto.fechaLimiteBusqueda);
     if (busquedaSwitch && fechaBusqueda && fechaCambio && !esFechaFutura(fechaBusqueda)) {
       setErrorFechaBusqueda(t('formularioProyecto.errFechaPasada'));
+      document.getElementById('busqueda-fecha-limite')?.focus();
       return;
     }
 
     setGuardandoBusqueda(true);
-    setErrorBusqueda('');
+    setErrorBusqueda(null);
     setErrorFechaBusqueda('');
     try {
       const token = await getAccessToken();
@@ -350,8 +368,9 @@ const DetalleProyecto = () => {
       });
       setProyecto(actualizado);
       setModalBusquedaAbierto(false);
+      notificar({ mensaje: t('detalleProyecto.exitoBusqueda') });
     } catch (err) {
-      setErrorBusqueda(err.response?.data?.error || t('detalleProyecto.errorConfigBusqueda'));
+      setErrorBusqueda(err);
     } finally {
       setGuardandoBusqueda(false);
     }
@@ -365,7 +384,8 @@ const DetalleProyecto = () => {
       enlaceCodigoFuente: proyecto.enlaceCodigoFuente || '',
     });
     setErroresAvance({});
-    setErrorAvance('');
+    setAvisoAvance('');
+    setErrorAvance(null);
     setModalEditarAvance(true);
   };
 
@@ -389,7 +409,11 @@ const DetalleProyecto = () => {
       errores.enlaceCodigoFuente = t('detalleProyecto.errEnlace');
     }
     setErroresAvance(errores);
-    if (Object.keys(errores).length > 0) return;
+    if (Object.keys(errores).length > 0) {
+      const primero = { porcentaje: 'avance-porcentaje', enlaceSistema: 'avance-enlace-sistema', enlaceCodigoFuente: 'avance-enlace-repo' }[Object.keys(errores)[0]];
+      document.getElementById(primero)?.focus();
+      return;
+    }
 
     // Solo se mandan los datos cargados: un campo vacío no se envía
     const cambios = {};
@@ -397,12 +421,13 @@ const DetalleProyecto = () => {
     if (enlaceSistema) cambios.enlaceSistema = enlaceSistema;
     if (enlaceCodigoFuente) cambios.enlaceCodigoFuente = enlaceCodigoFuente;
     if (Object.keys(cambios).length === 0) {
-      setErrorAvance(t('detalleProyecto.errAvanceVacio'));
+      setAvisoAvance(t('detalleProyecto.errAvanceVacio'));
       return;
     }
 
     setGuardandoAvance(true);
-    setErrorAvance('');
+    setAvisoAvance('');
+    setErrorAvance(null);
     try {
       const token = await getAccessToken();
       const actualizado = await actualizarAvance(token, id, cambios);
@@ -413,8 +438,9 @@ const DetalleProyecto = () => {
         enlaceCodigoFuente: actualizado.enlaceCodigoFuente,
       }));
       setModalEditarAvance(false);
+      notificar({ mensaje: t('detalleProyecto.exitoAvance') });
     } catch (err) {
-      setErrorAvance(err.response?.data?.error || t('detalleProyecto.errorAvance'));
+      setErrorAvance(err);
     } finally {
       setGuardandoAvance(false);
     }
@@ -425,13 +451,17 @@ const DetalleProyecto = () => {
     e.preventDefault();
     const titulo = nuevoLogro.titulo.trim();
     const descripcion = nuevoLogro.descripcion.trim();
-    if (!titulo || !descripcion) {
-      setErrorLogro(t('detalleProyecto.errLogroCampos'));
+    const errores = {};
+    if (!titulo) errores.titulo = t('detalleProyecto.errLogroTitulo');
+    if (!descripcion) errores.descripcion = t('detalleProyecto.errLogroDescripcion');
+    setErroresLogro(errores);
+    if (Object.keys(errores).length > 0) {
+      document.getElementById(errores.titulo ? 'logro-titulo' : 'logro-descripcion')?.focus();
       return;
     }
 
     setGuardandoLogro(true);
-    setErrorLogro('');
+    setErrorLogro(null);
     try {
       const token = await getAccessToken();
       const creado = await crearLogro(token, id, {
@@ -443,19 +473,19 @@ const DetalleProyecto = () => {
       });
       setLogros((actuales) => [...actuales, creado]);
       setNuevoLogro({ titulo: '', descripcion: '', publicarEnLinkedin: false });
+      notificar({ mensaje: t('detalleProyecto.exitoLogro') });
       if (creado.publicacionLinkedin) setAvisoLinkedin(avisoDePublicacion(creado.publicacionLinkedin));
-      } catch (err) {
-        const codigo = codigoDeError(err);
-        if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
-          linkedin.recargar(); // el estado local estaba desactualizado
-        }
-        setErrorLogro(err.response?.data?.error || t('detalleProyecto.errorLogro'));
-      } finally {
-        setGuardandoLogro(false);
+    } catch (err) {
+      const codigo = codigoDeError(err);
+      if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
+        linkedin.recargar(); // el estado local estaba desactualizado
+      }
+      setErrorLogro(err);
+    } finally {
+      setGuardandoLogro(false);
     }
   };
 
-  
   const handlePublicarLogro = async (logro) => {
     if (!linkedin.estado?.conectado) {
       linkedin.conectar();
@@ -473,849 +503,608 @@ const DetalleProyecto = () => {
       if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
         linkedin.recargar();
       }
-      setAvisoLinkedin({ severity: 'error', texto: err.response?.data?.error || t('linkedin.falloPublicacion') });
+      setAvisoLinkedin({ severity: 'error', texto: mensajeDeError(err, t('linkedin.errorPublicarContexto')) });
     } finally {
       setPublicandoId(null);
     }
   };
 
+  const textoBotonPostular = (perfil) =>
+    postulacionesEnviadas[perfil.id]
+      ? t('detalleProyecto.postulacionEnviada')
+      : postulacionesPendientes[perfil.id]
+        ? t('detalleProyecto.postulacionPendiente')
+        : !busquedaVigente
+          ? t('detalleProyecto.busquedaCerradaBtn')
+          : sesion?.rol === 'COLECTIVO'
+            ? t('detalleProyecto.soloColaboradoras')
+            : !isAuthenticated
+              ? t('detalleProyecto.iniciarSesionPostulacion')
+              : t('detalleProyecto.postularme');
+
   return (
-      <div className="detalle-contenedor">
-        <Link to={rutaVolver} className="detalle-volver">
-          <FiArrowLeft /> <span>{t('detalleProyecto.volverALista')}</span>
-        </Link>
+    <div className="contenedor-pagina detalle">
+      <EncabezadoPagina
+        titulo={proyecto.titulo}
+        subtitulo={proyecto.descripcion}
+        migas={[...migasBase, { texto: proyecto.titulo }]}
+      >
+        <div className="detalle-meta">
+          <ChipEstado estado={esFinalizado ? 'FINALIZADO' : 'ACTIVO'} />
+          <Link className="detalle-meta__colectivo" to={`/colectivos/${proyecto.idColectivo}`}>
+            <FiUsers aria-hidden="true" />
+            {t('detalleProyecto.verColectivo')}
+          </Link>
+        </div>
+      </EncabezadoPagina>
 
-        <div className="detalle-grid-principal">
-          <div className="detalle-info">
-            <div className="detalle-badges-fila">
-              <span className={`detalle-badge ${esFinalizado ? 'finalizado' : 'activo'}`}>
-                {esFinalizado ? <FiCheckCircle /> : <FiInfo />}
-                {esFinalizado ? t('proyectos.finalizado') : t('proyectos.activo')}
-              </span>
-              <Link className="detalle-colectivo-badge" to={`/colectivos/${proyecto.idColectivo}`}>
-                {t('detalleProyecto.verColectivo')}
-              </Link>
+      <div className="detalle-grid">
+        <section className="detalle-bloque" aria-labelledby="detalle-datos-titulo">
+          <h2 id="detalle-datos-titulo">{t('detalleProyecto.datosProyecto')}</h2>
+          <dl className="detalle-datos">
+            <div>
+              <dt>{t('detalleProyecto.fechaInicio')}</dt>
+              <dd>{formatearFecha(proyecto.fechaInicio) ?? t('detalleProyecto.sinFecha')}</dd>
             </div>
-
-            <h1>{proyecto.titulo}</h1>
-            <Markdown className="detalle-descripcion">
-              {proyecto.descripcion}
-            </Markdown>
-
-            <div className="detalle-fechas-grid">
-              <div>
-                <small>{t('detalleProyecto.fechaInicio')}</small>
-                <strong>{formatearFecha(proyecto.fechaInicio) ?? t('detalleProyecto.sinFecha')}</strong>
-              </div>
-              <div>
-                <small>
-                  {esFinalizado
-                    ? t('detalleProyecto.cierrePrevisto')
-                    : t('detalleProyecto.cierreProgramado')}
-                </small>
+            <div>
+              <dt>{esFinalizado ? t('detalleProyecto.cierrePrevisto') : t('detalleProyecto.cierreProgramado')}</dt>
+              <dd>{formatearFecha(proyecto.fechaLimiteCierre) ?? t('detalleProyecto.sinFecha')}</dd>
+            </div>
+            <div>
+              <dt>{t('detalleProyecto.estadoBusqueda')}</dt>
+              <dd>
+                <ChipEstado
+                  estado={busquedaVigente ? 'ABIERTA' : 'CERRADA'}
+                  texto={busquedaVigente ? t('detalleProyecto.busquedaAbiertaChip') : t('detalleProyecto.busquedaCerradaChip')}
+                />
+              </dd>
+            </div>
+          </dl>
+          <p className="detalle-busqueda-texto">
+            {busquedaVigente ? (
+              <>
                 <strong>
-                  {formatearFecha(proyecto.fechaLimiteCierre) ?? t('detalleProyecto.sinFecha')}
-                </strong>
-              </div>
-            </div>
-          </div>
+                  {fechaLimiteBusqueda
+                    ? t('detalleProyecto.abiertaHasta', { fecha: fechaLimiteBusqueda })
+                    : t('detalleProyecto.abiertaSinFecha')}
+                  .
+                </strong>{' '}
+                {t('detalleProyecto.busquedaAbierta')}
+              </>
+            ) : (
+              <>
+                <FiLock aria-hidden="true" /> {t('detalleProyecto.mensajeBusquedaCerrada')}
+              </>
+            )}
+          </p>
+        </section>
 
-          <div className="detalle-card-avance">
-            <h3>{t('detalleProyecto.seccionAvance')}</h3>
-            <p>{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
-            <LinearProgress
-              variant="determinate"
-              value={avance}
-              aria-label={t('detalleProyecto.seccionAvance')}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: 'var(--line)',
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: 'var(--navy)',
-                  borderRadius: 4,
-                },
-              }}
-            />
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => setModalAvanceAbierto(true)}
-              sx={{ mt: 2 }}
-            >
-              {t('detalleProyecto.verAvance')}
+        <section className="detalle-bloque detalle-avance" aria-labelledby="detalle-avance-titulo">
+          <h2 id="detalle-avance-titulo">{t('detalleProyecto.seccionAvance')}</h2>
+          <p className="detalle-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
+          <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
+          <Button variant="outlined" startIcon={<FiBarChart2 aria-hidden="true" />} onClick={() => setModalAvanceAbierto(true)}>
+            {t('detalleProyecto.verAvance')}
+          </Button>
+        </section>
+      </div>
+
+      {esDueño && (
+        <section className="detalle-bloque detalle-admin" aria-labelledby="detalle-admin-titulo">
+          <h2 id="detalle-admin-titulo" className="detalle-admin__titulo">
+            <FiShield aria-hidden="true" /> {t('detalleProyecto.adminProyecto')}
+          </h2>
+          <div className="detalle-admin__botones">
+            <Button variant="outlined" startIcon={<FiEdit2 aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/editar`)}>
+              {t('detalleProyecto.btnEditarProyecto')}
+            </Button>
+            <Button variant="outlined" startIcon={<FiUsers aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/perfiles`)}>
+              {t('detalleProyecto.btnGestionarPerfiles')}
+            </Button>
+            <Button variant="outlined" startIcon={<FiSettings aria-hidden="true" />} onClick={abrirConfigurarBusqueda}>
+              {t('detalleProyecto.btnConfigurarBusqueda')}
+            </Button>
+            <Button variant="outlined" startIcon={<FiBarChart2 aria-hidden="true" />} onClick={abrirEditarAvance}>
+              {t('detalleProyecto.btnActualizarAvance')}
             </Button>
           </div>
-        </div>
+        </section>
+      )}
 
-        {esDueño && (
-          <div className="detalle-admin-panel">
-            <div className="detalle-admin-titulo">
-              <FiShield /> <span>{t('detalleProyecto.adminProyecto')}</span>
-            </div>
-            <div className="detalle-admin-botones">
-              <Button variant="outlined" onClick={() => navigate(`/proyectos/${id}/editar`)}>
-                {t('detalleProyecto.btnEditarProyecto')}
-              </Button>
-              <Button variant="outlined" onClick={() => navigate(`/proyectos/${id}/perfiles`)}>
-                {t('detalleProyecto.btnGestionarPerfiles')}
-              </Button>
-              <Button variant="outlined" onClick={abrirConfigurarBusqueda}>
-                {t('detalleProyecto.btnConfigurarBusqueda')}
-              </Button>
-              <Button variant="outlined" onClick={abrirEditarAvance}>
-                {t('detalleProyecto.btnActualizarAvance')}
-              </Button>
-            </div>
-          </div>
+      <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
+        <h2 id="detalle-perfiles-titulo">{t('detalleProyecto.seccionPerfiles')}</h2>
+        {errorPerfiles && (
+          <AlertaError error={errorPerfiles} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={cargarPerfiles} />
         )}
+        {errorColaboraciones && perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
+          <AlertaError
+            error={errorColaboraciones}
+            titulo={t('detalleProyecto.errorVacantesTitulo')}
+            onReintentar={cargarColaboraciones}
+          />
+        )}
+        {!errorPerfiles && perfiles.length === 0 ? (
+          <EstadoVacio icono={FiUsers} nivelTitulo="h3" titulo={t('detalleProyecto.sinPerfiles')} />
+        ) : (
+          <ul className="detalle-perfiles">
+            {perfiles.map((perfil) => {
+              const ocupadas = (colaboraciones ?? []).filter(
+                (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
+              ).length;
+              const vacantesDisponibles =
+                perfil.limiteColaboraciones == null || colaboraciones == null
+                  ? null
+                  : Math.max(0, perfil.limiteColaboraciones - ocupadas);
+              const idPerfil = `perfil-${perfil.id}`;
 
-        <div className={`detalle-busqueda-card ${!busquedaVigente ? 'cerrada' : ''}`}>
-          <div className="detalle-busqueda-header">
-            <div>
-              <h3>{t('detalleProyecto.seccionBusqueda')}</h3>
-              <p>
-                {busquedaVigente
-                  ? fechaLimiteBusqueda
-                    ? t('detalleProyecto.abiertaHasta', { fecha: fechaLimiteBusqueda })
-                    : t('detalleProyecto.abiertaSinFecha')
-                  : t('detalleProyecto.busquedaCerrada')}
-              </p>
-            </div>
-            {!busquedaVigente && <FiLock />}
-          </div>
-          <small className="detalle-busqueda-sub">
-            {busquedaVigente
-              ? t('detalleProyecto.busquedaAbierta')
-              : t('detalleProyecto.mensajeBusquedaCerrada')}
-          </small>
-        </div>
+              return (
+                <li key={perfil.id} className="tarjeta perfil-buscado" aria-labelledby={idPerfil}>
+                  <div className="tarjeta__cuerpo">
+                    <h3 id={idPerfil}>{perfil.descripcion}</h3>
 
-        <div className="detalle-perfiles-seccion">
-          <h2>{t('detalleProyecto.seccionPerfiles')}</h2>
-          {colaboraciones === null &&
-            perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                {t('detalleProyecto.errorCargarVacantes')}
-              </Alert>
-            )}
-          {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2 }}
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={() => setIntentoVerificacion((intento) => intento + 1)}
-                >
-                  {t('detalleProyecto.reintentarVerificacion')}
-                </Button>
-              }
-            >
-              {t('detalleProyecto.errorVerificarParticipacion')}
-            </Alert>
-          )}
-          <div className="detalle-perfiles-grid">
-            {perfiles.length > 0 ? (
-              perfiles.map((perfil) => {
-                const ocupadas = (colaboraciones ?? []).filter(
-                  (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
-                ).length;
-                const vacantesDisponibles =
-                  perfil.limiteColaboraciones == null || colaboraciones == null
-                    ? null
-                    : Math.max(0, perfil.limiteColaboraciones - ocupadas);
-
-                return (
-                <div key={perfil.id} className="perfil-card-publico">
-                  <h3>{perfil.descripcion}</h3>
-
-                  <div className="perfil-bloque-hab">
-                    <small>{t('detalleProyecto.habilidadesRequeridas')}</small>
-                    <div className="chips-fila">
-                      {perfil.habilidadesRequeridas.map((h) => (
-                        <span key={h} className="chip-hab">
-                          {h}
-                        </span>
-                      ))}
+                    <div className="perfil-buscado__bloque">
+                      <p className="perfil-buscado__etiqueta">{t('detalleProyecto.habilidadesRequeridas')}</p>
+                      <ul className="lista-chips">
+                        {perfil.habilidadesRequeridas.map((h) => (
+                          <li key={h}>
+                            <Chip color="primary" label={h} />
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
 
-                  <div className="perfil-bloque-hab">
-                    <small>{t('detalleProyecto.habilidadesOpcionales')}</small>
-                    <div className="chips-fila">
+                    <div className="perfil-buscado__bloque">
+                      <p className="perfil-buscado__etiqueta">{t('detalleProyecto.habilidadesOpcionales')}</p>
                       {perfil.habilidadesOpcionales.length > 0 ? (
-                        perfil.habilidadesOpcionales.map((h) => (
-                          <span key={h} className="chip-hab opcional">
-                            {h}
-                          </span>
-                        ))
+                        <ul className="lista-chips">
+                          {perfil.habilidadesOpcionales.map((h) => (
+                            <li key={h}>
+                              <Chip label={h} />
+                            </li>
+                          ))}
+                        </ul>
                       ) : (
-                        <span className="texto-muted">{t('detalleProyecto.sinHabilidadesOpcionales')}</span>
+                        <p className="texto-secundario">{t('detalleProyecto.sinHabilidadesOpcionales')}</p>
                       )}
                     </div>
+
+                    <dl className="perfil-buscado__datos">
+                      <div>
+                        <dt>{t('detalleProyecto.compromiso')}</dt>
+                        <dd>{resumenCompromiso(perfil.compromiso)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('detalleProyecto.modalidad')}</dt>
+                        <dd>{etiquetaModalidad(perfil.compromiso.tipoColaboracion)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('detalleProyecto.cupo')}</dt>
+                        <dd>{textoCupo(perfil.limiteColaboraciones)}</dd>
+                      </div>
+                    </dl>
+
+                    {vacantesDisponibles != null && (
+                      <p className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? ' perfil-buscado__vacantes--agotadas' : ''}`}>
+                        {vacantesDisponibles === 0 ? <FiLock aria-hidden="true" /> : <FiCheckCircle aria-hidden="true" />}
+                        <span>
+                          {vacantesDisponibles === 0
+                            ? t('detalleProyecto.vacantesCompletas')
+                            : vacantesDisponibles === 1
+                              ? t('detalleProyecto.unaVacanteDisponible')
+                              : t('detalleProyecto.vacantesDisponibles', { cantidad: vacantesDisponibles })}
+                        </span>
+                      </p>
+                    )}
                   </div>
 
-                  <div className="perfil-meta-tabla">
-                    <div>
-                      <span>{t('detalleProyecto.compromiso')}</span>{' '}
-                      <strong>{resumenCompromiso(perfil.compromiso)}</strong>
-                    </div>
-                    <div>
-                      <span>{t('detalleProyecto.modalidad')}</span>{' '}
-                      <strong>{etiquetaModalidad(perfil.compromiso.tipoColaboracion)}</strong>
-                    </div>
-                    <div>
-                      <span>{t('detalleProyecto.cupo')}</span>{' '}
-                      <strong>{textoCupo(perfil.limiteColaboraciones)}</strong>
-                    </div>
+                  <div className="tarjeta__acciones">
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<FiSend aria-hidden="true" />}
+                      disabled={
+                        !busquedaVigente ||
+                        esDueño ||
+                        authCargando ||
+                        (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
+                        Boolean(postulacionesEnviadas[perfil.id]) ||
+                        Boolean(postulacionesPendientes[perfil.id]) ||
+                        vacantesDisponibles === 0
+                      }
+                      onClick={() => abrirPostulacion(perfil)}
+                    >
+                      {textoBotonPostular(perfil)}
+                    </Button>
                   </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
-                  {vacantesDisponibles != null && (
-                    <div className="perfil-vacantes">
-                      {vacantesDisponibles === 0
-                        ? t('detalleProyecto.vacantesCompletas')
-                        : vacantesDisponibles === 1
-                          ? t('detalleProyecto.unaVacanteDisponible')
-                          : t('detalleProyecto.vacantesDisponibles', {
-                              cantidad: vacantesDisponibles,
-                            })}
-                    </div>
-                  )}
-
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    disabled={
-                      !busquedaVigente ||
-                      esDueño ||
-                      authCargando ||
-                      (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
-                      yaColaboraEnProyecto ||
-                      verificandoParticipacion ||
-                      Boolean(errorVerificarParticipacion) ||
-                      Boolean(postulacionesEnviadas[perfil.id]) ||
-                      Boolean(postulacionesPendientes[perfil.id]) ||
-                      vacantesDisponibles === 0
-                    }
-                    onClick={() => abrirPostulacion(perfil)}
-                    sx={{ mt: 2 }}
-                  >
-                    {yaColaboraEnProyecto
-                      ? t('detalleProyecto.yaColaboraEnProyecto')
-                      : verificandoParticipacion
-                        ? t('detalleProyecto.verificandoParticipacion')
-                        : errorVerificarParticipacion
-                          ? t('detalleProyecto.errorVerificarParticipacionCorto')
-                          : postulacionesEnviadas[perfil.id]
-                      ? t('detalleProyecto.postulacionEnviada')
-                      : postulacionesPendientes[perfil.id]
-                        ? t('detalleProyecto.postulacionPendiente')
-                        : !busquedaVigente
-                          ? t('detalleProyecto.busquedaCerradaBtn')
-                          : sesion?.rol === 'COLECTIVO'
-                            ? t('detalleProyecto.soloColaboradoras')
-                            : !isAuthenticated
-                              ? t('detalleProyecto.iniciarSesionPostulacion')
-                              : t('detalleProyecto.postularme')}
-                  </Button>
-                </div>
-                );
-              })
-            ) : (
-              <p className="texto-muted">{t('detalleProyecto.sinPerfiles')}</p>
+      <section className="detalle-seccion" aria-labelledby="detalle-enlaces-titulo">
+        <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>
+        {proyecto.enlaceSistema || proyecto.enlaceCodigoFuente ? (
+          <div className="detalle-enlaces">
+            {proyecto.enlaceSistema && (
+              <Button
+                variant="outlined"
+                href={proyecto.enlaceSistema}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<FiExternalLink aria-hidden="true" />}
+              >
+                {t('detalleProyecto.enlaceSistemaBtn')}
+                <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+              </Button>
+            )}
+            {proyecto.enlaceCodigoFuente && (
+              <Button
+                variant="outlined"
+                href={proyecto.enlaceCodigoFuente}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<FiExternalLink aria-hidden="true" />}
+              >
+                {t('detalleProyecto.enlaceRepoBtn')}
+                <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+              </Button>
             )}
           </div>
-        </div>
+        ) : (
+          <p className="texto-secundario">{t('detalleProyecto.sinEnlaces')}</p>
+        )}
+      </section>
 
-        {esDueño && (
-          <section
-            className="detalle-postulaciones"
-            aria-labelledby="detalle-postulaciones-titulo"
-          >
-            <header className="detalle-postulaciones-encabezado">
-              <div>
-                <h2 id="detalle-postulaciones-titulo">
-                  {t('detalleProyecto.seccionPostulaciones')}
-                </h2>
-                <p>{t('detalleProyecto.ayudaPostulaciones')}</p>
-              </div>
-            </header>
-
-            {cargandoPostulaciones && (
-              <div className="detalle-postulaciones-estado" role="status">
-                <CircularProgress size={22} />
-                <span>{t('detalleProyecto.cargandoPostulaciones')}</span>
-              </div>
-            )}
-
-            {errorCargarPostulaciones && (
-              <Alert
-                severity="error"
-                action={
-                  <Button
-                    color="inherit"
-                    size="small"
-                    onClick={cargarPostulaciones}
-                  >
-                    {t('detalleProyecto.reintentarPostulaciones')}
-                  </Button>
-                }
-              >
-                {errorCargarPostulaciones}
-              </Alert>
-            )}
-
-            {!cargandoPostulaciones &&
-              !errorCargarPostulaciones &&
-              postulacionesProyecto.length === 0 && (
-                <p className="texto-muted">
-                  {t('detalleProyecto.sinPostulaciones')}
-                </p>
-              )}
-
-            <div className="detalle-postulaciones-lista">
-              {postulacionesProyecto.map((postulacion) => {
-                const perfil = perfiles.find(
-                  (item) => String(item.id) === String(postulacion.idPerfil),
-                );
-                const colaboradora = postulacion.colaborador;
-                const nombre =
-                  [colaboradora?.nombre, colaboradora?.apellido]
-                    .filter(Boolean)
-                    .join(' ') ||
-                  colaboradora?.nombreFantasia ||
-                  t('detalleProyecto.nombreNoDisponible');
-                const fecha = formatearFecha(postulacion.fechaPostulacion);
-                const perfilCompleto =
-                  perfil?.limiteColaboraciones != null &&
-                  (colaboraciones === null ||
-                    colaboraciones.filter(
-                      (colaboracion) =>
-                        String(colaboracion.idPerfil) ===
-                        String(postulacion.idPerfil),
-                    ).length >= perfil.limiteColaboraciones);
-                const estadoTexto = {
-                  PENDIENTE: t('detalleProyecto.estadoPendiente'),
-                  ACEPTADA: t('detalleProyecto.estadoAceptada'),
-                  RECHAZADA: t('detalleProyecto.estadoRechazada'),
-                }[postulacion.estado] ?? postulacion.estado;
-
-                return (
-                  <article
-                    className="detalle-postulacion-card"
-                    key={postulacion.id}
-                    aria-label={`${perfil?.descripcion ?? t('detalleProyecto.seccionPerfiles')}: ${estadoTexto}`}
-                  >
-                    <div className="detalle-postulacion-card__encabezado">
-                      <div>
-                        <h3>
-                          {t('detalleProyecto.perfilPostulacion', {
-                            perfil:
-                              perfil?.descripcion ??
-                              t('detalleProyecto.nombreNoDisponible'),
-                          })}
-                        </h3>
-                        {fecha && (
-                          <p>
-                            {t('detalleProyecto.fechaPostulacion', { fecha })}
-                          </p>
-                        )}
-                      </div>
-                      <span
-                        className={`detalle-postulacion-estado ${postulacion.estado.toLowerCase()}`}
-                      >
-                        {estadoTexto}
-                      </span>
-                    </div>
-
-                    {postulacion.estado === 'PENDIENTE' && (
-                      <>
-                        <p className="detalle-postulacion-identidad">
-                          {postulacion.esAnonima &&
-                            `${t('detalleProyecto.postulacionAnonima')} `}
-                          {t('detalleProyecto.identidadAlAceptar')}
-                        </p>
-                        {perfilCompleto && (
-                          <Alert severity="warning">
-                            {t('detalleProyecto.sinVacantesParaAceptar')}
-                          </Alert>
-                        )}
-                        {erroresResolucion[postulacion.id] && (
-                          <Alert severity="error">
-                            {erroresResolucion[postulacion.id]}
-                          </Alert>
-                        )}
-                        <div className="detalle-postulacion-acciones">
-                          <Button
-                            variant="contained"
-                            disabled={
-                              resolviendoPostulacionId !== null ||
-                              perfilCompleto ||
-                              esFinalizado
-                            }
-                            onClick={() =>
-                              resolverSolicitud(postulacion, 'ACEPTADA')
-                            }
-                          >
-                            {resolviendoPostulacionId === postulacion.id
-                              ? t('detalleProyecto.resolviendoPostulacion')
-                              : t('detalleProyecto.aceptarPostulacion')}
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            disabled={resolviendoPostulacionId !== null}
-                            onClick={() =>
-                              resolverSolicitud(postulacion, 'RECHAZADA')
-                            }
-                          >
-                            {resolviendoPostulacionId === postulacion.id
-                              ? t('detalleProyecto.resolviendoPostulacion')
-                              : t('detalleProyecto.rechazarPostulacion')}
-                          </Button>
-                        </div>
-                      </>
-                    )}
-
-                    {postulacion.estado === 'ACEPTADA' && colaboradora && (
-                      <div className="detalle-postulacion-colaboradora">
-                        <strong>
-                          {t('detalleProyecto.colaboradoraAceptada')}: {nombre}
-                        </strong>
-                        {colaboradora.pronombres?.length > 0 && (
-                          <p>
-                            {t('detalleProyecto.pronombresColaboradora')}:{' '}
-                            {colaboradora.pronombres.join(', ')}
-                          </p>
-                        )}
-                        {colaboradora.usuarioGitHub && (
-                          <p>
-                            {t('detalleProyecto.githubColaboradora')}:{' '}
+      <section className="detalle-seccion" aria-labelledby="detalle-logros-titulo">
+        <h2 id="detalle-logros-titulo">{t('detalleProyecto.seccionLogros')}</h2>
+        {errorLogros ? (
+          <AlertaError error={errorLogros} titulo={t('detalleProyecto.errorLogrosTitulo')} onReintentar={cargarLogros} />
+        ) : logros.length === 0 ? (
+          <p className="texto-secundario">{t('detalleProyecto.sinLogros')}</p>
+        ) : (
+          <ol className="detalle-logros">
+            {logros.map((logro) => (
+              <li key={logro.id} className="detalle-logro">
+                <div className="detalle-logro__cabecera">
+                  <h3>{logro.titulo}</h3>
+                  {formatearFecha(logro.fecha) && <span className="texto-caption">{formatearFecha(logro.fecha)}</span>}
+                </div>
+                <p>{logro.descripcion}</p>
+                {esDueño && (
+                  <div className="detalle-logro__linkedin">
+                    {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
+                      <p className="texto-secundario detalle-logro__publicado">
+                        <FiCheckCircle aria-hidden="true" /> {t('linkedin.publicado')}
+                        {logro.publicacionLinkedin.urnPost && (
+                          <>
+                            {' · '}
                             <a
-                              href={`https://github.com/${colaboradora.usuarioGitHub}`}
+                              href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              @{colaboradora.usuarioGitHub}
+                              {t('linkedin.verPublicacion')}
+                              <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
                             </a>
-                          </p>
+                          </>
                         )}
-                        <div>
-                          <strong>{t('detalleProyecto.contactoColaboradora')}</strong>
-                          {colaboradora.mediosDeContacto?.length > 0 ? (
-                            <ul>
-                              {colaboradora.mediosDeContacto.map((medio, indice) => (
-                                <li key={`${medio.tipoDeContacto}-${indice}`}>
-                                  {medio.tipoDeContacto}: {medio.contacto}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
-                          )}
-                        </div>
-                      </div>
+                      </p>
+                    ) : (
+                      <Button
+                        variant="text"
+                        startIcon={<FiLinkedin aria-hidden="true" />}
+                        loading={publicandoId === logro.id}
+                        onClick={() => handlePublicarLogro(logro)}
+                      >
+                        {logro.publicacionLinkedin?.estado === 'FALLIDO'
+                          ? t('linkedin.reintentar')
+                          : linkedin.estado?.conectado
+                            ? t('linkedin.compartir')
+                            : t('linkedin.conectar')}
+                      </Button>
                     )}
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
         )}
 
-        <div className="detalle-enlaces-externos" style={{ margin: '24px 0' }}>
-          <h2>{t('detalleProyecto.seccionEnlaces')}</h2>
-          {proyecto.enlaceSistema || proyecto.enlaceCodigoFuente ? (
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {proyecto.enlaceSistema && (
-                <Button
-                  variant="contained"
-                  href={proyecto.enlaceSistema}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('detalleProyecto.enlaceSistemaBtn')} {t('detalleProyecto.nuevaPestana')}
-                </Button>
-              )}
-              {proyecto.enlaceCodigoFuente && (
-                <Button
-                  variant="outlined"
-                  href={proyecto.enlaceCodigoFuente}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('detalleProyecto.enlaceRepoBtn')} {t('detalleProyecto.nuevaPestana')}
-                </Button>
-              )}
-            </div>
-          ) : (
-            <p className="texto-muted">{t('detalleProyecto.sinEnlaces')}</p>
-          )}
-        </div>
+        {esDueño && (
+          <form onSubmit={handleCrearLogro} noValidate className="detalle-bloque detalle-form-logro" aria-labelledby="nuevo-logro-titulo">
+            <h3 id="nuevo-logro-titulo">{t('detalleProyecto.nuevoLogroTitulo')}</h3>
+            <TextField
+              id="logro-titulo"
+              label={t('detalleProyecto.labelLogroTitulo')}
+              placeholder={t('detalleProyecto.placeholderLogroTitulo')}
+              value={nuevoLogro.titulo}
+              onChange={(e) => setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })}
+              onBlur={() =>
+                setErroresLogro((actual) => ({ ...actual, titulo: nuevoLogro.titulo.trim() ? undefined : actual.titulo }))
+              }
+              error={Boolean(erroresLogro.titulo)}
+              helperText={mensajeCampo(erroresLogro.titulo)}
+              disabled={guardandoLogro}
+              required
+              fullWidth
+            />
+            <TextField
+              id="logro-descripcion"
+              label={t('detalleProyecto.labelLogroDescripcion')}
+              placeholder={t('detalleProyecto.placeholderLogroDescripcion')}
+              value={nuevoLogro.descripcion}
+              onChange={(e) => setNuevoLogro({ ...nuevoLogro, descripcion: e.target.value })}
+              onBlur={() =>
+                setErroresLogro((actual) => ({ ...actual, descripcion: nuevoLogro.descripcion.trim() ? undefined : actual.descripcion }))
+              }
+              error={Boolean(erroresLogro.descripcion)}
+              helperText={mensajeCampo(erroresLogro.descripcion)}
+              disabled={guardandoLogro}
+              required
+              multiline
+              minRows={3}
+              fullWidth
+            />
 
-        <div className="detalle-logros-seccion" style={{ marginTop: '32px' }}>
-          <h2>{t('detalleProyecto.seccionLogros')}</h2>
-          {logros.length === 0 ? (
-            <p className="texto-muted">{t('detalleProyecto.sinLogros')}</p>
-          ) : (
-            <ul style={{ paddingLeft: '20px' }}>
-              {logros.map((logro) => (
-                <li key={logro.id} style={{ marginBottom: '12px' }}>
-                  <strong>{logro.titulo}</strong>
-                  {formatearFecha(logro.fecha) && <small> · {formatearFecha(logro.fecha)}</small>}
-                  <br />
-                  <span>{logro.descripcion}</span>
-                  {esDueño && (
-                    <div style={{ marginTop: '4px' }}>
-                      {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
-                        <small>
-                          ✓ {t('linkedin.publicado')}
-                          {logro.publicacionLinkedin.urnPost && (
-                            <>
-                              {' · '}
-                              <a
-                                href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {t('linkedin.verPublicacion')}
-                              </a>
-                            </>
-                          )}
-                        </small>
-                      ) : (
-                        <Button
-                          size="small"
-                          disabled={publicandoId === logro.id}
-                          onClick={() => handlePublicarLogro(logro)}
-                          startIcon={publicandoId === logro.id ? <CircularProgress size={14} color="inherit" /> : null}
-                        >
-                          {logro.publicacionLinkedin?.estado === 'FALLIDO'
-                            ? t('linkedin.reintentar')
-                            : linkedin.estado?.conectado
-                              ? t('linkedin.compartir')
-                              : t('linkedin.conectar')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {esDueño && (
-            <form
-              onSubmit={handleCrearLogro}
-              noValidate
-              style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}
-            >
-              <TextField
-                size="small"
-                label={t('detalleProyecto.labelLogroTitulo')}
-                value={nuevoLogro.titulo}
-                onChange={(e) => setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })}
-                disabled={guardandoLogro}
-                fullWidth
-              />
-              <TextField
-                size="small"
-                label={t('detalleProyecto.labelLogroDescripcion')}
-                value={nuevoLogro.descripcion}
-                onChange={(e) => setNuevoLogro({ ...nuevoLogro, descripcion: e.target.value })}
-                disabled={guardandoLogro}
-                multiline
-                minRows={2}
-                fullWidth
-              />
-
-              {/* Bloque de LinkedIn movido aquí */}
-              {linkedin.estado &&
-                (linkedin.estado.conectado ? (
-                  <div>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={nuevoLogro.publicarEnLinkedin}
-                          onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
-                          disabled={guardandoLogro}
-                        />
-                      }
-                      label={t('linkedin.publicarAlCrear')}
-                    />
-                    <br />
-                    <small className="texto-muted">
-                      {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
-                    </small>
-                  </div>
-                ) : (
-                  <Alert
-                    severity="info"
-                    action={
-                      <Button color="inherit" size="small" onClick={linkedin.conectar}>
-                        {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
-                      </Button>
+            {linkedin.estado &&
+              (linkedin.estado.conectado ? (
+                <div>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={nuevoLogro.publicarEnLinkedin}
+                        onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
+                        disabled={guardandoLogro}
+                      />
                     }
-                  >
-                    {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
-                  </Alert>
-                ))}
-              {linkedin.error && <Alert severity="error">{linkedin.error}</Alert>}
-              {avisoLinkedin && (
-                <Alert severity={avisoLinkedin.severity} onClose={() => setAvisoLinkedin(null)}>
-                  {avisoLinkedin.texto}
+                    label={t('linkedin.publicarAlCrear')}
+                  />
+                  <p className="texto-secundario">
+                    {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
+                  </p>
+                </div>
+              ) : (
+                <Alert severity="info">
+                  {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
+                  <div className="alerta-acciones">
+                    <Button variant="outlined" startIcon={<FiLinkedin aria-hidden="true" />} onClick={linkedin.conectar}>
+                      {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
+                    </Button>
+                  </div>
+                </Alert>
+              ))}
+            {linkedin.error && (
+              <Alert severity="error" role="alert">
+                {linkedin.error}
+              </Alert>
+            )}
+            {avisoLinkedin && (
+              <Alert
+                severity={avisoLinkedin.severity}
+                role={avisoLinkedin.severity === 'error' ? 'alert' : 'status'}
+                onClose={() => setAvisoLinkedin(null)}
+              >
+                {avisoLinkedin.texto}
+              </Alert>
+            )}
+
+            {errorLogro && <AlertaError error={errorLogro} titulo={t('detalleProyecto.errorLogroTitulo')} />}
+            <div>
+              <Button type="submit" variant="contained" loading={guardandoLogro} startIcon={<FiPlus aria-hidden="true" />}>
+                {t('detalleProyecto.btnAgregarLogro')}
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
+
+      {/* Resumen de avance (lo ve cualquiera) */}
+      <Dialogo
+        open={modalAvanceAbierto}
+        onClose={() => setModalAvanceAbierto(false)}
+        maxWidth="xs"
+        aria-labelledby="dialogo-avance-titulo"
+      >
+        <DialogTitle id="dialogo-avance-titulo">{t('detalleProyecto.modalAvanceTitulo')}</DialogTitle>
+        <DialogContent className="dialogo-avance">
+          <DialogContentText>{proyecto.titulo}</DialogContentText>
+          <p className="dialogo-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
+          <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setModalAvanceAbierto(false)}>
+            {t('detalleProyecto.volverAlDetalle')}
+          </Button>
+        </DialogActions>
+      </Dialogo>
+
+      <Dialogo
+        open={modalPostulacionAbierto}
+        onClose={() => !guardandoPostulacion && setModalPostulacionAbierto(false)}
+        aria-labelledby="dialogo-postulacion-titulo"
+      >
+        <DialogTitle id="dialogo-postulacion-titulo">{t('detalleProyecto.modalPostulacionTitulo')}</DialogTitle>
+        <DialogContent className="dialogo-postulacion">
+          <div className="dialogo-postulacion__resumen">
+            <strong>{proyecto.titulo}</strong>
+            <span>{perfilPostulando?.descripcion}</span>
+          </div>
+          {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
+            <Alert severity="success" role="status">
+              <AlertTitle>{t('detalleProyecto.postulacionEnviadaTitulo')}</AlertTitle>
+              {t('detalleProyecto.postulacionEnviadaDescripcion')}
+            </Alert>
+          ) : (
+            <>
+              <p>{t('detalleProyecto.postulacionInstruccion')}</p>
+              <div className="dialogo-postulacion__anonimato">
+                <div>
+                  <strong id="anonimato-label">{t('detalleProyecto.anonimatoLabel')}</strong>
+                  <p className="texto-secundario" id="anonimato-ayuda">
+                    {t('detalleProyecto.anonimatoAyuda')}
+                  </p>
+                </div>
+                <Switch
+                  checked={esAnonima}
+                  onChange={(event) => setEsAnonima(event.target.checked)}
+                  disabled={guardandoPostulacion}
+                  slotProps={{
+                    input: { 'aria-label': t('detalleProyecto.anonimatoLabel'), 'aria-describedby': 'anonimato-ayuda' },
+                  }}
+                />
+              </div>
+              {errorPostulacion && (
+                <Alert severity="error" role="alert">
+                  {errorPostulacion}
                 </Alert>
               )}
-
-              {errorLogro && <Alert severity="error">{errorLogro}</Alert>}
-              <div>
-                <Button
-                  type="submit"
-                  variant="outlined"
-                  disabled={guardandoLogro}
-                  startIcon={guardandoLogro ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  {t('detalleProyecto.btnAgregarLogro')}
-                </Button>
-              </div>
-            </form>
+            </>
           )}
-        </div>
-
-        {/* Resumen de avance (lo ve cualquiera) */}
-        <Dialog open={modalAvanceAbierto} onClose={() => setModalAvanceAbierto(false)} maxWidth="xs" fullWidth>
-          <DialogTitle>{t('detalleProyecto.modalAvanceTitulo')}</DialogTitle>
-          <DialogContent sx={{ textAlign: 'center', py: 3 }}>
-            <p style={{ margin: '0 0 8px' }}>{proyecto.titulo}</p>
-            <h2 style={{ margin: '0 0 16px', fontSize: '24px' }}>
-              {t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}
-            </h2>
-            <LinearProgress
-              variant="determinate"
-              value={avance}
-              sx={{ mb: 3 }}
-              aria-label={t('detalleProyecto.seccionAvance')}
-            />
-            <Button variant="outlined" onClick={() => setModalAvanceAbierto(false)} fullWidth>
-              {t('detalleProyecto.volverAlDetalle')}
+        </DialogContent>
+        <DialogActions>
+          {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
+            <Button variant="outlined" onClick={() => setModalPostulacionAbierto(false)}>
+              {t('detalleProyecto.cerrar')}
             </Button>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={modalPostulacionAbierto}
-          onClose={() => !guardandoPostulacion && setModalPostulacionAbierto(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>{t('detalleProyecto.modalPostulacionTitulo')}</DialogTitle>
-          <DialogContent className="postulacion-dialogo" sx={{ pt: 1 }}>
-            <div className="postulacion-resumen">
-              <strong>{proyecto.titulo}</strong>
-              <span>{perfilPostulando?.descripcion}</span>
-            </div>
-            {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
-              <Alert severity="success">
-                <strong>{t('detalleProyecto.postulacionEnviadaTitulo')}</strong>
-                <div>{t('detalleProyecto.postulacionEnviadaDescripcion')}</div>
-              </Alert>
-            ) : (
-              <>
-                <p className="postulacion-instruccion">
-                  {t('detalleProyecto.postulacionInstruccion')}
-                </p>
-                <div className="postulacion-anonimato">
-                  <div>
-                    <strong>{t('detalleProyecto.anonimatoLabel')}</strong>
-                    <small>{t('detalleProyecto.anonimatoAyuda')}</small>
-                  </div>
-                  <Switch
-                    checked={esAnonima}
-                    onChange={(event) => setEsAnonima(event.target.checked)}
-                    disabled={guardandoPostulacion}
-                    slotProps={{ input: { 'aria-label': t('detalleProyecto.anonimatoLabel') } }}
-                  />
-                </div>
-                {errorPostulacion && <Alert severity="error">{errorPostulacion}</Alert>}
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
-              <Button onClick={() => setModalPostulacionAbierto(false)}>
-                {t('detalleProyecto.cerrar')}
-              </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={() => setModalPostulacionAbierto(false)}
-                  disabled={guardandoPostulacion}
-                >
-                  {t('detalleProyecto.cancelar')}
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={enviarPostulacion}
-                  disabled={
-                    guardandoPostulacion ||
-                    Boolean(postulacionesPendientes[perfilPostulando?.id])
-                  }
-                  startIcon={
-                    guardandoPostulacion ? <CircularProgress size={16} color="inherit" /> : null
-                  }
-                >
-                  {guardandoPostulacion
-                    ? t('detalleProyecto.enviandoPostulacion')
-                    : t('detalleProyecto.enviarPostulacion')}
-                </Button>
-              </>
-            )}
-          </DialogActions>
-        </Dialog>
-
-        {/* Actualizar avance (solo el colectivo dueño) */}
-        <Dialog
-          open={modalEditarAvance}
-          onClose={() => !guardandoAvance && setModalEditarAvance(false)}
-          maxWidth="xs"
-          fullWidth
-        >
-          <form onSubmit={guardarAvance} noValidate>
-            <DialogTitle>{t('detalleProyecto.modalEditarAvanceTitulo')}</DialogTitle>
-            <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-              <TextField
-                size="small"
-                type="number"
-                label={t('detalleProyecto.labelPorcentaje')}
-                value={formAvance.porcentaje}
-                onChange={(e) => setFormAvance({ ...formAvance, porcentaje: e.target.value })}
-                error={Boolean(erroresAvance.porcentaje)}
-                helperText={erroresAvance.porcentaje}
-                disabled={guardandoAvance}
-                inputProps={{ min: 0, max: 100 }}
-                fullWidth
-                sx={{ mt: 1 }}
-              />
-              <TextField
-                size="small"
-                label={t('detalleProyecto.labelEnlaceSistema')}
-                value={formAvance.enlaceSistema}
-                onChange={(e) => setFormAvance({ ...formAvance, enlaceSistema: e.target.value })}
-                error={Boolean(erroresAvance.enlaceSistema)}
-                helperText={erroresAvance.enlaceSistema || t('detalleProyecto.ayudaEnlace')}
-                disabled={guardandoAvance}
-                fullWidth
-              />
-              <TextField
-                size="small"
-                label={t('detalleProyecto.labelEnlaceRepo')}
-                value={formAvance.enlaceCodigoFuente}
-                onChange={(e) => setFormAvance({ ...formAvance, enlaceCodigoFuente: e.target.value })}
-                error={Boolean(erroresAvance.enlaceCodigoFuente)}
-                helperText={erroresAvance.enlaceCodigoFuente || t('detalleProyecto.ayudaEnlace')}
-                disabled={guardandoAvance}
-                fullWidth
-              />
-              {errorAvance && <Alert severity="error">{errorAvance}</Alert>}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setModalEditarAvance(false)} disabled={guardandoAvance}>
+          ) : (
+            <>
+              <Button variant="outlined" onClick={() => setModalPostulacionAbierto(false)} disabled={guardandoPostulacion}>
                 {t('detalleProyecto.cancelar')}
               </Button>
               <Button
-                type="submit"
                 variant="contained"
-                disabled={guardandoAvance}
-                startIcon={guardandoAvance ? <CircularProgress size={16} color="inherit" /> : null}
+                onClick={enviarPostulacion}
+                disabled={Boolean(postulacionesPendientes[perfilPostulando?.id])}
+                loading={guardandoPostulacion}
+                startIcon={<FiSend aria-hidden="true" />}
               >
-                {guardandoAvance ? t('detalleProyecto.guardando') : t('detalleProyecto.guardar')}
+                {guardandoPostulacion ? t('detalleProyecto.enviandoPostulacion') : t('detalleProyecto.enviarPostulacion')}
               </Button>
-            </DialogActions>
-          </form>
-        </Dialog>
+            </>
+          )}
+        </DialogActions>
+      </Dialogo>
 
-        {/* Configurar búsqueda (solo el colectivo dueño) */}
-        <Dialog
-          open={modalBusquedaAbierto}
-          onClose={() => !guardandoBusqueda && setModalBusquedaAbierto(false)}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>{t('detalleProyecto.modalBusquedaTitulo')}</DialogTitle>
-          <DialogContent>
-            <p style={{ margin: '0 0 8px', fontWeight: 600 }}>{proyecto.titulo}</p>
-            <p style={{ margin: '0 0 16px', fontSize: 14 }}>
-              {busquedaSwitch
-                ? t('detalleProyecto.modalBusquedaSubActiva')
-                : t('detalleProyecto.modalBusquedaSubInactiva')}
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <strong style={{ display: 'block', fontSize: 14 }}>
-                  {t('formularioProyecto.labelBusquedaAbierta')}
-                </strong>
-                <span style={{ fontSize: 14 }}>
-                  {busquedaSwitch
-                    ? t('formularioProyecto.estadoActivada')
-                    : t('formularioProyecto.estadoDesactivada')}
-                </span>
-              </div>
-              <Switch
-                checked={busquedaSwitch}
-                onChange={(e) => setBusquedaSwitch(e.target.checked)}
-                disabled={guardandoBusqueda || esFinalizado}
-                slotProps={{
-                  input: {
-                    'aria-label': t('formularioProyecto.labelBusquedaAbierta'),
-                  },
-                }}
-              />
-            </div>
-
+      {/* Actualizar avance (solo el colectivo dueño) */}
+      <Dialogo
+        open={modalEditarAvance}
+        onClose={() => !guardandoAvance && setModalEditarAvance(false)}
+        aria-labelledby="dialogo-editar-avance-titulo"
+      >
+        <form onSubmit={guardarAvance} noValidate>
+          <DialogTitle id="dialogo-editar-avance-titulo">{t('detalleProyecto.modalEditarAvanceTitulo')}</DialogTitle>
+          <DialogContent className="dialogo-formulario">
             <TextField
-              type="date"
-              size="small"
-              label={t('formularioProyecto.labelFechaLimite')}
-              value={fechaBusqueda}
-              onChange={(e) => setFechaBusqueda(e.target.value)}
-              error={Boolean(errorFechaBusqueda)}
-              helperText={
-                errorFechaBusqueda ||
-                (busquedaSwitch
-                  ? t('formularioProyecto.ayudaFechaLimiteActiva')
-                  : t('formularioProyecto.ayudaFechaLimiteInactiva'))
-              }
-              disabled={guardandoBusqueda || esFinalizado || !busquedaSwitch}
-              slotProps={{ inputLabel: { shrink: true } }}
+              id="avance-porcentaje"
+              type="number"
+              label={t('detalleProyecto.labelPorcentaje')}
+              placeholder={t('detalleProyecto.placeholderPorcentaje')}
+              value={formAvance.porcentaje}
+              onChange={(e) => setFormAvance({ ...formAvance, porcentaje: e.target.value })}
+              error={Boolean(erroresAvance.porcentaje)}
+              helperText={mensajeCampo(erroresAvance.porcentaje)}
+              disabled={guardandoAvance}
+              slotProps={{ htmlInput: { min: 0, max: 100 } }}
               fullWidth
-              sx={{ mt: 2 }}
             />
-
-            {errorBusqueda && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {errorBusqueda}
+            <TextField
+              id="avance-enlace-sistema"
+              label={t('detalleProyecto.labelEnlaceSistema')}
+              placeholder={t('detalleProyecto.placeholderEnlaceSistema')}
+              value={formAvance.enlaceSistema}
+              onChange={(e) => setFormAvance({ ...formAvance, enlaceSistema: e.target.value })}
+              error={Boolean(erroresAvance.enlaceSistema)}
+              helperText={mensajeCampo(erroresAvance.enlaceSistema, t('detalleProyecto.ayudaEnlace'))}
+              disabled={guardandoAvance}
+              fullWidth
+            />
+            <TextField
+              id="avance-enlace-repo"
+              label={t('detalleProyecto.labelEnlaceRepo')}
+              placeholder={t('detalleProyecto.placeholderEnlaceRepo')}
+              value={formAvance.enlaceCodigoFuente}
+              onChange={(e) => setFormAvance({ ...formAvance, enlaceCodigoFuente: e.target.value })}
+              error={Boolean(erroresAvance.enlaceCodigoFuente)}
+              helperText={mensajeCampo(erroresAvance.enlaceCodigoFuente, t('detalleProyecto.ayudaEnlace'))}
+              disabled={guardandoAvance}
+              fullWidth
+            />
+            {avisoAvance && (
+              <Alert severity="warning" role="alert">
+                {avisoAvance}
               </Alert>
             )}
+            {errorAvance && <AlertaError error={errorAvance} titulo={t('detalleProyecto.errorAvanceTitulo')} />}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setModalBusquedaAbierto(false)} disabled={guardandoBusqueda}>
+            <Button variant="outlined" onClick={() => setModalEditarAvance(false)} disabled={guardandoAvance}>
               {t('detalleProyecto.cancelar')}
             </Button>
-            <Button
-              variant="contained"
-              onClick={guardarConfigBusqueda}
-              disabled={guardandoBusqueda || esFinalizado}
-              startIcon={guardandoBusqueda ? <CircularProgress size={16} color="inherit" /> : null}
-            >
-              {guardandoBusqueda ? t('detalleProyecto.guardando') : t('detalleProyecto.guardar')}
+            <Button type="submit" variant="contained" loading={guardandoAvance}>
+              {guardandoAvance ? t('detalleProyecto.guardando') : t('detalleProyecto.btnActualizarAvance')}
             </Button>
           </DialogActions>
-        </Dialog>
-      </div>
-    );
-  };
+        </form>
+      </Dialogo>
+
+      {/* Configurar búsqueda (solo el colectivo dueño) */}
+      <Dialogo
+        open={modalBusquedaAbierto}
+        onClose={() => !guardandoBusqueda && setModalBusquedaAbierto(false)}
+        aria-labelledby="dialogo-busqueda-titulo"
+      >
+        <DialogTitle id="dialogo-busqueda-titulo">{t('detalleProyecto.modalBusquedaTitulo')}</DialogTitle>
+        <DialogContent className="dialogo-formulario">
+          <DialogContentText>
+            <strong>{proyecto.titulo}.</strong>{' '}
+            {busquedaSwitch ? t('detalleProyecto.modalBusquedaSubActiva') : t('detalleProyecto.modalBusquedaSubInactiva')}
+          </DialogContentText>
+
+          <div className="interruptor-fila">
+            <div>
+              <strong id="busqueda-switch-label">{t('formularioProyecto.labelBusquedaAbierta')}</strong>
+              <p className="texto-secundario">
+                {busquedaSwitch ? t('formularioProyecto.estadoActivada') : t('formularioProyecto.estadoDesactivada')}
+              </p>
+            </div>
+            <Switch
+              checked={busquedaSwitch}
+              onChange={(e) => setBusquedaSwitch(e.target.checked)}
+              disabled={guardandoBusqueda || esFinalizado}
+              slotProps={{ input: { 'aria-label': t('formularioProyecto.labelBusquedaAbierta') } }}
+            />
+          </div>
+
+          <TextField
+            id="busqueda-fecha-limite"
+            type="date"
+            label={t('formularioProyecto.labelFechaLimite')}
+            value={fechaBusqueda}
+            onChange={(e) => setFechaBusqueda(e.target.value)}
+            error={Boolean(errorFechaBusqueda)}
+            helperText={mensajeCampo(
+              errorFechaBusqueda,
+              busquedaSwitch ? t('formularioProyecto.ayudaFechaLimiteActiva') : t('formularioProyecto.ayudaFechaLimiteInactiva')
+            )}
+            disabled={guardandoBusqueda || esFinalizado || !busquedaSwitch}
+            fullWidth
+          />
+
+          {errorBusqueda && <AlertaError error={errorBusqueda} titulo={t('detalleProyecto.errorBusquedaTitulo')} />}
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setModalBusquedaAbierto(false)} disabled={guardandoBusqueda}>
+            {t('detalleProyecto.cancelar')}
+          </Button>
+          <Button variant="contained" onClick={guardarConfigBusqueda} disabled={esFinalizado} loading={guardandoBusqueda}>
+            {guardandoBusqueda ? t('detalleProyecto.guardando') : t('detalleProyecto.guardar')}
+          </Button>
+        </DialogActions>
+      </Dialogo>
+    </div>
+  );
+};
 
 export default DetalleProyecto;

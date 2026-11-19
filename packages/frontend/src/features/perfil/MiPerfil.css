@@ -1,247 +1,122 @@
-.mi-perfil {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 96px;
-  color: #23313f;
-}
-
-.mi-perfil-volver {
-  display: inline-block;
-  margin-bottom: 24px;
-  color: #17364e;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.mi-perfil-volver:hover {
-  text-decoration: underline;
-}
-
-.mi-perfil-cabecera {
-  margin: 0 0 28px 250px;
-}
-
-.mi-perfil-cabecera h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-
-.mi-perfil-cabecera p {
-  margin: 0 0 8px;
-  color: #617180;
-}
-
-.mi-perfil-cabecera small {
-  color: #748391;
-}
-
-.mi-perfil-estado {
-  margin: 0 0 18px 240px;
-}
-
-.mi-perfil-estado-confirmacion {
-  margin: 12px 0 0;
-}
-
+/* Mi perfil: navegación de secciones (colaboradora) + formulario en tarjetas */
 .mi-perfil-disposicion {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, var(--card-min-width)) minmax(0, var(--form-max-width));
   align-items: start;
+  gap: var(--space-4);
+}
+
+.mi-perfil-disposicion--sin-nav {
+  grid-template-columns: minmax(0, var(--form-max-width));
 }
 
 .mi-perfil-nav {
   position: sticky;
-  top: 24px;
+  top: calc(var(--space-8) + var(--space-3));
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
-.mi-perfil-nav > span,
-.mi-perfil-nav > small {
-  padding: 8px;
-  color: #6d7b87;
-  font-size: 11px;
+.mi-perfil-nav__titulo {
+  padding: 0 var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--font-size-secundario);
+  font-weight: var(--font-weight-medium);
 }
 
-.mi-perfil-nav button {
-  border: 0;
-  border-radius: 6px;
-  padding: 10px;
-  background: transparent;
-  color: #263b4c;
-  text-align: left;
-  cursor: pointer;
+.mi-perfil-nav__opcion.MuiButton-root {
+  justify-content: flex-start;
+  width: 100%;
 }
 
-.mi-perfil-nav button:hover,
-.mi-perfil-nav button.activo {
-  background: #eaf1f6;
+.mi-perfil-nav__opcion.activo.MuiButton-root {
+  background: var(--color-primary-tint);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-width-strong);
+  text-underline-offset: var(--underline-offset);
 }
 
-.mi-perfil-nav button.activo {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-weight: 600;
-}
-
-.mi-perfil-contenido {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-width: 0;
-}
-
-.mi-perfil-resumen-errores {
-  padding: 18px 22px;
-  border: 1px solid #f1c7c3;
-  border-radius: 10px;
-  background: #fff7f6;
-  color: #8f2922;
-}
-
-.mi-perfil-resumen-errores h2 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-
-.mi-perfil-resumen-errores p {
-  margin: 0 0 10px;
-  font-size: 14px;
-}
-
-.mi-perfil-resumen-errores ul {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding-left: 18px;
-}
-
-.mi-perfil-resumen-errores a {
-  color: inherit;
-  font-size: 13px;
-}
-
-.mi-perfil-error-campo {
-  margin: -10px 0 0 !important;
-  color: #b3261e !important;
-  font-size: 12px !important;
-}
-
+.mi-perfil-contenido,
 .mi-perfil-formulario {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .mi-perfil-tarjeta {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  scroll-margin-top: 20px;
-  padding: 22px;
-  border: 1px solid #dce3e8;
-  border-radius: 10px;
-  background: #fff;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  scroll-margin-top: calc(var(--space-8) + var(--space-2));
 }
 
 .mi-perfil-tarjeta h2 {
-  margin: 0;
-  font-size: 18px;
+  font-size: var(--font-size-h3);
 }
 
-.mi-perfil-tarjeta > p {
-  margin: -8px 0 0;
-  color: #687987;
-  font-size: 14px;
+.mi-perfil-tarjeta > .texto-secundario {
+  margin-top: calc(-1 * var(--space-2));
 }
 
 .mi-perfil-dos-columnas {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.mi-perfil-contacto-fila {
-  display: grid;
-  grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.2fr) auto;
-  gap: 10px;
-  align-items: start;
+  gap: var(--space-2);
 }
 
 .mi-perfil-acciones {
-  position: sticky;
-  bottom: 0;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 0;
-  background: rgba(248, 249, 247, 0.96);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border-subtle);
 }
 
-.mi-perfil-cargando {
-  min-height: 55vh;
-  display: grid;
-  place-items: center;
+.mi-perfil-estado .texto-secundario {
+  margin-top: var(--space-1);
 }
 
-.mi-perfil-dialogo-acciones {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  padding: 8px 24px 20px;
-}
-
-.mi-perfil-dialogo-acciones .MuiButton-root {
-  width: 100%;
-}
-
-@media (max-width: 760px) {
-  .mi-perfil-cabecera {
-    margin-left: 0;
-  }
-
-  .mi-perfil-estado {
-    margin-left: 0;
-  }
-
+@media (max-width: 899.95px) {
   .mi-perfil-disposicion {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mi-perfil-nav {
     position: static;
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 0;
   }
 
-  .mi-perfil-nav > span,
-  .mi-perfil-nav > small {
-    display: none;
+  .mi-perfil-nav__opcion.MuiButton-root {
+    width: auto;
   }
+}
 
-  .mi-perfil-contenido {
-    gap: 14px;
+@media (max-width: 599.95px) {
+  .mi-perfil-tarjeta {
+    padding: var(--space-2);
   }
 
   .mi-perfil-dos-columnas {
-    grid-template-columns: 1fr;
-  }
-
-  .mi-perfil-contacto-fila {
-    grid-template-columns: 1fr;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e3e8ec;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mi-perfil-acciones {
-    position: static;
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .mi-perfil-acciones .MuiButton-root {

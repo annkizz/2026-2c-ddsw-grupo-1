@@ -1,5 +1,14 @@
+import { t } from '../../i18n/t';
 import React, { useMemo, useState } from "react";
-import { Skeleton } from "@mui/material";
+import { Button, MenuItem, TextField } from "@mui/material";
+import { FiFilter, FiRotateCcw, FiSearch } from "react-icons/fi";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
+import { EsqueletoGrilla } from "../../components/Esqueletos/Esqueletos.jsx";
+import "../../components/Card.css";
+import "../proyectos/ListaProyectos.css";
+
 import CustomSelect from "../../components/CustomSelect/CustomSelect";
 import CardProyecto from "../../components/CardProyecto/CardProyecto";
 import { PROVINCIAS } from "../../data/provincias";
@@ -198,16 +207,14 @@ export default function BuscadorProyectos() {
   }));
 
   return (
-    <section className="pagina">
-      <h1>Buscar proyectos</h1>
-      <p className="pagina__bajada">
-        Encontrá proyectos en los que puedas aportar tus conocimientos. Combiná
-        habilidades, colectivos, etiquetas y provincias: verás los proyectos que
-        coincidan con al menos uno de los valores elegidos, junto con el detalle
-        de qué coincidió.
-      </p>
+    <div className="contenedor-pagina">
+      <EncabezadoPagina
+        titulo="Buscar proyectos"
+        subtitulo={t('buscadorProyectos.encontraProyectosEnLosQue')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Buscar proyectos" }]}
+      />
 
-      <div className="filtros filtros--busqueda">
+      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
@@ -229,18 +236,7 @@ export default function BuscadorProyectos() {
               }
             />
             {habilidadesState.error && (
-              <div className="estado-bloque estado-bloque--compacto">
-                <p className="estado estado--error">
-                  No pudimos cargar las habilidades.
-                </p>
-                <button
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={habilidadesState.recargar}
-                >
-                  Reintentar
-                </button>
-              </div>
+              <AlertaError error={habilidadesState.error} titulo={t('buscadorProyectos.noPudimosCargarLasHabilidades')} onReintentar={habilidadesState.recargar} />
             )}
           </div>
 
@@ -255,7 +251,7 @@ export default function BuscadorProyectos() {
               placeholder={
                 etiquetasState.cargando
                   ? "Cargando etiquetas…"
-                  : "Buscá y elegí etiquetas"
+                  : t('buscadorProyectos.ejSalud')
               }
               textoVacio={
                 etiquetasState.cargando
@@ -264,18 +260,7 @@ export default function BuscadorProyectos() {
               }
             />
             {etiquetasState.error && (
-              <div className="estado-bloque estado-bloque--compacto">
-                <p className="estado estado--error">
-                  No pudimos cargar las etiquetas.
-                </p>
-                <button
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={etiquetasState.recargar}
-                >
-                  Reintentar
-                </button>
-              </div>
+              <AlertaError error={etiquetasState.error} titulo={t('buscadorProyectos.noPudimosCargarLasEtiquetas')} onReintentar={etiquetasState.recargar} />
             )}
           </div>
         </div>
@@ -316,18 +301,28 @@ export default function BuscadorProyectos() {
             )}
           </div>
 
-          <div className="filtros__grupo filtros__grupo--buscable">
-            <CustomSelect
-              id="provincias"
-              etiqueta="Provincias (opcional)"
-              opciones={opcionesProvincias}
-              seleccion={filtros.provincias}
-              multiple
-              onSeleccionar={alternarProvincia}
-              placeholder="Buscá provincias"
-              textoVacio="No hay provincias con ese texto."
-            />
-          </div>
+        <div className="filtros__acciones">
+          <Button
+            variant="outlined"
+            type="button"
+            aria-expanded={mostrarMas}
+            aria-controls="filtros-avanzados"
+            startIcon={<FiFilter aria-hidden="true" />}
+            onClick={() => setMostrarMas((actual) => !actual)}
+          >
+            {mostrarMas ? "Ocultar más filtros" : "Más filtros"}
+          </Button>
+          <Button
+            type="button"
+            variant="text"
+            startIcon={<FiRotateCcw aria-hidden="true" />}
+            onClick={limpiarFiltros}
+          >
+            Limpiar filtros
+          </Button>
+          <Button variant="contained" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
+            Buscar proyectos
+          </Button>
         </div>
 
         {hayFiltros && (
@@ -354,18 +349,59 @@ export default function BuscadorProyectos() {
           </p>
         )}
 
-        <div className="filtros__acciones">
-          <button
-            type="button"
-            className="boton boton--secundario"
-            onClick={limpiarFiltros}
-          >
-            Limpiar filtros
-          </button>
-          <button type="button" className="boton" onClick={buscar}>
-            Buscar
-          </button>
-        </div>
+        {mostrarMas && (
+          <div className="filtros__avanzados" id="filtros-avanzados">
+            <div className="filtros__grupo filtros__grupo--buscable">
+              <CustomSelect
+                id="colectivo"
+                etiqueta="Colectivos"
+                opciones={opcionesColectivos}
+                seleccion={[filtros.idColectivo]}
+                onSeleccionar={(valor) =>
+                  setFiltros((actual) => ({ ...actual, idColectivo: valor }))
+                }
+                placeholder={
+                  colectivosState.cargando
+                    ? "Cargando colectivos…"
+                    : "Todos los colectivos"
+                }
+                textoVacio={
+                  colectivosState.cargando
+                    ? "Cargando colectivos…"
+                    : "No hay colectivos con ese texto."
+                }
+              />
+              {colectivosState.error && (
+                <AlertaError error={colectivosState.error} titulo={t('buscadorProyectos.noPudimosCargarLosColectivos')} onReintentar={colectivosState.recargar} />
+              )}
+            </div>
+
+            <div className="filtros__grupo">
+              <TextField
+                id="provincia"
+                select
+                label="Provincia"
+                className="filtros__provincia"
+                slotProps={{ select: { displayEmpty: true } }}
+                fullWidth
+                value={filtros.provincia}
+                onChange={(evento) =>
+                  setFiltros((actual) => ({
+                    ...actual,
+                    provincia: evento.target.value,
+                  }))
+                }
+              >
+                <MenuItem value="">Todas las provincias</MenuItem>
+                {PROVINCIAS.map((provincia) => (
+                  <MenuItem key={provincia.codigo} value={provincia.codigo}>
+                    {provincia.nombre}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </div>
+          </div>
+        )}
       </div>
 
       {!filtrosAplicados && (
@@ -386,53 +422,25 @@ export default function BuscadorProyectos() {
           </div>
 
           {coincidenciasState.cargando && (
-            <>
-              <p className="estado" role="status">
-                Calculando recomendaciones…
-              </p>
-              <div className="tarjetas" aria-hidden="true">
-                {[0, 1].map((indice) => (
-                  <Skeleton key={indice} variant="rounded" height={190} />
-                ))}
-              </div>
-            </>
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorProyectos.calculandoRecomendaciones')} />
           )}
 
           {coincidenciasState.error && (
-            <div className="estado-bloque">
-              <p className="estado estado--error">
-                No pudimos calcular las recomendaciones. Podés buscar igual con
-                los filtros.
-              </p>
-              <button
-                type="button"
-                className="boton boton--secundario"
-                onClick={coincidenciasState.recargar}
-              >
-                Reintentar
-              </button>
-            </div>
+            <AlertaError error={coincidenciasState.error} titulo={t('buscadorProyectos.noPudimosCalcularLasRecomendaciones')} onReintentar={coincidenciasState.recargar} />
           )}
 
           {!coincidenciasState.cargando &&
             !coincidenciasState.error &&
             recomendados.length === 0 && (
-              <div className="estado-bloque">
-                <p className="estado">
-                  {idColaboradora
+              <EstadoVacio nivelTitulo="p" titulo={idColaboradora
                     ? "Todavía no encontramos proyectos activos que coincidan con tus habilidades."
                     : esColectivo
                       ? "No hay recomendaciones para un colectivo. Podés ver todos los proyectos activos."
-                      : "Iniciá sesión como colaboradora para ver recomendaciones. También podés ver todos los proyectos activos."}
-                </p>
-                <button
+                      : "Iniciá sesión como colaboradora para ver recomendaciones. También podés ver todos los proyectos activos."} accion={<Button
+                  variant="outlined"
                   type="button"
-                  className="boton boton--secundario"
                   onClick={verTodosLosProyectos}
-                >
-                  Ver todos los proyectos activos
-                </button>
-              </div>
+                >{t('buscadorProyectos.verTodosLosProyectosActivos')}</Button>} />
             )}
 
           {!coincidenciasState.cargando &&
@@ -454,37 +462,16 @@ export default function BuscadorProyectos() {
           </div>
 
           {resultadosState.cargando && (
-            <>
-              <p className="estado" role="status">
-                Buscando proyectos activos…
-              </p>
-              <div className="tarjetas" aria-hidden="true">
-                {[0, 1, 2].map((indice) => (
-                  <Skeleton key={indice} variant="rounded" height={190} />
-                ))}
-              </div>
-            </>
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorProyectos.buscandoProyectosActivos')} />
           )}
 
           {resultadosState.error && (
-            <div className="estado-bloque">
-              <p className="estado estado--error">
-                No pudimos buscar proyectos. Revisá los filtros e intentá de
-                nuevo.
-              </p>
-              <button
-                type="button"
-                className="boton boton--secundario"
-                onClick={resultadosState.recargar}
-              >
-                Reintentar
-              </button>
-            </div>
+            <AlertaError error={resultadosState.error} titulo={t('buscadorProyectos.noPudimosBuscarProyectos')} onReintentar={resultadosState.recargar} />
           )}
 
           {!resultadosState.cargando && !resultadosState.error && (
             <>
-              <p className="estado" role="status" aria-live="polite">
+              <p className="contador-resultados" role="status" aria-live="polite">
                 {resultados.length === 0
                   ? "No encontramos proyectos activos que coincidan con al menos uno de los filtros."
                   : `${resultados.length} proyecto${
@@ -513,6 +500,6 @@ export default function BuscadorProyectos() {
           )}
         </section>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { t } from '../../i18n/t';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { crearColaboradora } from '../../service/colaboradorasService';
-import { mensajeDeError } from '../../service/api';
+import { mensajeDeError } from '../../utils/mensajeDeError';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import PasosRegistro from '../../components/PasosRegistro/PasosRegistro.jsx';
 import { borrarTipo } from './tipoElegido';
 import DatosColaboradora from './DatosColaboradora.jsx';
 import Habilidades from './Habilidades.jsx';
 import MediosDeContacto from './MediosDeContacto.jsx';
 import './Registro.css';
+
+const PASOS = [t('registro.tusDatos'), 'Habilidades', 'Contacto'];
 
 const DATOS_INICIALES = {
   nombreFantasia: '',
@@ -53,15 +58,20 @@ const RegistroColaboradora = () => {
       borrarTipo();
       navigate('/mis-colaboraciones');
     } catch (e) {
-      setError(mensajeDeError(e));
+      setError(mensajeDeError(e, t('registro.noPudimosCrearTuPerfil')));
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <div className="registro">
-      <h1>Registrar Colaboradora</h1>
+    <div className="contenedor-pagina contenedor-pagina--formulario registro">
+      <EncabezadoPagina
+        titulo={t('registro.crearTuPerfilDeColaboradora')}
+        subtitulo={t('registro.conEstosDatosLosColectivos')}
+      >
+        <PasosRegistro pasos={PASOS} actual={paso} />
+      </EncabezadoPagina>
       {paso === 1 && (
         <DatosColaboradora
           datos={datos}
@@ -87,7 +97,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
+          siguiente={registroCreado ? 'Verificar registro' : t('registro.crearMiPerfil')}
           guardando={guardando}
           error={error}
         />

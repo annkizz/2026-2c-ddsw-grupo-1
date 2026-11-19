@@ -1,9 +1,8 @@
 .loading-splash {
-  min-height: 60vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 16px;
-  color: var(--muted);
+  width: 100%;
+  min-height: 60vh;
+  padding-top: var(--space-2);
 }

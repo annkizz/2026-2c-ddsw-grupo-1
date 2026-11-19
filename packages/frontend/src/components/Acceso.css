@@ -1,0 +1,25 @@
+.acceso-estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: var(--reading-max-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+}
+
+.acceso-estado .MuiAlertTitle-root {
+  font-size: var(--font-size-h3);
+}
+
+.acceso-estado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+@media (max-width: 599.95px) {
+  .acceso-estado__acciones > * {
+    width: 100%;
+  }
+}

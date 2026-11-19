@@ -1,7 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Alert, Button, CircularProgress, MenuItem, Switch, TextField } from '@mui/material';
-import { FiArrowLeft, FiAlertCircle, FiCheck, FiLock } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Alert,
+  AlertTitle,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  MenuItem,
+  Switch,
+  TextField,
+} from '@mui/material';
+import { FiAlertCircle, FiArrowRight, FiLock, FiSave } from 'react-icons/fi';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
+import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import { EsqueletoFormulario } from '../../components/Esqueletos/Esqueletos.jsx';
+import { useNotificar } from '../../components/Notificador/Notificador.jsx';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
@@ -34,6 +51,7 @@ const FormularioProyecto = () => {
   const esEdicion = Boolean(id);
   const navigate = useNavigate();
   const { sesion, getAccessToken } = useAuth();
+  const notificar = useNotificar();
 
   const [datos, setDatos] = useState(DATOS_INICIALES);
   const [inicial, setInicial] = useState(null);
@@ -42,14 +60,16 @@ const FormularioProyecto = () => {
   const [cargandoInicial, setCargandoInicial] = useState(esEdicion);
   const [guardando, setGuardando] = useState(false);
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
-  const [errorServidor, setErrorServidor] = useState('');
+  const [errorServidor, setErrorServidor] = useState(null);
+  const [errorCarga, setErrorCarga] = useState(null);
+  const [intentoResumen, setIntentoResumen] = useState(0);
+  const [confirmandoSalida, setConfirmandoSalida] = useState(false);
   const etiquetasState = useListado('/etiquetas');
 
-  useEffect(() => {
-    if (!esEdicion) return;
-
-    const cargar = async () => {
+  const cargar = useCallback(async () => {
+      if (!esEdicion) return;
       setCargandoInicial(true);
+      setErrorCarga(null);
       try {
         const proyecto = await obtenerProyectoPorId(id);
         const cargados = {
@@ -66,14 +86,15 @@ const FormularioProyecto = () => {
         setInicial(cargados);
         setEsFinalizado(proyecto.estado === 'FINALIZADO');
       } catch (err) {
-        setErrorServidor(err.response?.data?.error || t('formularioProyecto.errorCargarProyecto'));
+        setErrorCarga(err);
       } finally {
         setCargandoInicial(false);
       }
-    };
-
-    cargar();
   }, [id, esEdicion]);
+
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
 
   // En edición, una fecha que no tocaste no se vuelve a validar
   const cambio = (campo) => !inicial || datos[campo] !== inicial[campo];
@@ -81,7 +102,7 @@ const FormularioProyecto = () => {
   const cambiarCampo = (campo, valor) => {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
     if (errores[campo]) setErrores((prev) => ({ ...prev, [campo]: '' }));
-    if (errorServidor) setErrorServidor('');
+    if (errorServidor) setErrorServidor(null);
   };
 
   const alternarEtiqueta = (etiqueta) => {
@@ -91,7 +112,7 @@ const FormularioProyecto = () => {
         ? prev.etiquetas.filter((una) => una !== etiqueta)
         : [...prev.etiquetas, etiqueta],
     }));
-    if (errorServidor) setErrorServidor('');
+    if (errorServidor) setErrorServidor(null);
   };
 
   const cambiarProvincia = (e) => {
@@ -101,7 +122,7 @@ const FormularioProyecto = () => {
       provincia,
       ciudad: provincia ? prev.ciudad : '',
     }));
-    if (errorServidor) setErrorServidor('');
+    if (errorServidor) setErrorServidor(null);
   };
 
   const mensajeDeError = (campo) => {
@@ -134,6 +155,7 @@ const FormularioProyecto = () => {
       if (mensaje) nuevosErrores[campo] = mensaje;
     });
     setErrores(nuevosErrores);
+    setIntentoResumen((n) => n + 1);
     return Object.keys(nuevosErrores).length === 0;
   };
 
@@ -162,7 +184,7 @@ const FormularioProyecto = () => {
     if (!validarFormularioCompleto()) return;
 
     setGuardando(true);
-    setErrorServidor('');
+    setErrorServidor(null);
     try {
       const token = await getAccessToken();
       const titulo = datos.titulo.trim();
@@ -209,97 +231,124 @@ const FormularioProyecto = () => {
       }
 
       setGuardadoExitoso(true);
+      notificar({ mensaje: esEdicion ? t('formularioProyecto.exitoEditar') : t('formularioProyecto.exitoCrear') });
     } catch (err) {
-      setErrorServidor(
-        err.response?.data?.error ||
-          (esEdicion ? t('formularioProyecto.errorEditar') : t('formularioProyecto.errorCrear')),
-      );
+      // Lo ingresado se conserva: el formulario no se limpia ante un error.
+      setErrorServidor(err);
     } finally {
       setGuardando(false);
     }
   };
 
+  const camposBloqueados = guardando || guardadoExitoso;
+  const titulo = esEdicion ? t('formularioProyecto.tituloEditar') : t('formularioProyecto.tituloCrear');
+  const migas = [
+    { texto: t('navegacion.inicio'), to: '/' },
+    { texto: t('formularioProyecto.migaMisProyectos'), to: '/proyectos' },
+    ...(esEdicion && inicial?.titulo ? [{ texto: inicial.titulo, to: `/proyectos/${id}` }] : []),
+    { texto: titulo },
+  ];
+  const hayCambios =
+    !guardadoExitoso &&
+    (esEdicion ? inicial && JSON.stringify(datos) !== JSON.stringify(inicial) : JSON.stringify(datos) !== JSON.stringify(DATOS_INICIALES));
+
+  const salir = () => {
+    if (hayCambios) {
+      setConfirmandoSalida(true);
+      return;
+    }
+    navigate('/proyectos');
+  };
+
+  const mensajeCampo = (error, ayuda) =>
+    error ? (
+      <>
+        <FiAlertCircle aria-hidden="true" />
+        <span>{error}</span>
+      </>
+    ) : (
+      ayuda
+    );
+
+  const IDS_CAMPOS = {
+    titulo: 'proyecto-titulo',
+    descripcion: 'proyecto-descripcion',
+    fechaLimiteCierre: 'proyecto-cierre',
+    fechaLimiteBusqueda: 'proyecto-limite-busqueda',
+  };
+  const listaErrores = Object.entries(errores)
+    .filter(([, mensaje]) => mensaje)
+    .map(([campo, mensaje]) => ({ campoId: IDS_CAMPOS[campo], mensaje }));
+
   if (cargandoInicial) {
     return (
-      <div className="form-proyecto-cargando" role="status">
-        <CircularProgress />
+      <div className="contenedor-pagina">
+        <EncabezadoPagina titulo={titulo} migas={migas} />
+        <EsqueletoFormulario campos={5} />
       </div>
     );
   }
 
-  const camposBloqueados = guardando || guardadoExitoso;
+  if (errorCarga) {
+    return (
+      <div className="contenedor-pagina contenedor-pagina--formulario">
+        <EncabezadoPagina titulo={titulo} migas={migas} />
+        <AlertaError error={errorCarga} titulo={t('formularioProyecto.errorCargarTitulo')} onReintentar={cargar} />
+      </div>
+    );
+  }
 
   return (
-    <div className="form-proyecto-contenedor">
-      <Link to="/proyectos" className="form-proyecto-volver">
-        <FiArrowLeft />
-        <span>{t('formularioProyecto.volver')}</span>
-      </Link>
-
-      <header className="form-proyecto-cabecera">
-        <h1>
-          {esEdicion ? t('formularioProyecto.tituloEditar') : t('formularioProyecto.tituloCrear')}
-        </h1>
-        <p>{t('formularioProyecto.subtitulo')}</p>
-      </header>
+    <div className="contenedor-pagina">
+      <EncabezadoPagina titulo={titulo} subtitulo={t('formularioProyecto.subtitulo')} migas={migas} />
 
       {guardadoExitoso && (
-        <Alert severity="success" icon={<FiCheck />} className="form-proyecto-banner">
-          {esEdicion ? t('formularioProyecto.exitoEditar') : t('formularioProyecto.exitoCrear')}
+        <Alert severity="success" role="status" className="form-proyecto-banner">
+          <AlertTitle>{esEdicion ? t('formularioProyecto.exitoEditar') : t('formularioProyecto.exitoCrear')}</AlertTitle>
+          {esEdicion ? t('formularioProyecto.exitoEditarDetalle') : t('formularioProyecto.exitoCrearDetalle')}
         </Alert>
       )}
 
+      <ResumenErrores errores={listaErrores.length > 0 && intentoResumen > 0 ? listaErrores : []} intento={intentoResumen} />
+
       <form onSubmit={guardar} noValidate>
         <div className="form-proyecto-grid">
-          <section className="form-proyecto-card">
-            <h2>{t('formularioProyecto.cardDatos')}</h2>
-            <p className="form-proyecto-card-sub">{t('formularioProyecto.subtituloDatos')}</p>
+          <section className="form-proyecto-card" aria-labelledby="form-proyecto-datos">
+            <h2 id="form-proyecto-datos">{t('formularioProyecto.cardDatos')}</h2>
+            <p className="texto-secundario">{t('formularioProyecto.subtituloDatos')}</p>
 
-            <div className="form-proyecto-campo">
-              <label htmlFor="proyecto-titulo">{t('formularioProyecto.labelTitulo')}</label>
-              <TextField
-                id="proyecto-titulo"
-                placeholder={t('formularioProyecto.placeholderTitulo')}
-                value={datos.titulo}
-                onChange={(e) => cambiarCampo('titulo', e.target.value)}
-                onBlur={() => validarCampoIndividual('titulo')}
-                error={Boolean(errores.titulo)}
-                disabled={camposBloqueados}
-                fullWidth
-                size="small"
-                InputProps={{
-                  endAdornment: guardadoExitoso ? <FiLock className="icono-bloqueado" /> : null,
-                }}
-              />
-              {errores.titulo && (
-                <span className="form-proyecto-error">
-                  <FiAlertCircle /> {errores.titulo}
-                </span>
-              )}
-            </div>
+            <TextField
+              id="proyecto-titulo"
+              label={t('formularioProyecto.labelTitulo')}
+              placeholder={t('formularioProyecto.placeholderTitulo')}
+              value={datos.titulo}
+              onChange={(e) => cambiarCampo('titulo', e.target.value)}
+              onBlur={() => validarCampoIndividual('titulo')}
+              error={Boolean(errores.titulo)}
+              helperText={mensajeCampo(errores.titulo)}
+              disabled={camposBloqueados}
+              required
+              fullWidth
+              slotProps={{ input: { endAdornment: guardadoExitoso ? <FiLock aria-hidden="true" /> : null } }}
+            />
 
-            <div className="form-proyecto-campo">
-              <label htmlFor="proyecto-descripcion">{t('formularioProyecto.labelDescripcion')}</label>
-              <TextField
-                id="proyecto-descripcion"
-                placeholder={t('formularioProyecto.placeholderDescripcion')}
-                value={datos.descripcion}
-                onChange={(e) => cambiarCampo('descripcion', e.target.value)}
-                onBlur={() => validarCampoIndividual('descripcion')}
-                error={Boolean(errores.descripcion)}
-                disabled={camposBloqueados}
-                multiline
-                minRows={6}
-                fullWidth
-              />
-              {errores.descripcion && (
-                <span className="form-proyecto-error">
-                  <FiAlertCircle /> {errores.descripcion}
-                </span>
-              )}
-            </div>
+            <TextField
+              id="proyecto-descripcion"
+              label={t('formularioProyecto.labelDescripcion')}
+              placeholder={t('formularioProyecto.placeholderDescripcion')}
+              value={datos.descripcion}
+              onChange={(e) => cambiarCampo('descripcion', e.target.value)}
+              onBlur={() => validarCampoIndividual('descripcion')}
+              error={Boolean(errores.descripcion)}
+              helperText={mensajeCampo(errores.descripcion, t('formularioProyecto.ayudaDescripcion'))}
+              disabled={camposBloqueados}
+              required
+              multiline
+              minRows={5}
+              fullWidth
+            />
 
-            <div className="form-proyecto-campo">
+            <div>
               <CustomSelect
                 id="proyecto-etiquetas"
                 etiqueta={t('formularioProyecto.labelEtiquetas')}
@@ -310,6 +359,7 @@ const FormularioProyecto = () => {
                 permiteCrear
                 onSeleccionar={alternarEtiqueta}
                 onQuitar={alternarEtiqueta}
+                ayuda={t('formularioProyecto.ayudaEtiquetas')}
                 placeholder={
                   etiquetasState.cargando
                     ? t('formularioProyecto.cargandoEtiquetas')
@@ -322,213 +372,173 @@ const FormularioProyecto = () => {
                 }
               />
               {etiquetasState.error && (
-                <Alert severity="warning" className="form-proyecto-aviso-etiquetas">
+                <Alert severity="warning" className="form-proyecto-aviso">
                   {t('formularioProyecto.errorEtiquetas')}
-                  <Button size="small" onClick={etiquetasState.recargar}>
-                    {t('formularioProyecto.reintentar')}
-                  </Button>
+                  <div className="alerta-acciones">
+                    <Button variant="outlined" onClick={etiquetasState.recargar}>
+                      {t('formularioProyecto.reintentar')}
+                    </Button>
+                  </div>
                 </Alert>
               )}
-              <small className="form-proyecto-ayuda">
-                {t('formularioProyecto.ayudaEtiquetas')}
-              </small>
             </div>
 
             {!esEdicion && (
-              <>
-                <div className="form-proyecto-ubicacion">
-                  <div className="form-proyecto-campo">
-                    <label htmlFor="proyecto-provincia">
-                      {t('formularioProyecto.labelProvincia')}
-                    </label>
-                    <TextField
-                      id="proyecto-provincia"
-                      select
-                      value={datos.provincia}
-                      onChange={cambiarProvincia}
-                      disabled={camposBloqueados}
-                      fullWidth
-                      size="small"
-                      SelectProps={{ displayEmpty: true }}
-                    >
-                      <MenuItem value="">
-                        {t('formularioProyecto.opcionProvinciaHeredada')}
+              <fieldset className="form-proyecto-ubicacion">
+                <legend>{t('formularioProyecto.ubicacion')}</legend>
+                <p className="texto-secundario">{t('formularioProyecto.ayudaUbicacion')}</p>
+                <div className="form-proyecto-ubicacion__campos">
+                  <TextField
+                    id="proyecto-provincia"
+                    select
+                    label={t('formularioProyecto.labelProvincia')}
+                    value={datos.provincia}
+                    onChange={cambiarProvincia}
+                    disabled={camposBloqueados}
+                    fullWidth
+                    slotProps={{ select: { displayEmpty: true } }}
+                  >
+                    <MenuItem value="">{t('formularioProyecto.opcionProvinciaHeredada')}</MenuItem>
+                    {PROVINCIAS.map(({ codigo, nombre }) => (
+                      <MenuItem key={codigo} value={codigo}>
+                        {nombre}
                       </MenuItem>
-                      {PROVINCIAS.map(({ codigo, nombre }) => (
-                        <MenuItem key={codigo} value={codigo}>
-                          {nombre}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </div>
+                    ))}
+                  </TextField>
 
-                  <div className="form-proyecto-campo">
-                    <label htmlFor="proyecto-ciudad">
-                      {t('formularioProyecto.labelCiudad')}
-                    </label>
-                    <TextField
-                      id="proyecto-ciudad"
-                      placeholder={t('formularioProyecto.placeholderCiudad')}
-                      value={datos.ciudad}
-                      onChange={(e) => cambiarCampo('ciudad', e.target.value)}
-                      disabled={camposBloqueados || !datos.provincia}
-                      fullWidth
-                      size="small"
-                    />
-                  </div>
+                  <TextField
+                    id="proyecto-ciudad"
+                    label={t('formularioProyecto.labelCiudad')}
+                    placeholder={t('formularioProyecto.placeholderCiudad')}
+                    value={datos.ciudad}
+                    onChange={(e) => cambiarCampo('ciudad', e.target.value)}
+                    disabled={camposBloqueados || !datos.provincia}
+                    helperText={!datos.provincia ? t('formularioProyecto.ayudaCiudad') : undefined}
+                    fullWidth
+                  />
                 </div>
-                <small className="form-proyecto-ayuda">
-                  {t('formularioProyecto.ayudaUbicacion')}
-                </small>
-              </>
+              </fieldset>
             )}
           </section>
 
-          <div className="form-proyecto-columna-derecha">
-            <section className="form-proyecto-card">
-              <h2>{t('formularioProyecto.cardCierre')}</h2>
-
-              <div className="form-proyecto-campo">
-                <label htmlFor="proyecto-cierre">{t('formularioProyecto.labelFechaCierre')}</label>
-                <TextField
-                  id="proyecto-cierre"
-                  type="date"
-                  value={datos.fechaLimiteCierre}
-                  onChange={(e) => cambiarCampo('fechaLimiteCierre', e.target.value)}
-                  onBlur={() => validarCampoIndividual('fechaLimiteCierre')}
-                  error={Boolean(errores.fechaLimiteCierre)}
-                  disabled={camposBloqueados || esFinalizado}
-                  fullWidth
-                  size="small"
-                  InputLabelProps={{ shrink: true }}
-                />
-                {errores.fechaLimiteCierre ? (
-                  <span className="form-proyecto-error">
-                    <FiAlertCircle /> {errores.fechaLimiteCierre}
-                  </span>
-                ) : (
-                  <small className="form-proyecto-ayuda">{t('formularioProyecto.ayudaFechaCierre')}</small>
-                )}
-              </div>
+          <div className="form-proyecto-columna">
+            <section className="form-proyecto-card" aria-labelledby="form-proyecto-cierre">
+              <h2 id="form-proyecto-cierre">{t('formularioProyecto.cardCierre')}</h2>
+              <TextField
+                id="proyecto-cierre"
+                type="date"
+                label={t('formularioProyecto.labelFechaCierre')}
+                value={datos.fechaLimiteCierre}
+                onChange={(e) => cambiarCampo('fechaLimiteCierre', e.target.value)}
+                onBlur={() => validarCampoIndividual('fechaLimiteCierre')}
+                error={Boolean(errores.fechaLimiteCierre)}
+                helperText={mensajeCampo(errores.fechaLimiteCierre, t('formularioProyecto.ayudaFechaCierre'))}
+                disabled={camposBloqueados || esFinalizado}
+                fullWidth
+              />
             </section>
 
-            <section className="form-proyecto-card">
-              <h2>{t('formularioProyecto.cardBusqueda')}</h2>
+            <section className="form-proyecto-card" aria-labelledby="form-proyecto-busqueda">
+              <h2 id="form-proyecto-busqueda">{t('formularioProyecto.cardBusqueda')}</h2>
 
-              {esFinalizado && (
-                <Alert severity="info" className="form-proyecto-aviso-finalizado">
-                  {t('formularioProyecto.avisoFinalizado')}
-                </Alert>
-              )}
+              {esFinalizado && <Alert severity="info">{t('formularioProyecto.avisoFinalizado')}</Alert>}
 
-              <div className="form-proyecto-switch-fila">
+              <div className="interruptor-fila">
                 <div>
                   <strong>{t('formularioProyecto.labelBusquedaAbierta')}</strong>
-                  <span className="form-proyecto-switch-estado">
-                    {datos.busquedaAbierta
-                      ? t('formularioProyecto.estadoActivada')
-                      : t('formularioProyecto.estadoDesactivada')}
-                  </span>
+                  <p className="texto-secundario">
+                    {datos.busquedaAbierta ? t('formularioProyecto.estadoActivada') : t('formularioProyecto.estadoDesactivada')}
+                  </p>
                 </div>
-                <div className="form-proyecto-switch-control">
-                  {esFinalizado && <FiLock className="icono-bloqueado" />}
+                <div className="interruptor-fila__control">
+                  {esFinalizado && <FiLock aria-hidden="true" />}
                   <Switch
                     checked={datos.busquedaAbierta}
                     onChange={manejarSwitchBusqueda}
                     disabled={camposBloqueados || esFinalizado}
-                    color="primary"
-                    inputProps={{ 'aria-label': t('formularioProyecto.labelBusquedaAbierta') }}
+                    slotProps={{
+                      input: { 'aria-label': t('formularioProyecto.labelBusquedaAbierta'), 'aria-describedby': 'ayuda-busqueda' },
+                    }}
                   />
                 </div>
               </div>
+              <p className="texto-secundario" id="ayuda-busqueda">
+                {t('formularioProyecto.ayudaBusqueda')}
+              </p>
 
-              <small className="form-proyecto-ayuda">{t('formularioProyecto.ayudaBusqueda')}</small>
-
-              <div className="form-proyecto-campo" style={{ marginTop: 16 }}>
-                <label htmlFor="proyecto-limite-busqueda">{t('formularioProyecto.labelFechaLimite')}</label>
-                <TextField
-                  id="proyecto-limite-busqueda"
-                  type="date"
-                  value={datos.fechaLimiteBusqueda}
-                  onChange={(e) => cambiarCampo('fechaLimiteBusqueda', e.target.value)}
-                  onBlur={() => validarCampoIndividual('fechaLimiteBusqueda')}
-                  error={Boolean(errores.fechaLimiteBusqueda)}
-                  disabled={
-                    camposBloqueados ||
-                    esFinalizado ||
-                    (!datos.busquedaAbierta && !datos.fechaLimiteBusqueda)
-                  }
-                  fullWidth
-                  size="small"
-                  InputLabelProps={{ shrink: true }}
-                />
-                {errores.fechaLimiteBusqueda ? (
-                  <>
-                    <small className="form-proyecto-ayuda">
-                      {t('formularioProyecto.ayudaFechaLimiteConservar')}
-                    </small>
-                    <span className="form-proyecto-error">
-                      <FiAlertCircle /> {errores.fechaLimiteBusqueda}
-                    </span>
-                  </>
-                ) : (
-                  <small className="form-proyecto-ayuda">
-                    {esFinalizado
-                      ? t('formularioProyecto.ayudaNoDisponibleFinalizado')
-                      : datos.busquedaAbierta
+              <TextField
+                id="proyecto-limite-busqueda"
+                type="date"
+                label={t('formularioProyecto.labelFechaLimite')}
+                value={datos.fechaLimiteBusqueda}
+                onChange={(e) => cambiarCampo('fechaLimiteBusqueda', e.target.value)}
+                onBlur={() => validarCampoIndividual('fechaLimiteBusqueda')}
+                error={Boolean(errores.fechaLimiteBusqueda)}
+                helperText={mensajeCampo(
+                  errores.fechaLimiteBusqueda
+                    ? `${errores.fechaLimiteBusqueda}. ${t('formularioProyecto.ayudaFechaLimiteConservar')}`
+                    : '',
+                  esFinalizado
+                    ? t('formularioProyecto.ayudaNoDisponibleFinalizado')
+                    : datos.busquedaAbierta
                       ? t('formularioProyecto.ayudaFechaLimiteActiva')
-                      : t('formularioProyecto.ayudaFechaLimiteInactiva')}
-                  </small>
+                      : t('formularioProyecto.ayudaFechaLimiteInactiva')
                 )}
-              </div>
+                disabled={camposBloqueados || esFinalizado || (!datos.busquedaAbierta && !datos.fechaLimiteBusqueda)}
+                fullWidth
+              />
             </section>
           </div>
         </div>
 
         {errorServidor && (
-          <Alert severity="error" className="form-proyecto-banner-error">
-            {errorServidor}
-          </Alert>
+          <AlertaError
+            className="form-proyecto-banner"
+            error={errorServidor}
+            titulo={t('formularioProyecto.errorGuardarTitulo')}
+          >
+            <span> {t('formularioProyecto.datosConservados')}</span>
+          </AlertaError>
         )}
 
         <div className="form-proyecto-acciones">
           {guardadoExitoso ? (
-            <Button
-              variant="contained"
-              onClick={() => navigate('/proyectos')}
-              className="form-proyecto-btn-primario"
-            >
+            <Button variant="contained" onClick={() => navigate('/proyectos')} endIcon={<FiArrowRight aria-hidden="true" />}>
               {t('formularioProyecto.volverAProyectos')}
             </Button>
           ) : (
             <>
-              <Button
-                variant="outlined"
-                type="button"
-                onClick={() => navigate('/proyectos')}
-                disabled={guardando}
-              >
+              <Button variant="outlined" type="button" onClick={salir} disabled={guardando}>
                 {t('formularioProyecto.cancelar')}
               </Button>
-              <Button
-                variant="contained"
-                type="submit"
-                disabled={guardando}
-                startIcon={guardando ? <CircularProgress size={18} color="inherit" /> : null}
-                className="form-proyecto-btn-primario"
-              >
+              <Button variant="contained" type="submit" loading={guardando} startIcon={<FiSave aria-hidden="true" />}>
                 {guardando
                   ? t('formularioProyecto.guardando')
                   : errorServidor
-                  ? t('formularioProyecto.reintentar')
-                  : esEdicion
-                  ? t('formularioProyecto.botonGuardar')
-                  : t('formularioProyecto.botonCrear')}
+                    ? t('formularioProyecto.reintentar')
+                    : esEdicion
+                      ? t('formularioProyecto.botonGuardar')
+                      : t('formularioProyecto.botonCrear')}
               </Button>
             </>
           )}
         </div>
       </form>
+
+      <Dialogo open={confirmandoSalida} onClose={() => setConfirmandoSalida(false)} aria-labelledby="salir-titulo">
+        <DialogTitle id="salir-titulo">{t('formularioProyecto.salirTitulo')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{t('formularioProyecto.salirTexto')}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setConfirmandoSalida(false)}>
+            {t('formularioProyecto.seguirEditando')}
+          </Button>
+          <Button variant="contained" color="error" onClick={() => navigate('/proyectos')}>
+            {t('formularioProyecto.salirSinGuardar')}
+          </Button>
+        </DialogActions>
+      </Dialogo>
     </div>
   );
 };

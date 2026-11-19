@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Chip, CircularProgress } from '@mui/material';
+import { t } from '../../i18n/t';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { obtenerColaboradoraPorId } from '../../service/colaboradorasService';
-import { mensajeDeError } from '../../service/api';
-import '../perfil/PerfilPublico.css';
+import PerfilPublicoVista from '../perfil/PerfilPublicoVista.jsx';
 
 const PerfilColaboradora = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [colaboradora, setColaboradora] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [intento, setIntento] = useState(0);
 
   useEffect(() => {
     let vigente = true;
+    setCargando(true);
+    setError(null);
     obtenerColaboradoraPorId(id)
       .then((perfil) => {
         if (vigente) setColaboradora(perfil);
       })
       .catch((fallo) => {
-        if (vigente) setError(mensajeDeError(fallo));
+        if (vigente) setError(fallo);
       })
       .finally(() => {
         if (vigente) setCargando(false);
@@ -28,53 +29,29 @@ const PerfilColaboradora = () => {
     return () => {
       vigente = false;
     };
-  }, [id]);
+  }, [id, intento]);
 
-  if (cargando) {
-    return <div className="perfil-publico-cargando" role="status"><CircularProgress /></div>;
-  }
-
-  if (error || !colaboradora) {
-    return (
-      <main className="perfil-publico">
-        <Alert severity="error">{error || 'No encontramos este perfil.'}</Alert>
-        <Button onClick={() => navigate(-1)}>Volver</Button>
-      </main>
-    );
-  }
-
-  const nombre = [colaboradora.nombre, colaboradora.apellido].filter(Boolean).join(' ');
+  const reintentar = useCallback(() => setIntento((n) => n + 1), []);
+  const nombre = colaboradora ? [colaboradora.nombre, colaboradora.apellido].filter(Boolean).join(' ') : '';
 
   return (
-    <main className="perfil-publico">
-      <Button className="perfil-publico-volver" onClick={() => navigate(-1)}>Volver</Button>
-      <Card className="perfil-publico-cabecera" variant="outlined">
-        <p className="perfil-publico-tipo">PERSONA COLABORADORA</p>
-        <h1>{colaboradora.nombreFantasia || nombre || 'Perfil de colaboradora'}</h1>
-        {nombre && colaboradora.nombreFantasia && <p>{nombre}</p>}
-        {colaboradora.pronombres?.length > 0 && (
-          <p className="perfil-publico-pronombres">{colaboradora.pronombres.join(' · ')}</p>
-        )}
-        {colaboradora.presentacion && <p>{colaboradora.presentacion}</p>}
-        {colaboradora.usuarioGitHub && <p>GitHub o GitLab: {colaboradora.usuarioGitHub}</p>}
-      </Card>
-
-      <Card className="perfil-publico-seccion" variant="outlined">
-        <h2>Habilidades</h2>
-        {colaboradora.habilidades?.length ? (
-          <div className="perfil-publico-etiquetas">
-            {colaboradora.habilidades.map((habilidad) => (
-              <Chip key={habilidad} label={habilidad} />
-            ))}
-          </div>
-        ) : (
-          <p>Aún no agregó habilidades.</p>
-        )}
-      </Card>
-      <p className="perfil-publico-privacidad">
-        Los medios de contacto son privados y no se muestran en este perfil.
-      </p>
-    </main>
+    <PerfilPublicoVista
+      tipo={t('perfilPublico.personaColaboradora')}
+      cargando={cargando}
+      error={error}
+      encontrado={Boolean(colaboradora)}
+      onReintentar={reintentar}
+      titulo={colaboradora?.nombreFantasia || nombre || 'Perfil de colaboradora'}
+      datos={[
+        nombre && colaboradora?.nombreFantasia ? nombre : null,
+        colaboradora?.pronombres?.length > 0 ? `Pronombres: ${colaboradora.pronombres.join(', ')}` : null,
+        colaboradora?.usuarioGitHub ? `GitHub o GitLab: ${colaboradora.usuarioGitHub}` : null,
+        colaboradora?.presentacion || null,
+      ]}
+      seccionTitulo="Habilidades"
+      chips={colaboradora?.habilidades ?? []}
+      textoSinChips="Aún no agregó habilidades."
+    />
   );
 };
 

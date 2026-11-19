@@ -61,6 +61,46 @@ describe('MiPerfil', () => {
     actualizarColaboradora.mockResolvedValue({});
   });
 
+  it('mantiene reconocible la sección activa en la navegación', async () => {
+    renderPerfil();
+
+    expect(await screen.findByRole('button', { name: '✓ Cuenta · Actual' }))
+      .toHaveAttribute('aria-current', 'location');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Perfil' }));
+
+    expect(screen.getByRole('button', { name: '✓ Perfil · Actual' }))
+      .toHaveAttribute('aria-current', 'location');
+    expect(screen.getByRole('button', { name: 'Cuenta' }))
+      .not.toHaveAttribute('aria-current');
+  });
+
+  it('oculta la navegación lateral en el perfil del colectivo', async () => {
+    useAuth.mockReturnValue({
+      sesion: { rol: 'COLECTIVO', idColectivo: 'colectivo-1' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      obtenerEmailCuenta: jest.fn().mockResolvedValue('colectivo@example.org'),
+      cambiarContrasena: jest.fn(),
+    });
+    useListado.mockReturnValue({ datos: [], cargando: false, error: null, recargar: jest.fn() });
+    obtenerMiPerfilColectivo.mockResolvedValue({
+      nombre: 'Colectivo Ejemplo',
+      descripcion: 'Descripción',
+      tipoDeColectivo: 'ONG',
+      etiquetas: [],
+      mediosDeContacto: [],
+    });
+
+    renderPerfil();
+
+    expect(await screen.findByRole('heading', { name: 'Tu perfil de colectivo' }))
+      .toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Secciones de mi perfil' }))
+      .not.toBeInTheDocument();
+    expect(document.querySelector('.mi-perfil-disposicion--sin-nav'))
+      .toBeInTheDocument();
+  });
+
   it('muestra errores resumidos y junto a cada campo inválido', async () => {
     obtenerMiPerfilColaboradora.mockResolvedValue({
       nombreFantasia: '',

@@ -1,6 +1,7 @@
-import { createTheme, ThemeProvider } from '@mui/material';
+import React, { useMemo } from 'react';
+import { GlobalStyles, ThemeProvider } from '@mui/material';
 import { LogtoProvider } from '@logto/react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, RESOURCE } from './hooks/useAuth.jsx';
 import RequiereAuth from './components/RequiereAuth.jsx';
 import RequiereRol from './components/RequiereRol.jsx';
@@ -23,27 +24,12 @@ import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
 import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
 import Mapa from './features/busquedas/Mapa.jsx';
 import LinkedinCallback from './components/LinkedinCallback.jsx';
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#15324b'
-    },
-    secondary: {
-      main: '#e69f00'
-    }
-  },
-  typography: {
-    fontFamily: "'DM Sans', sans-serif",
-    button: {
-      textTransform: 'none',
-      fontWeight: 700
-    }
-  },
-  shape: {
-    borderRadius: 6
-  }
-});
+import { crearTema } from './theme/crearTema.js';
+import { ModoColorProvider, useModoColor } from './theme/ModoColorContext.jsx';
+import { NotificadorProvider } from './components/Notificador/Notificador.jsx';
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx';
+import PaginaNoEncontrada from './features/errores/PaginaNoEncontrada.jsx';
+import PropTypes from 'prop-types';
 
 const logtoConfig = {
   endpoint: process.env.REACT_APP_LOGTO_ENDPOINT,
@@ -52,12 +38,36 @@ const logtoConfig = {
   resources: RESOURCE ? [RESOURCE] : []
 };
 
+// El tema MUI y las variables CSS salen de los mismos tokens del modo activo.
+const TemaDelModo = ({ children }) => {
+  const { tokens } = useModoColor();
+  const theme = useMemo(() => crearTema(tokens), [tokens]);
+  return (
+    <ThemeProvider theme={theme}>
+      <GlobalStyles styles={{ ':root': tokens }} />
+      {children}
+    </ThemeProvider>
+  );
+};
+
+// Reinicia el ErrorBoundary al navegar, para que un fallo no bloquee el resto de la app.
+const LimiteDeErrores = ({ children }) => {
+  const { pathname } = useLocation();
+  return <ErrorBoundary claveReinicio={pathname}>{children}</ErrorBoundary>;
+};
+
+TemaDelModo.propTypes = { children: PropTypes.node };
+LimiteDeErrores.propTypes = { children: PropTypes.node };
+
 function App() {
   return (
     <LogtoProvider config={logtoConfig}>
       <AuthProvider>
         <BrowserRouter>
-          <ThemeProvider theme={theme}>
+          <ModoColorProvider>
+          <TemaDelModo>
+          <NotificadorProvider>
+          <LimiteDeErrores>
             <Routes>
               <Route path="/callback" element={<Callback />} />
               <Route path="/" element={<Layout />}>
@@ -156,9 +166,13 @@ function App() {
                       </RequiereAuth>
                     }
                   />
+                <Route path="*" element={<PaginaNoEncontrada />} />
               </Route>
             </Routes>
-          </ThemeProvider>
+          </LimiteDeErrores>
+          </NotificadorProvider>
+          </TemaDelModo>
+          </ModoColorProvider>
         </BrowserRouter>
       </AuthProvider>
     </LogtoProvider>
