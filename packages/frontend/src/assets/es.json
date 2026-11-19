@@ -457,10 +457,24 @@
   "notificaciones": {
     "titulo": "Notificaciones",
     "subtitulo": "Acá vas a ver las novedades de tus proyectos y postulaciones.",
-    "vacioTitulo": "Todavía no tenés notificaciones",
+    "vacioTitulo": "Aún no recibiste notificaciones",
     "vacioDescripcion": "Cuando haya novedades sobre tus proyectos o postulaciones, las vas a ver en esta pantalla.",
     "irAlInicio": "Ir al inicio",
-    "cargando": "Cargando notificaciones…"
+    "cargando": "Cargando notificaciones…",
+    "errorCarga": "No pudimos cargar tus notificaciones. {mensaje}",
+    "errorCargaMas": "No pudimos cargar más notificaciones. {mensaje}",
+    "reintentar": "Reintentar",
+    "cargarMas": "Cargar más",
+    "cargandoMas": "Cargando…",
+    "de": "De {nombre}",
+    "para": "Para {nombre}",
+    "usuario": "Usuario",
+    "noLeida": "Notificación no leída",
+    "postulacionAceptada": "Postulación aceptada",
+    "postulacionRechazada": "Postulación rechazada",
+    "invitacion": "Invitación a postularte",
+    "verMisColaboraciones": "Ver mis colaboraciones",
+    "verProyecto": "Ver proyecto"
   },
   "acceso": {
     "denegadoTitulo": "No tenés acceso a esta sección",
