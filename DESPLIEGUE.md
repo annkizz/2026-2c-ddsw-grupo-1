@@ -66,6 +66,7 @@ Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant
 | `LOGTO_ISSUER`                  | Emisor OIDC de Logto, por ejemplo `https://tenant.logto.app/oidc`.                                                                                                                   |
 | `LOGTO_JWKS_URL`                | URL de claves públicas de Logto, normalmente `https://tenant.logto.app/oidc/jwks`.                                                                                                   |
 | `LOGTO_AUDIENCE`                | Identificador del recurso de API; debe coincidir con `REACT_APP_LOGTO_RESOURCES`.                                                                                                   |
+| `LOGTO_ADMIN_IDS`               | IDs `sub` de Logto autorizados como administradores, separados por coma. Usá cuentas dedicadas sin un perfil previo de colectivo/colaboradora.                                        |
 | `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                                                                                                        |
 | `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                                                                                                  |
 | `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                                                                                                     |
@@ -76,6 +77,16 @@ Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant
 Para desarrollo local, copiá las variables `LOGTO_*` de `packages/backend/.env` y las `REACT_APP_LOGTO_*` de
 `packages/frontend/.env` al `.env` de la raíz. Compose usa estas últimas al compilar el frontend.
 En la consola de Logto, autorizá además la URL de callback `http://<IP-o-dominio>:3000/callback`.
+
+Para habilitar la administración de proyectos destacados, agregá a `LOGTO_ADMIN_IDS` el ID de usuario de Logto
+(claim `sub`) de cada cuenta administradora. El backend asigna `ADMINISTRADOR` al primer inicio de sesión de una
+cuenta configurada que todavía no tenga rol; no se puede elegir ese rol desde el registro. En desarrollo sin Docker,
+configurá la misma variable en `packages/backend/.env`.
+
+La edición de nombre, email y contraseña se realiza en las páginas alojadas del Account Center de Logto. Habilitá
+**Account API** en la consola y permití editar **Name**, **Primary email** y **Password**. Para cambiar el email,
+Logto también requiere un conector de email con la plantilla `BindNewIdentifier`. La aplicación vuelve al perfil
+después de cada operación.
 
 ### Levantar todo
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { Navigate } from 'react-router-dom';
@@ -58,5 +59,35 @@ describe('RequiereAuth en rutas de registro', () => {
     });
 
     expect(Navigate.mock.calls[0][0]).toEqual({ to: '/perfil', replace: true });
+  });
+
+  it('redirige a la administradora al panel en lugar de permitir el registro de un perfil', () => {
+    sessionStorage.setItem('tipoDeCuenta', 'colaboradora');
+    renderGuard({
+      isAuthenticated: true,
+      cargando: false,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+    });
+
+    expect(Navigate.mock.calls[0][0]).toEqual({
+      to: '/administrador/destacados',
+      replace: true,
+    });
+  });
+
+  it('permite a la administradora entrar a su pantalla de perfil', () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      cargando: false,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+    });
+
+    render(
+      <RequiereAuth>
+        <p>Perfil de administración</p>
+      </RequiereAuth>,
+    );
+
+    expect(screen.getByText('Perfil de administración')).toBeInTheDocument();
   });
 });

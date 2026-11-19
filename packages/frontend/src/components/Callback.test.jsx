@@ -1,3 +1,4 @@
+import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useHandleSignInCallback } from '@logto/react';
 import { useNavigate } from 'react-router-dom';
@@ -62,6 +63,21 @@ describe('destino del callback de Logto', () => {
     render(<Callback />);
 
     expect(navigate).toHaveBeenCalledWith('/mis-colaboraciones', {
+      replace: true,
+    });
+  });
+
+  it('lleva a la administradora al panel de proyectos destacados', () => {
+    useAuth.mockReturnValue({
+      sesion: { tienePerfil: false, rol: 'ADMINISTRADOR' },
+      errorSesion: false,
+      recargarSesion: jest.fn(),
+      cerrarSesion: jest.fn(),
+    });
+
+    render(<Callback />);
+
+    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', {
       replace: true,
     });
   });

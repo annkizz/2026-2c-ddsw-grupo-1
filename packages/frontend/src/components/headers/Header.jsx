@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiCode } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -5,7 +6,8 @@ import './Header.css';
 
 const Header = () => {
   const { isAuthenticated, sesion, cerrarSesion } = useAuth();
-  const conPerfil = isAuthenticated && sesion?.tienePerfil;
+  const esAdministrador = sesion?.rol === 'ADMINISTRADOR';
+  const conPerfil = isAuthenticated && (sesion?.tienePerfil || esAdministrador);
   const esColectivo = sesion?.rol === 'COLECTIVO';
 
   return (
@@ -19,7 +21,9 @@ const Header = () => {
 
       {conPerfil ? (
         <nav className="header-nav">
-          {esColectivo ? (
+          {esAdministrador ? (
+            <Link to="/administrador/destacados">Proyectos destacados</Link>
+          ) : esColectivo ? (
             <>
               <Link to="/proyectos">Proyectos</Link>
               <Link to="/buscar-colaboradores">Buscar colaboradores</Link>
@@ -31,7 +35,7 @@ const Header = () => {
               <Link to="/mapa">Mapa</Link>
             </>
           )}
-          <Link to="/notificaciones">Notificaciones</Link>
+          {!esAdministrador && <Link to="/notificaciones">Notificaciones</Link>}
           <Link to="/perfil">Mi perfil</Link>
           <button onClick={cerrarSesion}>Salir</button>
         </nav>

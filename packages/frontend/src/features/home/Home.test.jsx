@@ -1,3 +1,4 @@
+import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -74,6 +75,25 @@ describe('acceso a inicio de sesión desde Home', () => {
     render(<Home />);
 
     expect(navigate).toHaveBeenCalledWith('/mis-colaboraciones', {
+      replace: true,
+    });
+  });
+
+  it('redirige a la administradora a su panel al entrar al inicio', () => {
+    const navigate = jest.fn();
+    useNavigate.mockReturnValue(navigate);
+    useAuth.mockReturnValue({
+      cargando: false,
+      isAuthenticated: true,
+      sesion: { tienePerfil: false, rol: 'ADMINISTRADOR' },
+      errorLogto: undefined,
+      iniciarSesion: jest.fn(),
+      registrarse: jest.fn(),
+    });
+
+    render(<Home />);
+
+    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', {
       replace: true,
     });
   });

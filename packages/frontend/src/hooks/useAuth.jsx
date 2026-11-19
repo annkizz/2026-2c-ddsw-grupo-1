@@ -85,16 +85,21 @@ export const AuthProvider = ({ children }) => {
     [signIn]
   );
   const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);
-  const obtenerEmailCuenta = useCallback(async () => {
+  const obtenerDatosCuenta = useCallback(async () => {
     const userInfo = await logtoFetchUserInfo();
     const email = typeof userInfo?.email === 'string' ? userInfo.email.trim() : '';
+    const nombre = typeof userInfo?.name === 'string' ? userInfo.name.trim() : '';
+    return { email, nombre };
+  }, [logtoFetchUserInfo]);
+  const obtenerEmailCuenta = useCallback(async () => {
+    const { email } = await obtenerDatosCuenta();
     if (!email) {
       throw new Error(
         'Logto no devolvio el email. Verifica que la cuenta tenga un email y que la aplicacion tenga habilitado el permiso email.'
       );
     }
     return email;
-  }, [logtoFetchUserInfo]);
+  }, [obtenerDatosCuenta]);
   const cambiarContrasena = useCallback(
     (email) =>
       signIn({
@@ -120,12 +125,13 @@ export const AuthProvider = ({ children }) => {
       iniciarSesion,
       registrarse,
       cerrarSesion,
+      obtenerDatosCuenta,
       obtenerEmailCuenta,
       cambiarContrasena,
       getAccessToken,
       recargarSesion
     }),
-    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
+    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerDatosCuenta, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

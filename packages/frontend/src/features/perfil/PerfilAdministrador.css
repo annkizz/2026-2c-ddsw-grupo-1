@@ -1,0 +1,109 @@
+.perfil-administrador {
+  width: min(840px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 72px;
+  color: #23313f;
+}
+
+.perfil-administrador__volver {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #17364e;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.perfil-administrador__volver:hover {
+  text-decoration: underline;
+}
+
+.perfil-administrador header {
+  margin-bottom: 24px;
+}
+
+.perfil-administrador h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.perfil-administrador header p:last-child {
+  margin: 0;
+  color: #617180;
+}
+
+.perfil-administrador__eyebrow {
+  margin: 0 0 8px;
+  color: #52718a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.perfil-administrador__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid #dce3e8;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.perfil-administrador__tarjeta h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.perfil-administrador__tarjeta dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.perfil-administrador__tarjeta dl div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.perfil-administrador__tarjeta dt {
+  color: #617180;
+  font-weight: 600;
+}
+
+.perfil-administrador__tarjeta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.perfil-administrador__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.perfil-administrador__ayuda {
+  margin: -8px 0 0;
+  color: #617180;
+  font-size: 13px;
+}
+
+.perfil-administrador__cargando {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .perfil-administrador__acciones {
+    flex-direction: column;
+  }
+
+  .perfil-administrador__acciones .MuiButton-root {
+    width: 100%;
+  }
+}

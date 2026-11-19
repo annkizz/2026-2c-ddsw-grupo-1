@@ -86,6 +86,16 @@ export const actualizarProyecto = async (token, idProyecto, proyecto) => {
   const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
   return response.data;
 };
+
+export const configurarDestacado = async (token, idProyecto, datos) => {
+  const response = await api.patch(
+    `/proyectos/${idProyecto}/destacado`,
+    datos,
+    conToken(token)
+  );
+  return response.data;
+};
+
 export const configurarBusqueda = async (token, idProyecto, datos) => {
   const response = await api.put(`/proyectos/${idProyecto}/busqueda`, datos, conToken(token));
   return response.data;

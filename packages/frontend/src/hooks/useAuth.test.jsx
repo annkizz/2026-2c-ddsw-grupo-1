@@ -20,6 +20,7 @@ const AccionesAuth = () => {
     recargarSesion,
     errorSesion,
     obtenerEmailCuenta,
+    obtenerDatosCuenta,
     cargando,
   } = useAuth();
   const [email, setEmail] = useState('');
@@ -31,6 +32,9 @@ const AccionesAuth = () => {
       <button onClick={recargarSesion}>Verificar sesión</button>
       <button onClick={async () => setEmail(await obtenerEmailCuenta())}>Leer email</button>
       {email && <output>{email}</output>}
+      <button onClick={async () => setEmail(JSON.stringify(await obtenerDatosCuenta()))}>
+        Leer datos de cuenta
+      </button>
       <output data-testid="auth-loading">{String(cargando)}</output>
       {errorSesion && <output>{errorSesion}</output>}
     </>
@@ -46,7 +50,10 @@ describe('flujo de autenticación', () => {
     sessionStorage.clear();
     jest.clearAllMocks();
     getAccessToken.mockResolvedValue('access-token');
-    fetchUserInfo.mockResolvedValue({ email: 'cuenta@example.com' });
+    fetchUserInfo.mockResolvedValue({
+      email: 'cuenta@example.com',
+      name: 'Ada Lovelace',
+    });
     obtenerSesion.mockResolvedValue({ tienePerfil: true });
     useLogto.mockReturnValue({
       isAuthenticated: false,
@@ -130,6 +137,21 @@ describe('flujo de autenticación', () => {
     fireEvent.click(screen.getByText('Leer email'));
 
     expect(await screen.findByText('cuenta@example.com')).toBeInTheDocument();
+    expect(fetchUserInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('obtiene nombre y email de Logto para el perfil administrativo', async () => {
+    render(
+      <AuthProvider>
+        <AccionesAuth />
+      </AuthProvider>
+    );
+
+    fireEvent.click(screen.getByText('Leer datos de cuenta'));
+
+    expect(
+      await screen.findByText('{"email":"cuenta@example.com","nombre":"Ada Lovelace"}'),
+    ).toBeInTheDocument();
     expect(fetchUserInfo).toHaveBeenCalledTimes(1);
   });
 

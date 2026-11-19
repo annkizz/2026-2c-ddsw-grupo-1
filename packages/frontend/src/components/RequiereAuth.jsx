@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Alert, Button } from '@mui/material';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -55,6 +56,14 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
         </div>
       </div>
     );
+  }
+
+  if (sesion.rol === 'ADMINISTRADOR') {
+    if (!exigirPerfil || tipoRegistro) {
+      return <Navigate to="/administrador/destacados" replace />;
+    }
+
+    return children;
   }
 
   if (sesion.tienePerfil) {

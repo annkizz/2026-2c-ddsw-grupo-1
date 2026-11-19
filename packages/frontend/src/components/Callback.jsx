@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { useHandleSignInCallback } from '@logto/react';
 import { useNavigate } from 'react-router-dom';
@@ -16,11 +17,13 @@ const Callback = () => {
   useEffect(() => {
     if (!sesion) return;
     navigate(
-      sesion.tienePerfil
-        ? sesion.rol === 'COLABORADOR'
-          ? '/mis-colaboraciones'
-          : '/perfil'
-        : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
+      sesion.rol === 'ADMINISTRADOR'
+        ? '/administrador/destacados'
+        : sesion.tienePerfil
+          ? sesion.rol === 'COLABORADOR'
+            ? '/mis-colaboraciones'
+            : '/perfil'
+          : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
       { replace: true }
     );
   }, [sesion, navigate]);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, CircularProgress } from '@mui/material';
 import { FiArrowRight, FiCode, FiRepeat, FiUsers } from 'react-icons/fi';
@@ -11,9 +11,11 @@ const Home = () => {
   const { cargando, sesion, errorLogto, iniciarSesion, registrarse } = useAuth();
   const [eligiendoTipo, setEligiendoTipo] = useState(false);
 
-  // Solo las cuentas con perfil salen del inicio automáticamente.
+  // Cada rol autenticado entra directamente a su espacio principal.
   useEffect(() => {
-    if (sesion?.tienePerfil) {
+    if (sesion?.rol === 'ADMINISTRADOR') {
+      navigate('/administrador/destacados', { replace: true });
+    } else if (sesion?.tienePerfil) {
       const destino =
         sesion.rol === 'COLABORADOR' ? '/mis-colaboraciones' : '/perfil';
       navigate(destino, { replace: true });

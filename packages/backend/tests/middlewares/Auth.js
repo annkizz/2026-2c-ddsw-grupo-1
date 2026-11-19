@@ -23,7 +23,7 @@ describe("middleware de autenticacion", () => {
       })),
     };
     verificarToken = jest.fn(async () => ({ sub: "logto-1", username: "ada" }));
-    autenticar = crearAutenticar(usuarioRepository, verificarToken);
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {});
   });
 
   it("sin header Authorization responde 401 TOKEN_AUSENTE", async () => {
@@ -66,6 +66,50 @@ describe("middleware de autenticacion", () => {
     );
     expect(req.usuario).toEqual({ _id: "u1", logtoId: "logto-1" });
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("asigna el rol administrador a IDs de Logto configurados", async () => {
+    const usuarioAdministrador = {
+      _id: "u1",
+      logtoId: "logto-1",
+      rol: "ADMINISTRADOR",
+    };
+    usuarioRepository.asignarRol = jest.fn(async () => usuarioAdministrador);
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "otro-id, logto-1",
+    });
+
+    const { req, next, resultado } = ejecutar({
+      authorization: "Bearer bueno",
+    });
+    await resultado;
+
+    expect(usuarioRepository.asignarRol).toHaveBeenCalledWith(
+      "u1",
+      "ADMINISTRADOR",
+    );
+    expect(req.usuario).toEqual(usuarioAdministrador);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("no reemplaza el rol de una cuenta que ya tiene perfil", async () => {
+    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({
+      _id: "u1",
+      logtoId: "logto-1",
+      rol: "COLABORADOR",
+    });
+    usuarioRepository.asignarRol = jest.fn();
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "logto-1",
+    });
+
+    const { req, resultado } = ejecutar({
+      authorization: "Bearer bueno",
+    });
+    await resultado;
+
+    expect(usuarioRepository.asignarRol).not.toHaveBeenCalled();
+    expect(req.usuario.rol).toBe("COLABORADOR");
   });
 });
 

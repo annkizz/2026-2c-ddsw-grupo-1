@@ -1,3 +1,4 @@
+import React from 'react';
 import { createTheme, ThemeProvider } from '@mui/material';
 import { LogtoProvider } from '@logto/react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -16,7 +17,8 @@ import MisColaboraciones from './features/colaboraciones/MisColaboraciones.jsx';
 import PerfilColaboradora from './features/colaboradoras/PerfilColaboradora.jsx';
 import PerfilColectivo from './features/colectivos/PerfilColectivo.jsx';
 import Notificaciones from './features/notificaciones/Notificaciones.jsx';
-import MiPerfil from './features/perfil/MiPerfil.jsx';
+import PerfilCuenta from './features/perfil/PerfilCuenta.jsx';
+import ProyectosDestacados from './features/proyectos/ProyectosDestacados.jsx';
 import FormularioProyecto from './features/proyectos/FormularioProyecto.jsx';
 import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
 import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
@@ -48,7 +50,7 @@ const theme = createTheme({
 const logtoConfig = {
   endpoint: process.env.REACT_APP_LOGTO_ENDPOINT,
   appId: process.env.REACT_APP_LOGTO_APP_ID,
-  scopes: ['offline_access', 'email'],
+  scopes: ['offline_access', 'email', 'profile'],
   resources: RESOURCE ? [RESOURCE] : []
 };
 
@@ -72,6 +74,16 @@ function App() {
                     }
                   />
                 <Route index element={<Home />} />
+                <Route
+                  path="/administrador/destacados"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['ADMINISTRADOR']}>
+                        <ProyectosDestacados />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
                 <Route path="/proyectos" element={<ListaProyectos />} />
                 <Route path="/proyectos/:id" element={<DetalleProyecto />} />
                 <Route
@@ -124,8 +136,17 @@ function App() {
                 <Route path="/registro/listo" element={<Navigate to="/perfil" replace />} />
 
                 {/* con sesión y perfil */}
-                <Route path="/perfil" element={<RequiereAuth><MiPerfil /></RequiereAuth>} />
-                <Route path="/notificaciones" element={<RequiereAuth><Notificaciones /></RequiereAuth>} />
+                <Route path="/perfil" element={<RequiereAuth><PerfilCuenta /></RequiereAuth>} />
+                <Route
+                  path="/notificaciones"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['COLECTIVO', 'COLABORADOR']}>
+                        <Notificaciones />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
                 <Route
                     path="/proyectos/nuevo"
                     element={

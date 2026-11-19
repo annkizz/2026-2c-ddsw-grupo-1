@@ -41,6 +41,7 @@ export default function BuscadorProyectos() {
   const habilidadesState = useListado("/habilidades");
   const etiquetasState = useListado("/etiquetas");
   const colectivosState = useListado("/colectivos");
+  const destacadosState = useListado("/proyectos/destacados");
   const coincidenciasState = useListado(
     idColaboradora ? `/colaboradoras/${idColaboradora}/proyectos` : null,
   );
@@ -88,7 +89,17 @@ export default function BuscadorProyectos() {
     [coincidenciasState.datos],
   );
 
-  const recomendados = coincidenciasState.datos;
+  const idsDestacados = useMemo(
+    () => new Set(destacadosState.datos.map((proyecto) => proyecto.id)),
+    [destacadosState.datos],
+  );
+  const recomendados = useMemo(
+    () =>
+      coincidenciasState.datos.filter(
+        (proyecto) => !idsDestacados.has(proyecto.id),
+      ),
+    [coincidenciasState.datos, idsDestacados],
+  );
 
   const resultados = useMemo(() => {
     const activos = resultadosState.datos
@@ -369,7 +380,62 @@ export default function BuscadorProyectos() {
       </div>
 
       {!filtrosAplicados && (
-        <section className="resultados" aria-labelledby="recomendados-titulo">
+        <>
+          <section className="resultados" aria-labelledby="destacados-titulo">
+            <div className="resultados__encabezado">
+              <div>
+                <h2 id="destacados-titulo">Proyectos destacados</h2>
+                <p className="resultados__bajada">
+                  Proyectos seleccionados para que los conozcas primero.
+                </p>
+              </div>
+            </div>
+
+            {destacadosState.cargando && (
+              <div className="tarjetas" aria-hidden="true">
+                {[0, 1].map((indice) => (
+                  <Skeleton key={indice} variant="rounded" height={190} />
+                ))}
+              </div>
+            )}
+
+            {destacadosState.error && (
+              <div className="estado-bloque">
+                <p className="estado estado--error">
+                  No pudimos cargar los proyectos destacados.
+                </p>
+                <button
+                  type="button"
+                  className="boton boton--secundario"
+                  onClick={destacadosState.recargar}
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
+
+            {!destacadosState.cargando &&
+              !destacadosState.error &&
+              destacadosState.datos.length === 0 && (
+                <div className="estado-bloque">
+                  <p className="estado">
+                    Todavía no hay proyectos destacados vigentes.
+                  </p>
+                </div>
+              )}
+
+            {!destacadosState.cargando &&
+              !destacadosState.error &&
+              destacadosState.datos.length > 0 && (
+                <ul className="tarjetas">
+                  {destacadosState.datos.map((proyecto) => (
+                    <CardProyecto key={proyecto.id} proyecto={proyecto} />
+                  ))}
+                </ul>
+              )}
+          </section>
+
+          <section className="resultados" aria-labelledby="recomendados-titulo">
           <div className="resultados__encabezado">
             <div>
               <h2 id="recomendados-titulo">
@@ -385,7 +451,7 @@ export default function BuscadorProyectos() {
             </div>
           </div>
 
-          {coincidenciasState.cargando && (
+          {(coincidenciasState.cargando || destacadosState.cargando) && (
             <>
               <p className="estado" role="status">
                 Calculando recomendaciones…
@@ -415,12 +481,15 @@ export default function BuscadorProyectos() {
           )}
 
           {!coincidenciasState.cargando &&
+            !destacadosState.cargando &&
             !coincidenciasState.error &&
             recomendados.length === 0 && (
               <div className="estado-bloque">
                 <p className="estado">
                   {idColaboradora
-                    ? "Todavía no encontramos proyectos activos que coincidan con tus habilidades."
+                    ? coincidenciasState.datos.length > 0
+                      ? "Los proyectos que coinciden con tus habilidades ya aparecen en destacados."
+                      : "Todavía no encontramos proyectos activos que coincidan con tus habilidades."
                     : esColectivo
                       ? "No hay recomendaciones para un colectivo. Podés ver todos los proyectos activos."
                       : "Iniciá sesión como colaboradora para ver recomendaciones. También podés ver todos los proyectos activos."}
@@ -436,6 +505,7 @@ export default function BuscadorProyectos() {
             )}
 
           {!coincidenciasState.cargando &&
+            !destacadosState.cargando &&
             !coincidenciasState.error &&
             recomendados.length > 0 && (
               <ul className="tarjetas">
@@ -444,7 +514,8 @@ export default function BuscadorProyectos() {
                 ))}
               </ul>
             )}
-        </section>
+          </section>
+        </>
       )}
 
       {filtrosAplicados && (
