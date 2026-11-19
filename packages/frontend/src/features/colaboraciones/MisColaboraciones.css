@@ -1,0 +1,134 @@
+.mis-colaboraciones {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.mis-colaboraciones-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.mis-colaboraciones-intro h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+}
+
+.mis-colaboraciones-intro p,
+.mis-colaboraciones-fecha {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mis-colaboraciones-conteo {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mis-colaboraciones-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.mis-colaboraciones-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.mis-colaboraciones-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mis-colaboraciones-badge.activo {
+  color: var(--navy);
+  background: #eef3f7;
+}
+
+.mis-colaboraciones-badge.finalizado {
+  color: #1e6b3a;
+  background: #edf7ed;
+}
+
+.mis-colaboraciones-card h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.mis-colaboraciones-descripcion {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.mis-colaboraciones-avance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mis-colaboraciones-avance > div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mis-colaboraciones-avance strong {
+  color: var(--ink);
+}
+
+.mis-colaboraciones-acciones {
+  display: flex;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.mis-colaboraciones-estado,
+.mis-colaboraciones-vacio {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.mis-colaboraciones-vacio h2,
+.mis-colaboraciones-vacio p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .mis-colaboraciones-grid {
+    grid-template-columns: 1fr;
+  }
+}

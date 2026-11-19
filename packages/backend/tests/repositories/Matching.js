@@ -16,6 +16,26 @@ function crearModelo() {
 }
 
 describe("consultas de matching", () => {
+  it("obtiene proyectos por varios ids en una sola consulta", async () => {
+    const model = crearModelo();
+
+    await new ProyectoRepository(model).obtenerPorIds(["p1", "p2"]);
+
+    expect(model.find).toHaveBeenCalledWith({
+      _id: { $in: ["p1", "p2"] },
+    });
+    expect(model.query.exec).toHaveBeenCalledTimes(1);
+  });
+
+  it("no consulta proyectos cuando no hay ids", async () => {
+    const model = crearModelo();
+
+    await expect(
+      new ProyectoRepository(model).obtenerPorIds([]),
+    ).resolves.toEqual([]);
+    expect(model.find).not.toHaveBeenCalled();
+  });
+
   it("excluye proyectos ya anotados en Mongo y mantiene el orden", async () => {
     const model = crearModelo();
     await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"]);
@@ -28,15 +48,11 @@ describe("consultas de matching", () => {
     expect(model.query.exec).toHaveBeenCalledTimes(1);
   });
 
-  it("filtra perfiles del conjunto candidato con alguna requerida en las habilidades", async () => {
+  it("trae los perfiles de los proyectos candidatos para evaluarlos en memoria", async () => {
     const model = crearModelo();
-    await new PerfilRepository(model).obtenerCompatiblesPorProyectos(
-      ["p1"],
-      ["React", "SQL"],
-    );
+    await new PerfilRepository(model).obtenerPorProyectos(["p1"]);
     expect(model.find).toHaveBeenCalledWith({
       idProyecto: { $in: ["p1"] },
-      habilidadesRequeridas: { $in: ["React", "SQL"] },
     });
     expect(model.query.select).toHaveBeenCalledWith(
       "_id idProyecto descripcion compromiso habilidadesRequeridas habilidadesOpcionales",
@@ -47,12 +63,7 @@ describe("consultas de matching", () => {
   it("no consulta perfiles para conjuntos vacios", async () => {
     const model = crearModelo();
     const repository = new PerfilRepository(model);
-    await expect(
-      repository.obtenerCompatiblesPorProyectos([], ["React"]),
-    ).resolves.toEqual([]);
-    await expect(
-      repository.obtenerCompatiblesPorProyectos(["p1"], []),
-    ).resolves.toEqual([]);
+    await expect(repository.obtenerPorProyectos([])).resolves.toEqual([]);
     expect(model.find).not.toHaveBeenCalled();
   });
 

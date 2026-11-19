@@ -2,6 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 import {
   crearEvaluadorCoincidencia,
   evaluarCoincidencia,
+  puntajeDeCoincidencia,
+  puntajeMaximoDeCoincidencia,
+  porcentajeDeCobertura,
+  porcentajeDeCoberturaRequerida,
 } from "../../domain/Matching.js";
 
 describe("evaluarCoincidencia", () => {
@@ -17,6 +21,8 @@ describe("evaluarCoincidencia", () => {
       tieneCoincidencia: true,
       requeridasCoincidentes: ["Testing E2E con Cypress"],
       opcionalesCoincidentes: [],
+      requeridasTotales: 2,
+      opcionalesTotales: 1,
     });
     expect(evaluarCoincidencia(perfil, ["Jest"]).tieneCoincidencia).toBe(false);
     expect(
@@ -25,6 +31,8 @@ describe("evaluarCoincidencia", () => {
       tieneCoincidencia: true,
       requeridasCoincidentes: ["Testing E2E con Cypress", "React"],
       opcionalesCoincidentes: [],
+      requeridasTotales: 2,
+      opcionalesTotales: 1,
     });
   });
 
@@ -41,6 +49,8 @@ describe("evaluarCoincidencia", () => {
       tieneCoincidencia: false,
       requeridasCoincidentes: [],
       opcionalesCoincidentes: ["Jest"],
+      requeridasTotales: 2,
+      opcionalesTotales: 1,
     });
   });
 
@@ -57,6 +67,8 @@ describe("evaluarCoincidencia", () => {
       tieneCoincidencia: true,
       requeridasCoincidentes: ["Diseño UX/UI", "React"],
       opcionalesCoincidentes: ["Jest"],
+      requeridasTotales: 2,
+      opcionalesTotales: 1,
     });
   });
 
@@ -86,5 +98,79 @@ describe("evaluarCoincidencia", () => {
         habilidadesRequeridas: ["React", "Java"],
       }).tieneCoincidencia,
     ).toBe(true);
+  });
+});
+
+describe("puntajeDeCoincidencia", () => {
+  it("pondera las requeridas con 2 y las opcionales con 1", () => {
+    expect(
+      puntajeDeCoincidencia({
+        requeridasCoincidentes: ["React", "SQL"],
+        opcionalesCoincidentes: ["Jest"],
+      }),
+    ).toBe(5);
+  });
+
+  it("devuelve 0 si no hay coincidencias", () => {
+    expect(puntajeDeCoincidencia()).toBe(0);
+    expect(
+      puntajeDeCoincidencia({
+        requeridasCoincidentes: [],
+        opcionalesCoincidentes: [],
+      }),
+    ).toBe(0);
+  });
+});
+
+describe("puntajeMaximoDeCoincidencia", () => {
+  it("usa las requeridas con peso 2 y las opcionales con peso 1", () => {
+    expect(
+      puntajeMaximoDeCoincidencia({
+        requeridasTotales: 3,
+        opcionalesTotales: 2,
+      }),
+    ).toBe(8);
+  });
+
+  it("devuelve 0 si no hay habilidades buscables", () => {
+    expect(puntajeMaximoDeCoincidencia()).toBe(0);
+    expect(
+      puntajeMaximoDeCoincidencia({
+        requeridasTotales: 0,
+        opcionalesTotales: 5,
+      }),
+    ).toBe(0);
+  });
+});
+
+describe("porcentajeDeCobertura", () => {
+  it("compara proyectos de distinto tamaño por cobertura", () => {
+    expect(porcentajeDeCobertura({ puntaje: 20, puntajeMaximo: 100 })).toBe(20);
+    expect(porcentajeDeCobertura({ puntaje: 15, puntajeMaximo: 15 })).toBe(100);
+  });
+
+  it("devuelve 0 si el máximo es 0", () => {
+    expect(porcentajeDeCobertura({ puntaje: 5, puntajeMaximo: 0 })).toBe(0);
+    expect(porcentajeDeCobertura()).toBe(0);
+  });
+});
+
+describe("porcentajeDeCoberturaRequerida", () => {
+  it("prioriza las habilidades obligatorias", () => {
+    expect(
+      porcentajeDeCoberturaRequerida({
+        requeridasCoincidentes: 3,
+        requeridasTotales: 4,
+      }),
+    ).toBe(75);
+  });
+
+  it("devuelve 0 si no hay requeridas", () => {
+    expect(
+      porcentajeDeCoberturaRequerida({
+        requeridasCoincidentes: 0,
+        requeridasTotales: 0,
+      }),
+    ).toBe(0);
   });
 });

@@ -2,6 +2,27 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { ColaboracionRepository } from "../../repositories/ColaboracionRepository.js";
 
 describe("ColaboracionRepository", () => {
+  it("obtiene las colaboraciones de una colaboradora sin consultar por proyecto", async () => {
+    const colaboraciones = [{ idProyecto: "p1" }];
+    const exec = jest.fn(async () => colaboraciones);
+    const sort = jest.fn(() => ({ exec }));
+    const select = jest.fn(() => ({ sort }));
+    const model = {
+      find: jest.fn(() => ({ select })),
+    };
+
+    await expect(
+      new ColaboracionRepository(model).obtenerPorColaborador("c1"),
+    ).resolves.toBe(colaboraciones);
+
+    expect(model.find).toHaveBeenCalledWith({ idColaborador: "c1" });
+    expect(select).toHaveBeenCalledWith(
+      "idProyecto idPerfil fecha esAnonima",
+    );
+    expect(sort).toHaveBeenCalledWith({ fecha: -1 });
+    expect(exec).toHaveBeenCalledTimes(1);
+  });
+
   it("limita la consulta y la población a los datos públicos necesarios", async () => {
     const idProyecto = "a00000000000000000000001";
     const resultado = [{ idProyecto }];
@@ -19,12 +40,35 @@ describe("ColaboracionRepository", () => {
 
     expect(model.find).toHaveBeenCalledWith({ idProyecto });
     expect(select).toHaveBeenCalledWith(
-      "idProyecto idColaborador fecha esAnonima",
+      "idProyecto idPerfil idColaborador fecha esAnonima",
     );
     expect(populate).toHaveBeenCalledWith(
       "idColaborador",
       "nombreFantasia usuarioGitHub nombre apellido",
     );
     expect(exec).toHaveBeenCalledTimes(1);
+  });
+
+  it("conecta la colaboración creada con su postulación aceptada", async () => {
+    const colaboracion = {
+      proyecto: { _id: "proyecto-1" },
+      perfil: { _id: "perfil-1" },
+      postulacion: { _id: "postulacion-1" },
+      colaborador: { _id: "colaboradora-1" },
+      fecha: new Date(),
+      esAnonima: false,
+    };
+    const model = { create: jest.fn(async (datos) => datos) };
+
+    await new ColaboracionRepository(model).crearDesdePostulacion(colaboracion);
+
+    expect(model.create).toHaveBeenCalledWith({
+      idProyecto: "proyecto-1",
+      idPerfil: "perfil-1",
+      idPostulacion: "postulacion-1",
+      idColaborador: "colaboradora-1",
+      fecha: colaboracion.fecha,
+      esAnonima: false,
+    });
   });
 });

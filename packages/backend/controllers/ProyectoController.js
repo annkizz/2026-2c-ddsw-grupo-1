@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { BadRequestError } from "../errors/AppError.js";
 import { NotFoundError } from "../errors/AppError.js";
+import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
+const fechaLimiteBusquedaSchema = z.coerce.date().nullable();
 
 export const proyectoSchema = z
   .object({
@@ -11,13 +12,21 @@ export const proyectoSchema = z
     titulo: z.string().trim().min(1),
     descripcion: z.string().trim().min(1),
     fechaLimiteCierre: fechaLimiteCierreSchema.optional(),
-  })
-  .strict();
-
-export const idColaboradorSchema = z
-  .object({
-    idColaborador: z.string().trim().min(1),
-    esAnonima: z.boolean().default(false),
+    busquedaAbierta: z.boolean().optional(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
+    // req 34: lista opcional etiquetas
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
+    // req 15
+    ubicacion: z
+      .object({
+        provincia: z.string().trim().min(1),
+        ciudad: z.string().trim().min(1).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -35,19 +44,99 @@ export const avanceSchema = z
   })
   .strict();
 
+const primerValor = (valor) => (Array.isArray(valor) ? valor[0] : valor);
+const valoresComoLista = (valor) => {
+  if (valor === undefined) return [];
+  return Array.isArray(valor) ? valor : [valor];
+};
+
+export const proyectoEdicionSchema = z
+  .object({
+    titulo: z.string().trim().min(1),
+    descripcion: z.string().trim().min(1),
+    etiquetas: z
+      .array(z.string().min(1).max(ETIQUETA_MAX))
+      .max(ETIQUETAS_MAX)
+      .optional(),
+  })
+  .strict();
+
+export const busquedaSchema = z
+  .object({
+    busquedaAbierta: z.boolean(),
+    fechaLimiteBusqueda: fechaLimiteBusquedaSchema.optional(),
+  })
+  .strict();
+
+export const destacarProyectoSchema = z.union([
+  z
+    .object({
+      destacado: z.literal(true),
+      destacadoHasta: z.coerce.date(),
+    })
+    .strict(),
+  z
+    .object({
+      destacado: z.literal(false),
+    })
+    .strict(),
+]);
+
 export class ProyectoController {
   constructor(proyectoService = new ProyectoService()) {
     this.proyectoService = proyectoService;
   }
 
   crear = async (req, res) => {
-    const proyectoNuevo = await this.proyectoService.crear(req.body);
+    const proyectoNuevo = await this.proyectoService.crear(
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(proyectoNuevo);
   };
 
   obtenerTodos = async (req, res) => {
-    const proyectos = await this.proyectoService.obtenerTodos();
+    const etiquetas = valoresComoLista(req.query.etiqueta);
+    const filtros = etiquetas.length > 0 ? { etiquetas } : {};
+    // modo=cualquiera
+    if (req.query.modo !== undefined) {
+      filtros.modo = primerValor(req.query.modo);
+    }
+    if (req.query.provincia !== undefined) {
+      filtros.provincia = primerValor(req.query.provincia);
+      filtros.provincias = valoresComoLista(req.query.provincia);
+    }
+    if (req.query.estado !== undefined) {
+      filtros.estado = primerValor(req.query.estado);
+    }
+    if (req.query.idColectivo !== undefined) {
+      filtros.idColectivo = primerValor(req.query.idColectivo);
+      filtros.idColectivos = valoresComoLista(req.query.idColectivo);
+    }
+    if (req.query.habilidad !== undefined) {
+      filtros.habilidades = valoresComoLista(req.query.habilidad);
+    }
+    const proyectos = await this.proyectoService.obtenerTodos(filtros);
     res.status(200).json(proyectos);
+  };
+
+  obtenerDestacados = async (req, res) => {
+    const proyectos = await this.proyectoService.obtenerDestacados();
+    res.status(200).json(proyectos);
+  };
+
+  configurarDestacado = async (req, res) => {
+    const proyecto = await this.proyectoService.configurarDestacado(
+      req.params.idProyecto,
+      req.body,
+    );
+    res.status(200).json(proyecto);
+  };
+
+  obtenerUbicaciones = async (req, res) => {
+    const nivel = primerValor(req.query.nivel);
+    const ubicaciones = await this.proyectoService.obtenerUbicaciones(nivel);
+    res.status(200).json(ubicaciones);
   };
 
   obtenerColaboracionesPublicas = async (req, res) => {
@@ -66,45 +155,11 @@ export class ProyectoController {
     res.status(200).json(proyecto);
   }
 
-  async crearColaboracion(req, res) {
-    const proyectoId = req.params.idProyecto;
-    const proyectoExistente =
-      await this.proyectoService.obtenerProyectoPorId(proyectoId);
-
-    if (!proyectoExistente) {
-      throw new NotFoundError(
-        "Proyecto no encontrado",
-        "PROYECTO_NO_ENCONTRADO",
-      );
-    }
-
-    const body = req.body;
-    const resultado = idColaboradorSchema.safeParse(body);
-
-    if (!resultado.success) {
-      throw new BadRequestError(
-        "los datos ingresados son invalidos",
-        "DATOS_COLABORACION_INVALIDOS",
-      );
-    }
-
-    const colaboradorId = resultado.data.idColaborador;
-    const { esAnonima } = resultado.data;
-    const colaboracion = await this.proyectoService.crearColaboracion(
-      proyectoExistente,
-      colaboradorId,
-      esAnonima,
-    );
-
-    res
-      .status(201)
-      .json(this.proyectoService.toContribucionPublica(colaboracion));
-  }
-
   async actualizarAvance(req, res) {
     const avance = await this.proyectoService.actualizarAvance(
       req.params.idProyecto,
       req.body,
+      req.usuario,
     );
     res.status(200).json(avance);
   }
@@ -122,7 +177,32 @@ export class ProyectoController {
     }
 
     const proyectoCerrado =
-      await this.proyectoService.cerrarProyecto(proyectoId);
+      await this.proyectoService.cerrarProyecto(proyectoId, req.usuario);
     res.status(200).json(proyectoCerrado);
+  }
+
+  async obtenerPorId(req, res) {
+    const proyecto = await this.proyectoService.obtenerPorId(
+      req.params.idProyecto,
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async actualizar(req, res) {
+    const proyecto = await this.proyectoService.actualizar(
+      req.params.idProyecto,
+      req.body,
+      req.usuario
+    );
+    res.status(200).json(proyecto);
+  }
+
+  async configurarBusqueda(req, res) {
+    const proyecto = await this.proyectoService.configurarBusqueda(
+      req.params.idProyecto,
+      req.body,
+      req.usuario,
+    );
+    res.status(200).json(proyecto);
   }
 }

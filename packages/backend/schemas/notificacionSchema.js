@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Notificacion } from "../domain/Notificacion.js";
 import { EstadoEnvio } from "../domain/EstadoEnvio.js";
 import { TipoDeContacto } from "../domain/TipoDeContacto.js";
+import { TipoNotificacion } from "../domain/TipoNotificacion.js";
 
 const envioSchema = new mongoose.Schema(
   {
@@ -20,6 +21,12 @@ const notificacionSchema = new mongoose.Schema(
   {
     fecha: { type: Date, required: true, default: Date.now },
     contenido: { type: String, required: true, trim: true },
+    tipo: {
+      type: String,
+      enum: Object.values(TipoNotificacion),
+      required: true,
+      default: TipoNotificacion.MENSAJE,
+    },
     idColectivo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Colectivo",
@@ -32,7 +39,20 @@ const notificacionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Proyecto",
+    },
+    idPerfil: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Perfil",
+    },
+    idPostulacion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Postulacion",
+    },
     envios: { type: [envioSchema], default: [] },
+    leida: { type: Boolean, required: true, default: false },
   },
   { timestamps: true, collection: "notificaciones" },
 );

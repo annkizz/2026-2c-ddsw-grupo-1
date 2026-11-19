@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { Perfil } from "../../domain/Perfil.js";
 import { Compromiso } from "../../domain/Compromiso.js";
 import { TipoCompromiso } from "../../domain/TipoCompromiso.js";
@@ -27,10 +28,49 @@ describe("Dominio - Perfil", () => {
     expect(perfil.compromiso.horas).toBe(5);
   });
 
+  it("guarda el límite de colaboraciones", () => {
+    const perfil = new Perfil(
+      "Tester",
+      ["Testing E2E con Cypress"],
+      [],
+      compromiso,
+      2,
+    );
+
+    expect(perfil.limiteColaboraciones).toBe(2);
+  });
+
+  it("puede no tener límite de colaboraciones", () => {
+    const perfil = new Perfil("Backend", ["Node.js"], [], compromiso, null);
+
+    expect(perfil.limiteColaboraciones).toBeNull();
+  });
+
   it("puede no tener habilidades opcionales", () => {
     const perfil = new Perfil("Backend", ["Node.js"], [], compromiso);
 
     expect(perfil.habilidadesOpcionales).toEqual([]);
+  });
+
+  it("mantiene la búsqueda abierta al crearse y permite cerrarla", () => {
+    const perfil = new Perfil(
+      "Tester",
+      ["Testing E2E con Cypress"],
+      [],
+      compromiso,
+      2,
+      "MANUAL",
+    );
+
+    expect(perfil.tipoAceptacion).toBe("MANUAL");
+    expect(perfil.busquedaAbierta).toBe(true);
+
+    perfil.cerrarBusqueda();
+
+    expect(perfil.busquedaAbierta).toBe(false);
+    expect(perfil.tieneLimite()).toBe(true);
+    expect(perfil.tieneVacantes(1)).toBe(true);
+    expect(perfil.tieneVacantes(2)).toBe(false);
   });
 });
 

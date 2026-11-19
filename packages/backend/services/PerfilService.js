@@ -4,18 +4,21 @@ import {
   normalizarHabilidad,
 } from "../repositories/HabilidadRepository.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
-import { NotFoundError } from "../errors/AppError.js";
+import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 import { Perfil } from "../domain/Perfil.js";
+import { ColectivoRepository } from "../repositories/ColectivoRepository.js";
 
 export class PerfilService {
   constructor(
     perfilRepository = new PerfilRepository(),
     proyectoRepository = new ProyectoRepository(),
     habilidadRepository = new HabilidadRepository(),
+    colectivoRepository = new ColectivoRepository(),
   ) {
     this.perfilRepository = perfilRepository;
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
+    this.colectivoRepository = colectivoRepository;
   }
 
   toDTO(perfil) {
@@ -25,11 +28,15 @@ export class PerfilService {
       descripcion: perfil.descripcion,
       habilidadesRequeridas: perfil.habilidadesRequeridas.slice(),
       habilidadesOpcionales: perfil.habilidadesOpcionales.slice(),
+      limiteColaboraciones: perfil.limiteColaboraciones ?? null,
+      tipoAceptacion: perfil.tipoAceptacion,
       compromiso: {
         tipoCompromiso: perfil.compromiso.tipoCompromiso,
         horas: perfil.compromiso.horas,
         tipoColaboracion: perfil.compromiso.tipoColaboracion,
       },
+      limiteColaboraciones: perfil.limiteColaboraciones ?? null,
+      tipoAceptacion: perfil.tipoAceptacion,
     };
   }
 
@@ -39,8 +46,8 @@ export class PerfilService {
     return perfiles.map((perfil) => this.toDTO(perfil));
   }
 
-  async crear(idProyecto, datos) {
-    await this.validarProyecto(idProyecto);
+  async crear(idProyecto, datos, usuario) {
+    await this.validarPropietario(idProyecto, usuario);
 
     const habilidadesRequeridas = datos.habilidadesRequeridas;
     const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
@@ -55,6 +62,9 @@ export class PerfilService {
       requeridas.map((h) => h.titulo),
       opcionales.map((h) => h.titulo),
       datos.compromiso,
+      datos.limiteColaboraciones ?? null,
+      datos.tipoAceptacion,
+
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -66,8 +76,8 @@ export class PerfilService {
     return this.toDTO(guardado);
   }
 
-  async obtenerPerfilDelProyecto(idProyecto, id) {
-    await this.validarProyecto(idProyecto);
+  async obtenerPerfilDelProyecto(idProyecto, id, proyecto) {
+    if (!proyecto) await this.validarProyecto(idProyecto);
     const perfil = await this.perfilRepository.buscarPorId(id);
     if (!perfil || String(perfil.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
@@ -80,8 +90,9 @@ export class PerfilService {
     return this.toDTO(perfil);
   }
 
-  async actualizar(idProyecto, id, datos) {
-    await this.obtenerPerfilDelProyecto(idProyecto, id);
+  async actualizar(idProyecto, id, datos, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario);
+    await this.obtenerPerfilDelProyecto(idProyecto, id, proyecto);
 
     const habilidadesRequeridas = datos.habilidadesRequeridas;
     const habilidadesOpcionales = datos.habilidadesOpcionales ?? [];
@@ -96,14 +107,44 @@ export class PerfilService {
       habilidadesRequeridas: requeridas.map((h) => h.titulo),
       habilidadesOpcionales: opcionales.map((h) => h.titulo),
       compromiso: datos.compromiso,
+      limiteColaboraciones: datos.limiteColaboraciones ?? null,
+      tipoAceptacion: datos.tipoAceptacion,
     });
+    if (!actualizado) {
+      throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
+    }
     return this.toDTO(actualizado);
   }
 
-  async eliminar(idProyecto, id) {
-    await this.obtenerPerfilDelProyecto(idProyecto, id);
+  async eliminar(idProyecto, id, usuario) {
+    const proyecto = await this.validarPropietario(idProyecto, usuario);
+    await this.obtenerPerfilDelProyecto(idProyecto, id, proyecto);
     await this.perfilRepository.eliminar(id);
     await this.proyectoRepository.quitarPerfil(idProyecto, id);
+  }
+
+  async validarPropietario(idProyecto, usuario) {
+    const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
+    if (!proyecto) {
+      throw new NotFoundError(
+        "proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
+    }
+
+    const colectivo = usuario
+      ? await this.colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id)
+      : null;
+    if (
+      !colectivo ||
+      String(colectivo._id ?? colectivo.id) !== String(proyecto.idColectivo)
+    ) {
+      throw new ForbiddenError(
+        "solo el colectivo dueño del proyecto puede gestionar sus perfiles",
+        "ACCESO_DENEGADO",
+      );
+    }
+    return proyecto;
   }
 
   async validarProyecto(idProyecto) {
@@ -137,4 +178,5 @@ export class PerfilService {
       return habilidad;
     });
   }
+
 }

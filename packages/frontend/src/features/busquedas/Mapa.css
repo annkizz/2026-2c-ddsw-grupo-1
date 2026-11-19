@@ -1,0 +1,132 @@
+/* Mapa coroplético y tabla accesible de proyectos activos. */
+.mapa-contenedor {
+  display: grid;
+  grid-template-columns: minmax(280px, 440px) 1fr;
+  gap: 24px;
+  align-items: start;
+  margin: 24px 0 0;
+}
+
+.mapa-columna {
+  min-width: 0;
+}
+
+.mapa-columna h2 {
+  margin-top: 0;
+}
+
+.mapa {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+}
+
+.provincia {
+  stroke: var(--blanco);
+  stroke-width: 0.7;
+  cursor: pointer;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.provincia:hover {
+  opacity: 0.92;
+}
+
+.provincia:focus {
+  outline: none;
+  stroke: #111827;
+  stroke-width: 1.6;
+}
+
+.provincia--activa {
+  stroke: #111827;
+  stroke-width: 1.8;
+}
+
+.mapa__numero {
+  fill: #0f172a;
+  stroke: #ffffff;
+  stroke-width: 3;
+  paint-order: stroke;
+  font-size: 16px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mapa__numero--cero {
+  fill: #64748b;
+  stroke-width: 2;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.leyenda__color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--borde);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabla__caption {
+  padding: 12px 14px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  text-align: left;
+}
+
+.tabla th,
+.tabla td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+}
+
+.tabla th {
+  background-color: #eef3f7;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.tabla tr:last-child td {
+  border-bottom: 0;
+}
+
+.enlace-tabla {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--verde-oscuro);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .mapa-contenedor {
+    grid-template-columns: 1fr;
+  }
+}

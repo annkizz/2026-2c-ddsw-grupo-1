@@ -13,6 +13,13 @@ const colaboradorSchema = new mongoose.Schema(
     aceptaMensajeria: { type: Boolean, required: true, default: false },
     habilidades: { type: [String], required: true, index: true },
     mediosDeContacto: { type: [medioDeContactoSchema], default: [] },
+    // cuenta duena del perfil (las colaboradoras del seed no tienen)
+    usuario: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Usuario",
+      unique: true,
+      sparse: true,
+    },
   },
   { timestamps: true, collection: "colaboradoras" },
 );

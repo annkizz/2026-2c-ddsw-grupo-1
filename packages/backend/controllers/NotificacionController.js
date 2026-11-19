@@ -1,6 +1,6 @@
 import { NotificacionService } from "../services/NotificacionService.js";
 import { BadRequestError } from "../errors/AppError.js";
-import { notificacionFiltroSchema, notificacionPaginasSchema } from "../schemas/zod/notificacionSchema.js";
+import { notificacionPaginasSchema } from "../schemas/zod/notificacionSchema.js";
 
 export class NotificacionController {
   constructor(notificacionService = new NotificacionService()) {
@@ -8,45 +8,53 @@ export class NotificacionController {
   }
 
   crear = async (req, res) => {
-    const nuevaNotificacion = await this.notificacionService.crear(req.body);
-    res.status(201).json(nuevaNotificacion);
+    const notificacion = await this.notificacionService.crear(
+      req.body,
+      req.usuario,
+    );
+    res.status(201).json(notificacion);
   };
 
-  obtenerTodos = async (req, res) => {
-    const resultado = notificacionFiltroSchema.safeParse(req.query);
-    if (!resultado.success) {
+  obtenerTodosPaginado = async (req, res) => {
+    const pagina = notificacionPaginasSchema.safeParse(req.query);
+    if (!pagina.success) {
       throw new BadRequestError(
-        "los filtros son inválidos",
-        "FILTROS_INVALIDOS",
+        "Los parámetros de paginación son inválidos",
+        "PAGINACION_INVALIDA",
       );
     }
 
-    const notificaciones = await this.notificacionService.obtenerTodos(
-      resultado.data,
+    const resultado = await this.notificacionService.obtenerTodosPaginado(
+      req.usuario,
+      pagina.data.pag,
+      pagina.data.limite,
     );
-    res.status(200).json(notificaciones);
+    res.status(200).json(resultado);
   };
- 
-  obtenerTodosPaginado = async (req, res) => {
-    const pag = req.query.pag;
-    const limite = req.query.limite;
-    /*
-    if (!resultado.success) {
-      throw new BadRequestError(
-        "No se le enviaron los datos necesarios",
-        "PAGINA_INVALIDA",
-      );
-    }*/
 
-    const notificaciones = await this.notificacionService.obtenerTodosPaginado(
-      pag, limite,
-    );
-    res.status(200).json(notificaciones);
-  };  
+  obtenerTodosPorColaboradora = async (req, res) => {
+    const pagina = notificacionPaginasSchema.safeParse(req.query);
+    if (!pagina.success) {
+      throw new BadRequestError(
+        "Los parámetros de paginación son inválidos",
+        "PAGINACION_INVALIDA",
+      );
+    }
+
+    const resultado =
+      await this.notificacionService.obtenerTodosPorColaboradora(
+        req.params.id,
+        pagina.data.pag,
+        pagina.data.limite,
+        req.usuario,
+      );
+    res.status(200).json(resultado);
+  };
 
   obtenerPorId = async (req, res) => {
     const notificacion = await this.notificacionService.obtenerPorId(
       req.params.id,
+      req.usuario,
     );
     res.status(200).json(notificacion);
   };

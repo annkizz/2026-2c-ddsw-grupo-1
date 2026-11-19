@@ -3,16 +3,25 @@ export class Notificacion {
     id,
     fecha = new Date(),
     contenido,
+    tipo,
     idColectivo,
     idColaborador,
+    idProyecto,
+    idPerfil,
+    idPostulacion,
     envios = [],
   }) {
     this.id = id;
     this.fecha = fecha;
     this.contenido = contenido;
+    this.tipo = tipo;
     this.idColectivo = idColectivo;
     this.idColaborador = idColaborador;
+    this.idProyecto = idProyecto;
+    this.idPerfil = idPerfil;
+    this.idPostulacion = idPostulacion;
     this.envios = envios;
+    this.leida = false;
   }
 
   registrarEnvio(envio) {

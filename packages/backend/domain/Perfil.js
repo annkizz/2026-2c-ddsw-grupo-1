@@ -4,10 +4,30 @@ export class Perfil {
     habilidadesRequeridas,
     habilidadesOpcionales,
     compromiso,
+    limiteColaboraciones = null,
+    tipoAceptacion,
   ) {
-    ((this.descripcion = descripcion),
-      (this.habilidadesRequeridas = habilidadesRequeridas),
-      (this.habilidadesOpcionales = habilidadesOpcionales),
-      (this.compromiso = compromiso));
+    this.descripcion = descripcion;
+    this.habilidadesRequeridas = habilidadesRequeridas;
+    this.habilidadesOpcionales = habilidadesOpcionales;
+    this.compromiso = compromiso;
+    this.limiteColaboraciones = limiteColaboraciones;
+    this.busquedaAbierta = true;
+    this.tipoAceptacion = tipoAceptacion;
+  }
+
+  cerrarBusqueda() {
+    this.busquedaAbierta = false;
+  }
+
+  tieneLimite() {
+    return this.limiteColaboraciones !== null;
+  }
+
+  tieneVacantes(colaboracionesActivas) {
+    return (
+      !this.tieneLimite() ||
+      colaboracionesActivas < this.limiteColaboraciones
+    );
   }
 }

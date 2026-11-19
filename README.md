@@ -59,6 +59,8 @@ SERVER_PORT=3001
 - **`ALLOWED_ORIGINS`**: Define los orígenes permitidos para las solicitudes CORS. Asegurate de incluir la URL donde se ejecuta tu frontend (por defecto, `http://localhost:3000` para Create React App). Cuando se haga el despliegue en nube acá se deberá incluir la URL donde se desplegó el frontend.
 - **`SERVER_PORT`**: El puerto en el que se ejecutará el servidor backend (ej. `8000`).
 
+La gestión de proyectos destacados requiere el rol `ADMINISTRADOR`. Este rol no se puede asignar mediante las rutas públicas de registro; debe habilitarlo el equipo operador directamente en el usuario correspondiente de MongoDB.
+
 ### 3\. Ejecución de la Aplicación
 
 Podés iniciar el frontend y el backend por separado o ambos a la vez:
@@ -88,3 +90,17 @@ Para iniciar el backend en modo `dev` y el frontend simultáneamente, usá:
 ```bash
 npm run start:dev
 ```
+
+### Ejecutar el stack completo con Docker
+
+Para levantar MongoDB, cargar la seed, iniciar la API y servir el frontend juntos:
+
+```bash
+cp .env.example .env
+# Editar .env con los datos del tenant de Logto
+docker compose up -d --build
+```
+
+Abrí `http://localhost:3000` para desarrollo local. En la VM, Caddy sirve el frontend mediante HTTPS en el dominio
+configurado. La API queda disponible solo en la máquina local, en `http://localhost:3001`; la seed se carga una sola vez
+por versión en el volumen de Mongo. La configuración de Compose para VM está en [DESPLIEGUE.md](./DESPLIEGUE.md).
