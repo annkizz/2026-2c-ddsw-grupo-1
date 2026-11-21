@@ -18,8 +18,8 @@ const CuentaCreada = () => {
         </p>
       </Card>
       <div className="cuenta-creada-boton">
-        <Button variant="contained" component={Link} to="/perfil" endIcon={<FiArrowRight />}>
-          Ir a mi perfil
+        <Button variant="contained" component={Link} to="/" endIcon={<FiArrowRight />}>
+          Ir al inicio
         </Button>
       </div>
     </div>

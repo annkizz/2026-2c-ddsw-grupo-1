@@ -294,7 +294,6 @@ const PerfilesProyecto = () => {
       <EncabezadoPagina
         titulo={t('perfilesProyecto.titulo')}
         antetitulo={proyecto.titulo}
-        subtitulo={t('perfilesProyecto.subtitulo')}
         migas={migas}
         accion={botonAgregar}
       />

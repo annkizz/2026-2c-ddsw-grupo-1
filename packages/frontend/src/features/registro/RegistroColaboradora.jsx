@@ -56,7 +56,7 @@ const RegistroColaboradora = () => {
       }
 
       borrarTipo();
-      navigate('/mis-colaboraciones');
+      navigate('/', { replace: true });
     } catch (e) {
       setError(mensajeDeError(e, t('registro.noPudimosCrearTuPerfil')));
     } finally {

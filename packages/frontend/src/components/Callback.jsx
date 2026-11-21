@@ -26,12 +26,9 @@ const Callback = () => {
 
   useEffect(() => {
     if (!sesion) return;
+    // Con perfil, siempre al Inicio (panel del colectivo o de la colaboradora), nunca a Mi perfil.
     navigate(
-      sesion.tienePerfil
-        ? sesion.rol === 'COLECTIVO' || sesion.rol === 'COLABORADOR'
-          ? '/'
-          : '/perfil'
-        : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
+      sesion.tienePerfil ? '/' : leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo',
       { replace: true }
     );
   }, [sesion, navigate]);

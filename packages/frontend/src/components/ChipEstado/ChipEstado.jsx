@@ -10,7 +10,9 @@ const ESTADOS = {
   FINALIZADO: { texto: 'Finalizado', color: 'default', Icono: FiCheckCircle },
   ABIERTA: { texto: t('proyectos.busquedaAbierta'), color: 'success', Icono: FiCheckCircle },
   CERRADA: { texto: t('proyectos.busquedaCerrada'), color: 'default', Icono: FiXCircle },
-  PENDIENTE: { texto: 'Pendiente', color: 'warning', Icono: FiClock }
+  PENDIENTE: { texto: 'Pendiente', color: 'warning', Icono: FiClock },
+  ACEPTADA: { texto: 'Aceptada', color: 'success', Icono: FiCheckCircle },
+  RECHAZADA: { texto: 'Rechazada', color: 'error', Icono: FiXCircle }
 };
 
 const ChipEstado = ({ estado, texto, className }) => {

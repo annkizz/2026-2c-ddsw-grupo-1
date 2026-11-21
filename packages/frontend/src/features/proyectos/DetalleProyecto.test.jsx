@@ -12,7 +12,11 @@ import {
   obtenerProyectoPorId,
   resolverPostulacion,
 } from '../../service/proyectosService';
-import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
+import {
+  obtenerColaboradoraPorId,
+  obtenerMiPerfilColaboradora,
+  obtenerMisColaboraciones,
+} from '../../service/colaboradorasService';
 import DetalleProyecto from './DetalleProyecto';
 
 jest.mock('../../hooks/useAuth.jsx', () => ({
@@ -57,7 +61,13 @@ jest.mock('../../service/proyectosService', () => ({
 
 jest.mock('../../service/colaboradorasService', () => ({
   obtenerMisColaboraciones: jest.fn(),
+  obtenerMiPerfilColaboradora: jest.fn(),
+  obtenerColaboradoraPorId: jest.fn(),
 }));
+
+// La pantalla está dividida en pestañas: cada prueba abre la que necesita.
+const irAPestana = async (nombre) =>
+  userEvent.click(await screen.findByRole('tab', { name: new RegExp(`^${nombre}`) }));
 
 describe('DetalleProyecto - postulaciones', () => {
   beforeEach(() => {
@@ -96,12 +106,15 @@ describe('DetalleProyecto - postulaciones', () => {
     obtenerColaboracionesParaGestion.mockResolvedValue([]);
     obtenerPostulaciones.mockResolvedValue([]);
     obtenerMisColaboraciones.mockResolvedValue([]);
+    obtenerMiPerfilColaboradora.mockResolvedValue({ habilidades: [] });
+    obtenerColaboradoraPorId.mockResolvedValue({ habilidades: [] });
     crearPostulacion.mockResolvedValue({ id: 'postulacion-1', estado: 'PENDIENTE' });
     resolverPostulacion.mockResolvedValue({});
   });
 
   it('envía una postulación con la preferencia de anonimato elegida', async () => {
     render(<DetalleProyecto />);
+    await irAPestana('Perfiles');
 
     await userEvent.click(await screen.findByRole('button', { name: 'Postularme' }));
     await userEvent.click(screen.getByLabelText('Registrar mi contribución de forma anónima'));
@@ -136,6 +149,7 @@ describe('DetalleProyecto - postulaciones', () => {
     obtenerColaboraciones.mockResolvedValueOnce([{ idPerfil: 'perfil-1' }]);
 
     render(<DetalleProyecto />);
+    await irAPestana('Perfiles');
 
     expect(await screen.findByText('No quedan vacantes para este perfil')).toBeInTheDocument();
     expect(
@@ -149,6 +163,7 @@ describe('DetalleProyecto - postulaciones', () => {
     ]);
 
     render(<DetalleProyecto />);
+    await irAPestana('Perfiles');
 
     expect(
       await screen.findByRole('button', {
@@ -195,10 +210,11 @@ describe('DetalleProyecto - postulaciones', () => {
     resolverPostulacion.mockResolvedValue(colaboradoraAceptada);
 
     render(<DetalleProyecto />);
+    await irAPestana('Postulaciones');
 
     expect(
       await screen.findByText(
-        'La identidad y los datos de contacto se habilitan al aceptar.',
+        'La identidad, los datos de contacto y qué habilidades cumple la persona se ven al aceptar.',
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText('Ana Gómez')).not.toBeInTheDocument();
@@ -238,6 +254,7 @@ describe('DetalleProyecto - postulaciones', () => {
     });
 
     render(<DetalleProyecto />);
+    await irAPestana('Postulaciones');
     fireEvent.click(await screen.findByRole('button', { name: 'Rechazar' }));
 
     await waitFor(() => {
@@ -248,7 +265,7 @@ describe('DetalleProyecto - postulaciones', () => {
         'RECHAZADA',
       );
     });
-    expect(await screen.findByText('Rechazada')).toBeInTheDocument();
+    expect((await screen.findAllByText('Rechazada')).length).toBeGreaterThan(0);
   });
 
   it('deshabilita la aceptación cuando el perfil ya alcanzó el cupo', async () => {
@@ -283,6 +300,7 @@ describe('DetalleProyecto - postulaciones', () => {
     ]);
 
     render(<DetalleProyecto />);
+    await irAPestana('Postulaciones');
 
     expect(
       await screen.findByText(
@@ -313,7 +331,8 @@ describe('DetalleProyecto - postulaciones', () => {
 
     render(<DetalleProyecto />);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Configurar búsqueda' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Administrar' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Configurar búsqueda' }));
 
     const fecha = screen.getByLabelText(
       'Fecha límite de la búsqueda (opcional)',
@@ -324,5 +343,54 @@ describe('DetalleProyecto - postulaciones', () => {
         selector: 'label',
       }),
     ).toHaveClass('MuiInputLabel-shrink');
+  });
+
+  it('separa la pantalla en pestañas y empieza por el resumen', async () => {
+    render(<DetalleProyecto />);
+
+    expect(await screen.findByRole('tab', { name: /^Resumen/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Descripción', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Postularme' })).not.toBeInTheDocument();
+  });
+
+  it('le muestra a la colaboradora qué habilidades del perfil cumple y cuáles le faltan', async () => {
+    obtenerPerfiles.mockResolvedValueOnce([
+      {
+        id: 'perfil-1',
+        descripcion: 'Desarrollo web',
+        habilidadesRequeridas: ['React', 'Node.js'],
+        habilidadesOpcionales: ['Figma'],
+        compromiso: { tipoCompromiso: 'MENSUALES', horas: 4, tipoColaboracion: 'GRATUITA' },
+        limiteColaboraciones: null,
+      },
+    ]);
+    obtenerMiPerfilColaboradora.mockResolvedValue({ habilidades: ['react', 'Figma'] });
+
+    render(<DetalleProyecto />);
+    await irAPestana('Perfiles');
+
+    expect(
+      await screen.findByText('Tenés 1 de 2 habilidades requeridas y 1 de 1 opcionales.'),
+    ).toBeInTheDocument();
+    const react = screen.getByText('React').closest('li');
+    expect(react).toHaveTextContent('Cumple');
+    expect(screen.getByText('Node.js').closest('li')).toHaveTextContent('Falta');
+  });
+
+  it('marca las postulaciones pendientes con un número en la pestaña', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      isAuthenticated: true,
+      cargando: false,
+    });
+    obtenerPostulaciones.mockResolvedValue([
+      { id: 'p-1', idProyecto: 'proyecto-1', idPerfil: 'perfil-1', estado: 'PENDIENTE' },
+      { id: 'p-2', idProyecto: 'proyecto-1', idPerfil: 'perfil-1', estado: 'PENDIENTE' },
+    ]);
+
+    render(<DetalleProyecto />);
+
+    expect(await screen.findByRole('tab', { name: /Postulaciones.*2 pendientes/ })).toBeInTheDocument();
   });
 });

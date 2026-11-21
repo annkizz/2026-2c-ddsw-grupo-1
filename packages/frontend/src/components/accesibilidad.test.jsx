@@ -7,12 +7,10 @@ import { ThemeProvider } from '@mui/material';
 import { Button } from '@mui/material';
 import { crearTema } from '../theme/crearTema';
 import { tokensBase } from '../designTokens';
-import { ModoColorProvider } from '../theme/ModoColorContext.jsx';
 import EncabezadoPagina from './EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from './AlertaError/AlertaError.jsx';
 import EstadoVacio from './EstadoVacio/EstadoVacio.jsx';
 import ResumenErrores from './ResumenErrores/ResumenErrores.jsx';
-import BotonModoDaltonico from './BotonModoDaltonico/BotonModoDaltonico.jsx';
 import PasosRegistro from './PasosRegistro/PasosRegistro.jsx';
 import CustomSelect from './CustomSelect/CustomSelect';
 import CardProyecto from './CardProyecto/CardProyecto.jsx';
@@ -42,11 +40,9 @@ const opcionesAxe = { rules: { 'color-contrast': { enabled: false }, region: { e
 const renderizar = (ui) =>
   render(
     <MemoryRouter>
-      <ModoColorProvider>
-        <ThemeProvider theme={crearTema(tokensBase)}>
-          <main>{ui}</main>
-        </ThemeProvider>
-      </ModoColorProvider>
+      <ThemeProvider theme={crearTema(tokensBase)}>
+        <main>{ui}</main>
+      </ThemeProvider>
     </MemoryRouter>
   );
 
@@ -105,10 +101,9 @@ describe('Accesibilidad de componentes compartidos (jest-axe)', () => {
     await sinViolaciones(container);
   });
 
-  it('BotonModoDaltonico, PasosRegistro y ChipEstado', async () => {
+  it('PasosRegistro y ChipEstado', async () => {
     const { container } = renderizar(
       <>
-        <BotonModoDaltonico />
         <PasosRegistro pasos={['Tus datos', 'Habilidades', 'Contacto']} actual={2} />
         <ChipEstado estado="ACTIVO" />
         <ChipEstado estado="FINALIZADO" />

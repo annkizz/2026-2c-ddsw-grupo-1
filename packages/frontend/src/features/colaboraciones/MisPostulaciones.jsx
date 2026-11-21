@@ -44,7 +44,6 @@ const MisPostulaciones = () => {
       <header className="mis-colaboraciones-intro">
         <div>
           <h1>{t('misPostulaciones.titulo')}</h1>
-          <p>{t('misPostulaciones.subtitulo')}</p>
         </div>
       </header>
       {cargando ? (

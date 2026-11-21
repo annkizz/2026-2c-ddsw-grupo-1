@@ -15,7 +15,7 @@ import {
   TextField,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { FiAlertCircle, FiCheck, FiKey, FiLock, FiSave, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiKey, FiLock, FiMail, FiSave, FiStar, FiTrash2, FiUser } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
@@ -192,10 +192,10 @@ const MiPerfil = () => {
 
   const secciones = useMemo(
     () => [
-      ['cuenta', 'Cuenta'],
-      ['perfil', 'Perfil'],
-      [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? 'Habilidades' : 'Áreas de trabajo'],
-      ['contacto', 'Contacto'],
+      ['cuenta', 'Cuenta', FiKey],
+      ['perfil', 'Perfil', FiUser],
+      [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? 'Habilidades' : 'Áreas de trabajo', FiStar],
+      ['contacto', 'Medios de contacto', FiMail],
     ],
     [esColaboradora],
   );
@@ -385,34 +385,37 @@ const MiPerfil = () => {
 
   return (
     <div className={`contenedor-pagina mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
-      <EncabezadoPagina
-        titulo={titulo}
-        subtitulo={t('miPerfil.manteneTusDatosAlDia')}
-        migas={migas}
-      />
+      <EncabezadoPagina titulo={titulo} migas={migas} />
 
-      <div className={`mi-perfil-disposicion${esColaboradora ? '' : ' mi-perfil-disposicion--sin-nav'}`}>
-        {esColaboradora && (
-          <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
-            <p className="mi-perfil-nav__titulo">{t('miPerfil.miCuenta')}</p>
-            {secciones.map(([id, etiqueta]) => (
-              <Button
-                variant="text"
-                type="button"
-                key={id}
-                className={`mi-perfil-nav__opcion${seccionActiva === id ? ' activo' : ''}`}
-                onClick={() => {
-                  setSeccionActiva(id);
-                  document.getElementById(`mi-perfil-${id}`)?.scrollIntoView?.({ block: 'start' });
-                }}
-                aria-current={seccionActiva === id ? 'location' : undefined}
-              >
-                {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
-              </Button>
-            ))}
-            <p className="texto-secundario">Tus datos, bajo tu control.</p>
-          </nav>
-        )}
+      {/* Una sección a la vez (panel lateral): el formulario completo era demasiado largo. */}
+      <div className="mi-perfil-disposicion">
+        <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
+          <ul className="lateral-nav">
+            {secciones.map(([id, etiqueta, Icono]) => {
+              const erroresSeccion = Object.values(errores).filter((detalle) => detalle.seccion === id).length;
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className="lateral-nav__item"
+                    onClick={() => setSeccionActiva(id)}
+                    aria-current={seccionActiva === id ? 'location' : undefined}
+                  >
+                    <Icono aria-hidden="true" />
+                    <span>{etiqueta}</span>
+                    {erroresSeccion > 0 && (
+                      <span className="insignia insignia--error">
+                        <FiAlertCircle aria-hidden="true" />
+                        {erroresSeccion}
+                        <span className="visualmente-oculto"> {erroresSeccion === 1 ? 'campo para revisar' : 'campos para revisar'}</span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
         <div className="mi-perfil-contenido">
           {cantidadErrores > 0 && (
@@ -422,14 +425,18 @@ const MiPerfil = () => {
               intento={intentoResumen}
               onIr={(detalle) => {
                 setSeccionActiva(detalle.seccion);
-                const campo = document.getElementById(detalle.id);
-                campo?.scrollIntoView?.({ block: 'center' });
-                campo?.focus();
+                // La sección se monta en el próximo render: recién ahí existe el campo.
+                window.setTimeout(() => {
+                  const campo = document.getElementById(detalle.id);
+                  campo?.scrollIntoView?.({ block: 'center' });
+                  campo?.focus();
+                }, 0);
               }}
             />
           )}
 
           <form className="mi-perfil-formulario" onSubmit={guardar} noValidate>
+            {seccionActiva === 'cuenta' && (
             <section className="mi-perfil-tarjeta" id="mi-perfil-cuenta" aria-labelledby="mi-perfil-cuenta-titulo">
               <h2 id="mi-perfil-cuenta-titulo">Cuenta</h2>
               <TextField
@@ -460,7 +467,9 @@ const MiPerfil = () => {
                 </Button>
               </div>
             </section>
+            )}
 
+            {seccionActiva === 'perfil' && (
             <section className="mi-perfil-tarjeta" id="mi-perfil-perfil" aria-labelledby="mi-perfil-perfil-titulo">
               <h2 id="mi-perfil-perfil-titulo">Perfil</h2>
               {esColaboradora ? (
@@ -579,7 +588,9 @@ const MiPerfil = () => {
                 </>
               )}
             </section>
+            )}
 
+            {(seccionActiva === 'habilidades' || seccionActiva === 'areas') && (
             <section
               className="mi-perfil-tarjeta"
               id={`mi-perfil-${esColaboradora ? 'habilidades' : 'areas'}`}
@@ -618,19 +629,26 @@ const MiPerfil = () => {
                 textoVacio={listado.cargando ? 'Cargando opciones…' : 'No hay coincidencias.'}
               />
             </section>
+            )}
 
-            <section className="mi-perfil-tarjeta" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
-              <h2 id="mi-perfil-contacto-titulo">Contacto</h2>
-              <Alert severity="info" icon={<FiLock aria-hidden="true" />}>
-                Tus medios de contacto son privados y no se muestran públicamente.
-              </Alert>
-              {datos.medios.length > 0 && (
-                <ul className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
+            {seccionActiva === 'contacto' && (
+            <section className="mi-perfil-tarjeta medios-contacto" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
+              <h2 id="mi-perfil-contacto-titulo">Medios de contacto</h2>
+              <p className="medios-contacto__intro">{t('medios.intro')}</p>
+              <p className="medios-contacto__privado">
+                <FiLock aria-hidden="true" /> {t('medios.privado')}
+              </p>
+              {datos.medios.length === 0 ? (
+                <p className="medios-contacto__vacio">{t('medios.vacio')}</p>
+              ) : (
+                <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
                   {datos.medios.map((medio, indice) => (
-                    <li className="medios-fila" key={`${indice}-${medio.tipo}`}>
+                    <li className="medios-item" key={`${indice}-${medio.tipo}`}>
+                      <p className="medios-item__titulo">{t('medios.numero', { numero: indice + 1 })}</p>
+                      <div className="medios-fila">
                       <TextField
                         id={`medio-tipo-${indice}`}
-                        label="Tipo"
+                        label={t('medios.tipo')}
                         select
                         value={medio.tipo}
                         onChange={(e) => cambiarMedio(indice, { tipo: e.target.value })}
@@ -659,9 +677,10 @@ const MiPerfil = () => {
                       >
                         <FiTrash2 aria-hidden="true" />
                       </IconButton>
+                      </div>
                     </li>
                   ))}
-                </ul>
+                </ol>
               )}
               <div>
                 <AgregarMedioContactoButton
@@ -678,6 +697,7 @@ const MiPerfil = () => {
                 label="Quiero recibir mensajes internos sobre proyectos relacionados con mi perfil."
               />
             </section>
+            )}
 
             {errorServidor && (
               <Alert className="mi-perfil-estado" severity="error" role="alert">

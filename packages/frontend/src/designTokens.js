@@ -1,110 +1,97 @@
 // Única fuente de verdad del sistema visual.
-// - tokensBase: modo normal (todos los tokens).
-// - tokensDaltonico: modo daltónico, solo sobrescribe colores.
 // Los valores se inyectan como variables CSS en :root (GlobalStyles en App.jsx)
 // y el tema MUI se arma con los mismos valores (theme/crearTema.js).
-// Contrastes y ΔE validados con scripts/validar_paletas.py (ver CAMBIOS-UI.md).
+//
+// Paleta: azul (primario) + naranja (complementario). Es el par que recomiendan las guías de
+// diseño para daltonismo (Okabe & Ito, "Color Universal Design"; Datawrapper; data.europa.eu):
+// se distingue con protanopia, deuteranopia y tritanopia, así que no hace falta un "modo daltónico".
+// Igual, el color NUNCA es la única señal (WCAG 1.4.1): estados con ícono + texto,
+// enlaces subrayados, foco con anillo, sección actual con barra, errores con ícono.
+// Contrastes (WCAG 2.x, sobre blanco): primario 6.7:1, complementario 5.4:1, texto 15:1,
+// texto secundario 7.5:1, borde de controles 4.8:1.
 
-const coloresBase = {
-  // Neutros (60 %)
-  '--color-background': '#F7F8F5',
+const colores = {
+  // Neutros
+  '--color-background': '#F6F7FB',
   '--color-surface': '#FFFFFF',
-  '--color-text': '#1F2937',
-  '--color-muted': '#4B5563',
-  '--color-text-subtle': '#4B5563',
+  '--color-surface-alt': '#EEF1F7',
+  '--color-text': '#172033',
+  '--color-muted': '#4A5568',
+  '--color-text-subtle': '#4A5568',
   '--color-text-disabled': '#6B7280',
   '--color-border': '#6B7280',
-  '--color-border-subtle': '#E5E7EB',
+  '--color-border-subtle': '#DDE2EC',
   '--color-disabled-background': '#E5E7EB',
 
-  // Primario (30 %)
-  '--color-primary': '#0F766E',
-  '--color-primary-hover': '#115E59',
-  '--color-primary-tint': '#F0FDFA',
-  '--color-primary-tint-strong': '#CCFBF1',
+  // Superficie de marca (header, portada): azul noche
+  '--color-brand': '#0B2545',
+  '--color-brand-2': '#13315C',
+  '--color-on-brand': '#FFFFFF',
+  '--color-on-brand-muted': '#C7D3E6',
+
+  // Primario: azul (acciones, enlaces, foco)
+  '--color-primary': '#0B5CAD',
+  '--color-primary-hover': '#084A8C',
+  '--color-primary-tint': '#EAF2FB',
+  '--color-primary-tint-strong': '#CFE2F6',
   '--color-on-primary': '#FFFFFF',
 
-  // Acento (10 %, solo CTA puntuales)
-  '--color-secondary': '#C2410C',
-  '--color-secondary-hover': '#9A3412',
-  '--color-secondary-tint': '#FFF7ED',
+  // Complementario: naranja (CTA principal, sección activa, insignias, destacados)
+  '--color-secondary': '#B54708',
+  '--color-secondary-hover': '#93370D',
+  '--color-secondary-tint': '#FFF1E6',
+  '--color-secondary-tint-strong': '#FFD8B5',
   '--color-on-secondary': '#FFFFFF',
+  // Naranja claro de relleno: siempre con texto oscuro (7.6:1) o sobre azul noche (7.2:1)
+  '--color-accent': '#F59E0B',
+  '--color-on-accent': '#172033',
 
   // Semánticos (siempre con ícono + texto)
-  '--color-success': '#166534',
-  '--color-success-tint': '#F0FDF4',
+  '--color-success': '#146C43',
+  '--color-success-tint': '#ECF8F1',
   '--color-on-success': '#FFFFFF',
-  '--color-error': '#9F1239',
-  '--color-error-hover': '#881337',
-  '--color-error-tint': '#FFF1F2',
+  '--color-error': '#B42318',
+  '--color-error-hover': '#912018',
+  '--color-error-tint': '#FEF0EE',
   '--color-on-error': '#FFFFFF',
-  '--color-warning': '#92400E',
-  '--color-warning-tint': '#FEF3C7',
+  '--color-warning': '#8A4B00',
+  '--color-warning-tint': '#FFF6E0',
   '--color-on-warning': '#FFFFFF',
-  '--color-info': '#0369A1',
-  '--color-info-tint': '#F0F9FF',
+  '--color-info': '#0B5CAD',
+  '--color-info-tint': '#EAF2FB',
   '--color-on-info': '#FFFFFF',
 
   // Foco
-  '--color-focus': '#0F766E',
-  '--color-focus-on-dark': '#FFFFFF',
+  '--color-focus': '#0B5CAD',
+  '--color-focus-on-dark': '#F59E0B',
 
-  // Mapa coroplético (escala secuencial de un tono)
+  // Mapa coroplético (escala secuencial de un tono: se lee por claridad, no por matiz)
   '--color-map-empty': '#E5E7EB',
-  '--color-map-1': '#F0FDFA',
-  '--color-map-2': '#99F6E4',
-  '--color-map-3': '#2DD4BF',
-  '--color-map-4': '#0D9488',
-  '--color-map-5': '#115E59',
+  '--color-map-1': '#EAF2FB',
+  '--color-map-2': '#B7D3EC',
+  '--color-map-3': '#74A9D8',
+  '--color-map-4': '#2F78BA',
+  '--color-map-5': '#0B4A86',
   '--color-map-stroke': '#6B7280',
 
   // Esqueletos de carga y velos
   '--color-skeleton': '#E5E7EB',
-  '--color-overlay': 'rgba(31, 41, 55, 0.5)'
-};
-
-const coloresDaltonico = {
-  '--color-primary': '#0072B2',
-  '--color-primary-hover': '#005A8C',
-  '--color-primary-tint': '#EAF3F9',
-  '--color-primary-tint-strong': '#CFE3F2',
-
-  '--color-secondary': '#9E0E94',
-  '--color-secondary-hover': '#7A0B72',
-  '--color-secondary-tint': '#FBEAF9',
-
-  '--color-success': '#0B7686',
-  '--color-success-tint': '#F0F8F9',
-  '--color-error': '#861427',
-  '--color-error-hover': '#6B0F1F',
-  '--color-error-tint': '#FBEAEC',
-  '--color-warning': '#816403',
-  '--color-warning-tint': '#FAF3D9',
-  '--color-info': '#013C9A',
-  '--color-info-tint': '#E8EEF9',
-
-  '--color-focus': '#0072B2',
-
-  '--color-map-1': '#EAF3F9',
-  '--color-map-2': '#B7D3EC',
-  '--color-map-3': '#74A9D8',
-  '--color-map-4': '#2F78BA',
-  '--color-map-5': '#0B4A86'
+  '--color-overlay': 'rgba(11, 37, 69, 0.55)'
 };
 
 const resto = {
-  // Tipografía: una familia, tres pesos
-  '--font-family-body': "'DM Sans', system-ui, sans-serif",
-  '--font-family-heading': 'var(--font-family-body)',
+  // Tipografía: títulos con personalidad, cuerpo legible
+  '--font-family-body': "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  '--font-family-heading': "'Space Grotesk', 'Inter', system-ui, sans-serif",
   '--font-weight-regular': '400',
-  '--font-weight-medium': '500',
+  '--font-weight-medium': '600',
   '--font-weight-bold': '700',
-  '--font-size-xs': '12px',
+  '--font-size-xs': '13px',
   '--font-size-sm': '14px',
   '--font-size-md': '16px',
   '--font-size-lg': '20px',
   '--font-size-xl': '24px',
-  '--font-size-2xl': '32px',
+  '--font-size-2xl': '34px',
   '--font-size-2xl-movil': '28px',
   // Escala semántica
   '--font-size-h1': 'var(--font-size-2xl)',
@@ -114,9 +101,9 @@ const resto = {
   '--font-size-body': 'var(--font-size-md)',
   '--font-size-secundario': 'var(--font-size-sm)',
   '--font-size-caption': 'var(--font-size-xs)',
-  '--line-height-body': '1.5',
-  '--line-height-heading': '1.25',
-  '--letter-spacing-heading': '-0.01em',
+  '--line-height-body': '1.55',
+  '--line-height-heading': '1.2',
+  '--letter-spacing-heading': '-0.02em',
 
   // Espaciado: múltiplos de 8
   '--space-1': '8px',
@@ -137,36 +124,37 @@ const resto = {
   '--icon-size-lg': '24px',
   '--icon-size-xl': '48px',
   '--avatar-size': '64px',
-  // Ajuste óptico: alinea íconos de 16px con la primera línea de texto (no es espaciado).
   '--icon-alineacion': '2px',
   '--logo-size': '40px',
   '--logo-size-movil': '32px',
-  '--progress-height': '8px',
+  '--progress-height': '10px',
   '--map-max-width': '560px',
-  '--layout-max-width': '1280px',
+  '--layout-max-width': '1240px',
   '--content-max-width': '1120px',
-  '--form-max-width': '720px',
-  '--reading-max-width': '640px',
-  '--dialog-max-width': '560px',
+  '--form-max-width': '760px',
+  '--reading-max-width': '680px',
+  '--dialog-max-width': '600px',
   '--drawer-width': '360px',
   '--card-min-width': '280px',
-  '--sidebar-width': '320px',
+  '--sidebar-width': '280px',
+  '--header-height': '68px',
 
   // Bordes y radios
   '--border-width': '1px',
   '--border-width-strong': '2px',
-  '--focus-ring-width': '2px',
+  '--focus-ring-width': '3px',
   '--focus-ring-offset': '2px',
   '--underline-offset': '4px',
-  '--radius-sm': '4px',
-  '--radius-md': '8px',
-  '--radius-lg': '12px',
+  '--indicator-height': '4px',
+  '--radius-sm': '6px',
+  '--radius-md': '10px',
+  '--radius-lg': '16px',
   '--radius-pill': '9999px',
 
   // Sombras
-  '--shadow-sm': '0 1px 3px rgba(31, 41, 55, 0.12)',
-  '--shadow-md': '0 4px 12px rgba(31, 41, 55, 0.16)',
-  '--shadow-lg': '0 12px 32px rgba(31, 41, 55, 0.2)',
+  '--shadow-sm': '0 1px 2px rgba(11, 37, 69, 0.08), 0 1px 3px rgba(11, 37, 69, 0.06)',
+  '--shadow-md': '0 6px 16px rgba(11, 37, 69, 0.12)',
+  '--shadow-lg': '0 16px 40px rgba(11, 37, 69, 0.18)',
 
   // Capas
   '--z-sticky': '1100',
@@ -177,7 +165,7 @@ const resto = {
   '--z-skip-link': '1600',
 
   // Movimiento
-  '--transition-fast': '180ms',
+  '--transition-fast': '160ms',
   '--transition-standard': '220ms',
   '--transition-easing': 'ease',
 
@@ -188,12 +176,6 @@ const resto = {
   '--breakpoint-xl': '1536px'
 };
 
-export const tokensBase = { ...coloresBase, ...resto };
-
-// Solo colores: el resto se hereda de tokensBase.
-export const tokensDaltonico = coloresDaltonico;
-
-export const tokensDelModo = (modo) =>
-  modo === 'daltonico' ? { ...tokensBase, ...tokensDaltonico } : tokensBase;
+export const tokensBase = { ...colores, ...resto };
 
 export default tokensBase;

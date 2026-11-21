@@ -113,7 +113,6 @@ const ListaProyectos = () => {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo={esColectivo ? t('proyectos.titulo') : t('proyectos.tituloPublico')}
-        subtitulo={esColectivo ? t('proyectos.subtitulo') : t('proyectos.subtituloPublico')}
         accion={botonCrear}
         migas={esColectivo ? [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('proyectos.titulo') }] : undefined}
       />

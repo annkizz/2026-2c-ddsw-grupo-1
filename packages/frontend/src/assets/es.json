@@ -1,7 +1,6 @@
 {
   "proyectos": {
     "titulo": "Mis proyectos",
-    "subtitulo": "Administrá los proyectos de tu colectivo y mirá cómo avanzan",
     "crearProyecto": "Crear proyecto",
     "buscarTitulo": "Buscar por título",
     "placeholderBusqueda": "Escribí el título del proyecto",
@@ -43,7 +42,6 @@
     "perfilesRequeridos": "Perfiles requeridos: {cantidad}",
     "cerrar": "Cerrar",
     "tituloPublico": "Proyectos",
-    "subtituloPublico": "Conocé los proyectos de los colectivos y encontrá dónde sumarte",
     "unProyecto": "1 proyecto",
     "variosProyectos": "{cantidad} proyectos",
     "sinProyectos": "Todavía no cargaste proyectos",
@@ -58,7 +56,6 @@
   },
   "misColaboraciones": {
     "titulo": "Mis colaboraciones",
-    "subtitulo": "Seguí los proyectos activos en los que participás y mirá cómo avanzan.",
     "cargando": "Cargando tus colaboraciones…",
     "reintentar": "Reintentar",
     "vacioTitulo": "No tenés colaboraciones en proyectos activos",
@@ -73,7 +70,6 @@
   },
   "misPostulaciones": {
     "titulo": "Mis postulaciones",
-    "subtitulo": "Consultá el estado de tus postulaciones a proyectos.",
     "cargando": "Cargando tus postulaciones…",
     "vacioTitulo": "Todavía no tenés postulaciones",
     "vacioDescripcion": "Explorá los proyectos abiertos y encontrá dónde participar.",
@@ -105,9 +101,7 @@
     "volver": "Mis proyectos",
     "tituloCrear": "Crear proyecto",
     "tituloEditar": "Editar proyecto",
-    "subtitulo": "Contanos qué necesitás y cuándo",
     "cardDatos": "Datos del proyecto",
-    "subtituloDatos": "Los campos obligatorios están indicados.",
     "labelTitulo": "Título (obligatorio)",
     "placeholderTitulo": "Ej.: Huerta comunitaria en Lanús",
     "labelDescripcion": "Descripción (obligatoria)",
@@ -168,7 +162,14 @@
     "salirSinGuardar": "Salir sin guardar",
     "migaMisProyectos": "Mis proyectos",
     "datosConservados": "Tus datos siguen acá.",
-    "ubicacion": "Ubicación"
+    "ubicacion": "Ubicación",
+    "pasosEtiqueta": "Pasos para cargar el proyecto",
+    "pasoBasico": "Lo básico",
+    "pasoEtiquetas": "Etiquetas y ubicación",
+    "pasoFechas": "Fechas y búsqueda",
+    "pasoActual": "Paso {actual} de {total}: {titulo}",
+    "anterior": "Anterior",
+    "siguiente": "Siguiente: {titulo}"
   },
   "detalleProyecto": {
     "volverALista": "Volver a la lista",
@@ -233,7 +234,7 @@
     "perfilPostulacion": "Perfil: {perfil}",
     "fechaPostulacion": "Enviada el {fecha}",
     "postulacionAnonima": "La contribución se mostrará de forma anónima en el proyecto.",
-    "identidadAlAceptar": "La identidad y los datos de contacto se habilitan al aceptar.",
+    "identidadAlAceptar": "La identidad, los datos de contacto y qué habilidades cumple la persona se ven al aceptar.",
     "estadoPendiente": "Pendiente",
     "estadoAceptada": "Aceptada",
     "estadoRechazada": "Rechazada",
@@ -321,12 +322,22 @@
     "estadoBusqueda": "Estado de la búsqueda",
     "busquedaAbiertaChip": "Búsqueda abierta",
     "busquedaCerradaChip": "Búsqueda cerrada",
-    "proyectosMigas": "Proyectos"
+    "proyectosMigas": "Proyectos",
+    "pestanas": "Secciones del proyecto",
+    "pestanaResumen": "Resumen",
+    "pestanaPerfiles": "Perfiles",
+    "pestanaLogros": "Logros",
+    "pestanaPostulaciones": "Postulaciones",
+    "pestanaEquipo": "Equipo",
+    "descripcion": "Descripción",
+    "btnAdministrar": "Administrar",
+    "pendientesUna": "1 pendiente",
+    "pendientesVarias": "{cantidad} pendientes",
+    "tuCoincidencia": "Tu coincidencia con este perfil"
   },
   "perfilesProyecto": {
     "volverAlProyecto": "Volver al proyecto",
     "titulo": "Perfiles del proyecto",
-    "subtitulo": "Definí qué personas necesitás y cuánto tiempo pueden dedicar",
     "agregarPerfilBtn": "Agregar perfil",
     "editar": "Editar",
     "eliminar": "Eliminar",
@@ -439,18 +450,20 @@
   "errores": {
     "sinConexion": "No hay conexión con el servidor. Revisá tu conexión a internet e intentá de nuevo.",
     "sesionVencida": "Tu sesión venció. Iniciá sesión de nuevo para continuar; lo que estabas haciendo no se pierde.",
-    "sinPermisos": "Tu cuenta no tiene permiso para hacer esto. Si creés que es un error, volvé a iniciar sesión.",
+    "sinPermisos": "Tu cuenta no tiene permiso para hacer esto.",
     "noEncontrado": "No encontramos lo que buscás. Puede que se haya eliminado o que el enlace haya cambiado.",
     "validacion": "Algunos datos no son válidos. Revisá los campos marcados e intentá de nuevo.",
     "conflicto": "Los datos cambiaron mientras trabajabas. Actualizá la página e intentá de nuevo.",
     "servidor": "El servidor tuvo un problema. Intentá de nuevo en unos minutos.",
-    "inesperado": "Ocurrió un error inesperado. Intentá de nuevo; si sigue pasando, recargá la página."
-  },
-  "modoColor": {
-    "boton": "Modo daltónico",
-    "botonActivado": "Modo daltónico: activado",
-    "anuncioActivado": "Modo daltónico activado",
-    "anuncioDesactivado": "Modo daltónico desactivado"
+    "inesperado": "Ocurrió un error inesperado. Intentá de nuevo; si sigue pasando, recargá la página.",
+    "codigo": "Código de error:",
+    "etiquetaCodigo": "Error {codigo}",
+    "titulo401": "Necesitás iniciar sesión",
+    "descripcion401": "Para ver esta página tenés que ingresar con tu cuenta.",
+    "titulo403": "Esta sección no está disponible para tu cuenta",
+    "descripcion403": "La página existe, pero es para otro tipo de cuenta. Desde el inicio ves todo lo que tenés disponible.",
+    "titulo404": "No encontramos esta página",
+    "descripcion404": "Puede que el enlace esté mal escrito o que la página ya no exista."
   },
   "navegacion": {
     "principal": "Navegación principal",
@@ -471,7 +484,15 @@
     "buscarProyectos": "Buscar proyectos",
     "mapa": "Mapa",
     "pie": "Desde Argentina, en comunidad.",
-    "preferencias": "Preferencias de visualización"
+    "misProyectos": "Mis proyectos",
+    "buscarColaboradoras": "Buscar colaboradoras",
+    "notificacionesUna": "Notificaciones: 1 sin ver",
+    "notificacionesVarias": "Notificaciones: {cantidad} sin ver",
+    "logoInicio": "Código a Voluntad, ir al inicio",
+    "miCuenta": "Mi cuenta",
+    "menuUsuario": "Menú de usuario",
+    "sinVer": "sin ver",
+    "sinVerUna": "sin ver"
   },
   "formulario": {
     "resumenUno": "Revisá 1 campo antes de continuar",
@@ -489,7 +510,6 @@
   },
   "notificaciones": {
     "titulo": "Notificaciones",
-    "subtitulo": "Acá vas a ver las novedades de tus proyectos y postulaciones.",
     "vacioTitulo": "Aún no recibiste notificaciones",
     "vacioDescripcion": "Cuando haya novedades sobre tus proyectos o postulaciones, las vas a ver en esta pantalla.",
     "irAlInicio": "Ir al inicio",
@@ -502,16 +522,14 @@
     "de": "De {nombre}",
     "para": "Para {nombre}",
     "usuario": "Usuario",
-    "noLeida": "Notificación no leída",
     "postulacionAceptada": "Postulación aceptada",
     "postulacionRechazada": "Postulación rechazada",
     "invitacion": "Invitación a postularte",
     "verMisColaboraciones": "Ver mis colaboraciones",
-    "verProyecto": "Ver proyecto"
+    "verProyecto": "Ver proyecto",
+    "nueva": "Nueva"
   },
   "acceso": {
-    "denegadoTitulo": "No tenés acceso a esta sección",
-    "denegadoDescripcion": "Esta sección es para otro tipo de cuenta. Desde el inicio podés ver lo que tenés disponible.",
     "verificandoSesion": "Conectando…",
     "validandoPermisos": "Validando permisos…",
     "errorSesionTitulo": "No pudimos verificar tu sesión con el servidor",
@@ -522,7 +540,6 @@
     "perfilGuardado": "Perfil guardado",
     "cargandoTuPerfil": "Cargando tu perfil…",
     "noPudimosCargarTuPerfil": "No pudimos cargar tu perfil",
-    "manteneTusDatosAlDia": "Mantené tus datos al día para que la comunidad pueda encontrarte. Los campos obligatorios están indicados.",
     "ejNombrePublico": "Ej.: Luna Código",
     "ejUsuarioGithub": "Ej.: luna-codigo",
     "ejLucia": "Ej.: Lucía",
@@ -537,7 +554,6 @@
     "numeroConCodigoDePais": "Número con código de país",
     "ejEmail": "Ej.: nombre@dominio.com",
     "ejTelefono": "Ej.: +54 9 11 4567 8901",
-    "miCuenta": "Mi cuenta",
     "tusDatosSiguenAcaPodes": "Tus datos siguen acá. Podés volver a intentarlo con “Guardar cambios”.",
     "vasAPerderLosCambios": "Vas a perder los cambios que no guardaste. Esta acción no se puede deshacer."
   },
@@ -640,5 +656,20 @@
     "datosDelPerfil": "Datos del perfil",
     "personaColaboradora": "Persona colaboradora",
     "tituloPerfilDe": "Perfil de {tipo}"
+  },
+  "coincidencias": {
+    "ninguna": "Ninguna",
+    "cumple": "Cumple",
+    "falta": "Falta",
+    "resumenVos": "Tenés {cumple} de {total} habilidades requeridas y {opcionales} de {totalOpcionales} opcionales.",
+    "resumenPersona": "Cumple {cumple} de {total} habilidades requeridas y {opcionales} de {totalOpcionales} opcionales.",
+    "cargandoPersona": "Comparando con las habilidades de la persona…"
+  },
+  "medios": {
+    "intro": "Son las formas en que un colectivo te puede escribir cuando acepta tu postulación. Agregá uno o más: email, WhatsApp o SMS.",
+    "privado": "Son privados: solo los ve el colectivo que acepta tu postulación.",
+    "vacio": "Todavía no agregaste ningún medio de contacto.",
+    "numero": "Medio de contacto {numero}",
+    "tipo": "Tipo de medio"
   }
 }

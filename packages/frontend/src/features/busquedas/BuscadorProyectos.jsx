@@ -212,11 +212,14 @@ export default function BuscadorProyectos() {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo="Buscar proyectos"
-        subtitulo={t('buscadorProyectos.encontraProyectosEnLosQue')}
         migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Buscar proyectos" }]}
       />
 
-      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
+      {/* Filtros en un panel lateral: la página ya no queda larga antes de llegar a los resultados. */}
+      <div className="con-lateral buscador-disposicion">
+      <aside className="lateral">
+      <div className="filtros filtros--busqueda filtros--lateral" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
+        <h2 className="filtros__titulo">Filtros</h2>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
@@ -314,8 +317,8 @@ export default function BuscadorProyectos() {
           >
             Limpiar filtros
           </Button>
-          <Button variant="contained" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
-            Buscar proyectos
+          <Button variant="contained" color="secondary" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
+            Buscar
           </Button>
         </div>
 
@@ -343,7 +346,9 @@ export default function BuscadorProyectos() {
           </p>
         )}
       </div>
+      </aside>
 
+      <div className="buscador-resultados">
       {!filtrosAplicados && (
         <section className="resultados" aria-labelledby="recomendados-titulo">
           <div className="resultados__encabezado">
@@ -353,7 +358,7 @@ export default function BuscadorProyectos() {
               </h2>
               <p className="resultados__bajada">
                 {idColaboradora
-                  ? "Proyectos activos que coinciden con tus habilidades. Usá los filtros y presioná Buscar para ver más."
+                  ? "Coinciden con tus habilidades. Usá los filtros para ver más."
                   : esColectivo
                     ? "Como colectivo podés buscar proyectos activos; las recomendaciones por habilidades son para colaboradoras."
                     : "Iniciá sesión como colaboradora para ver recomendaciones según tus habilidades. Mientras tanto, podés buscar proyectos activos."}
@@ -468,6 +473,8 @@ export default function BuscadorProyectos() {
           )}
         </section>
       )}
+      </div>
+      </div>
     </div>
   );
 }

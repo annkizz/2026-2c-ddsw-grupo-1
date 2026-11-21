@@ -71,7 +71,6 @@ const DashboardColaboradora = () => {
           id="dashboard-titulo"
           antetitulo={t('inicio.tuEspacioDeColaboradora')}
           titulo="Encontrá un proyecto para aportar"
-          subtitulo="Explorá oportunidades según tus habilidades o buscá por ubicación."
         />
 
         <div className="dashboard-grid">
@@ -79,10 +78,11 @@ const DashboardColaboradora = () => {
             className="dashboard-card--destacada"
             icon={<FiSearch />}
             title="Buscar proyectos"
-            description="Revisá proyectos activos y usá filtros para encontrar una oportunidad."
+            description="Filtrá por habilidades, etiquetas, colectivo o provincia."
           >
             <Button
               variant="contained"
+              color="secondary"
               onClick={() => navigate('/buscar-proyectos')}
               startIcon={<FiSearch aria-hidden="true" />}
             >
@@ -105,10 +105,7 @@ const DashboardColaboradora = () => {
         <section className="dashboard-recomendaciones" aria-labelledby="recomendaciones-titulo">
           <div className="dashboard-recomendaciones__encabezado">
             <h2 id="recomendaciones-titulo">Recomendados para vos</h2>
-            <p>
-              Proyectos que coinciden con las habilidades de tu perfil. Podés ajustar la búsqueda en
-              cualquier momento.
-            </p>
+            <p>Coinciden con las habilidades de tu perfil.</p>
           </div>
 
           {!idColaborador ? (

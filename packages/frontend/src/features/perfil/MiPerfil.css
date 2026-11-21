@@ -1,7 +1,7 @@
 /* Mi perfil: navegación de secciones (colaboradora) + formulario en tarjetas */
 .mi-perfil-disposicion {
   display: grid;
-  grid-template-columns: minmax(0, var(--card-min-width)) minmax(0, var(--form-max-width));
+  grid-template-columns: var(--sidebar-width) minmax(0, var(--form-max-width));
   align-items: start;
   gap: var(--space-4);
 }
@@ -12,35 +12,7 @@
 
 .mi-perfil-nav {
   position: sticky;
-  top: calc(var(--space-8) + var(--space-3));
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  border: var(--border-width) solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-}
-
-.mi-perfil-nav__titulo {
-  padding: 0 var(--space-1);
-  color: var(--color-muted);
-  font-size: var(--font-size-secundario);
-  font-weight: var(--font-weight-medium);
-}
-
-.mi-perfil-nav__opcion.MuiButton-root {
-  justify-content: flex-start;
-  width: 100%;
-}
-
-.mi-perfil-nav__opcion.activo.MuiButton-root {
-  background: var(--color-primary-tint);
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
-  text-decoration: underline;
-  text-decoration-thickness: var(--border-width-strong);
-  text-underline-offset: var(--underline-offset);
+  top: calc(var(--header-height) + var(--space-3));
 }
 
 .mi-perfil-contenido,
@@ -97,12 +69,6 @@
 
   .mi-perfil-nav {
     position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .mi-perfil-nav__opcion.MuiButton-root {
-    width: auto;
   }
 }
 

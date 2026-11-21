@@ -8,6 +8,7 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import { t } from '../../i18n/t';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
+import { leerVistas, marcarVistas } from '../../hooks/useNotificacionesPendientes.js';
 import './Notificaciones.css';
 
 const LIMITE_POR_PAGINA = 8;
@@ -46,7 +47,7 @@ const fechaVisible = (fecha) => {
   if (Number.isNaN(date.getTime())) return null;
   return {
     iso: date.toISOString(),
-    texto: date.toLocaleString(),
+    texto: date.toLocaleString('es-AR', { dateStyle: 'long', timeStyle: 'short' }),
   };
 };
 
@@ -60,6 +61,8 @@ const Notificaciones = () => {
   const [error, setError] = useState(null);
   const [errorMas, setErrorMas] = useState(null);
   const [intento, setIntento] = useState(0);
+  const [nuevasAlEntrar, setNuevasAlEntrar] = useState(0);
+  const usuarioId = sesion?.usuarioId ?? sesion?.idColectivo ?? sesion?.idColaborador;
 
   useEffect(() => {
     let vigente = true;
@@ -84,6 +87,11 @@ const Notificaciones = () => {
         setNotificaciones(resultado.notificaciones);
         setPagina(resultado.pag);
         setTotalPaginas(resultado.totalPags);
+        // Las más recientes que todavía no habías visto se marcan como "Nueva" y el contador del header vuelve a 0.
+        if (usuarioId && Number.isFinite(resultado.total)) {
+          setNuevasAlEntrar(Math.max(0, resultado.total - leerVistas(usuarioId)));
+          marcarVistas(usuarioId, resultado.total);
+        }
       } catch (e) {
         if (vigente) setError(e);
       } finally {
@@ -95,7 +103,7 @@ const Notificaciones = () => {
     return () => {
       vigente = false;
     };
-  }, [getAccessToken, intento]);
+  }, [getAccessToken, intento, usuarioId]);
 
   const cargarMas = async () => {
     if (cargandoMas || cargando || pagina >= totalPaginas) return;
@@ -131,7 +139,6 @@ const Notificaciones = () => {
       <div className="notificaciones-contenedor">
         <EncabezadoPagina
           titulo={t('notificaciones.titulo')}
-          subtitulo={t('notificaciones.subtitulo')}
           migas={[
             { texto: t('navegacion.inicio'), to: '/' },
             { texto: t('notificaciones.titulo') },
@@ -165,7 +172,8 @@ const Notificaciones = () => {
         ) : (
           <>
             <ul className="notificaciones-lista" aria-label={t('notificaciones.titulo')}>
-              {notificaciones.map((notificacion) => {
+              {notificaciones.map((notificacion, indice) => {
+                const esNueva = indice < nuevasAlEntrar;
                 const fecha = fechaVisible(notificacion.fecha);
                 const accion = enlaceAccion(notificacion);
                 const contraparte = esColectivo
@@ -179,7 +187,7 @@ const Notificaciones = () => {
 
                 return (
                   <li
-                    className={`notificaciones-item${notificacion.leida ? '' : ' notificaciones-item-no-leida'}`}
+                    className={`notificaciones-item${esNueva ? ' notificaciones-item-no-leida' : ''}`}
                     key={notificacion.id}
                   >
                     <span className="notificaciones-avatar" aria-hidden="true">
@@ -189,7 +197,10 @@ const Notificaciones = () => {
                       )?.slice(0, 1).toUpperCase() ?? <FiBell />}
                     </span>
                     <div className="notificaciones-contenido">
-                      <p className="notificaciones-contraparte">{contraparte}</p>
+                      <p className="notificaciones-contraparte">
+                        {esNueva && <span className="insignia insignia--acento notificaciones-nueva">{t('notificaciones.nueva')}</span>}
+                        {contraparte}
+                      </p>
                       {tipo && <p className="notificaciones-tipo">{tipo}</p>}
                       <p>{notificacion.contenido}</p>
                       {fecha && <time dateTime={fecha.iso}>{fecha.texto}</time>}
@@ -209,9 +220,6 @@ const Notificaciones = () => {
                         </Link>
                       )}
                     </div>
-                    {!notificacion.leida && (
-                      <span className="notificaciones-punto" aria-label={t('notificaciones.noLeida')} />
-                    )}
                   </li>
                 );
               })}

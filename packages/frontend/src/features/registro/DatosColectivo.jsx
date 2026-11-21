@@ -112,7 +112,7 @@ const DatosColectivo = () => {
       }
 
       borrarTipo();
-      navigate('/perfil');
+      navigate('/', { replace: true });
     } catch (e) {
       setError(mensajeDeError(e, t('registro.noPudimosRegistrarElColectivo')));
     } finally {

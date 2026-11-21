@@ -4,29 +4,39 @@ import {
   Alert,
   AlertTitle,
   Button,
-  Chip,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   LinearProgress,
+  ListItemIcon,
+  Menu,
+  MenuItem,
   Switch,
+  Tab,
+  Tabs,
   TextField,
 } from '@mui/material';
 import {
   FiAlertCircle,
+  FiAward,
   FiBarChart2,
+  FiCheck,
   FiCheckCircle,
+  FiChevronDown,
   FiEdit2,
   FiExternalLink,
+  FiInbox,
+  FiInfo,
   FiLinkedin,
   FiLock,
   FiPlus,
   FiSearch,
   FiSend,
   FiSettings,
-  FiShield,
+  FiUserCheck,
   FiUsers,
+  FiX,
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import {
@@ -49,7 +59,13 @@ import { mensajeDeError } from '../../utils/mensajeDeError';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
 import { codigoDeError } from '../../service/api';
 import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
-import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
+import {
+  obtenerColaboradoraPorId,
+  obtenerMiPerfilColaboradora,
+  obtenerMisColaboraciones,
+} from '../../service/colaboradorasService';
+import CoincidenciaHabilidades from '../../components/CoincidenciaHabilidades/CoincidenciaHabilidades.jsx';
+import PaginaError from '../../components/PaginaError/PaginaError.jsx';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
@@ -119,7 +135,12 @@ const DetalleProyecto = () => {
   const [resolviendoPostulacionId, setResolviendoPostulacionId] = useState(null);
   const [erroresResolucion, setErroresResolucion] = useState({});
 
-  const [modalAvanceAbierto, setModalAvanceAbierto] = useState(false);
+  // Pantalla segmentada en pestañas (antes era una sola página muy larga).
+  const [pestana, setPestana] = useState('resumen');
+  const [anclaAdmin, setAnclaAdmin] = useState(null);
+  // Habilidades propias (colaboradora) y de las personas aceptadas (colectivo), para mostrar qué cumple cada una.
+  const [misHabilidades, setMisHabilidades] = useState(null);
+  const [habilidadesPorColaboradora, setHabilidadesPorColaboradora] = useState({});
 
   const [modalEditarAvance, setModalEditarAvance] = useState(false);
   const [formAvance, setFormAvance] = useState({ porcentaje: '', enlaceSistema: '', enlaceCodigoFuente: '' });
@@ -257,6 +278,44 @@ const DetalleProyecto = () => {
     if (esDueño) cargarColaboracionesGestion();
   }, [esDueño, cargarColaboracionesGestion]);
 
+  useEffect(() => {
+    if (sesion?.rol !== 'COLABORADOR') return undefined;
+    let vigente = true;
+    (async () => {
+      try {
+        const token = await getAccessToken();
+        const perfil = await obtenerMiPerfilColaboradora(token);
+        if (vigente) setMisHabilidades(Array.isArray(perfil?.habilidades) ? perfil.habilidades : []);
+      } catch {
+        // Si no se pueden leer, se listan las habilidades del perfil sin la comparación.
+        if (vigente) setMisHabilidades(null);
+      }
+    })();
+    return () => {
+      vigente = false;
+    };
+  }, [sesion?.rol, getAccessToken]);
+
+  useEffect(() => {
+    const faltantes = postulacionesProyecto
+      .map((postulacion) => postulacion.colaborador?.id)
+      .filter((idColaboradora) => idColaboradora && !(idColaboradora in habilidadesPorColaboradora));
+    if (faltantes.length === 0) return undefined;
+    let vigente = true;
+    Promise.all(
+      faltantes.map((idColaboradora) =>
+        obtenerColaboradoraPorId(idColaboradora)
+          .then((colaboradora) => [idColaboradora, Array.isArray(colaboradora?.habilidades) ? colaboradora.habilidades : undefined])
+          .catch(() => [idColaboradora, undefined]),
+      ),
+    ).then((pares) => {
+      if (vigente) setHabilidadesPorColaboradora((actual) => ({ ...actual, ...Object.fromEntries(pares) }));
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [postulacionesProyecto, habilidadesPorColaboradora]);
+
   const migasBase = [{ texto: t('detalleProyecto.proyectosMigas'), to: '/proyectos' }];
 
   if (cargando) {
@@ -267,28 +326,31 @@ const DetalleProyecto = () => {
     );
   }
 
+  if (errorCarga === 'NO_ENCONTRADO') {
+    return (
+      <div className="contenedor-pagina">
+        <PaginaError
+          codigo={404}
+          titulo={t('detalleProyecto.noEncontradoTitulo')}
+          descripcion={t('detalleProyecto.noEncontradoSub')}
+          accion={
+            <Button component={Link} to="/proyectos" variant="contained">
+              {t('detalleProyecto.volverALista')}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
   if (errorCarga || !proyecto) {
-    const noEncontrado = errorCarga === 'NO_ENCONTRADO';
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina
-          titulo={noEncontrado ? t('detalleProyecto.noEncontradoTitulo') : t('detalleProyecto.errorCargaTitulo')}
-          migas={[...migasBase, { texto: t('detalleProyecto.noEncontradoTitulo') }]}
+          titulo={t('detalleProyecto.errorCargaTitulo')}
+          migas={[...migasBase, { texto: t('detalleProyecto.errorCargaTitulo') }]}
         />
-        {noEncontrado ? (
-          <EstadoVacio
-            icono={FiSearch}
-            titulo={t('detalleProyecto.noEncontradoTitulo')}
-            descripcion={t('detalleProyecto.noEncontradoSub')}
-            accion={
-              <Button component={Link} to="/proyectos" variant="outlined">
-                {t('detalleProyecto.volverALista')}
-              </Button>
-            }
-          />
-        ) : (
-          <AlertaError error={errorCarga} titulo={t('detalleProyecto.errorCargaTitulo')} onReintentar={cargar} />
-        )}
+        <AlertaError error={errorCarga} titulo={t('detalleProyecto.errorCargaTitulo')} onReintentar={cargar} />
       </div>
     );
   }
@@ -591,15 +653,97 @@ const DetalleProyecto = () => {
               ? t('detalleProyecto.iniciarSesionPostulacion')
               : t('detalleProyecto.postularme');
 
+  const pendientes = postulacionesProyecto.filter((postulacion) => postulacion.estado === 'PENDIENTE').length;
+  const pestanas = [
+    { valor: 'resumen', texto: t('detalleProyecto.pestanaResumen'), icono: <FiInfo aria-hidden="true" /> },
+    { valor: 'perfiles', texto: t('detalleProyecto.pestanaPerfiles'), icono: <FiUsers aria-hidden="true" />, cantidad: perfiles.length },
+    ...(esDueño
+      ? [
+          {
+            valor: 'postulaciones',
+            texto: t('detalleProyecto.pestanaPostulaciones'),
+            icono: <FiInbox aria-hidden="true" />,
+            destacado: pendientes,
+            textoDestacado: pendientes === 1
+              ? t('detalleProyecto.pendientesUna')
+              : t('detalleProyecto.pendientesVarias', { cantidad: pendientes }),
+          },
+          {
+            valor: 'equipo',
+            texto: t('detalleProyecto.pestanaEquipo'),
+            icono: <FiUserCheck aria-hidden="true" />,
+            cantidad: colaboracionesGestion.length,
+          },
+        ]
+      : []),
+    { valor: 'logros', texto: t('detalleProyecto.pestanaLogros'), icono: <FiAward aria-hidden="true" />, cantidad: logros.length },
+  ];
+  const pestanaVisible = pestanas.some((p) => p.valor === pestana) ? pestana : 'resumen';
+  const abrirAdmin = (accion) => {
+    setAnclaAdmin(null);
+    accion();
+  };
+
+  const nombreDe = (colaboradora) =>
+    colaboradora?.nombreFantasia ||
+    [colaboradora?.nombre, colaboradora?.apellido].filter(Boolean).join(' ') ||
+    colaboradora?.usuarioGitHub ||
+    t('detalleProyecto.nombreNoDisponible');
+
+  const accionesDueño = esDueño ? (
+    <>
+      <Button variant="outlined" startIcon={<FiEdit2 aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/editar`)}>
+        {t('detalleProyecto.btnEditarProyecto')}
+      </Button>
+      <Button
+        variant="contained"
+        color="secondary"
+        startIcon={<FiSettings aria-hidden="true" />}
+        endIcon={<FiChevronDown aria-hidden="true" />}
+        aria-haspopup="menu"
+        aria-expanded={Boolean(anclaAdmin)}
+        aria-controls={anclaAdmin ? 'menu-admin-proyecto' : undefined}
+        onClick={(evento) => setAnclaAdmin(evento.currentTarget)}
+      >
+        {t('detalleProyecto.btnAdministrar')}
+      </Button>
+      <Menu
+        id="menu-admin-proyecto"
+        anchorEl={anclaAdmin}
+        open={Boolean(anclaAdmin)}
+        onClose={() => setAnclaAdmin(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/perfiles`))}>
+          <ListItemIcon><FiUsers aria-hidden="true" /></ListItemIcon>
+          {t('detalleProyecto.btnGestionarPerfiles')}
+        </MenuItem>
+        <MenuItem onClick={() => abrirAdmin(abrirConfigurarBusqueda)}>
+          <ListItemIcon><FiSearch aria-hidden="true" /></ListItemIcon>
+          {t('detalleProyecto.btnConfigurarBusqueda')}
+        </MenuItem>
+        <MenuItem onClick={() => abrirAdmin(abrirEditarAvance)}>
+          <ListItemIcon><FiBarChart2 aria-hidden="true" /></ListItemIcon>
+          {t('detalleProyecto.btnActualizarAvance')}
+        </MenuItem>
+      </Menu>
+    </>
+  ) : null;
+
   return (
     <div className="contenedor-pagina detalle">
       <EncabezadoPagina
         titulo={proyecto.titulo}
-        subtitulo={proyecto.descripcion}
         migas={[...migasBase, { texto: proyecto.titulo }]}
+        accion={accionesDueño}
       >
         <div className="detalle-meta">
           <ChipEstado estado={esFinalizado ? 'FINALIZADO' : 'ACTIVO'} />
+          <ChipEstado
+            estado={busquedaVigente ? 'ABIERTA' : 'CERRADA'}
+            texto={busquedaVigente ? t('detalleProyecto.busquedaAbiertaChip') : t('detalleProyecto.busquedaCerradaChip')}
+          />
           <Link className="detalle-meta__colectivo" to={`/colectivos/${proyecto.idColectivo}`}>
             <FiUsers aria-hidden="true" />
             {t('detalleProyecto.verColectivo')}
@@ -607,380 +751,566 @@ const DetalleProyecto = () => {
         </div>
       </EncabezadoPagina>
 
-      <div className="detalle-grid">
-        <section className="detalle-bloque" aria-labelledby="detalle-datos-titulo">
-          <h2 id="detalle-datos-titulo">{t('detalleProyecto.datosProyecto')}</h2>
-          <dl className="detalle-datos">
-            <div>
-              <dt>{t('detalleProyecto.fechaInicio')}</dt>
-              <dd>{formatearFecha(proyecto.fechaInicio) ?? t('detalleProyecto.sinFecha')}</dd>
-            </div>
-            <div>
-              <dt>{esFinalizado ? t('detalleProyecto.cierrePrevisto') : t('detalleProyecto.cierreProgramado')}</dt>
-              <dd>{formatearFecha(proyecto.fechaLimiteCierre) ?? t('detalleProyecto.sinFecha')}</dd>
-            </div>
-            <div>
-              <dt>{t('detalleProyecto.estadoBusqueda')}</dt>
-              <dd>
-                <ChipEstado
-                  estado={busquedaVigente ? 'ABIERTA' : 'CERRADA'}
-                  texto={busquedaVigente ? t('detalleProyecto.busquedaAbiertaChip') : t('detalleProyecto.busquedaCerradaChip')}
-                />
-              </dd>
-            </div>
-          </dl>
-          <p className="detalle-busqueda-texto">
-            {busquedaVigente ? (
-              <>
-                <strong>
-                  {fechaLimiteBusqueda
-                    ? t('detalleProyecto.abiertaHasta', { fecha: fechaLimiteBusqueda })
-                    : t('detalleProyecto.abiertaSinFecha')}
-                  .
-                </strong>{' '}
-                {t('detalleProyecto.busquedaAbierta')}
-              </>
-            ) : (
-              <>
-                <FiLock aria-hidden="true" /> {t('detalleProyecto.mensajeBusquedaCerrada')}
-              </>
-            )}
-          </p>
-        </section>
-
-        <section className="detalle-bloque detalle-avance" aria-labelledby="detalle-avance-titulo">
-          <h2 id="detalle-avance-titulo">{t('detalleProyecto.seccionAvance')}</h2>
-          <p className="detalle-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
-          <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
-          <Button variant="outlined" startIcon={<FiBarChart2 aria-hidden="true" />} onClick={() => setModalAvanceAbierto(true)}>
-            {t('detalleProyecto.verAvance')}
-          </Button>
-        </section>
-      </div>
-
-      {esDueño && (
-        <section className="detalle-bloque detalle-admin" aria-labelledby="detalle-admin-titulo">
-          <h2 id="detalle-admin-titulo" className="detalle-admin__titulo">
-            <FiShield aria-hidden="true" /> {t('detalleProyecto.adminProyecto')}
-          </h2>
-          <div className="detalle-admin__botones">
-            <Button variant="outlined" startIcon={<FiEdit2 aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/editar`)}>
-              {t('detalleProyecto.btnEditarProyecto')}
-            </Button>
-            <Button variant="outlined" startIcon={<FiUsers aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/perfiles`)}>
-              {t('detalleProyecto.btnGestionarPerfiles')}
-            </Button>
-            <Button variant="outlined" startIcon={<FiSettings aria-hidden="true" />} onClick={abrirConfigurarBusqueda}>
-              {t('detalleProyecto.btnConfigurarBusqueda')}
-            </Button>
-            <Button variant="outlined" startIcon={<FiBarChart2 aria-hidden="true" />} onClick={abrirEditarAvance}>
-              {t('detalleProyecto.btnActualizarAvance')}
-            </Button>
-          </div>
-        </section>
-      )}
-
-      {!esDueño && (yaColaboraEnProyecto || avisoBaja) && (
-        <section className="detalle-bloque" aria-label={t('misColaboraciones.titulo')}>
-          {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
-          {yaColaboraEnProyecto && (
-            <Button color="error" variant="outlined" disabled={!sesion?.idColaborador} onClick={() => {
-              setAvisoBaja('');
-              setBajaSeleccionada({
-                idProyecto: id,
-                idColaborador: sesion.idColaborador,
-                nombre: proyecto.titulo,
-              });
-            }}>
-              {t('bajaColaboracion.confirmarPropia')}
-            </Button>
-          )}
-        </section>
-      )}
-
-      <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
-        <h2 id="detalle-perfiles-titulo">{t('detalleProyecto.seccionPerfiles')}</h2>
-        {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
-          <AlertaError
-            error={errorVerificarParticipacion}
-            titulo={t('detalleProyecto.errorVerificarParticipacion')}
-            onReintentar={() => setIntentoVerificacion((intento) => intento + 1)}
+      <Tabs
+        value={pestanaVisible}
+        onChange={(_, valor) => setPestana(valor)}
+        aria-label={t('detalleProyecto.pestanas')}
+        className="pestanas"
+      >
+        {pestanas.map(({ valor, texto, icono, cantidad, destacado, textoDestacado }) => (
+          <Tab
+            key={valor}
+            value={valor}
+            id={`pestana-${valor}`}
+            aria-controls={`panel-${valor}`}
+            icon={icono}
+            iconPosition="start"
+            label={
+              <span className="pestana-etiqueta">
+                {texto}
+                {cantidad > 0 && <span className="pestana-contador"> ({cantidad})</span>}
+                {destacado > 0 && (
+                  <span className="insignia insignia--acento">
+                    {destacado}
+                    <span className="visualmente-oculto"> {textoDestacado}</span>
+                  </span>
+                )}
+              </span>
+            }
           />
-        )}
-        {errorPerfiles && (
-          <AlertaError error={errorPerfiles} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={cargarPerfiles} />
-        )}
-        {errorColaboraciones && perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
-          <AlertaError
-            error={errorColaboraciones}
-            titulo={t('detalleProyecto.errorVacantesTitulo')}
-            onReintentar={cargarColaboraciones}
-          />
-        )}
-        {!errorPerfiles && perfiles.length === 0 ? (
-          <EstadoVacio icono={FiUsers} nivelTitulo="h3" titulo={t('detalleProyecto.sinPerfiles')} />
-        ) : (
-          <ul className="detalle-perfiles">
-            {perfiles.map((perfil) => {
-              const ocupadas = (colaboraciones ?? []).filter(
-                (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
-              ).length;
-              const vacantesDisponibles =
-                perfil.limiteColaboraciones == null || colaboraciones == null
-                  ? null
-                  : Math.max(0, perfil.limiteColaboraciones - ocupadas);
-              const idPerfil = `perfil-${perfil.id}`;
+        ))}
+      </Tabs>
 
-              return (
-                <li key={perfil.id} className="tarjeta perfil-buscado" aria-labelledby={idPerfil}>
-                  <div className="tarjeta__cuerpo">
-                    <h3 id={idPerfil}>{perfil.descripcion}</h3>
+      <div
+        role="tabpanel"
+        id={`panel-${pestanaVisible}`}
+        aria-labelledby={`pestana-${pestanaVisible}`}
+        className="panel-pestana"
+      >
+        {pestanaVisible === 'resumen' && (
+          <div className="con-lateral con-lateral--derecha">
+            <div className="detalle-columna">
+              <section className="panel" aria-labelledby="detalle-descripcion-titulo">
+                <h2 id="detalle-descripcion-titulo">{t('detalleProyecto.descripcion')}</h2>
+                <p className="detalle-descripcion">{proyecto.descripcion}</p>
+              </section>
 
-                    <div className="perfil-buscado__bloque">
-                      <p className="perfil-buscado__etiqueta">{t('detalleProyecto.habilidadesRequeridas')}</p>
-                      <ul className="lista-chips">
-                        {perfil.habilidadesRequeridas.map((h) => (
-                          <li key={h}>
-                            <Chip color="primary" label={h} />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="perfil-buscado__bloque">
-                      <p className="perfil-buscado__etiqueta">{t('detalleProyecto.habilidadesOpcionales')}</p>
-                      {perfil.habilidadesOpcionales.length > 0 ? (
-                        <ul className="lista-chips">
-                          {perfil.habilidadesOpcionales.map((h) => (
-                            <li key={h}>
-                              <Chip label={h} />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="texto-secundario">{t('detalleProyecto.sinHabilidadesOpcionales')}</p>
-                      )}
-                    </div>
-
-                    <dl className="perfil-buscado__datos">
-                      <div>
-                        <dt>{t('detalleProyecto.compromiso')}</dt>
-                        <dd>{resumenCompromiso(perfil.compromiso)}</dd>
-                      </div>
-                      <div>
-                        <dt>{t('detalleProyecto.modalidad')}</dt>
-                        <dd>{etiquetaModalidad(perfil.compromiso.tipoColaboracion)}</dd>
-                      </div>
-                      <div>
-                        <dt>{t('detalleProyecto.cupo')}</dt>
-                        <dd>{textoCupo(perfil.limiteColaboraciones)}</dd>
-                      </div>
-                    </dl>
-
-                    {vacantesDisponibles != null && (
-                      <p className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? ' perfil-buscado__vacantes--agotadas' : ''}`}>
-                        {vacantesDisponibles === 0 ? <FiLock aria-hidden="true" /> : <FiCheckCircle aria-hidden="true" />}
-                        <span>
-                          {vacantesDisponibles === 0
-                            ? t('detalleProyecto.vacantesCompletas')
-                            : vacantesDisponibles === 1
-                              ? t('detalleProyecto.unaVacanteDisponible')
-                              : t('detalleProyecto.vacantesDisponibles', { cantidad: vacantesDisponibles })}
-                        </span>
-                      </p>
+              <section className="panel" aria-labelledby="detalle-enlaces-titulo">
+                <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>
+                {proyecto.enlaceSistema || proyecto.enlaceCodigoFuente ? (
+                  <div className="detalle-enlaces">
+                    {proyecto.enlaceSistema && (
+                      <Button
+                        variant="outlined"
+                        href={proyecto.enlaceSistema}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        endIcon={<FiExternalLink aria-hidden="true" />}
+                      >
+                        {t('detalleProyecto.enlaceSistemaBtn')}
+                        <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                      </Button>
+                    )}
+                    {proyecto.enlaceCodigoFuente && (
+                      <Button
+                        variant="outlined"
+                        href={proyecto.enlaceCodigoFuente}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        endIcon={<FiExternalLink aria-hidden="true" />}
+                      >
+                        {t('detalleProyecto.enlaceRepoBtn')}
+                        <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                      </Button>
                     )}
                   </div>
+                ) : (
+                  <p className="texto-secundario">{t('detalleProyecto.sinEnlaces')}</p>
+                )}
+              </section>
 
-                  <div className="tarjeta__acciones">
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<FiSend aria-hidden="true" />}
-                      disabled={
-                        !busquedaVigente ||
-                        esDueño ||
-                        authCargando ||
-                        yaColaboraEnProyecto ||
-                        verificandoParticipacion ||
-                        Boolean(errorVerificarParticipacion) ||
-                        (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
-                        Boolean(postulacionesEnviadas[perfil.id]) ||
-                        Boolean(postulacionesPendientes[perfil.id]) ||
-                        vacantesDisponibles === 0
-                      }
-                      onClick={() => abrirPostulacion(perfil)}
-                    >
-                      {textoBotonPostular(perfil)}
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      {esDueño && (
-        <section className="detalle-seccion" aria-labelledby="detalle-postulaciones-titulo">
-          <h2 id="detalle-postulaciones-titulo">{t('detalleProyecto.seccionPostulaciones')}</h2>
-          <p className="texto-secundario">{t('detalleProyecto.ayudaPostulaciones')}</p>
-          {errorCargarPostulaciones && (
-            <AlertaError
-              error={errorCargarPostulaciones}
-              titulo={t('detalleProyecto.errorCargarPostulaciones')}
-              onReintentar={cargarPostulaciones}
-            />
-          )}
-          {cargandoPostulaciones ? (
-            <p role="status">{t('detalleProyecto.cargandoPostulaciones')}</p>
-          ) : !errorCargarPostulaciones && postulacionesProyecto.length === 0 ? (
-            <EstadoVacio
-              nivelTitulo="p"
-              titulo={t('detalleProyecto.sinPostulaciones')}
-            />
-          ) : (
-            <ul className="detalle-perfiles">
-              {postulacionesProyecto.map((postulacion) => {
-                const perfil = perfiles.find(
-                  (item) => String(item.id) === String(postulacion.idPerfil),
-                );
-                const ocupadas = (colaboraciones ?? []).filter(
-                  (item) => String(item.idPerfil) === String(postulacion.idPerfil),
-                ).length;
-                const sinVacantes =
-                  perfil?.limiteColaboraciones != null &&
-                  ocupadas >= perfil.limiteColaboraciones;
-                const colaboradora = postulacion.colaborador;
-                const nombreColaboradora =
-                  colaboradora?.nombreFantasia ||
-                  [colaboradora?.nombre, colaboradora?.apellido].filter(Boolean).join(' ') ||
-                  colaboradora?.usuarioGitHub ||
-                  t('detalleProyecto.nombreNoDisponible');
-                const pendiente = postulacion.estado === 'PENDIENTE';
-
-                return (
-                  <li key={postulacion.id} className="tarjeta perfil-buscado">
-                    <div className="tarjeta__cuerpo">
-                      <h3>{perfil?.descripcion ?? t('detalleProyecto.nombreNoDisponible')}</h3>
-                      {postulacion.fechaPostulacion && (
-                        <p className="texto-secundario">
-                          {t('detalleProyecto.fechaPostulacion', {
-                            fecha: formatearFecha(postulacion.fechaPostulacion),
-                          })}
-                        </p>
-                      )}
-                      {postulacion.esAnonima && (
-                        <p>{t('detalleProyecto.postulacionAnonima')}</p>
-                      )}
-                      {pendiente ? (
-                        <p>{t('detalleProyecto.identidadAlAceptar')}</p>
-                      ) : postulacion.estado === 'ACEPTADA' ? (
-                        <>
-                          <p>
-                            {t('detalleProyecto.colaboradoraAceptada')}: {nombreColaboradora}
-                          </p>
-                          <p className="perfil-buscado__etiqueta">
-                            {t('detalleProyecto.contactoColaboradora')}
-                          </p>
-                          {colaboradora?.mediosDeContacto?.length ? (
-                            <ul>
-                              {colaboradora.mediosDeContacto.map((medio, indice) => (
-                                <li key={`${medio.tipoDeContacto}-${indice}`}>
-                                  {medio.tipoDeContacto}: {medio.contacto}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
-                          )}
-                        </>
-                      ) : (
-                        <p>{t('detalleProyecto.estadoRechazada')}</p>
-                      )}
-                      {erroresResolucion[postulacion.id] && (
-                        <Alert severity="error" role="alert">
-                          {erroresResolucion[postulacion.id]}
-                        </Alert>
-                      )}
-                      {pendiente && sinVacantes && (
-                        <Alert severity="warning">
-                          {t('detalleProyecto.sinVacantesParaAceptar')}
-                        </Alert>
-                      )}
-                    </div>
-                    {pendiente && (
-                      <div className="tarjeta__acciones">
-                        <Button
-                          variant="contained"
-                          disabled={
-                            sinVacantes ||
-                            resolviendoPostulacionId === postulacion.id
-                          }
-                          loading={resolviendoPostulacionId === postulacion.id}
-                          onClick={() => resolverSolicitud(postulacion, 'ACEPTADA')}
-                        >
-                          {resolviendoPostulacionId === postulacion.id
-                            ? t('detalleProyecto.resolviendoPostulacion')
-                            : t('detalleProyecto.aceptarPostulacion')}
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          disabled={resolviendoPostulacionId === postulacion.id}
-                          loading={resolviendoPostulacionId === postulacion.id}
-                          onClick={() => resolverSolicitud(postulacion, 'RECHAZADA')}
-                        >
-                          {t('detalleProyecto.rechazarPostulacion')}
-                        </Button>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {esDueño && (
-        <section className="detalle-seccion" aria-labelledby="detalle-colaboraciones-titulo">
-          <h2 id="detalle-colaboraciones-titulo">{t('bajaColaboracion.tituloGestion')}</h2>
-          {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
-          {errorGestion && (
-            <AlertaError error={errorGestion} titulo={t('bajaColaboracion.errorCarga')} onReintentar={cargarColaboracionesGestion} />
-          )}
-          {cargandoGestion ? (
-            <p role="status">{t('misColaboraciones.cargando')}</p>
-          ) : !errorGestion && colaboracionesGestion.length === 0 ? (
-            <EstadoVacio nivelTitulo="p" titulo={t('bajaColaboracion.vacio')} />
-          ) : !errorGestion && (
-            <ul className="detalle-perfiles">
-              {colaboracionesGestion.map((colaboracion) => {
-                const nombre = colaboracion.nombreFantasia ||
-                  [colaboracion.nombre, colaboracion.apellido].filter(Boolean).join(' ') ||
-                  colaboracion.usuarioGitHub || t('detalleProyecto.nombreNoDisponible');
-                const perfil = perfiles.find((item) => String(item.id) === String(colaboracion.idPerfil));
-                return (
-                  <li key={colaboracion.idColaborador} className="tarjeta perfil-buscado">
-                    <div className="tarjeta__cuerpo">
-                      <h3>{nombre}</h3>
-                      {perfil && <p>{perfil.descripcion}</p>}
-                      {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
-                    </div>
-                    <div className="tarjeta__acciones">
-                      <Button color="error" variant="outlined" onClick={() => {
+              {!esDueño && (yaColaboraEnProyecto || avisoBaja) && (
+                <section className="panel" aria-label={t('misColaboraciones.titulo')}>
+                  {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+                  {yaColaboraEnProyecto && (
+                    <div>
+                      <Button color="error" variant="outlined" disabled={!sesion?.idColaborador} onClick={() => {
                         setAvisoBaja('');
-                        setBajaSeleccionada({ idProyecto: id, idColaborador: colaboracion.idColaborador, nombre });
+                        setBajaSeleccionada({
+                          idProyecto: id,
+                          idColaborador: sesion.idColaborador,
+                          nombre: proyecto.titulo,
+                        });
                       }}>
-                        {t('bajaColaboracion.confirmarColectivo')}
+                        {t('bajaColaboracion.confirmarPropia')}
                       </Button>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-      )}
+                  )}
+                </section>
+              )}
+            </div>
+
+            <aside className="lateral" aria-label={t('detalleProyecto.datosProyecto')}>
+              <section className="panel detalle-avance" aria-labelledby="detalle-avance-titulo">
+                <h2 id="detalle-avance-titulo">{t('detalleProyecto.seccionAvance')}</h2>
+                <p className="detalle-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
+                <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
+              </section>
+
+              <section className="panel" aria-labelledby="detalle-datos-titulo">
+                <h2 id="detalle-datos-titulo">{t('detalleProyecto.datosProyecto')}</h2>
+                <dl className="detalle-datos">
+                  <div>
+                    <dt>{t('detalleProyecto.fechaInicio')}</dt>
+                    <dd>{formatearFecha(proyecto.fechaInicio) ?? t('detalleProyecto.sinFecha')}</dd>
+                  </div>
+                  <div>
+                    <dt>{esFinalizado ? t('detalleProyecto.cierrePrevisto') : t('detalleProyecto.cierreProgramado')}</dt>
+                    <dd>{formatearFecha(proyecto.fechaLimiteCierre) ?? t('detalleProyecto.sinFecha')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('detalleProyecto.estadoBusqueda')}</dt>
+                    <dd>
+                      {busquedaVigente ? (
+                        fechaLimiteBusqueda
+                          ? t('detalleProyecto.abiertaHasta', { fecha: fechaLimiteBusqueda })
+                          : t('detalleProyecto.abiertaSinFecha')
+                      ) : (
+                        <>
+                          <FiLock aria-hidden="true" /> {t('detalleProyecto.mensajeBusquedaCerrada')}
+                        </>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            </aside>
+          </div>
+        )}
+
+        {pestanaVisible === 'perfiles' && (
+          <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
+            <h2 id="detalle-perfiles-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionPerfiles')}</h2>
+            {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
+              <AlertaError
+                error={errorVerificarParticipacion}
+                titulo={t('detalleProyecto.errorVerificarParticipacion')}
+                onReintentar={() => setIntentoVerificacion((intento) => intento + 1)}
+              />
+            )}
+            {errorPerfiles && (
+              <AlertaError error={errorPerfiles} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={cargarPerfiles} />
+            )}
+            {errorColaboraciones && perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
+              <AlertaError
+                error={errorColaboraciones}
+                titulo={t('detalleProyecto.errorVacantesTitulo')}
+                onReintentar={cargarColaboraciones}
+              />
+            )}
+            {!errorPerfiles && perfiles.length === 0 ? (
+              <EstadoVacio icono={FiUsers} nivelTitulo="h3" titulo={t('detalleProyecto.sinPerfiles')} />
+            ) : (
+              <ul className="detalle-perfiles">
+                {perfiles.map((perfil) => {
+                  const ocupadas = (colaboraciones ?? []).filter(
+                    (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
+                  ).length;
+                  const vacantesDisponibles =
+                    perfil.limiteColaboraciones == null || colaboraciones == null
+                      ? null
+                      : Math.max(0, perfil.limiteColaboraciones - ocupadas);
+                  const idPerfil = `perfil-${perfil.id}`;
+
+                  return (
+                    <li key={perfil.id} className="tarjeta perfil-buscado" aria-labelledby={idPerfil}>
+                      <div className="tarjeta__cuerpo">
+                        <h3 id={idPerfil}>{perfil.descripcion}</h3>
+
+                        <CoincidenciaHabilidades
+                          perfil={perfil}
+                          habilidadesPersona={sesion?.rol === 'COLABORADOR' ? misHabilidades ?? undefined : undefined}
+                          sujeto="vos"
+                        />
+
+                        <dl className="perfil-buscado__datos">
+                          <div>
+                            <dt>{t('detalleProyecto.compromiso')}</dt>
+                            <dd>{resumenCompromiso(perfil.compromiso)}</dd>
+                          </div>
+                          <div>
+                            <dt>{t('detalleProyecto.modalidad')}</dt>
+                            <dd>{etiquetaModalidad(perfil.compromiso.tipoColaboracion)}</dd>
+                          </div>
+                          <div>
+                            <dt>{t('detalleProyecto.cupo')}</dt>
+                            <dd>{textoCupo(perfil.limiteColaboraciones)}</dd>
+                          </div>
+                        </dl>
+
+                        {vacantesDisponibles != null && (
+                          <p className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? ' perfil-buscado__vacantes--agotadas' : ''}`}>
+                            {vacantesDisponibles === 0 ? <FiLock aria-hidden="true" /> : <FiCheckCircle aria-hidden="true" />}
+                            <span>
+                              {vacantesDisponibles === 0
+                                ? t('detalleProyecto.vacantesCompletas')
+                                : vacantesDisponibles === 1
+                                  ? t('detalleProyecto.unaVacanteDisponible')
+                                  : t('detalleProyecto.vacantesDisponibles', { cantidad: vacantesDisponibles })}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      {!esDueño && (
+                        <div className="tarjeta__acciones">
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            fullWidth
+                            startIcon={<FiSend aria-hidden="true" />}
+                            disabled={
+                              !busquedaVigente ||
+                              authCargando ||
+                              yaColaboraEnProyecto ||
+                              verificandoParticipacion ||
+                              Boolean(errorVerificarParticipacion) ||
+                              (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
+                              Boolean(postulacionesEnviadas[perfil.id]) ||
+                              Boolean(postulacionesPendientes[perfil.id]) ||
+                              vacantesDisponibles === 0
+                            }
+                            onClick={() => abrirPostulacion(perfil)}
+                          >
+                            {textoBotonPostular(perfil)}
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {pestanaVisible === 'postulaciones' && esDueño && (
+          <section className="detalle-seccion" aria-labelledby="detalle-postulaciones-titulo">
+            <h2 id="detalle-postulaciones-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionPostulaciones')}</h2>
+            <p className="texto-secundario">{t('detalleProyecto.ayudaPostulaciones')}</p>
+            {errorCargarPostulaciones && (
+              <AlertaError
+                error={errorCargarPostulaciones}
+                titulo={t('detalleProyecto.errorCargarPostulaciones')}
+                onReintentar={cargarPostulaciones}
+              />
+            )}
+            {cargandoPostulaciones ? (
+              <p role="status">{t('detalleProyecto.cargandoPostulaciones')}</p>
+            ) : !errorCargarPostulaciones && postulacionesProyecto.length === 0 ? (
+              <EstadoVacio icono={FiInbox} nivelTitulo="p" titulo={t('detalleProyecto.sinPostulaciones')} />
+            ) : (
+              <ul className="detalle-perfiles detalle-perfiles--lista">
+                {postulacionesProyecto.map((postulacion) => {
+                  const perfil = perfiles.find(
+                    (item) => String(item.id) === String(postulacion.idPerfil),
+                  );
+                  const ocupadas = (colaboraciones ?? []).filter(
+                    (item) => String(item.idPerfil) === String(postulacion.idPerfil),
+                  ).length;
+                  const sinVacantes =
+                    perfil?.limiteColaboraciones != null &&
+                    ocupadas >= perfil.limiteColaboraciones;
+                  const colaboradora = postulacion.colaborador;
+                  const nombreColaboradora = nombreDe(colaboradora);
+                  const pendiente = postulacion.estado === 'PENDIENTE';
+                  const habilidadesPersona = colaboradora?.id ? habilidadesPorColaboradora[colaboradora.id] : undefined;
+
+                  return (
+                    <li key={postulacion.id} className={`tarjeta perfil-buscado postulacion postulacion--${postulacion.estado?.toLowerCase()}`}>
+                      <div className="tarjeta__cuerpo">
+                        <div className="postulacion__cabecera">
+                          <h3>{perfil?.descripcion ?? t('detalleProyecto.nombreNoDisponible')}</h3>
+                          <ChipEstado
+                            estado={postulacion.estado}
+                            texto={t(`detalleProyecto.estado${postulacion.estado === 'ACEPTADA' ? 'Aceptada' : postulacion.estado === 'RECHAZADA' ? 'Rechazada' : 'Pendiente'}`)}
+                          />
+                        </div>
+                        {postulacion.fechaPostulacion && (
+                          <p className="texto-secundario">
+                            {t('detalleProyecto.fechaPostulacion', {
+                              fecha: formatearFecha(postulacion.fechaPostulacion),
+                            })}
+                          </p>
+                        )}
+                        {postulacion.esAnonima && (
+                          <p>{t('detalleProyecto.postulacionAnonima')}</p>
+                        )}
+
+                        {perfil && (
+                          <CoincidenciaHabilidades
+                            perfil={perfil}
+                            habilidadesPersona={habilidadesPersona}
+                          />
+                        )}
+
+                        {pendiente ? (
+                          <p className="texto-secundario">{t('detalleProyecto.identidadAlAceptar')}</p>
+                        ) : postulacion.estado === 'ACEPTADA' ? (
+                          <div className="postulacion__contacto">
+                            <p>
+                              <strong>{t('detalleProyecto.colaboradoraAceptada')}: {nombreColaboradora}</strong>
+                            </p>
+                            <p className="perfil-buscado__etiqueta">
+                              {t('detalleProyecto.contactoColaboradora')}
+                            </p>
+                            {colaboradora?.mediosDeContacto?.length ? (
+                              <ul>
+                                {colaboradora.mediosDeContacto.map((medio, indice) => (
+                                  <li key={`${medio.tipoDeContacto}-${indice}`}>
+                                    {medio.tipoDeContacto}: {medio.contacto}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
+                            )}
+                          </div>
+                        ) : null}
+                        {erroresResolucion[postulacion.id] && (
+                          <Alert severity="error" role="alert">
+                            {erroresResolucion[postulacion.id]}
+                          </Alert>
+                        )}
+                        {pendiente && sinVacantes && (
+                          <Alert severity="warning">
+                            {t('detalleProyecto.sinVacantesParaAceptar')}
+                          </Alert>
+                        )}
+                      </div>
+                      {pendiente && (
+                        <div className="tarjeta__acciones">
+                          <Button
+                            variant="contained"
+                            startIcon={<FiCheck aria-hidden="true" />}
+                            disabled={
+                              sinVacantes ||
+                              resolviendoPostulacionId === postulacion.id
+                            }
+                            loading={resolviendoPostulacionId === postulacion.id}
+                            onClick={() => resolverSolicitud(postulacion, 'ACEPTADA')}
+                          >
+                            {resolviendoPostulacionId === postulacion.id
+                              ? t('detalleProyecto.resolviendoPostulacion')
+                              : t('detalleProyecto.aceptarPostulacion')}
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            startIcon={<FiX aria-hidden="true" />}
+                            disabled={resolviendoPostulacionId === postulacion.id}
+                            loading={resolviendoPostulacionId === postulacion.id}
+                            onClick={() => resolverSolicitud(postulacion, 'RECHAZADA')}
+                          >
+                            {t('detalleProyecto.rechazarPostulacion')}
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {pestanaVisible === 'equipo' && esDueño && (
+          <section className="detalle-seccion" aria-labelledby="detalle-colaboraciones-titulo">
+            <h2 id="detalle-colaboraciones-titulo" className="visualmente-oculto">{t('bajaColaboracion.tituloGestion')}</h2>
+            {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+            {errorGestion && (
+              <AlertaError error={errorGestion} titulo={t('bajaColaboracion.errorCarga')} onReintentar={cargarColaboracionesGestion} />
+            )}
+            {cargandoGestion ? (
+              <p role="status">{t('misColaboraciones.cargando')}</p>
+            ) : !errorGestion && colaboracionesGestion.length === 0 ? (
+              <EstadoVacio icono={FiUserCheck} nivelTitulo="p" titulo={t('bajaColaboracion.vacio')} />
+            ) : !errorGestion && (
+              <ul className="detalle-perfiles">
+                {colaboracionesGestion.map((colaboracion) => {
+                  const nombre = nombreDe(colaboracion);
+                  const perfil = perfiles.find((item) => String(item.id) === String(colaboracion.idPerfil));
+                  return (
+                    <li key={colaboracion.idColaborador} className="tarjeta perfil-buscado">
+                      <div className="tarjeta__cuerpo">
+                        <h3>{nombre}</h3>
+                        {perfil && <p>{perfil.descripcion}</p>}
+                        {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
+                      </div>
+                      <div className="tarjeta__acciones">
+                        <Button color="error" variant="outlined" onClick={() => {
+                          setAvisoBaja('');
+                          setBajaSeleccionada({ idProyecto: id, idColaborador: colaboracion.idColaborador, nombre });
+                        }}>
+                          {t('bajaColaboracion.confirmarColectivo')}
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {pestanaVisible === 'logros' && (
+          <section className="detalle-seccion" aria-labelledby="detalle-logros-titulo">
+            <h2 id="detalle-logros-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionLogros')}</h2>
+            <div className={esDueño ? 'con-lateral con-lateral--derecha' : ''}>
+              <div>
+                {errorLogros ? (
+                  <AlertaError error={errorLogros} titulo={t('detalleProyecto.errorLogrosTitulo')} onReintentar={cargarLogros} />
+                ) : logros.length === 0 ? (
+                  <EstadoVacio icono={FiAward} nivelTitulo="p" titulo={t('detalleProyecto.sinLogros')} />
+                ) : (
+                  <ol className="detalle-logros">
+                    {logros.map((logro) => (
+                      <li key={logro.id} className="detalle-logro">
+                        <div className="detalle-logro__cabecera">
+                          <h3>{logro.titulo}</h3>
+                          {formatearFecha(logro.fecha) && <span className="texto-caption">{formatearFecha(logro.fecha)}</span>}
+                        </div>
+                        <p>{logro.descripcion}</p>
+                        {esDueño && (
+                          <div className="detalle-logro__linkedin">
+                            {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
+                              <p className="texto-secundario detalle-logro__publicado">
+                                <FiCheckCircle aria-hidden="true" /> {t('linkedin.publicado')}
+                                {logro.publicacionLinkedin.urnPost && (
+                                  <>
+                                    {' · '}
+                                    <a
+                                      href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {t('linkedin.verPublicacion')}
+                                      <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                                    </a>
+                                  </>
+                                )}
+                              </p>
+                            ) : (
+                              <Button
+                                variant="text"
+                                startIcon={<FiLinkedin aria-hidden="true" />}
+                                loading={publicandoId === logro.id}
+                                onClick={() => handlePublicarLogro(logro)}
+                              >
+                                {logro.publicacionLinkedin?.estado === 'FALLIDO'
+                                  ? t('linkedin.reintentar')
+                                  : linkedin.estado?.conectado
+                                    ? t('linkedin.compartir')
+                                    : t('linkedin.conectar')}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+
+              {esDueño && (
+                <form onSubmit={handleCrearLogro} noValidate className="panel detalle-form-logro" aria-labelledby="nuevo-logro-titulo">
+                  <h3 id="nuevo-logro-titulo">{t('detalleProyecto.nuevoLogroTitulo')}</h3>
+                  <TextField
+                    id="logro-titulo"
+                    label={t('detalleProyecto.labelLogroTitulo')}
+                    placeholder={t('detalleProyecto.placeholderLogroTitulo')}
+                    value={nuevoLogro.titulo}
+                    onChange={(e) => setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })}
+                    onBlur={() =>
+                      setErroresLogro((actual) => ({ ...actual, titulo: nuevoLogro.titulo.trim() ? undefined : actual.titulo }))
+                    }
+                    error={Boolean(erroresLogro.titulo)}
+                    helperText={mensajeCampo(erroresLogro.titulo)}
+                    disabled={guardandoLogro}
+                    required
+                    fullWidth
+                  />
+                  <TextField
+                    id="logro-descripcion"
+                    label={t('detalleProyecto.labelLogroDescripcion')}
+                    placeholder={t('detalleProyecto.placeholderLogroDescripcion')}
+                    value={nuevoLogro.descripcion}
+                    onChange={(e) => setNuevoLogro({ ...nuevoLogro, descripcion: e.target.value })}
+                    onBlur={() =>
+                      setErroresLogro((actual) => ({ ...actual, descripcion: nuevoLogro.descripcion.trim() ? undefined : actual.descripcion }))
+                    }
+                    error={Boolean(erroresLogro.descripcion)}
+                    helperText={mensajeCampo(erroresLogro.descripcion)}
+                    disabled={guardandoLogro}
+                    required
+                    multiline
+                    minRows={3}
+                    fullWidth
+                  />
+
+                  {linkedin.estado &&
+                    (linkedin.estado.conectado ? (
+                      <div>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={nuevoLogro.publicarEnLinkedin}
+                              onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
+                              disabled={guardandoLogro}
+                            />
+                          }
+                          label={t('linkedin.publicarAlCrear')}
+                        />
+                        <p className="texto-secundario">
+                          {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
+                        </p>
+                      </div>
+                    ) : (
+                      <Alert severity="info">
+                        {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
+                        <div className="alerta-acciones">
+                          <Button variant="outlined" startIcon={<FiLinkedin aria-hidden="true" />} onClick={linkedin.conectar}>
+                            {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
+                          </Button>
+                        </div>
+                      </Alert>
+                    ))}
+                  {linkedin.error && (
+                    <Alert severity="error" role="alert">
+                      {linkedin.error}
+                    </Alert>
+                  )}
+                  {avisoLinkedin && (
+                    <Alert
+                      severity={avisoLinkedin.severity}
+                      role={avisoLinkedin.severity === 'error' ? 'alert' : 'status'}
+                      onClose={() => setAvisoLinkedin(null)}
+                    >
+                      {avisoLinkedin.texto}
+                    </Alert>
+                  )}
+
+                  {errorLogro && <AlertaError error={errorLogro} titulo={t('detalleProyecto.errorLogroTitulo')} />}
+                  <div>
+                    <Button type="submit" variant="contained" loading={guardandoLogro} startIcon={<FiPlus aria-hidden="true" />}>
+                      {t('detalleProyecto.btnAgregarLogro')}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
 
       <DialogoBajaColaboracion
         propia={!esDueño}
@@ -997,203 +1327,6 @@ const DetalleProyecto = () => {
           cargarColaboraciones();
         }}
       />
-
-      <section className="detalle-seccion" aria-labelledby="detalle-enlaces-titulo">
-        <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>
-        {proyecto.enlaceSistema || proyecto.enlaceCodigoFuente ? (
-          <div className="detalle-enlaces">
-            {proyecto.enlaceSistema && (
-              <Button
-                variant="outlined"
-                href={proyecto.enlaceSistema}
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<FiExternalLink aria-hidden="true" />}
-              >
-                {t('detalleProyecto.enlaceSistemaBtn')}
-                <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
-              </Button>
-            )}
-            {proyecto.enlaceCodigoFuente && (
-              <Button
-                variant="outlined"
-                href={proyecto.enlaceCodigoFuente}
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<FiExternalLink aria-hidden="true" />}
-              >
-                {t('detalleProyecto.enlaceRepoBtn')}
-                <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <p className="texto-secundario">{t('detalleProyecto.sinEnlaces')}</p>
-        )}
-      </section>
-
-      <section className="detalle-seccion" aria-labelledby="detalle-logros-titulo">
-        <h2 id="detalle-logros-titulo">{t('detalleProyecto.seccionLogros')}</h2>
-        {errorLogros ? (
-          <AlertaError error={errorLogros} titulo={t('detalleProyecto.errorLogrosTitulo')} onReintentar={cargarLogros} />
-        ) : logros.length === 0 ? (
-          <p className="texto-secundario">{t('detalleProyecto.sinLogros')}</p>
-        ) : (
-          <ol className="detalle-logros">
-            {logros.map((logro) => (
-              <li key={logro.id} className="detalle-logro">
-                <div className="detalle-logro__cabecera">
-                  <h3>{logro.titulo}</h3>
-                  {formatearFecha(logro.fecha) && <span className="texto-caption">{formatearFecha(logro.fecha)}</span>}
-                </div>
-                <p>{logro.descripcion}</p>
-                {esDueño && (
-                  <div className="detalle-logro__linkedin">
-                    {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
-                      <p className="texto-secundario detalle-logro__publicado">
-                        <FiCheckCircle aria-hidden="true" /> {t('linkedin.publicado')}
-                        {logro.publicacionLinkedin.urnPost && (
-                          <>
-                            {' · '}
-                            <a
-                              href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {t('linkedin.verPublicacion')}
-                              <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
-                            </a>
-                          </>
-                        )}
-                      </p>
-                    ) : (
-                      <Button
-                        variant="text"
-                        startIcon={<FiLinkedin aria-hidden="true" />}
-                        loading={publicandoId === logro.id}
-                        onClick={() => handlePublicarLogro(logro)}
-                      >
-                        {logro.publicacionLinkedin?.estado === 'FALLIDO'
-                          ? t('linkedin.reintentar')
-                          : linkedin.estado?.conectado
-                            ? t('linkedin.compartir')
-                            : t('linkedin.conectar')}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-
-        {esDueño && (
-          <form onSubmit={handleCrearLogro} noValidate className="detalle-bloque detalle-form-logro" aria-labelledby="nuevo-logro-titulo">
-            <h3 id="nuevo-logro-titulo">{t('detalleProyecto.nuevoLogroTitulo')}</h3>
-            <TextField
-              id="logro-titulo"
-              label={t('detalleProyecto.labelLogroTitulo')}
-              placeholder={t('detalleProyecto.placeholderLogroTitulo')}
-              value={nuevoLogro.titulo}
-              onChange={(e) => setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })}
-              onBlur={() =>
-                setErroresLogro((actual) => ({ ...actual, titulo: nuevoLogro.titulo.trim() ? undefined : actual.titulo }))
-              }
-              error={Boolean(erroresLogro.titulo)}
-              helperText={mensajeCampo(erroresLogro.titulo)}
-              disabled={guardandoLogro}
-              required
-              fullWidth
-            />
-            <TextField
-              id="logro-descripcion"
-              label={t('detalleProyecto.labelLogroDescripcion')}
-              placeholder={t('detalleProyecto.placeholderLogroDescripcion')}
-              value={nuevoLogro.descripcion}
-              onChange={(e) => setNuevoLogro({ ...nuevoLogro, descripcion: e.target.value })}
-              onBlur={() =>
-                setErroresLogro((actual) => ({ ...actual, descripcion: nuevoLogro.descripcion.trim() ? undefined : actual.descripcion }))
-              }
-              error={Boolean(erroresLogro.descripcion)}
-              helperText={mensajeCampo(erroresLogro.descripcion)}
-              disabled={guardandoLogro}
-              required
-              multiline
-              minRows={3}
-              fullWidth
-            />
-
-            {linkedin.estado &&
-              (linkedin.estado.conectado ? (
-                <div>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={nuevoLogro.publicarEnLinkedin}
-                        onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
-                        disabled={guardandoLogro}
-                      />
-                    }
-                    label={t('linkedin.publicarAlCrear')}
-                  />
-                  <p className="texto-secundario">
-                    {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
-                  </p>
-                </div>
-              ) : (
-                <Alert severity="info">
-                  {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
-                  <div className="alerta-acciones">
-                    <Button variant="outlined" startIcon={<FiLinkedin aria-hidden="true" />} onClick={linkedin.conectar}>
-                      {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
-                    </Button>
-                  </div>
-                </Alert>
-              ))}
-            {linkedin.error && (
-              <Alert severity="error" role="alert">
-                {linkedin.error}
-              </Alert>
-            )}
-            {avisoLinkedin && (
-              <Alert
-                severity={avisoLinkedin.severity}
-                role={avisoLinkedin.severity === 'error' ? 'alert' : 'status'}
-                onClose={() => setAvisoLinkedin(null)}
-              >
-                {avisoLinkedin.texto}
-              </Alert>
-            )}
-
-            {errorLogro && <AlertaError error={errorLogro} titulo={t('detalleProyecto.errorLogroTitulo')} />}
-            <div>
-              <Button type="submit" variant="contained" loading={guardandoLogro} startIcon={<FiPlus aria-hidden="true" />}>
-                {t('detalleProyecto.btnAgregarLogro')}
-              </Button>
-            </div>
-          </form>
-        )}
-      </section>
-
-      {/* Resumen de avance (lo ve cualquiera) */}
-      <Dialogo
-        open={modalAvanceAbierto}
-        onClose={() => setModalAvanceAbierto(false)}
-        maxWidth="xs"
-        aria-labelledby="dialogo-avance-titulo"
-      >
-        <DialogTitle id="dialogo-avance-titulo">{t('detalleProyecto.modalAvanceTitulo')}</DialogTitle>
-        <DialogContent className="dialogo-avance">
-          <DialogContentText>{proyecto.titulo}</DialogContentText>
-          <p className="dialogo-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
-          <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={() => setModalAvanceAbierto(false)}>
-            {t('detalleProyecto.volverAlDetalle')}
-          </Button>
-        </DialogActions>
-      </Dialogo>
 
       <Dialogo
         open={modalPostulacionAbierto}
@@ -1214,6 +1347,12 @@ const DetalleProyecto = () => {
           ) : (
             <>
               <p>{t('detalleProyecto.postulacionInstruccion')}</p>
+              {perfilPostulando && (
+                <div className="dialogo-postulacion__coincidencia">
+                  <p className="perfil-buscado__etiqueta">{t('detalleProyecto.tuCoincidencia')}</p>
+                  <CoincidenciaHabilidades perfil={perfilPostulando} habilidadesPersona={misHabilidades ?? undefined} sujeto="vos" />
+                </div>
+              )}
               <div className="dialogo-postulacion__anonimato">
                 <div>
                   <strong id="anonimato-label">{t('detalleProyecto.anonimatoLabel')}</strong>

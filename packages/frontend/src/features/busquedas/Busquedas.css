@@ -101,3 +101,41 @@
     width: 100%;
   }
 }
+
+/* Panel lateral de filtros */
+.filtros--lateral {
+  margin-bottom: 0;
+  padding: var(--space-2);
+}
+
+.filtros--lateral .filtros__fila,
+.filtros--lateral .filtros__avanzados {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.filtros--lateral .filtros__acciones {
+  justify-content: space-between;
+}
+
+.filtros__titulo {
+  font-size: var(--font-size-h3);
+}
+
+.buscador-disposicion .lateral {
+  max-height: calc(100vh - var(--header-height) - var(--space-6));
+  overflow-y: auto;
+}
+
+.buscador-resultados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+@media (max-width: 899.95px) {
+  .buscador-disposicion .lateral {
+    max-height: none;
+  }
+}

@@ -9,7 +9,7 @@ import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
 import { EsqueletoDetalle } from "../../components/Esqueletos/Esqueletos.jsx";
 import { PROVINCIAS_MAPA } from "../../data/provinciasMapa";
 import { obtenerUbicacionesProyectos } from "../../service/proyectosService";
-import { useModoColor } from "../../theme/ModoColorContext.jsx";
+import { tokensBase as tokens } from "../../designTokens.js";
 import "../../components/Card.css";
 import "./Busquedas.css";
 import "./Mapa.css";
@@ -24,7 +24,7 @@ const REGIONES = PROVINCIAS_MAPA.provincias
     labelY: provincia.labelY,
   }));
 
-// Escala secuencial de un solo tono (claro -> oscuro) del modo activo (normal o daltónico).
+// Escala secuencial de un solo tono (claro -> oscuro) (se distingue por claridad, no solo por matiz).
 // Además del color, cada provincia muestra su número y hay una tabla equivalente.
 function nivelDeRegion(cantidad, maximo) {
   if (cantidad === 0) return 0;
@@ -33,7 +33,6 @@ function nivelDeRegion(cantidad, maximo) {
 }
 
 export default function Mapa() {
-  const { tokens } = useModoColor();
   const colores = [
     tokens["--color-map-empty"],
     tokens["--color-map-1"],

@@ -26,7 +26,7 @@ import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.js
 import Mapa from './features/busquedas/Mapa.jsx';
 import LinkedinCallback from './components/LinkedinCallback.jsx';
 import { crearTema } from './theme/crearTema.js';
-import { ModoColorProvider, useModoColor } from './theme/ModoColorContext.jsx';
+import { tokensBase } from './designTokens.js';
 import { NotificadorProvider } from './components/Notificador/Notificador.jsx';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx';
 import PaginaNoEncontrada from './features/errores/PaginaNoEncontrada.jsx';
@@ -39,13 +39,12 @@ const logtoConfig = {
   resources: RESOURCE ? [RESOURCE] : []
 };
 
-// El tema MUI y las variables CSS salen de los mismos tokens del modo activo.
-const TemaDelModo = ({ children }) => {
-  const { tokens } = useModoColor();
-  const theme = useMemo(() => crearTema(tokens), [tokens]);
+// El tema MUI y las variables CSS salen de los mismos tokens (designTokens.js).
+const TemaApp = ({ children }) => {
+  const theme = useMemo(() => crearTema(tokensBase), []);
   return (
     <ThemeProvider theme={theme}>
-      <GlobalStyles styles={{ ':root': tokens }} />
+      <GlobalStyles styles={{ ':root': tokensBase }} />
       {children}
     </ThemeProvider>
   );
@@ -57,7 +56,7 @@ const LimiteDeErrores = ({ children }) => {
   return <ErrorBoundary claveReinicio={pathname}>{children}</ErrorBoundary>;
 };
 
-TemaDelModo.propTypes = { children: PropTypes.node };
+TemaApp.propTypes = { children: PropTypes.node };
 LimiteDeErrores.propTypes = { children: PropTypes.node };
 
 function App() {
@@ -65,8 +64,7 @@ function App() {
     <LogtoProvider config={logtoConfig}>
       <AuthProvider>
         <BrowserRouter>
-          <ModoColorProvider>
-          <TemaDelModo>
+          <TemaApp>
           <NotificadorProvider>
           <LimiteDeErrores>
             <Routes>
@@ -142,7 +140,7 @@ function App() {
                 <Route path="/registro/tipo" element={<RequiereAuth exigirPerfil={false}><TipoCuenta /></RequiereAuth>} />
                 <Route path="/registro/colectivo" element={<RequiereAuth exigirPerfil={false} tipoRegistro="colectivo"><DatosColectivo /></RequiereAuth>} />
                 <Route path="/registro/colaboradora" element={<RequiereAuth exigirPerfil={false} tipoRegistro="colaboradora"><RegistroColaboradora /></RequiereAuth>} />
-                <Route path="/registro/listo" element={<Navigate to="/perfil" replace />} />
+                <Route path="/registro/listo" element={<Navigate to="/" replace />} />
 
                 {/* con sesión y perfil */}
                 <Route path="/perfil" element={<RequiereAuth><MiPerfil /></RequiereAuth>} />
@@ -182,8 +180,7 @@ function App() {
             </Routes>
           </LimiteDeErrores>
           </NotificadorProvider>
-          </TemaDelModo>
-          </ModoColorProvider>
+          </TemaApp>
         </BrowserRouter>
       </AuthProvider>
     </LogtoProvider>

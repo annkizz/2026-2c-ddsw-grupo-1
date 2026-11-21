@@ -71,10 +71,10 @@ const Home = () => {
   const esDashboardColectivo = sesion?.rol === 'COLECTIVO' && sesion?.tienePerfil;
   const esDashboardColaboradora = sesion?.rol === 'COLABORADOR' && sesion?.tienePerfil;
 
-  // El colectivo autenticado usa el inicio como panel; el resto conserva el flujo actual.
+  // Cuentas con perfil pero sin panel propio (por ejemplo, administración) van al listado público.
   useEffect(() => {
     if (sesion?.tienePerfil && !esDashboardColectivo && !esDashboardColaboradora) {
-      navigate('/perfil', { replace: true });
+      navigate('/proyectos', { replace: true });
     }
   }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
 
@@ -164,7 +164,6 @@ const Home = () => {
             id="dashboard-titulo"
             antetitulo={t('inicio.espacioDeTuColectivo')}
             titulo="¿Qué querés impulsar hoy?"
-            subtitulo="Publicá proyectos, revisá su estado y encontrá colaboradoras."
           />
 
           <div className="dashboard-grid">
@@ -172,11 +171,7 @@ const Home = () => {
               className="dashboard-card--destacada"
               icon={sinProyectos ? null : <FiCode />}
               title={sinProyectos ? null : 'Publicar un proyecto'}
-              description={
-                sinProyectos
-                  ? null
-                  : 'Compartí una iniciativa y contá qué tipo de colaboración necesitás.'
-              }
+              description={sinProyectos ? null : 'Contá qué necesita tu colectivo y sumá colaboradoras.'}
             >
               {sinProyectos ? (
                 <DashboardEmptyState
@@ -191,6 +186,7 @@ const Home = () => {
               ) : (
                 <Button
                   variant="contained"
+                  color="secondary"
                   onClick={() => navigate('/proyectos/nuevo')}
                   startIcon={<FiPlus aria-hidden="true" />}
                 >
@@ -298,24 +294,22 @@ const Home = () => {
             titulo="El código es mejor cuando nos conecta."
             subtitulo={t('inicio.unimosAColectivosQueNecesitan')}
           />
-          <div className="home-pares" aria-hidden="true">
-            <span>
-              <FiCode /> Personas
-            </span>
-            <FiRepeat />
-            <span>
-              <FiUsers /> Colectivos
-            </span>
-          </div>
-          <p className="texto-secundario">Software compartido. Impacto colectivo.</p>
+          <ul className="home-pares">
+            <li>
+              <FiUsers aria-hidden="true" /> Colectivos publican lo que necesitan
+            </li>
+            <li>
+              <FiCode aria-hidden="true" /> Personas colaboradoras suman su código
+            </li>
+          </ul>
         </section>
 
         <section className="home-login" aria-labelledby="home-login-titulo">
           <h2 id="home-login-titulo">Iniciar sesión</h2>
-          <p className="home-sub">Qué bueno encontrarte de nuevo.</p>
           {/* El email y la contraseña se piden en la pantalla de Logto */}
           <Button
             variant="contained"
+            color="secondary"
             fullWidth
             size="large"
             onClick={iniciarSesion}

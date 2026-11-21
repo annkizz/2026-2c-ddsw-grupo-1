@@ -64,18 +64,21 @@ describe('MiPerfil', () => {
   it('mantiene reconocible la sección activa en la navegación', async () => {
     renderPerfil();
 
-    expect(await screen.findByRole('button', { name: '✓ Cuenta · Actual' }))
+    expect(await screen.findByRole('button', { name: 'Cuenta' }))
       .toHaveAttribute('aria-current', 'location');
+    // Solo se muestra la sección activa: el formulario ya no es una única página larga.
+    expect(screen.queryByRole('textbox', { name: 'Nombre de fantasía (obligatorio)' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Perfil' }));
 
-    expect(screen.getByRole('button', { name: '✓ Perfil · Actual' }))
+    expect(screen.getByRole('button', { name: 'Perfil' }))
       .toHaveAttribute('aria-current', 'location');
     expect(screen.getByRole('button', { name: 'Cuenta' }))
       .not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('textbox', { name: 'Nombre de fantasía (obligatorio)' })).toBeInTheDocument();
   });
 
-  it('oculta la navegación lateral en el perfil del colectivo', async () => {
+  it('también segmenta el perfil del colectivo con navegación lateral', async () => {
     useAuth.mockReturnValue({
       sesion: { rol: 'COLECTIVO', idColectivo: 'colectivo-1' },
       getAccessToken: jest.fn().mockResolvedValue('token'),
@@ -95,10 +98,9 @@ describe('MiPerfil', () => {
 
     expect(await screen.findByRole('heading', { name: 'Tu perfil de colectivo' }))
       .toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Secciones de mi perfil' }))
-      .not.toBeInTheDocument();
-    expect(document.querySelector('.mi-perfil-disposicion--sin-nav'))
+    expect(screen.getByRole('navigation', { name: 'Secciones de mi perfil' }))
       .toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Áreas de trabajo' })).toBeInTheDocument();
   });
 
   it('muestra errores resumidos y junto a cada campo inválido', async () => {
@@ -119,9 +121,11 @@ describe('MiPerfil', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Guardar cambios' }));
 
     expect(await screen.findByText('Revisá 3 campos')).toBeInTheDocument();
+    // Se abre la sección del primer error; el resto queda enlazado en el resumen y marcado en la navegación.
     expect(screen.getByText('El nombre de fantasía es obligatorio.')).toBeInTheDocument();
-    expect(screen.getByText('Elegí al menos una habilidad.')).toBeInTheDocument();
+    expect(screen.getByText(/Elegí al menos una habilidad\./)).toBeInTheDocument();
     expect(screen.getAllByText(/Ingresá un número válido/)).not.toHaveLength(0);
+    expect(screen.getByRole('button', { name: /Habilidades 1 campo para revisar/ })).toBeInTheDocument();
     expect(actualizarColaboradora).not.toHaveBeenCalled();
   });
 
@@ -155,6 +159,7 @@ describe('MiPerfil', () => {
   it('confirma antes de descartar cambios sin guardar', async () => {
     renderPerfil();
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Perfil' }));
     const nombre = await screen.findByRole('textbox', { name: 'Nombre de fantasía (obligatorio)' });
     fireEvent.change(nombre, { target: { value: 'Nombre sin guardar' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
