@@ -67,11 +67,11 @@ const colores = {
 
   // Mapa coroplético (escala secuencial de un tono: se lee por claridad, no por matiz)
   '--color-map-empty': '#E5E7EB',
-  '--color-map-1': '#EAF2FB',
-  '--color-map-2': '#B7D3EC',
-  '--color-map-3': '#74A9D8',
-  '--color-map-4': '#2F78BA',
-  '--color-map-5': '#0B4A86',
+  '--color-map-1': '#C6DCF2',
+  '--color-map-2': '#8DB9E3',
+  '--color-map-3': '#4F8FCC',
+  '--color-map-4': '#1F66AE',
+  '--color-map-5': '#0B3F73',
   '--color-map-stroke': '#6B7280',
 
   // Esqueletos de carga y velos

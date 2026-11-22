@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import {
@@ -345,12 +345,31 @@ describe('DetalleProyecto - postulaciones', () => {
     ).toHaveClass('MuiInputLabel-shrink');
   });
 
-  it('separa la pantalla en pestañas y empieza por el resumen', async () => {
+  it('a quien visita le muestra primero los perfiles para postularse', async () => {
     render(<DetalleProyecto />);
 
-    expect(await screen.findByRole('tab', { name: /^Resumen/ })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Descripción', { selector: 'p' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Postularme' })).not.toBeInTheDocument();
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs[0]).toHaveTextContent(/^Perfiles/);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('button', { name: 'Postularme' })).toBeInTheDocument();
+  });
+
+  it('al colectivo dueño le ofrece cargar perfiles si no hay y agrupa la edición en Administrar', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      isAuthenticated: true,
+      cargando: false,
+    });
+    obtenerPerfiles.mockResolvedValueOnce([]);
+    render(<DetalleProyecto />);
+
+    expect(await screen.findByRole('button', { name: 'Cargar perfiles' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Editar proyecto' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Administrar' }));
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByRole('menuitem', { name: 'Editar datos del proyecto' })).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'Configurar búsqueda' })).toBeInTheDocument();
   });
 
   it('le muestra a la colaboradora qué habilidades del perfil cumple y cuáles le faltan', async () => {

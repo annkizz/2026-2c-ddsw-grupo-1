@@ -122,14 +122,32 @@
   margin-left: auto;
 }
 
-.header-campana.MuiIconButton-root {
+.header-campana {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-2);
+  border: var(--border-width-strong) solid var(--color-on-brand-muted);
+  border-radius: var(--radius-pill);
   color: var(--color-on-brand);
-  font-size: var(--icon-size-lg);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
 }
 
-.header-campana.MuiIconButton-root:hover,
-.header-campana.MuiIconButton-root[aria-current='page'] {
+.header-campana svg {
+  font-size: var(--icon-size-md);
+}
+
+.header-campana__numero.insignia {
+  margin-left: 0;
+}
+
+.header-campana:hover,
+.header-campana[aria-current='page'] {
+  border-color: var(--color-accent);
   background: var(--color-brand-2);
+  text-decoration: none;
 }
 
 .header-usuario__boton {
@@ -173,7 +191,7 @@
 }
 
 .header-usuario__nombre {
-  max-width: 16ch;
+  max-width: 18ch;
   overflow: hidden;
   font-size: var(--font-size-secundario);
   font-weight: var(--font-weight-bold);
@@ -295,8 +313,13 @@
   }
 
   .header-nav--desktop,
-  .header-usuario--desktop {
+  .header-usuario--desktop,
+  .header-campana__texto {
     display: none;
+  }
+
+  .header-campana {
+    padding: 0 10px;
   }
 
   .header-usuario {

@@ -199,7 +199,7 @@ export default function BuscadorColaboradores() {
               id="proyecto"
               etiqueta="Proyecto"
               opciones={opcionesProyectos}
-              seleccion={[idProyecto]}
+              seleccion={idProyecto ? [idProyecto] : []}
               onSeleccionar={cambiarProyecto}
               placeholder={
                 proyectosState.cargando
@@ -223,7 +223,7 @@ export default function BuscadorColaboradores() {
                 id="perfil"
                 etiqueta="Perfil que necesitás cubrir"
                 opciones={opcionesPerfiles}
-                seleccion={[idPerfil]}
+                seleccion={idPerfil ? [idPerfil] : []}
                 onSeleccionar={setIdPerfil}
                 placeholder={
                   perfilesState.cargando

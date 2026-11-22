@@ -1,6 +1,6 @@
 .notificaciones-contenedor {
   width: 100%;
-  max-width: var(--form-max-width);
+  max-width: var(--content-max-width);
   margin: 0 auto;
 }
 

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Badge, Divider, Drawer, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material';
+import { Divider, Drawer, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material';
 import {
   FiBell,
   FiChevronDown,
   FiCode,
   FiFileText,
-  FiHelpCircle,
   FiLogOut,
   FiMap,
   FiMenu,
@@ -20,16 +19,15 @@ import { useNotificacionesPendientes } from '../../hooks/useNotificacionesPendie
 import { t } from '../../i18n/t';
 import './Header.css';
 
-import { RUTA_AYUDA, irAAyuda } from '../../utils/rutasUI';
 
 const ETIQUETA_ROL = {
   COLECTIVO: 'Colectivo',
-  COLABORADOR: 'Persona colaboradora',
+  COLABORADOR: 'Colaborador',
   ADMINISTRADOR: 'Administración'
 };
 
 // El logo es el único acceso a Inicio (antes había un botón "Inicio" que hacía lo mismo).
-// Lo personal (perfil, notificaciones, ayuda, salir) vive en el menú de usuario.
+// Lo personal (Mi perfil, Salir) vive en el menú de usuario; las notificaciones, en su botón.
 const enlacesPorRol = (rol) => {
   if (rol === 'COLABORADOR') {
     return [
@@ -89,10 +87,6 @@ const Header = () => {
     cerrarMenu();
     cerrarSesion();
   };
-  const ayuda = () => {
-    ir(RUTA_AYUDA);
-    irAAyuda();
-  };
 
   const renderEnlaces = () =>
     enlaces.map(({ to, texto, icono }) => (
@@ -107,18 +101,24 @@ const Header = () => {
       </NavLink>
     ));
 
+  // Notificaciones como botón visible (borde + texto en desktop), con el número de no vistas.
   const campana = (
-    <IconButton
-      component={Link}
+    <Link
       to="/notificaciones"
       className="header-campana"
       aria-label={textoPendientes(pendientes)}
       onClick={cerrarMenu}
     >
-      <Badge badgeContent={insignia} color="secondary" invisible={pendientes === 0} overlap="circular">
-        <FiBell aria-hidden="true" />
-      </Badge>
-    </IconButton>
+      <FiBell aria-hidden="true" />
+      <span className="header-campana__texto" aria-hidden="true">
+        {t('navegacion.notificaciones')}
+      </span>
+      {pendientes > 0 && (
+        <span className="insignia insignia--acento header-campana__numero" aria-hidden="true">
+          {insignia}
+        </span>
+      )}
+    </Link>
   );
 
   return (
@@ -138,12 +138,7 @@ const Header = () => {
             {renderEnlaces()}
           </nav>
         ) : (
-          <div className="header-nav header-nav--desktop">
-            <Link className="header-ayuda" to={RUTA_AYUDA} onClick={irAAyuda}>
-              <FiHelpCircle aria-hidden="true" />
-              <span>{t('navegacion.ayuda')}</span>
-            </Link>
-          </div>
+          <div className="header-nav header-nav--desktop" />
         )}
 
         {conPerfil && (
@@ -170,6 +165,7 @@ const Header = () => {
           </div>
         )}
 
+        {conPerfil && (
         <IconButton
           className="header-menu-toggle"
           aria-label={menuAbierto ? t('navegacion.cerrarMenu') : t('navegacion.abrirMenu')}
@@ -179,6 +175,7 @@ const Header = () => {
         >
           {menuAbierto ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
         </IconButton>
+        )}
       </div>
 
       <Menu
@@ -200,24 +197,6 @@ const Header = () => {
             <FiUser aria-hidden="true" />
           </ListItemIcon>
           {t('navegacion.miPerfil')}
-        </MenuItem>
-        <MenuItem onClick={() => ir('/notificaciones')}>
-          <ListItemIcon>
-            <FiBell aria-hidden="true" />
-          </ListItemIcon>
-          <span className="menu-usuario__texto">{t('navegacion.notificaciones')}</span>
-          {pendientes > 0 && (
-            <span className="insignia insignia--acento">
-              {insignia}
-              <span className="visualmente-oculto"> {pendientes === 1 ? t('navegacion.sinVerUna') : t('navegacion.sinVer')}</span>
-            </span>
-          )}
-        </MenuItem>
-        <MenuItem onClick={ayuda}>
-          <ListItemIcon>
-            <FiHelpCircle aria-hidden="true" />
-          </ListItemIcon>
-          {t('navegacion.ayuda')}
         </MenuItem>
         <Divider component="li" role="presentation" />
         <MenuItem onClick={salir} className="menu-usuario__salir">
@@ -282,10 +261,6 @@ const Header = () => {
                 </NavLink>
               </>
             )}
-            <Link className="header-nav-link" to={RUTA_AYUDA} onClick={() => { cerrarMenu(); irAAyuda(); }}>
-              <FiHelpCircle aria-hidden="true" />
-              <span>{t('navegacion.ayuda')}</span>
-            </Link>
             {conPerfil && (
               <button type="button" className="header-nav-link header-nav-salir" onClick={salir}>
                 <FiLogOut aria-hidden="true" />

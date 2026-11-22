@@ -22,7 +22,30 @@ Solo se tocó `packages/frontend`. El backend quedó igual.
 | Login → inicio | Después de iniciar sesión o terminar el registro se va al Inicio, no a Mi perfil. |
 | "Tus datos bajo tu control" y texto innecesario | Eliminado, junto con subtítulos que repetían el título. |
 
+## Segunda ronda de ajustes
+
+| Pedido | Qué se hizo |
+| --- | --- |
+| Rol en "Mi cuenta" | Ahora dice "Colaborador" (y "Colectivo"). |
+| Menú de usuario | Solo "Mi perfil" y "Salir". Notificaciones es un botón aparte con borde, texto y número. |
+| "¿Necesitás ayuda?" | Se sacó del header, el menú, el menú móvil y el footer. |
+| Mapa | Se sacó la tabla. Al tocar una provincia, sus proyectos aparecen al lado del mapa. La referencia muestra rangos reales ("De 3 a 4 proyectos") y los tonos son más distintos entre sí. |
+| Inicio de colaboradora | Queda un solo botón para buscar: "Explorar proyectos". |
+| Vacantes | Los perfiles sin cupo ahora dicen "Vacantes sin límite". Antes no decían nada, aunque igual se podía postular. |
+| Espacio en desktop | El perfil público (de colectivo o colaboradora) usa todo el ancho: descripción al centro, áreas al costado y los proyectos activos del colectivo. Las tarjetas de perfiles se estiran sin dejar columnas vacías. |
+| Búsqueda de proyectos | Sin "(opcional)" en los filtros. |
+| Proyecto: perfiles primero | Quien visita entra directo a la pestaña "Perfiles". El colectivo dueño sigue entrando a "Resumen". |
+| Administrar / Editar | "Editar datos del proyecto" pasó adentro de "Administrar", junto a perfiles, búsqueda y avance. La búsqueda ya no se repite al editar. |
+| Sin perfiles | El dueño ve un aviso con el botón "Cargar perfiles" (en Resumen y en Perfiles). |
+| Etiquetas | La lista se cierra después de elegir una. Se vuelve a abrir al escribir, con ↓ o con un clic. |
+| Pasos del formulario | Se puede volver con "Anterior" o tocando cualquier paso. "Crear proyecto" está disponible en todos los pasos. Enter ya no envía el formulario. |
+| Búsqueda en el paso 3 | Se corrigió: el botón "Siguiente" se convertía en "Crear proyecto" en el mismo clic y el proyecto se creaba sin dejar configurar la búsqueda. |
+| Editar proyecto | Menú lateral (Lo básico · Etiquetas y ubicación · Fecha de cierre) en lugar de pasos. La ubicación se muestra solo para leer porque el backend no permite cambiarla (`proyectoEdicionSchema`). |
+| Buscar colaboradoras | Ya no aparece la píldora vacía antes de elegir un proyecto. |
+
 ## Pendiente: necesita cambios en el backend
+
+- **Editar la ubicación de un proyecto.** `proyectoEdicionSchema` es `.strict()` y solo acepta título, descripción y etiquetas.
 
 - **Descripción al postularse.** `crearPostulacionSchema` es `.strict()` y solo acepta `esAnonima`, así que un campo `mensaje` da 400. Hay que agregarlo al schema y al modelo.
 - **Habilidades de una postulación pendiente.** El DTO de una postulación pendiente no trae la persona (`colaborador` aparece recién al aceptar), así que el front no puede comparar sus habilidades antes de aceptar. Una opción es agregar `habilidades` al DTO sin datos personales.

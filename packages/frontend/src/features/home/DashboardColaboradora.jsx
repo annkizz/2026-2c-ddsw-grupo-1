@@ -2,7 +2,7 @@ import { t } from '../../i18n/t';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Skeleton } from '@mui/material';
-import { FiArrowRight, FiMapPin, FiSearch } from 'react-icons/fi';
+import { FiMapPin, FiSearch } from 'react-icons/fi';
 import CardProyecto from '../../components/CardProyecto/CardProyecto.jsx';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
@@ -127,25 +127,14 @@ const DashboardColaboradora = () => {
             <DashboardEmptyState
               icon={FiSearch}
               title="Todavía no encontramos coincidencias"
-              description="Explorá los proyectos activos y ajustá tus filtros para encontrar dónde aportar."
-              actionLabel="Explorar proyectos"
-              onAction={() => navigate('/buscar-proyectos')}
+              description="Usá «Explorar proyectos» para ver todos los proyectos activos."
             />
           ) : (
-            <>
-              <ul className="tarjetas dashboard-recomendaciones-lista">
-                {proyectosRecomendados.map((proyecto) => (
-                  <CardProyecto key={proyecto.id} proyecto={proyecto} />
-                ))}
-              </ul>
-              <Button
-                variant="outlined"
-                onClick={() => navigate('/buscar-proyectos')}
-                endIcon={<FiArrowRight aria-hidden="true" />}
-              >
-                Ver más proyectos
-              </Button>
-            </>
+            <ul className="tarjetas dashboard-recomendaciones-lista">
+              {proyectosRecomendados.map((proyecto) => (
+                <CardProyecto key={proyecto.id} proyecto={proyecto} />
+              ))}
+            </ul>
           )}
         </section>
 

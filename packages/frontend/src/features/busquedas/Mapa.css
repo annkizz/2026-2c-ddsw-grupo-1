@@ -172,3 +172,24 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.leyenda__escala {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.mapa-seleccion {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-3));
+}
+
+.tarjetas--una-columna {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+@media (max-width: 899.95px) {
+  .mapa-seleccion {
+    position: static;
+  }
+}

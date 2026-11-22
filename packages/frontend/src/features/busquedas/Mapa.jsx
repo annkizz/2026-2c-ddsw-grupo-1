@@ -24,12 +24,31 @@ const REGIONES = PROVINCIAS_MAPA.provincias
     labelY: provincia.labelY,
   }));
 
-// Escala secuencial de un solo tono (claro -> oscuro) (se distingue por claridad, no solo por matiz).
-// Además del color, cada provincia muestra su número y hay una tabla equivalente.
+// Escala secuencial de un solo tono (claro -> oscuro): se distingue por claridad, no solo por matiz.
+// Además del color, cada provincia muestra su número.
 function nivelDeRegion(cantidad, maximo) {
   if (cantidad === 0) return 0;
   if (maximo <= 1) return 5;
   return Math.min(5, Math.ceil((cantidad / maximo) * 5));
+}
+
+// Rangos reales de cada tono para la referencia ("1", "2 a 3", "4 a 6"…). Se omiten los tonos sin rango.
+function rangosDeLeyenda(maximo) {
+  if (maximo <= 0) return [];
+  if (maximo === 1) return [{ nivel: 5, texto: "1 proyecto" }];
+  const rangos = [];
+  for (let nivel = 1; nivel <= 5; nivel += 1) {
+    const desde = Math.floor(((nivel - 1) * maximo) / 5) + 1;
+    const hasta = Math.floor((nivel * maximo) / 5);
+    if (desde > hasta) continue;
+    rangos.push({
+      nivel,
+      texto: desde === hasta
+        ? `${desde} proyecto${desde === 1 ? "" : "s"}`
+        : `De ${desde} a ${hasta} proyectos`,
+    });
+  }
+  return rangos;
 }
 
 export default function Mapa() {
@@ -93,7 +112,6 @@ export default function Mapa() {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo="Proyectos por provincia"
-        subtitulo={t('mapa.exploraComoSeDistribuyenLos')}
         migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Mapa" }]}
       />
 
@@ -176,99 +194,66 @@ export default function Mapa() {
 
               <div className="leyenda">
                 <p className="leyenda__titulo" id="leyenda-titulo">
-                  Referencias
+                  Referencia: cantidad de proyectos activos
                 </p>
                 <ul className="leyenda__escala" aria-labelledby="leyenda-titulo">
                   <li>
                     <span className="leyenda__color leyenda__color--0" aria-hidden="true" />
                     Sin proyectos
                   </li>
-                  <li>
-                    <span className="leyenda__color leyenda__color--1" aria-hidden="true" />
-                    Menos proyectos
-                  </li>
-                  <li className="leyenda__intermedios" aria-hidden="true">
-                    <span className="leyenda__color leyenda__color--2" />
-                    <span className="leyenda__color leyenda__color--3" />
-                    <span className="leyenda__color leyenda__color--4" />
-                  </li>
-                  <li>
-                    <span className="leyenda__color leyenda__color--5" aria-hidden="true" />
-                    Más proyectos
-                  </li>
+                  {rangosDeLeyenda(maximo).map(({ nivel, texto }) => (
+                    <li key={nivel}>
+                      <span className={`leyenda__color leyenda__color--${nivel}`} aria-hidden="true" />
+                      {texto}
+                    </li>
+                  ))}
                 </ul>
-                <p className="texto-secundario">{t('mapa.elNumeroEnCadaProvincia')}</p>
+                <p className="texto-secundario">Cuanto más oscuro, más proyectos. El número sobre cada provincia es la cantidad exacta.</p>
               </div>
             </div>
 
-            <div className="mapa-columna">
-              <h2>Provincias con proyectos activos</h2>
+            <div className="mapa-columna mapa-seleccion" aria-live="polite">
               {grupos.length === 0 ? (
                 <EstadoVacio icono={FiMapPin} nivelTitulo="p" titulo="No hay proyectos activos con ubicación todavía." />
-              ) : (
-                <table className="tabla">
-                  <caption className="tabla__caption">
-                    Proyectos activos por provincia. Misma información que el mapa, en formato de tabla.
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Provincia</th>
-                      <th scope="col">Proyectos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grupos.map((grupo) => (
-                      <tr key={grupo.codigo} className={grupo.codigo === seleccionada ? "tabla__fila--activa" : undefined}>
-                        <td>
-                          <Button
-                            variant="text"
-                            type="button"
-                            className="enlace-tabla"
-                            aria-pressed={grupo.codigo === seleccionada}
-                            onClick={() => seleccionar(grupo.codigo)}
-                          >
-                            {grupo.nombre}
-                          </Button>
-                        </td>
-                        <td>{grupo.cantidad}</td>
-                      </tr>
+              ) : grupoSeleccionado ? (
+                <section className="resultados" aria-labelledby="mapa-seleccion-titulo">
+                  <div className="resultados__encabezado resultados__encabezado--fila">
+                    <h2 id="mapa-seleccion-titulo">Proyectos en {grupoSeleccionado.nombre}</h2>
+                    <Button
+                      variant="outlined"
+                      type="button"
+                      startIcon={<FiX aria-hidden="true" />}
+                      onClick={() => setSeleccionada(null)}
+                    >
+                      Quitar selección
+                    </Button>
+                  </div>
+                  <ul className="tarjetas tarjetas--una-columna">
+                    {grupoSeleccionado.proyectos.map((proyecto) => (
+                      <CardProyecto
+                        key={proyecto.id}
+                        proyecto={{
+                          ...proyecto,
+                          ubicacion: {
+                            nombreProvincia: grupoSeleccionado.nombre,
+                            ciudad: proyecto.ciudad,
+                          },
+                        }}
+                        nombreColectivo={proyecto.colectivo?.nombre}
+                      />
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                </section>
+              ) : (
+                <EstadoVacio
+                  icono={FiMapPin}
+                  nivelTitulo="h2"
+                  titulo="Elegí una provincia"
+                  descripcion="Tocá una provincia del mapa para ver sus proyectos activos acá."
+                />
               )}
             </div>
           </div>
-
-          {grupoSeleccionado && (
-            <section className="resultados" aria-labelledby="mapa-seleccion-titulo">
-              <div className="resultados__encabezado resultados__encabezado--fila">
-                <h2 id="mapa-seleccion-titulo">Proyectos en {grupoSeleccionado.nombre}</h2>
-                <Button
-                  variant="outlined"
-                  type="button"
-                  startIcon={<FiX aria-hidden="true" />}
-                  onClick={() => setSeleccionada(null)}
-                >
-                  Ver todas las provincias
-                </Button>
-              </div>
-              <ul className="tarjetas">
-                {grupoSeleccionado.proyectos.map((proyecto) => (
-                  <CardProyecto
-                    key={proyecto.id}
-                    proyecto={{
-                      ...proyecto,
-                      ubicacion: {
-                        nombreProvincia: grupoSeleccionado.nombre,
-                        ciudad: proyecto.ciudad,
-                      },
-                    }}
-                    nombreColectivo={proyecto.colectivo?.nombre}
-                  />
-                ))}
-              </ul>
-            </section>
-          )}
         </>
       )}
 

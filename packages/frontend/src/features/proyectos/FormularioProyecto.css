@@ -131,3 +131,30 @@
     width: 100%;
   }
 }
+
+/* Edición: menú lateral con las partes del proyecto */
+.form-proyecto-edicion {
+  align-items: start;
+}
+
+.form-proyecto-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: var(--form-max-width);
+}
+
+.form-proyecto-ubicacion--fija {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+
+.form-proyecto-ubicacion--fija svg {
+  vertical-align: -2px;
+  color: var(--color-primary);
+}

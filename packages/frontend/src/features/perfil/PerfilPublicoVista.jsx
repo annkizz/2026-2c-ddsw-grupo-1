@@ -46,35 +46,50 @@ const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, t
     );
   }
 
+  // Convención: el último dato es la descripción; los anteriores van como resumen bajo el título.
+  const principal = datos[datos.length - 1];
+  const secundarios = datos.slice(0, -1).filter(Boolean);
+  // Ancho completo: datos y descripción a la izquierda, áreas/habilidades a la derecha.
   return (
-    <div className="contenedor-pagina contenedor-pagina--formulario perfil-publico">
-      <EncabezadoPagina titulo={titulo} antetitulo={tipo} migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: titulo }]} />
-      <section className="perfil-publico__tarjeta" aria-label={t('perfilPublico.datosDelPerfil')}>
-        {datos.filter(Boolean).map((dato, i) => (
-          <p key={i} className={i === datos.length - 1 ? 'perfil-publico__descripcion' : 'texto-secundario'}>
-            {dato}
-          </p>
-        ))}
-        {children}
-      </section>
-      <section className="perfil-publico__tarjeta" aria-labelledby="perfil-publico-chips">
-        <h2 id="perfil-publico-chips">{seccionTitulo}</h2>
-        {chips.length ? (
-          <ul className="lista-chips">
-            {chips.map((chip) => (
-              <li key={chip}>
-                <Chip label={chip} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="texto-secundario">{textoSinChips}</p>
+    <div className="contenedor-pagina perfil-publico">
+      <EncabezadoPagina
+        titulo={titulo}
+        antetitulo={tipo}
+        migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: titulo }]}
+        accion={volver}
+      >
+        {secundarios.length > 0 && (
+          <p className="perfil-publico__meta">{secundarios.join(' · ')}</p>
         )}
-      </section>
-      <p className="perfil-publico__privacidad texto-secundario">
-        <FiLock aria-hidden="true" /> Los medios de contacto son privados y no se muestran en este perfil.
-      </p>
-      <div>{volver}</div>
+      </EncabezadoPagina>
+      <div className="con-lateral con-lateral--derecha perfil-publico__cuerpo">
+        <div className="perfil-publico__principal">
+          <section className="perfil-publico__tarjeta" aria-label={t('perfilPublico.datosDelPerfil')}>
+            <h2>Sobre {tipo.toLowerCase() === 'colectivo' ? 'el colectivo' : 'la persona'}</h2>
+            {principal ? <p className="perfil-publico__descripcion">{principal}</p> : <p className="texto-secundario">Sin descripción.</p>}
+          </section>
+          {children}
+        </div>
+        <aside className="lateral">
+          <section className="perfil-publico__tarjeta" aria-labelledby="perfil-publico-chips">
+            <h2 id="perfil-publico-chips">{seccionTitulo}</h2>
+            {chips.length ? (
+              <ul className="lista-chips">
+                {chips.map((chip) => (
+                  <li key={chip}>
+                    <Chip label={chip} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="texto-secundario">{textoSinChips}</p>
+            )}
+          </section>
+          <p className="perfil-publico__privacidad texto-secundario">
+            <FiLock aria-hidden="true" /> Los medios de contacto son privados.
+          </p>
+        </aside>
+      </div>
     </div>
   );
 };

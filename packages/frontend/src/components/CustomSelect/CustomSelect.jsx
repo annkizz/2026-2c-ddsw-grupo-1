@@ -51,7 +51,7 @@ export default function CustomSelect({
 
   const seleccionadas = useMemo(
     () =>
-      seleccion.map(
+      seleccion.filter((valor) => valor !== "" && valor != null).map(
         (valor) =>
           opcionesNormalizadas.find((opcion) => opcion.valor === valor) ?? {
             valor,
@@ -133,7 +133,9 @@ export default function CustomSelect({
     onSeleccionar?.(opcion.valor);
     setConsulta("");
     setIndiceActivo(0);
-    if (!multiple) setAbierto(false);
+    // La lista se cierra al elegir (también en selección múltiple): así se puede seguir con el
+    // formulario sin tener que hacer clic afuera. Se vuelve a abrir al escribir, con ↓ o con un clic.
+    setAbierto(false);
   };
 
   const alCambiarTexto = (evento) => {
@@ -200,6 +202,7 @@ export default function CustomSelect({
           placeholder={placeholder}
           onChange={alCambiarTexto}
           onFocus={() => setAbierto(true)}
+          onClick={() => setAbierto(true)}
           onKeyDown={alPresionarTecla}
           inputProps={{
             id,

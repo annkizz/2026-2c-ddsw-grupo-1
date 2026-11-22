@@ -68,18 +68,23 @@ describe('Header', () => {
     expect(screen.queryByRole('link', { name: 'Inicio' })).not.toBeInTheDocument();
   });
 
-  it('agrupa perfil, notificaciones, ayuda y salir en el menú de usuario', async () => {
+  it('el menú de usuario solo tiene Mi perfil y Salir, y muestra el rol', async () => {
     const auth = configurar({ ...sesionBase, rol: 'COLABORADOR' });
     renderHeader('/buscar-proyectos');
 
+    expect(screen.getAllByText('Colaborador').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /Menú de usuario/ }));
     const menu = await screen.findByRole('menu', { name: 'Menú de usuario' });
-    expect(within(menu).getByRole('menuitem', { name: 'Mi perfil' })).toBeInTheDocument();
-    expect(within(menu).getByRole('menuitem', { name: /Notificaciones/ })).toBeInTheDocument();
-    expect(within(menu).getByRole('menuitem', { name: '¿Necesitás ayuda?' })).toBeInTheDocument();
+    const items = within(menu).getAllByRole('menuitem').map((item) => item.textContent);
+    expect(items).toEqual(['Mi perfil', 'Salir']);
 
     fireEvent.click(within(menu).getByRole('menuitem', { name: 'Salir' }));
     expect(auth.cerrarSesion).toHaveBeenCalled();
+  });
+
+  it('no muestra "¿Necesitás ayuda?" en ningún lado', () => {
+    renderHeader('/');
+    expect(screen.queryByText('¿Necesitás ayuda?')).not.toBeInTheDocument();
   });
 
   it('muestra un número en la campana cuando llegan notificaciones nuevas', async () => {
@@ -91,7 +96,7 @@ describe('Header', () => {
     expect(screen.getAllByText('3').length).toBeGreaterThan(0);
   });
 
-  it('muestra la navegación de la colaboradora en el menú móvil y se cierra con Escape', async () => {
+  it('muestra la navegación de la colaboradora en el menú móvil y se cierra al tocar afuera', async () => {
     renderHeader('/mis-postulaciones');
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menú' }));
 
@@ -106,25 +111,16 @@ describe('Header', () => {
     expect(within(navegacion).getByRole('link', { name: 'Mi perfil' })).toHaveAttribute('href', '/perfil');
     expect(within(navegacion).getByRole('button', { name: 'Salir' })).toBeInTheDocument();
 
-    fireEvent.keyDown(document.activeElement, { key: 'Escape', code: 'Escape' });
+    fireEvent.click(document.querySelector('.MuiBackdrop-root'));
     await waitFor(() => expect(document.getElementById('header-navegacion-movil')).toBeNull());
   });
 
-  it('ofrece ayuda sin sesión y cierra el menú al hacer clic fuera', async () => {
+  it('sin sesión no muestra menú de usuario ni menú móvil vacío', () => {
     configurar(null, false);
     renderHeader('/');
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú' }));
 
-    const navegacion = await waitFor(() => {
-      const elemento = document.getElementById('header-navegacion-movil');
-      expect(elemento).toBeInTheDocument();
-      return elemento;
-    });
-    expect(within(navegacion).getByRole('link', { name: '¿Necesitás ayuda?' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument();
-
-    fireEvent.click(document.querySelector('.MuiBackdrop-root'));
-    await waitFor(() => expect(document.getElementById('header-navegacion-movil')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Abrir menú' })).not.toBeInTheDocument();
   });
 
   it('el colectivo ve sus proyectos y la búsqueda de colaboradoras', () => {

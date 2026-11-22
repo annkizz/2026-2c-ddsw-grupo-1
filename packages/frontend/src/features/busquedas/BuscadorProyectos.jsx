@@ -224,7 +224,7 @@ export default function BuscadorProyectos() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="habilidades"
-              etiqueta="Habilidades (opcional)"
+              etiqueta="Habilidades"
               opciones={opcionesHabilidades}
               seleccion={filtros.habilidades}
               multiple
@@ -248,7 +248,7 @@ export default function BuscadorProyectos() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="etiquetas"
-              etiqueta="Etiquetas (opcional)"
+              etiqueta="Etiquetas"
               opciones={opcionesEtiquetas}
               seleccion={filtros.etiquetas}
               multiple
@@ -274,7 +274,7 @@ export default function BuscadorProyectos() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="colectivos"
-                etiqueta="Colectivos (opcional)"
+                etiqueta="Colectivos"
                 opciones={opcionesColectivos}
                 seleccion={filtros.idColectivos}
                 multiple
@@ -298,7 +298,7 @@ export default function BuscadorProyectos() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="provincias"
-                etiqueta="Provincias (opcional)"
+                etiqueta="Provincias"
                 opciones={opcionesProvincias}
                 seleccion={filtros.provincias}
                 multiple

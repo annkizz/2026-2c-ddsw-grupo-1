@@ -169,7 +169,13 @@
     "pasoFechas": "Fechas y búsqueda",
     "pasoActual": "Paso {actual} de {total}: {titulo}",
     "anterior": "Anterior",
-    "siguiente": "Siguiente: {titulo}"
+    "siguiente": "Siguiente: {titulo}",
+    "pasoCierre": "Fecha de cierre",
+    "seccionesEdicion": "Partes del proyecto",
+    "seccionConError": "tiene campos para revisar",
+    "ubicacionDelColectivo": "La misma que el colectivo",
+    "ubicacionNoEditable": "La ubicación se elige al crear el proyecto y por ahora no se puede cambiar.",
+    "busquedaEnAdministrar": "La búsqueda de colaboradoras se abre o se cierra desde el proyecto, en Administrar → Configurar búsqueda."
   },
   "detalleProyecto": {
     "volverALista": "Volver a la lista",
@@ -333,7 +339,11 @@
     "btnAdministrar": "Administrar",
     "pendientesUna": "1 pendiente",
     "pendientesVarias": "{cantidad} pendientes",
-    "tuCoincidencia": "Tu coincidencia con este perfil"
+    "tuCoincidencia": "Tu coincidencia con este perfil",
+    "btnEditarDatos": "Editar datos del proyecto",
+    "btnCargarPerfiles": "Cargar perfiles",
+    "sinPerfilesDueño": "Cargá al menos un perfil para que las personas colaboradoras puedan postularse.",
+    "vacantesSinLimite": "Vacantes sin límite"
   },
   "perfilesProyecto": {
     "volverAlProyecto": "Volver al proyecto",
@@ -474,7 +484,6 @@
     "abrirMenu": "Abrir menú",
     "cerrarMenu": "Cerrar menú",
     "salir": "Salir",
-    "ayuda": "¿Necesitás ayuda?",
     "comoFunciona": "Cómo funciona",
     "notificaciones": "Notificaciones",
     "miPerfil": "Mi perfil",
@@ -585,9 +594,7 @@
     "cargandoLosPerfilesDeEste": "Cargando los perfiles de este proyecto…"
   },
   "mapa": {
-    "exploraComoSeDistribuyenLos": "Explorá cómo se distribuyen los proyectos activos en el país. Elegí una provincia en el mapa o en la tabla para ver sus proyectos.",
     "noPudimosCargarElMapa": "No pudimos cargar el mapa",
-    "elNumeroEnCadaProvincia": "El número en cada provincia indica la cantidad de proyectos.",
     "fuenteDelMapaGadm4": "Fuente del mapa: GADM 4.1 (gadm.org), uso académico con atribución.",
     "cargandoElMapa": "Cargando el mapa…"
   },

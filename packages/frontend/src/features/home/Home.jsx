@@ -78,7 +78,7 @@ const Home = () => {
     }
   }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
 
-  // "¿Necesitás ayuda?" lleva a /#como-funciona: al llegar, se desplaza a esa sección.
+  // Un enlace a /#como-funciona se desplaza a esa sección al llegar.
   useEffect(() => {
     if (window.location.hash === `#${ID_AYUDA}`) {
       document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: 'start' });

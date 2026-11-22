@@ -136,7 +136,8 @@ const DetalleProyecto = () => {
   const [erroresResolucion, setErroresResolucion] = useState({});
 
   // Pantalla segmentada en pestañas (antes era una sola página muy larga).
-  const [pestana, setPestana] = useState('resumen');
+  // Quien visita (no es dueño) entra directo a Perfiles: es donde decide en qué postularse.
+  const [pestana, setPestana] = useState(null);
   const [anclaAdmin, setAnclaAdmin] = useState(null);
   // Habilidades propias (colaboradora) y de las personas aceptadas (colectivo), para mostrar qué cumple cada una.
   const [misHabilidades, setMisHabilidades] = useState(null);
@@ -654,9 +655,10 @@ const DetalleProyecto = () => {
               : t('detalleProyecto.postularme');
 
   const pendientes = postulacionesProyecto.filter((postulacion) => postulacion.estado === 'PENDIENTE').length;
+  const pestanaResumen = { valor: 'resumen', texto: t('detalleProyecto.pestanaResumen'), icono: <FiInfo aria-hidden="true" /> };
+  const pestanaPerfiles = { valor: 'perfiles', texto: t('detalleProyecto.pestanaPerfiles'), icono: <FiUsers aria-hidden="true" />, cantidad: perfiles.length };
   const pestanas = [
-    { valor: 'resumen', texto: t('detalleProyecto.pestanaResumen'), icono: <FiInfo aria-hidden="true" /> },
-    { valor: 'perfiles', texto: t('detalleProyecto.pestanaPerfiles'), icono: <FiUsers aria-hidden="true" />, cantidad: perfiles.length },
+    ...(esDueño ? [pestanaResumen, pestanaPerfiles] : [pestanaPerfiles, pestanaResumen]),
     ...(esDueño
       ? [
           {
@@ -678,7 +680,7 @@ const DetalleProyecto = () => {
       : []),
     { valor: 'logros', texto: t('detalleProyecto.pestanaLogros'), icono: <FiAward aria-hidden="true" />, cantidad: logros.length },
   ];
-  const pestanaVisible = pestanas.some((p) => p.valor === pestana) ? pestana : 'resumen';
+  const pestanaVisible = pestanas.some((p) => p.valor === pestana) ? pestana : pestanas[0].valor;
   const abrirAdmin = (accion) => {
     setAnclaAdmin(null);
     accion();
@@ -690,11 +692,9 @@ const DetalleProyecto = () => {
     colaboradora?.usuarioGitHub ||
     t('detalleProyecto.nombreNoDisponible');
 
+  // Un solo punto de entrada para quien administra: datos, perfiles, búsqueda y avance.
   const accionesDueño = esDueño ? (
     <>
-      <Button variant="outlined" startIcon={<FiEdit2 aria-hidden="true" />} onClick={() => navigate(`/proyectos/${id}/editar`)}>
-        {t('detalleProyecto.btnEditarProyecto')}
-      </Button>
       <Button
         variant="contained"
         color="secondary"
@@ -715,6 +715,10 @@ const DetalleProyecto = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
+        <MenuItem onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/editar`))}>
+          <ListItemIcon><FiEdit2 aria-hidden="true" /></ListItemIcon>
+          {t('detalleProyecto.btnEditarDatos')}
+        </MenuItem>
         <MenuItem onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/perfiles`))}>
           <ListItemIcon><FiUsers aria-hidden="true" /></ListItemIcon>
           {t('detalleProyecto.btnGestionarPerfiles')}
@@ -790,6 +794,24 @@ const DetalleProyecto = () => {
         {pestanaVisible === 'resumen' && (
           <div className="con-lateral con-lateral--derecha">
             <div className="detalle-columna">
+              {esDueño && !errorPerfiles && perfiles.length === 0 && (
+                <Alert
+                  severity="warning"
+                  action={
+                    <Button
+                      color="inherit"
+                      variant="outlined"
+                      startIcon={<FiPlus aria-hidden="true" />}
+                      onClick={() => navigate(`/proyectos/${id}/perfiles`)}
+                    >
+                      {t('detalleProyecto.btnCargarPerfiles')}
+                    </Button>
+                  }
+                >
+                  <AlertTitle>{t('detalleProyecto.sinPerfiles')}</AlertTitle>
+                  {t('detalleProyecto.sinPerfilesDueño')}
+                </Alert>
+              )}
               <section className="panel" aria-labelledby="detalle-descripcion-titulo">
                 <h2 id="detalle-descripcion-titulo">{t('detalleProyecto.descripcion')}</h2>
                 <p className="detalle-descripcion">{proyecto.descripcion}</p>
@@ -909,15 +931,33 @@ const DetalleProyecto = () => {
               />
             )}
             {!errorPerfiles && perfiles.length === 0 ? (
-              <EstadoVacio icono={FiUsers} nivelTitulo="h3" titulo={t('detalleProyecto.sinPerfiles')} />
+              <EstadoVacio
+                icono={FiUsers}
+                nivelTitulo="h3"
+                titulo={t('detalleProyecto.sinPerfiles')}
+                descripcion={esDueño ? t('detalleProyecto.sinPerfilesDueño') : undefined}
+                accion={
+                  esDueño ? (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<FiPlus aria-hidden="true" />}
+                      onClick={() => navigate(`/proyectos/${id}/perfiles`)}
+                    >
+                      {t('detalleProyecto.btnCargarPerfiles')}
+                    </Button>
+                  ) : undefined
+                }
+              />
             ) : (
               <ul className="detalle-perfiles">
                 {perfiles.map((perfil) => {
                   const ocupadas = (colaboraciones ?? []).filter(
                     (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
                   ).length;
+                  const sinLimite = perfil.limiteColaboraciones == null;
                   const vacantesDisponibles =
-                    perfil.limiteColaboraciones == null || colaboraciones == null
+                    sinLimite || colaboraciones == null
                       ? null
                       : Math.max(0, perfil.limiteColaboraciones - ocupadas);
                   const idPerfil = `perfil-${perfil.id}`;
@@ -948,6 +988,13 @@ const DetalleProyecto = () => {
                           </div>
                         </dl>
 
+                        {/* Siempre se informa la disponibilidad: con cupo muestra cuántas quedan; sin cupo, que no hay límite. */}
+                        {sinLimite && (
+                          <p className="perfil-buscado__vacantes">
+                            <FiCheckCircle aria-hidden="true" />
+                            <span>{t('detalleProyecto.vacantesSinLimite')}</span>
+                          </p>
+                        )}
                         {vacantesDisponibles != null && (
                           <p className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? ' perfil-buscado__vacantes--agotadas' : ''}`}>
                             {vacantesDisponibles === 0 ? <FiLock aria-hidden="true" /> : <FiCheckCircle aria-hidden="true" />}
