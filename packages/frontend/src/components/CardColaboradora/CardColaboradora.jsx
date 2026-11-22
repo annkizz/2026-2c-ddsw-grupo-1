@@ -16,6 +16,7 @@ import { crearNotificacion } from '../../service/notificacionesService';
 import { invitarAColaborar } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import '../Card.css';
+import { markdownATextoPlano } from '../../utils/markdown';
 
 const NOMBRE_SIN_ALIAS = 'Colaboradora sin nombre público';
 
@@ -101,7 +102,7 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
         {colaboradora.pronombres?.length > 0 && (
           <p className="tarjeta__meta">Pronombres: {colaboradora.pronombres.join(', ')}</p>
         )}
-        {colaboradora.presentacion && <p className="tarjeta__descripcion">{colaboradora.presentacion}</p>}
+        {colaboradora.presentacion && <p className="tarjeta__descripcion">{markdownATextoPlano(colaboradora.presentacion)}</p>}
         {colaboradora.usuarioGitHub && (
           <p className="tarjeta__meta">
             <FiGithub aria-hidden="true" />

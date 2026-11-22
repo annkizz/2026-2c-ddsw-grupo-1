@@ -42,6 +42,7 @@ import { camposFaltantesPerfilColaboradora } from '../../utils/perfilColaborador
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { camposFaltantesPerfilColectivo } from '../../utils/perfilColectivo';
 import './MiPerfil.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const PERFIL_VACIO = {
   nombreFantasia: '',
@@ -521,7 +522,7 @@ const MiPerfil = () => {
                     helperText={t('miPerfil.separalosConComas')}
                     fullWidth
                   />
-                  <TextField
+                  <CampoMarkdown
                     id="presentacion"
                     label="Presentación breve (opcional)"
                     placeholder={t('miPerfil.ejPresentacion')}
@@ -572,7 +573,7 @@ const MiPerfil = () => {
                     labelsAbove
                     idPrefix="mi-perfil-ubicacion"
                   />
-                  <TextField
+                  <CampoMarkdown
                     id="descripcion-colectivo"
                     label="Descripción (obligatoria)"
                     placeholder={t('miPerfil.ejDescripcionColectivo')}

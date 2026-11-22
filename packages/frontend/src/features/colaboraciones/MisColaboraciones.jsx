@@ -9,6 +9,7 @@ import { formatearFecha } from '../../utils/fechas';
 import { t } from '../../i18n/t';
 import DialogoBajaColaboracion from '../../components/DialogoBajaColaboracion/DialogoBajaColaboracion.jsx';
 import './MisColaboraciones.css';
+import { markdownATextoPlano } from '../../utils/markdown';
 
 const MisColaboraciones = () => {
   const { getAccessToken, sesion } = useAuth();
@@ -98,7 +99,7 @@ const MisColaboraciones = () => {
                   </span>
                   <h2 id={`colaboracion-${idProyecto}`}>{proyecto.titulo}</h2>
                   <p className="mis-colaboraciones-descripcion">
-                    {proyecto.descripcion}
+                    {markdownATextoPlano(proyecto.descripcion)}
                   </p>
                   <div className="mis-colaboraciones-avance">
                     <div>

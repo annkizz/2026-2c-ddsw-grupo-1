@@ -15,6 +15,7 @@ import { mensajeDeError } from '../../utils/mensajeDeError';
 import { ETIQUETAS_MAX } from '../../utils/etiquetas';
 import { borrarTipo } from './tipoElegido';
 import './Registro.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const DATOS_INICIALES = {
   nombre: '',
@@ -190,7 +191,7 @@ const DatosColectivo = () => {
             )}
           </div>
 
-          <TextField
+          <CampoMarkdown
             id="registro-colectivo-descripcion"
             label="Descripción (obligatoria)"
             placeholder={t('miPerfil.ejDescripcionColectivo')}

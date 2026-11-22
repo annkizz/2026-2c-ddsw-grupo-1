@@ -6,6 +6,7 @@ import { FiArrowRight, FiCheckCircle, FiFolder, FiMapPin, FiUsers } from 'react-
 import { Link } from 'react-router-dom';
 import ChipEstado from '../ChipEstado/ChipEstado.jsx';
 import '../Card.css';
+import { markdownATextoPlano, markdownEnLineaATextoPlano } from '../../utils/markdown';
 
 function describirCompromiso(compromiso) {
   if (!compromiso) return 'Compromiso no informado';
@@ -51,7 +52,7 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
           />
         )}
 
-        {proyecto.descripcion && <p className="tarjeta__descripcion">{proyecto.descripcion}</p>}
+        {proyecto.descripcion && <p className="tarjeta__descripcion">{markdownATextoPlano(proyecto.descripcion)}</p>}
 
         {etiquetas.length > 0 && (
           <ul className="tarjeta__etiquetas" aria-label="Etiquetas">
@@ -88,7 +89,7 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
             <ul className="lista-perfiles">
               {perfilesCompatibles.map((perfil) => (
                 <li key={perfil.id}>
-                  <strong>{perfil.descripcion}</strong> · {describirCompromiso(perfil.compromiso)}
+                  <strong>{markdownEnLineaATextoPlano(perfil.descripcion)}</strong> · {describirCompromiso(perfil.compromiso)}
                   <br />
                   Requeridas en común: {listarHabilidades(perfil.requeridasCoincidentes)}
                   <br />

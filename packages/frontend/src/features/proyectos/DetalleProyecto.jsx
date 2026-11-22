@@ -77,6 +77,8 @@ import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
 import { EsqueletoDetalle } from '../../components/Esqueletos/Esqueletos.jsx';
 import { useNotificar } from '../../components/Notificador/Notificador.jsx';
 import './DetalleProyecto.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
+import Markdown, { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
 
 const ES_ENLACE = /^https?:\/\/\S+$/i;
 
@@ -814,7 +816,7 @@ const DetalleProyecto = () => {
               )}
               <section className="panel" aria-labelledby="detalle-descripcion-titulo">
                 <h2 id="detalle-descripcion-titulo">{t('detalleProyecto.descripcion')}</h2>
-                <p className="detalle-descripcion">{proyecto.descripcion}</p>
+                <Markdown texto={proyecto.descripcion} className="detalle-descripcion" />
               </section>
 
               <section className="panel" aria-labelledby="detalle-enlaces-titulo">
@@ -965,7 +967,7 @@ const DetalleProyecto = () => {
                   return (
                     <li key={perfil.id} className="tarjeta perfil-buscado" aria-labelledby={idPerfil}>
                       <div className="tarjeta__cuerpo">
-                        <h3 id={idPerfil}>{perfil.descripcion}</h3>
+                        <h3 id={idPerfil}><MarkdownEnLinea texto={perfil.descripcion} /></h3>
 
                         <CoincidenciaHabilidades
                           perfil={perfil}
@@ -1077,7 +1079,7 @@ const DetalleProyecto = () => {
                     <li key={postulacion.id} className={`tarjeta perfil-buscado postulacion postulacion--${postulacion.estado?.toLowerCase()}`}>
                       <div className="tarjeta__cuerpo">
                         <div className="postulacion__cabecera">
-                          <h3>{perfil?.descripcion ?? t('detalleProyecto.nombreNoDisponible')}</h3>
+                          <h3>{perfil ? <MarkdownEnLinea texto={perfil.descripcion} /> : t('detalleProyecto.nombreNoDisponible')}</h3>
                           <ChipEstado
                             estado={postulacion.estado}
                             texto={t(`detalleProyecto.estado${postulacion.estado === 'ACEPTADA' ? 'Aceptada' : postulacion.estado === 'RECHAZADA' ? 'Rechazada' : 'Pendiente'}`)}
@@ -1190,7 +1192,7 @@ const DetalleProyecto = () => {
                     <li key={colaboracion.idColaborador} className="tarjeta perfil-buscado">
                       <div className="tarjeta__cuerpo">
                         <h3>{nombre}</h3>
-                        {perfil && <p>{perfil.descripcion}</p>}
+                        {perfil && <p><MarkdownEnLinea texto={perfil.descripcion} /></p>}
                         {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
                       </div>
                       <div className="tarjeta__acciones">
@@ -1226,7 +1228,7 @@ const DetalleProyecto = () => {
                           <h3>{logro.titulo}</h3>
                           {formatearFecha(logro.fecha) && <span className="texto-caption">{formatearFecha(logro.fecha)}</span>}
                         </div>
-                        <p>{logro.descripcion}</p>
+                        <Markdown texto={logro.descripcion} nivelTitulo={4} />
                         {esDueño && (
                           <div className="detalle-logro__linkedin">
                             {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
@@ -1286,7 +1288,7 @@ const DetalleProyecto = () => {
                     required
                     fullWidth
                   />
-                  <TextField
+                  <CampoMarkdown
                     id="logro-descripcion"
                     label={t('detalleProyecto.labelLogroDescripcion')}
                     placeholder={t('detalleProyecto.placeholderLogroDescripcion')}
@@ -1384,7 +1386,7 @@ const DetalleProyecto = () => {
         <DialogContent className="dialogo-postulacion">
           <div className="dialogo-postulacion__resumen">
             <strong>{proyecto.titulo}</strong>
-            <span>{perfilPostulando?.descripcion}</span>
+            <span><MarkdownEnLinea texto={perfilPostulando?.descripcion} /></span>
           </div>
           {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
             <Alert severity="success" role="status">

@@ -678,5 +678,28 @@
     "vacio": "Todavía no agregaste ningún medio de contacto.",
     "numero": "Medio de contacto {numero}",
     "tipo": "Tipo de medio"
+  },
+  "markdown": {
+    "nuevaPestana": "(se abre en una pestaña nueva)",
+    "bloqueCodigo": "Bloque de código",
+    "negrita": "Negrita",
+    "cursiva": "Cursiva",
+    "lista": "Lista",
+    "enlace": "Enlace",
+    "barra": "Formato de {campo}",
+    "verVistaPrevia": "Vista previa",
+    "ocultarVistaPrevia": "Ocultar vista previa",
+    "vistaPrevia": "Vista previa",
+    "vistaPreviaVacia": "Escribí algo para ver cómo va a quedar.",
+    "admite": "Admite formato Markdown: ver cómo",
+    "ayudaEnlace": "enlace",
+    "ayudaLista": "→ lista con viñetas",
+    "ayudaNumerada": "→ lista numerada",
+    "ayudaTitulo": "→ subtítulo",
+    "ayudaCita": "→ cita",
+    "ejemploNegrita": "texto en negrita",
+    "ejemploCursiva": "texto en cursiva",
+    "ejemploEnlace": "texto del enlace",
+    "ejemploItem": "ítem"
   }
 }

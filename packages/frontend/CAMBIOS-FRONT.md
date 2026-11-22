@@ -43,6 +43,20 @@ Solo se tocó `packages/frontend`. El backend quedó igual.
 | Editar proyecto | Menú lateral (Lo básico · Etiquetas y ubicación · Fecha de cierre) en lugar de pasos. La ubicación se muestra solo para leer porque el backend no permite cambiarla (`proyectoEdicionSchema`). |
 | Buscar colaboradoras | Ya no aparece la píldora vacía antes de elegir un proyecto. |
 
+## Requerimiento 38: soporte para Markdown
+
+Las descripciones aceptan Markdown y se muestran con formato. El backend ya guardaba texto libre, así que no hizo falta cambiarlo.
+
+- **Renderizador propio, sin librerías** (`utils/markdown.js` + `components/Markdown`): convierte el texto en un árbol y lo dibuja con elementos de React. Nunca usa `dangerouslySetInnerHTML`, así que el HTML que alguien escriba se muestra como texto (sin XSS). Los enlaces solo se aceptan con `http`, `https` o `mailto`.
+- **Formatos soportados:** negrita, cursiva, tachado, código, enlaces (también URLs sueltas), títulos, listas con viñetas y numeradas (con sublistas), citas, bloques de código y separadores. Un Enter es un salto de línea, como en GitHub.
+- **Accesibilidad:** los `#` del texto se "corren" según el lugar donde se muestran (un `#` nunca es un `<h1>`), así la jerarquía de títulos de la página no se rompe. Los enlaces externos avisan que se abren en otra pestaña.
+- **Campo con formato** (`components/CampoMarkdown`): mismo uso que un `TextField`, más botones Negrita, Cursiva, Lista y Enlace (para quien no conoce la sintaxis), una vista previa y una ayuda desplegable.
+- **Dónde se escribe:** descripción del proyecto, descripción de un perfil buscado (solo formato en línea), descripción de un logro, descripción del colectivo y presentación de la colaboradora (en el registro y en Mi perfil).
+- **Dónde se ve con formato:** detalle del proyecto, logros, perfiles buscados, postulaciones, gestión de perfiles, buscador de colaboradoras y perfil público del colectivo o la colaboradora.
+- **Dónde se ve como texto plano:** tarjetas y listados (Mis colaboraciones, Mis postulaciones), para que no aparezcan `**` ni títulos en un resumen recortado.
+- **Habilidades:** el back ya tiene el campo `descripcion`, pero hoy ninguna pantalla lo muestra. Cuando se agregue, alcanza con usar `<Markdown texto={habilidad.descripcion} />`.
+- **Tests:** `Markdown.test.jsx` (formatos, enlaces e intentos de XSS) y `CampoMarkdown.test.jsx` (botones y vista previa).
+
 ## Pendiente: necesita cambios en el backend
 
 - **Editar la ubicación de un proyecto.** `proyectoEdicionSchema` es `.strict()` y solo acepta título, descripción y etiquetas.

@@ -18,6 +18,8 @@ import { useCandidatas } from "../../hooks/useCandidatas";
 import { useListado } from "../../hooks/useListado";
 import "./Busquedas.css";
 import "./BuscadorColaboradores.css";
+import { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+import { markdownEnLineaATextoPlano } from '../../utils/markdown';
 
 function describirCompromiso(compromiso) {
   if (!compromiso) return "Compromiso no informado";
@@ -35,7 +37,7 @@ function listarHabilidades(habilidades) {
 function ResumenPerfil({ perfil }) {
   return (
     <div className="resumen-perfil">
-      <h3>{perfil.descripcion}</h3>
+      <h3><MarkdownEnLinea texto={perfil.descripcion} /></h3>
       <p className="tarjeta__meta">
         Proyecto:{" "}
         <Link to={`/proyectos/${perfil.idProyecto}`}>
@@ -174,7 +176,7 @@ export default function BuscadorColaboradores() {
     },
     ...perfiles.map((perfil) => ({
       valor: perfil.id,
-      etiqueta: perfil.descripcion,
+      etiqueta: markdownEnLineaATextoPlano(perfil.descripcion),
       secundario: `${perfil.compromiso?.horas ?? "?"} h`,
     })),
   ];
@@ -336,7 +338,7 @@ export default function BuscadorColaboradores() {
               <section
                 className="grupo-candidatas"
                 key={perfil.id}
-                aria-label={`Candidatas para ${perfil.descripcion}`}
+                aria-label={`Candidatas para ${markdownEnLineaATextoPlano(perfil.descripcion)}`}
               >
                 <ResumenPerfil perfil={perfil} />
                 <p className="tarjeta__meta">

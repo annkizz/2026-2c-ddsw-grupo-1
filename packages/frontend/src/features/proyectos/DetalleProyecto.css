@@ -14,7 +14,6 @@
 
 .detalle-descripcion {
   max-width: var(--reading-max-width);
-  white-space: pre-line;
 }
 
 .detalle-datos dd svg {

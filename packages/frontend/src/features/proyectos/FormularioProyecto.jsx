@@ -37,6 +37,7 @@ import { t } from '../../i18n/t';
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import './FormularioProyecto.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const DATOS_INICIALES = {
   titulo: '',
@@ -424,7 +425,7 @@ const FormularioProyecto = () => {
               slotProps={{ input: { endAdornment: guardadoExitoso ? <FiLock aria-hidden="true" /> : null } }}
             />
 
-            <TextField
+            <CampoMarkdown
               id="proyecto-descripcion"
               label={t('formularioProyecto.labelDescripcion')}
               placeholder={t('formularioProyecto.placeholderDescripcion')}

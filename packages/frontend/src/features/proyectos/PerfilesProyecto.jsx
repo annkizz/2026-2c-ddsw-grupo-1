@@ -39,6 +39,9 @@ import {
   textoCupo,
 } from '../../utils/perfiles';
 import './PerfilesProyecto.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
+import { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+import { markdownEnLineaATextoPlano } from '../../utils/markdown';
 
 const PERFIL_VACIO = {
   descripcion: '',
@@ -315,7 +318,7 @@ const PerfilesProyecto = () => {
             <li key={perfil.id} className="tarjeta" aria-labelledby={`admin-perfil-${perfil.id}`}>
               <div className="tarjeta__cuerpo">
                 <h2 id={`admin-perfil-${perfil.id}`} className="tarjeta__titulo">
-                  {perfil.descripcion}
+                  <MarkdownEnLinea texto={perfil.descripcion} />
                 </h2>
 
                 <div className="perfil-admin__bloque">
@@ -365,7 +368,7 @@ const PerfilesProyecto = () => {
                   variant="outlined"
                   startIcon={<FiEdit2 aria-hidden="true" />}
                   onClick={() => abrirModalEditar(perfil)}
-                  aria-label={`${t('perfilesProyecto.editarPerfil')}: ${perfil.descripcion}`}
+                  aria-label={`${t('perfilesProyecto.editarPerfil')}: ${markdownEnLineaATextoPlano(perfil.descripcion)}`}
                 >
                   {t('perfilesProyecto.editarPerfil')}
                 </Button>
@@ -377,7 +380,7 @@ const PerfilesProyecto = () => {
                     setErrorEliminar(null);
                     setPerfilAEliminar(perfil);
                   }}
-                  aria-label={`${t('perfilesProyecto.eliminarPerfil')}: ${perfil.descripcion}`}
+                  aria-label={`${t('perfilesProyecto.eliminarPerfil')}: ${markdownEnLineaATextoPlano(perfil.descripcion)}`}
                 >
                   {t('perfilesProyecto.eliminarPerfil')}
                 </Button>
@@ -404,7 +407,7 @@ const PerfilesProyecto = () => {
               intento={intentoResumen}
             />
 
-            <TextField
+            <CampoMarkdown enLinea
               id="perfil-descripcion"
               label={t('perfilesProyecto.labelDescripcion')}
               placeholder={t('perfilesProyecto.placeholderDescripcion')}
@@ -563,7 +566,7 @@ const PerfilesProyecto = () => {
         <DialogTitle id="eliminar-perfil-titulo">{t('perfilesProyecto.modalEliminarTitulo')}</DialogTitle>
         <DialogContent className="dialogo-formulario">
           <DialogContentText id="eliminar-perfil-texto">
-            {perfilAEliminar && <strong>{perfilAEliminar.descripcion}. </strong>}
+            {perfilAEliminar && <strong><MarkdownEnLinea texto={perfilAEliminar.descripcion} />. </strong>}
             {t('perfilesProyecto.mensajeEliminar')}
           </DialogContentText>
           {errorEliminar && <AlertaError error={errorEliminar} titulo={t('perfilesProyecto.errorEliminarTitulo')} />}

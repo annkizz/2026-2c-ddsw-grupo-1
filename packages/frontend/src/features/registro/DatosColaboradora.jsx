@@ -5,6 +5,7 @@ import { TextField } from '@mui/material';
 import { FiAlertCircle } from 'react-icons/fi';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const OBLIGATORIOS = ['nombreFantasia', 'usuarioGitHub', 'presentacion'];
 
@@ -77,7 +78,7 @@ const DatosColaboradora = ({ datos, setDatos, onVolver, onSiguiente }) => {
         <TextField {...propsDe('nombre')} />
         <TextField {...propsDe('apellido')} />
         <TextField {...propsDe('pronombres')} />
-        <TextField multiline minRows={3} {...propsDe('presentacion')} />
+        <CampoMarkdown multiline minRows={3} {...propsDe('presentacion')} />
       </section>
       <AccionesRegistro onVolver={onVolver} />
     </form>

@@ -9,6 +9,7 @@ import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
 import { EsqueletoPerfil } from '../../components/Esqueletos/Esqueletos.jsx';
 import './PerfilPublico.css';
+import Markdown from '../../components/Markdown/Markdown.jsx';
 
 // Vista común de perfiles públicos (colaboradora y colectivo).
 const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, titulo, datos, seccionTitulo, chips, textoSinChips, children }) => {
@@ -66,7 +67,7 @@ const PerfilPublicoVista = ({ tipo, cargando, error, encontrado, onReintentar, t
         <div className="perfil-publico__principal">
           <section className="perfil-publico__tarjeta" aria-label={t('perfilPublico.datosDelPerfil')}>
             <h2>Sobre {tipo.toLowerCase() === 'colectivo' ? 'el colectivo' : 'la persona'}</h2>
-            {principal ? <p className="perfil-publico__descripcion">{principal}</p> : <p className="texto-secundario">Sin descripción.</p>}
+            {principal ? <Markdown texto={principal} className="perfil-publico__descripcion" /> : <p className="texto-secundario">Sin descripción.</p>}
           </section>
           {children}
         </div>

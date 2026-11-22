@@ -27,7 +27,6 @@
 .perfil-publico__descripcion {
   max-width: var(--reading-max-width);
   color: var(--color-text);
-  white-space: pre-line;
 }
 
 .perfil-publico__meta {
