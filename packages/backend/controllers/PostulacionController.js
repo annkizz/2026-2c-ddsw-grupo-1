@@ -20,8 +20,14 @@ export const resolverPostulacionSchema = z
 export const crearInvitacionSchema = z
   .object({
     idColaborador: z.string().trim().regex(/^[\da-f]{24}$/i),
+    mensaje: z.string().trim().max(500).optional().default(""),
   })
   .strict();
+
+export const resolverInvitacionSchema = z.object({
+  decision: z.enum([EstadoPostulacion.ACEPTADA, EstadoPostulacion.RECHAZADA]),
+  esAnonima: z.boolean().default(true),
+}).strict();
 
 export class PostulacionController {
   constructor(
@@ -69,8 +75,17 @@ export class PostulacionController {
       req.params.idPerfil,
       req.body.idColaborador,
       actor,
+      req.body.mensaje,
     );
     res.status(201).json(invitacion);
+  };
+
+  resolverInvitacion = async (req, res) => {
+    const actor = await this.obtenerActor(req);
+    const invitacion = await this.postulacionService.resolverInvitacion(
+      req.params.idProyecto, req.params.idInvitacion, req.body.decision, req.body.esAnonima, actor,
+    );
+    res.status(200).json(invitacion);
   };
 
   obtenerPorProyecto = async (req, res) => {

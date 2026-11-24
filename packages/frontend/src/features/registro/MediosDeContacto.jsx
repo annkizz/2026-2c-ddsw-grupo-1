@@ -84,7 +84,7 @@ const MediosDeContacto = ({
 
         {datos.medios.length === 0 ? (
           <p className="medios-contacto__vacio">
-            {t('medios.vacio')} <strong>{t('registro.mediosDeContactoOpcional')}</strong>
+            {t('medios.vacio')}
           </p>
         ) : (
           <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>

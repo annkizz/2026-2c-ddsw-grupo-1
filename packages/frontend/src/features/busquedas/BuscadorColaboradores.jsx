@@ -298,6 +298,7 @@ export default function BuscadorColaboradores() {
               variant="outlined"
               component={Link}
               to={`/proyectos/${idProyecto}/perfiles`}
+              state={{ crearPerfil: true }}
             >{t('buscadorColaboradoras.cargarPerfiles')}</Button>} />
         )}
 

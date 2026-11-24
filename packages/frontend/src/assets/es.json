@@ -532,8 +532,10 @@
     "para": "Para {nombre}",
     "usuario": "Usuario",
     "postulacionAceptada": "Postulación aceptada",
+    "postulacionRecibida": "Nueva postulación",
     "postulacionRechazada": "Postulación rechazada",
     "invitacion": "Invitación a postularte",
+    "invitacionProyecto": "Invitación a colaborar",
     "verMisColaboraciones": "Ver mis colaboraciones",
     "verProyecto": "Ver proyecto",
     "nueva": "Nueva"

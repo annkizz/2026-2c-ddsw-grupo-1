@@ -112,6 +112,23 @@ describe('DetalleProyecto - postulaciones', () => {
     resolverPostulacion.mockResolvedValue({});
   });
 
+  it('muestra las habilidades y el perfil público de una postulante pendiente', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'),
+      isAuthenticated: true, cargando: false,
+    });
+    obtenerPostulaciones.mockResolvedValue([{
+      id: 'post-1', idPerfil: 'perfil-1', estado: 'PENDIENTE',
+      perfilPublico: { nombreFantasia: 'Ada', habilidades: ['React'], presentacion: 'Desarrolladora' },
+    }]);
+    render(<DetalleProyecto />);
+    await irAPestana('Postulaciones');
+    expect((await screen.findByText('Perfil público:')).parentElement).toHaveTextContent('Ada');
+    expect(screen.getByText('Habilidades:').parentElement).toHaveTextContent('React');
+    expect(screen.getByText('Desarrolladora')).toBeInTheDocument();
+  });
+
   it('envía una postulación con la preferencia de anonimato elegida', async () => {
     render(<DetalleProyecto />);
     await irAPestana('Perfiles');

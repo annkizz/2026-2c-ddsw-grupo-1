@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import { FiCheckCircle, FiGithub, FiMail } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { crearNotificacion } from '../../service/notificacionesService';
 import { invitarAColaborar } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import '../Card.css';
@@ -47,7 +46,6 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
   const [error, setError] = useState('');
   const [resultado, setResultado] = useState(null);
   const [invitacionEnviada, setInvitacionEnviada] = useState(false);
-  const [errorInvitacion, setErrorInvitacion] = useState('');
 
   const cerrarDialogo = () => {
     setDialogoAbierto(false);
@@ -62,26 +60,13 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
     setError('');
     try {
       const token = await getAccessToken();
-      const respuesta = await crearNotificacion(token, {
-        idColaborador: colaboradora.id,
-        contenido: contenido.trim(),
-      });
+      const respuesta = await invitarAColaborar(token, idProyecto, idPerfil, colaboradora.id, contenido.trim());
+      setInvitacionEnviada(true);
       setResultado(respuesta);
     } catch (e) {
       setError(mensajeDeError(e));
     } finally {
       setEnviando(false);
-    }
-  };
-
-  const invitar = async () => {
-    setErrorInvitacion('');
-    try {
-      const token = await getAccessToken();
-      await invitarAColaborar(token, idProyecto, idPerfil, colaboradora.id);
-      setInvitacionEnviada(true);
-    } catch (e) {
-      setErrorInvitacion(mensajeDeError(e));
     }
   };
 
@@ -135,34 +120,23 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           variant="outlined"
           type="button"
           startIcon={<FiMail aria-hidden="true" />}
-          disabled={!colaboradora.aceptaMensajeria}
+          disabled={!colaboradora.aceptaMensajeria || !idProyecto || !idPerfil || invitacionEnviada}
           aria-describedby={`${idTitulo}-contacto`}
           onClick={() => setDialogoAbierto(true)}
         >
-          {colaboradora.aceptaMensajeria ? 'Contactar' : 'No acepta mensajes'}
+          {!colaboradora.aceptaMensajeria ? 'No acepta mensajes' : invitacionEnviada ? 'Invitación enviada' : 'Contactar'}
         </Button>
         <span id={`${idTitulo}-contacto`} className="texto-secundario">
           {colaboradora.aceptaMensajeria
-            ? 'Enviar un mensaje interno.'
+            ? 'Invitar a colaborar en este perfil.'
             : 'Esta persona no acepta mensajes internos.'}
         </span>
-        {idProyecto && idPerfil && (
-          <Button
-            variant="contained"
-            type="button"
-            disabled={!colaboradora.aceptaMensajeria || invitacionEnviada}
-            onClick={invitar}
-          >
-            {invitacionEnviada ? 'Invitación enviada' : 'Invitar a postularse'}
-          </Button>
-        )}
       </div>
       {invitacionEnviada && (
         <Alert severity="success" role="status">
           La invitación quedó en la bandeja de notificaciones de la persona.
         </Alert>
       )}
-      {errorInvitacion && <Alert severity="error">{errorInvitacion}</Alert>}
 
       <Dialog
         open={dialogoAbierto}
@@ -178,35 +152,24 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           <DialogContent>
             {resultado ? (
               <Alert severity="success" role="status">
-                El mensaje quedó enviado dentro de la plataforma.
-                {resultado.envios?.length > 0 && (
-                  <ul>
-                    {resultado.envios.map((envio) => (
-                      <li key={envio.tipoDeContacto}>
-                        {envio.tipoDeContacto}: {envio.estado}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                La invitación quedó enviada dentro de la plataforma.
               </Alert>
             ) : (
               <>
                 <p>
-                  El mensaje se guardará en la bandeja de la persona. Sus medios
-                  de contacto permanecen privados.
+                  La persona recibirá una invitación a colaborar en este perfil y podrá aceptarla o rechazarla.
                 </p>
                 {error && <Alert severity="error">{error}</Alert>}
                 <TextField
                   autoFocus
-                  required
                   fullWidth
                   multiline
                   minRows={4}
-                  label="Mensaje"
+                  label="Mensaje opcional"
                   value={contenido}
                   onChange={(event) => setContenido(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 2000 } }}
-                  helperText={`${contenido.length}/2000`}
+                  slotProps={{ htmlInput: { maxLength: 500 } }}
+                  helperText={`${contenido.length}/500`}
                   disabled={enviando}
                 />
               </>
@@ -223,9 +186,9 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={enviando || contenido.trim().length < 4}
+                  disabled={enviando}
                 >
-                  {enviando ? "Enviando…" : "Enviar mensaje"}
+                  {enviando ? "Enviando…" : "Enviar invitación"}
                 </Button>
               </>
             )}

@@ -64,10 +64,20 @@ export const invitarAColaborar = async (
   idProyecto,
   idPerfil,
   idColaborador,
+  mensaje = '',
 ) => {
   const response = await api.post(
     `/proyectos/${idProyecto}/perfiles/${idPerfil}/invitaciones`,
-    { idColaborador },
+    { idColaborador, mensaje },
+    conToken(token),
+  );
+  return response.data;
+};
+
+export const resolverInvitacion = async (token, idProyecto, idInvitacion, decision, esAnonima) => {
+  const response = await api.patch(
+    `/proyectos/${idProyecto}/invitaciones/${idInvitacion}`,
+    { decision, esAnonima },
     conToken(token),
   );
   return response.data;

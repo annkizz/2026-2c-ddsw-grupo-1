@@ -35,6 +35,14 @@ export class NotificacionRepository {
     return this.model.findById(id).exec();
   }
 
+  cambiarEstadoInvitacion(id, idColaborador, estadoActual, estadoNuevo) {
+    return this.model.findOneAndUpdate(
+      { _id: id, idColaborador, tipo: "INVITACION_PROYECTO", estadoInvitacion: estadoActual },
+      { $set: { estadoInvitacion: estadoNuevo } },
+      { returnDocument: "after", runValidators: true },
+    ).exec();
+  }
+
   save(notificacion) {
     const datos = {
       fecha: notificacion.fecha,
@@ -45,6 +53,7 @@ export class NotificacionRepository {
       idProyecto: notificacion.idProyecto,
       idPerfil: notificacion.idPerfil,
       idPostulacion: notificacion.idPostulacion,
+      estadoInvitacion: notificacion.estadoInvitacion,
       envios: notificacion.envios,
       leida: notificacion.leida,
     };

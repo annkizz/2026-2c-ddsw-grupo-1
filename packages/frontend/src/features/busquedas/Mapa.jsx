@@ -103,6 +103,8 @@ export default function Mapa() {
   const grupoSeleccionado = grupos.find(
     (grupo) => grupo.codigo === seleccionada,
   );
+  const regionSeleccionada = REGIONES.find((region) => region.codigo === seleccionada);
+  const provincias = [...REGIONES].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   const seleccionar = (codigo) => {
     setSeleccionada((actual) => (actual === codigo ? null : codigo));
@@ -212,13 +214,12 @@ export default function Mapa() {
               </div>
             </div>
 
-            <div className="mapa-columna mapa-seleccion" aria-live="polite">
-              {grupos.length === 0 ? (
-                <EstadoVacio icono={FiMapPin} nivelTitulo="p" titulo="No hay proyectos activos con ubicación todavía." />
-              ) : grupoSeleccionado ? (
+            <div className="mapa-columna mapa-lateral">
+              <div className="mapa-seleccion" aria-live="polite">
+              {regionSeleccionada ? (
                 <section className="resultados" aria-labelledby="mapa-seleccion-titulo">
                   <div className="resultados__encabezado resultados__encabezado--fila">
-                    <h2 id="mapa-seleccion-titulo">Proyectos en {grupoSeleccionado.nombre}</h2>
+                    <h2 id="mapa-seleccion-titulo">Proyectos en {regionSeleccionada.nombre}</h2>
                     <Button
                       variant="outlined"
                       type="button"
@@ -228,7 +229,7 @@ export default function Mapa() {
                       Quitar selección
                     </Button>
                   </div>
-                  <ul className="tarjetas tarjetas--una-columna">
+                  {grupoSeleccionado ? <ul className="tarjetas tarjetas--una-columna">
                     {grupoSeleccionado.proyectos.map((proyecto) => (
                       <CardProyecto
                         key={proyecto.id}
@@ -242,7 +243,7 @@ export default function Mapa() {
                         nombreColectivo={proyecto.colectivo?.nombre}
                       />
                     ))}
-                  </ul>
+                  </ul> : <EstadoVacio icono={FiMapPin} nivelTitulo="p" titulo="No hay proyectos activos en esta provincia." />}
                 </section>
               ) : (
                 <EstadoVacio
@@ -252,6 +253,23 @@ export default function Mapa() {
                   descripcion="Tocá una provincia del mapa para ver sus proyectos activos acá."
                 />
               )}
+              </div>
+              <table className="tabla">
+                <caption className="tabla__caption">Proyectos activos por provincia</caption>
+                <thead><tr><th scope="col">Provincia</th><th scope="col">Proyectos</th></tr></thead>
+                <tbody>
+                  {provincias.map((provincia) => (
+                    <tr key={provincia.codigo} className={provincia.codigo === seleccionada ? "tabla__fila--activa" : undefined}>
+                      <td>
+                        <Button className="enlace-tabla" type="button" aria-pressed={provincia.codigo === seleccionada} onClick={() => seleccionar(provincia.codigo)}>
+                          {provincia.nombre}
+                        </Button>
+                      </td>
+                      <td>{grupoPorCodigo[provincia.codigo]?.cantidad ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </>

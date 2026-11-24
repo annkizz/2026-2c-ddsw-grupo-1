@@ -166,15 +166,31 @@ export class PostulacionService {
     try {
       const guardada = await this.postulacionRepository.save(postulacion);
 
+      try {
+        await this.notificacionService.crearEventoSistema({
+          tipo: TipoNotificacion.POSTULACION_RECIBIDA,
+          contenido: `Recibiste una postulación para el perfil "${perfil.descripcion}" del proyecto "${proyecto.titulo}".`,
+          idColectivo: proyecto.idColectivo,
+          idColaborador,
+          idProyecto: proyecto._id,
+          idPerfil: perfil._id,
+          idPostulacion: guardada._id,
+        });
+      } catch (error) {
+        try {
+          const resultado = await this.postulacionRepository.eliminarSiPendiente(guardada._id);
+          if (resultado.deletedCount !== 1) throw new Error("No se pudo revertir la postulación");
+        } catch (errorRollback) {
+          throw new AggregateError([error, errorRollback], "Falló la notificación y la reversión de la postulación");
+        }
+        throw error;
+      }
+
       if (
         perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE ||
         perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES
       ) {
-        return await this.aceptarPostulacion(
-          proyecto,
-          guardada,
-          idProyecto,
-        );
+        return await this.aceptarPostulacion(proyecto, guardada, idProyecto);
       }
 
       this.despachadorWebhooks.emitir(
@@ -211,7 +227,23 @@ export class PostulacionService {
     this.validarColectivoDelProyecto(actor, proyecto);
     const postulaciones =
       await this.postulacionRepository.obtenerPorProyecto(idProyecto);
-    return postulaciones.map((postulacion) => this.toDTO(postulacion));
+    return postulaciones.map((postulacion) => {
+      const dto = this.toDTO(postulacion);
+      const colaboradora = postulacion.idColaborador;
+      if (postulacion.estado === EstadoPostulacion.PENDIENTE && colaboradora?._id) {
+        dto.perfilPublico = {
+          id: String(colaboradora._id),
+          nombreFantasia: colaboradora.nombreFantasia,
+          usuarioGitHub: colaboradora.usuarioGitHub,
+          nombre: colaboradora.nombre,
+          apellido: colaboradora.apellido,
+          pronombres: colaboradora.pronombres,
+          presentacion: colaboradora.presentacion,
+          habilidades: colaboradora.habilidades,
+        };
+      }
+      return dto;
+    });
   }
 
   async obtenerColaboracionesParaGestion(idProyecto, actor) {
@@ -238,7 +270,7 @@ export class PostulacionService {
     });
   }
 
-  async invitar(idProyecto, idPerfil, idColaborador, actor) {
+  async invitar(idProyecto, idPerfil, idColaborador, actor, mensaje = "") {
     const { proyecto, perfil } = await this.buscarProyectoYPerfil(
       idProyecto,
       idPerfil,
@@ -291,14 +323,83 @@ export class PostulacionService {
       );
     }
 
-    return this.notificacionService.crearEventoSistema({
-      tipo: TipoNotificacion.INVITACION_POSTULACION,
-      contenido: `El colectivo te invita a postularte al perfil "${perfil.descripcion}" del proyecto "${proyecto.titulo}".`,
-      idColectivo: proyecto.idColectivo,
-      idColaborador: colaboradora._id ?? colaboradora.id,
-      idProyecto: proyecto._id,
-      idPerfil: perfil._id ?? perfil.id,
-    });
+    try {
+      return await this.notificacionService.crearEventoSistema({
+        tipo: TipoNotificacion.INVITACION_PROYECTO,
+        contenido: `El colectivo te invita a colaborar en el proyecto "${proyecto.titulo}", para el perfil "${perfil.descripcion}".${mensaje ? ` Mensaje: ${mensaje}` : ""}`,
+        idColectivo: proyecto.idColectivo,
+        idColaborador: colaboradora._id ?? colaboradora.id,
+        idProyecto: proyecto._id,
+        idPerfil: perfil._id ?? perfil.id,
+        estadoInvitacion: "PENDIENTE",
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new ConflictError("Ya existe una invitación pendiente para este perfil", "INVITACION_YA_EXISTENTE");
+      }
+      throw error;
+    }
+  }
+
+  async resolverInvitacion(idProyecto, idInvitacion, decision, esAnonima, actor) {
+    this.validarColaboradora(actor);
+    if (![EstadoPostulacion.ACEPTADA, EstadoPostulacion.RECHAZADA].includes(decision)) {
+      throw new BadRequestError("La decisión debe ser ACEPTADA o RECHAZADA", "DECISION_INVITACION_INVALIDA");
+    }
+    const repo = this.notificacionService.notificacionRepository;
+    const invitacion = await repo.buscarPorId(idInvitacion);
+    if (!invitacion || invitacion.tipo !== TipoNotificacion.INVITACION_PROYECTO ||
+        String(invitacion.idColaborador) !== String(actor.id) ||
+        String(invitacion.idProyecto) !== String(idProyecto)) {
+      throw new NotFoundError("Invitación no encontrada", "INVITACION_NO_ENCONTRADA");
+    }
+    if (invitacion.estadoInvitacion !== "PENDIENTE") {
+      throw new ConflictError("La invitación ya fue respondida", "INVITACION_YA_RESUELTA");
+    }
+
+    let proyecto;
+    let perfil;
+    let colaboradora;
+    if (decision === EstadoPostulacion.ACEPTADA) {
+      ({ proyecto, perfil } = await this.buscarProyectoYPerfil(idProyecto, invitacion.idPerfil));
+      this.validarProyectoAbierto(proyecto);
+      if (!this.busquedaAbierta(proyecto) || perfil.busquedaAbierta === false) {
+        throw new ConflictError("La búsqueda de colaboraciones está cerrada", "BUSQUEDA_CERRADA");
+      }
+      if (await this.colaboracionRepository.existeColaboracion(idProyecto, actor.id)) {
+        throw new ConflictError("Ya participás de este proyecto", "COLABORACION_YA_EXISTENTE");
+      }
+      if (await this.postulacionRepository.existePendiente(idProyecto, perfil._id, actor.id)) {
+        throw new ConflictError("Ya tenés una postulación pendiente para este perfil", "POSTULACION_YA_EXISTENTE");
+      }
+      const ocupadas = await this.colaboracionRepository.contarPorPerfil(perfil._id);
+      if (perfil.limiteColaboraciones != null && ocupadas >= perfil.limiteColaboraciones) {
+        throw new ConflictError("Se alcanzó el límite de colaboraciones para este perfil", "LIMITE_COLABORACIONES_ALCANZADO");
+      }
+      colaboradora = await this.colaboradorService.obtenerPorId(actor.id);
+      if (!colaboradora) throw new NotFoundError("Colaboradora no encontrada", "COLABORADORA_NO_ENCONTRADA");
+    }
+
+    const actualizada = await repo.cambiarEstadoInvitacion(idInvitacion, actor.id, "PENDIENTE", decision);
+    if (!actualizada) throw new ConflictError("La invitación ya fue respondida", "INVITACION_YA_RESUELTA");
+    if (decision === EstadoPostulacion.ACEPTADA) {
+      try {
+        await this.colaboracionRepository.crearDesdeInvitacion(
+          new Colaboracion(proyecto, colaboradora, perfil, new Date(), esAnonima),
+        );
+      } catch (error) {
+        try {
+          const revertida = await repo.cambiarEstadoInvitacion(idInvitacion, actor.id, decision, "PENDIENTE");
+          if (!revertida) throw new Error("No se pudo reabrir la invitación");
+        } catch (errorRollback) {
+          throw new AggregateError([error, errorRollback], "Falló la colaboración y la reversión de la invitación");
+        }
+        if (error.code === 11000) throw new ConflictError("Ya participás de este proyecto", "COLABORACION_YA_EXISTENTE");
+        throw error;
+      }
+      await this.cerrarPerfilSiLleno(perfil, proyecto);
+    }
+    return this.notificacionService.toDTO(actualizada);
   }
 
   async resolver(idProyecto, idPostulacion, decision, actor) {
@@ -493,6 +594,31 @@ export class PostulacionService {
       throw error;
     }
 
+    await this.cerrarPerfilSiLleno(perfil, proyecto);
+
+    const resultado = this.toDTO({
+      ...(typeof postulacion.toObject === "function"
+        ? postulacion.toObject()
+        : postulacion),
+      estado: EstadoPostulacion.ACEPTADA,
+      idColaborador: colaborador,
+    });
+    this.despachadorWebhooks.emitir(
+      EventoWebhook.COLABORACION_ACEPTADA,
+      proyecto.idColectivo,
+      {
+        idProyecto: String(proyecto._id),
+        tituloProyecto: proyecto.titulo,
+        idPerfil: String(perfil._id),
+        idPostulacion: String(idPostulacion),
+        esAnonima: Boolean(postulacion.esAnonima),
+        fecha: new Date().toISOString(),
+      },
+    );
+    return resultado;
+  }
+
+  async cerrarPerfilSiLleno(perfil, proyecto) {
     if (
       perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES &&
       perfil.limiteColaboraciones != null &&
@@ -515,27 +641,6 @@ export class PostulacionService {
         );
       }
     }
-
-    const resultado = this.toDTO({
-      ...(typeof postulacion.toObject === "function"
-        ? postulacion.toObject()
-        : postulacion),
-      estado: EstadoPostulacion.ACEPTADA,
-      idColaborador: colaborador,
-    });
-    this.despachadorWebhooks.emitir(
-      EventoWebhook.COLABORACION_ACEPTADA,
-      proyecto.idColectivo,
-      {
-        idProyecto: String(proyecto._id),
-        tituloProyecto: proyecto.titulo,
-        idPerfil: String(perfil._id),
-        idPostulacion: String(idPostulacion),
-        esAnonima: Boolean(postulacion.esAnonima),
-        fecha: new Date().toISOString(),
-      },
-    );
-    return resultado;
   }
 
   async darDeBaja(idProyecto, idColaborador, actor) {

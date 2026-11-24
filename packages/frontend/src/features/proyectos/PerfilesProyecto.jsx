@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Alert,
   Autocomplete,
@@ -71,6 +71,8 @@ export const construirPayloadPerfil = (form) => ({
 
 const PerfilesProyecto = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { sesion, getAccessToken } = useAuth();
   const notificar = useNotificar();
 
@@ -111,6 +113,14 @@ const PerfilesProyecto = () => {
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  useEffect(() => {
+    if (!cargando && proyecto && sesion?.idColectivo &&
+        proyecto.idColectivo === sesion.idColectivo && location.state?.crearPerfil) {
+      setModalAbierto(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [cargando, proyecto, sesion?.idColectivo, location, navigate]);
 
   const cargarHabilidades = useCallback(() => {
     setErrorHabilidades(null);

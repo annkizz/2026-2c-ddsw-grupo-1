@@ -1,7 +1,7 @@
 /* Mapa coroplético y tabla accesible de proyectos activos */
 .mapa-contenedor {
   display: grid;
-  grid-template-columns: minmax(0, var(--map-max-width)) minmax(0, 1fr);
+  grid-template-columns: minmax(0, var(--map-max-width)) minmax(0, 380px);
   align-items: start;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
@@ -179,17 +179,6 @@
   gap: 6px;
 }
 
-.mapa-seleccion {
-  position: sticky;
-  top: calc(var(--header-height) + var(--space-3));
-}
-
 .tarjetas--una-columna {
   grid-template-columns: minmax(0, 1fr) !important;
-}
-
-@media (max-width: 899.95px) {
-  .mapa-seleccion {
-    position: static;
-  }
 }

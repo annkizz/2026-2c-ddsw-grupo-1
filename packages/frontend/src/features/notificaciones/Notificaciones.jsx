@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from '@mui/material';
+import { Alert, Button, Checkbox, FormControlLabel } from '@mui/material';
 import { FiBell, FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
@@ -7,6 +7,7 @@ import { EsqueletoLista } from '../../components/Esqueletos/Esqueletos.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { t } from '../../i18n/t';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
+import { resolverInvitacion } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import { leerVistas, marcarVistas } from '../../hooks/useNotificacionesPendientes.js';
 import './Notificaciones.css';
@@ -18,6 +19,8 @@ const tipoVisible = (tipo) => {
     POSTULACION_ACEPTADA: 'notificaciones.postulacionAceptada',
     POSTULACION_RECHAZADA: 'notificaciones.postulacionRechazada',
     INVITACION_POSTULACION: 'notificaciones.invitacion',
+    POSTULACION_RECIBIDA: 'notificaciones.postulacionRecibida',
+    INVITACION_PROYECTO: 'notificaciones.invitacionProyecto',
   };
   return claves[tipo] ? t(claves[tipo]) : null;
 };
@@ -62,6 +65,9 @@ const Notificaciones = () => {
   const [errorMas, setErrorMas] = useState(null);
   const [intento, setIntento] = useState(0);
   const [nuevasAlEntrar, setNuevasAlEntrar] = useState(0);
+  const [anonimas, setAnonimas] = useState({});
+  const [resolviendo, setResolviendo] = useState(null);
+  const [erroresRespuesta, setErroresRespuesta] = useState({});
   const usuarioId = sesion?.usuarioId ?? sesion?.idColectivo ?? sesion?.idColaborador;
 
   useEffect(() => {
@@ -134,6 +140,24 @@ const Notificaciones = () => {
 
   const esColectivo = sesion?.rol === 'COLECTIVO';
 
+  const responder = async (notificacion, decision) => {
+    setResolviendo(notificacion.id);
+    setErroresRespuesta((actual) => ({ ...actual, [notificacion.id]: null }));
+    try {
+      const token = await getAccessToken();
+      const actualizada = await resolverInvitacion(
+        token, notificacion.idProyecto, notificacion.id, decision, anonimas[notificacion.id] ?? true,
+      );
+      setNotificaciones((actuales) => actuales.map((item) =>
+        item.id === notificacion.id ? { ...item, estadoInvitacion: actualizada.estadoInvitacion } : item,
+      ));
+    } catch (e) {
+      setErroresRespuesta((actual) => ({ ...actual, [notificacion.id]: mensajeDeError(e) }));
+    } finally {
+      setResolviendo(null);
+    }
+  };
+
   return (
     <div className="contenedor-pagina notificaciones-pagina">
       <div className="notificaciones-contenedor">
@@ -176,7 +200,9 @@ const Notificaciones = () => {
                 const esNueva = indice < nuevasAlEntrar;
                 const fecha = fechaVisible(notificacion.fecha);
                 const accion = enlaceAccion(notificacion);
-                const contraparte = esColectivo
+                const contraparte = esColectivo && notificacion.tipo === 'POSTULACION_RECIBIDA'
+                  ? `De ${notificacion.nombreColaborador || t('notificaciones.usuario')}`
+                  : esColectivo
                   ? t('notificaciones.para', {
                       nombre: notificacion.nombreColaborador || t('notificaciones.usuario'),
                     })
@@ -204,6 +230,25 @@ const Notificaciones = () => {
                       {tipo && <p className="notificaciones-tipo">{tipo}</p>}
                       <p>{notificacion.contenido}</p>
                       {fecha && <time dateTime={fecha.iso}>{fecha.texto}</time>}
+                      {notificacion.tipo === 'INVITACION_PROYECTO' && (
+                        <>
+                          {notificacion.estadoInvitacion === 'PENDIENTE' && !esColectivo ? (
+                            <>
+                              <FormControlLabel
+                                control={<Checkbox checked={anonimas[notificacion.id] ?? true} onChange={(e) => setAnonimas((actual) => ({ ...actual, [notificacion.id]: e.target.checked }))} />}
+                                label="Mostrar mi participación de forma anónima en el proyecto"
+                              />
+                              {erroresRespuesta[notificacion.id] && <Alert severity="error" role="alert">{erroresRespuesta[notificacion.id]}</Alert>}
+                              <div>
+                                <Button variant="contained" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'ACEPTADA')}>Aceptar</Button>
+                                <Button disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'RECHAZADA')}>Rechazar</Button>
+                              </div>
+                            </>
+                          ) : (
+                            <p>Invitación {notificacion.estadoInvitacion?.toLowerCase()}</p>
+                          )}
+                        </>
+                      )}
                       {esColectivo && notificacion.envios?.length > 0 && (
                         <ul>
                           {notificacion.envios.map((envio, indice) => (

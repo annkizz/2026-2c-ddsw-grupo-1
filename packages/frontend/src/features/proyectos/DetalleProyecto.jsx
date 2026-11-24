@@ -804,7 +804,7 @@ const DetalleProyecto = () => {
                       color="inherit"
                       variant="outlined"
                       startIcon={<FiPlus aria-hidden="true" />}
-                      onClick={() => navigate(`/proyectos/${id}/perfiles`)}
+                      onClick={() => navigate(`/proyectos/${id}/perfiles`, { state: { crearPerfil: true } })}
                     >
                       {t('detalleProyecto.btnCargarPerfiles')}
                     </Button>
@@ -1073,7 +1073,7 @@ const DetalleProyecto = () => {
                   const colaboradora = postulacion.colaborador;
                   const nombreColaboradora = nombreDe(colaboradora);
                   const pendiente = postulacion.estado === 'PENDIENTE';
-                  const habilidadesPersona = colaboradora?.id ? habilidadesPorColaboradora[colaboradora.id] : undefined;
+                  const habilidadesPersona = postulacion.perfilPublico?.habilidades ?? (colaboradora?.id ? habilidadesPorColaboradora[colaboradora.id] : undefined);
 
                   return (
                     <li key={postulacion.id} className={`tarjeta perfil-buscado postulacion postulacion--${postulacion.estado?.toLowerCase()}`}>
@@ -1104,7 +1104,19 @@ const DetalleProyecto = () => {
                         )}
 
                         {pendiente ? (
-                          <p className="texto-secundario">{t('detalleProyecto.identidadAlAceptar')}</p>
+                          <>
+                            {postulacion.perfilPublico && (
+                              <div>
+                                <p><strong>Perfil público:</strong> {nombreDe(postulacion.perfilPublico)}</p>
+                                {postulacion.perfilPublico.pronombres?.length > 0 && <p>Pronombres: {postulacion.perfilPublico.pronombres.join(', ')}</p>}
+                                {postulacion.perfilPublico.presentacion && <p>{postulacion.perfilPublico.presentacion}</p>}
+                                {postulacion.perfilPublico.usuarioGitHub && <p>GitHub: {postulacion.perfilPublico.usuarioGitHub}</p>}
+                                <p><strong>Habilidades:</strong> {postulacion.perfilPublico.habilidades?.join(', ') || 'No informadas'}</p>
+                                {postulacion.perfilPublico.id && <Link to={`/colaboradoras/${postulacion.perfilPublico.id}`}>Ver perfil público</Link>}
+                              </div>
+                            )}
+                            <p className="texto-secundario">Los datos de contacto se habilitan al aceptar.</p>
+                          </>
                         ) : postulacion.estado === 'ACEPTADA' ? (
                           <div className="postulacion__contacto">
                             <p>
