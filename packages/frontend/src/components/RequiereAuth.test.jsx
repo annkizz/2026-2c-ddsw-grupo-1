@@ -59,4 +59,24 @@ describe('RequiereAuth en rutas de registro', () => {
 
     expect(Navigate.mock.calls[0][0]).toEqual({ to: '/', replace: true });
   });
+
+  it('envía al administrador al panel si intenta registrarse', () => {
+    renderGuard({
+      isAuthenticated: true,
+      cargando: false,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+    });
+
+    expect(Navigate.mock.calls[0][0]).toEqual({ to: '/administrador/destacados', replace: true });
+  });
+
+  it('permite al administrador acceder a rutas protegidas sin perfil', () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      cargando: false,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+    });
+    render(<RequiereAuth><p>Panel</p></RequiereAuth>);
+    expect(screen.getByText('Panel')).toBeInTheDocument();
+  });
 });

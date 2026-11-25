@@ -111,18 +111,18 @@ const CampoMarkdown = ({ enLinea = false, nivelTituloVistaPrevia = 3, ...propsCa
       <details className="campo-markdown__ayuda">
         <summary>{t('markdown.admite')}</summary>
         <ul>
-          <li><code>**negrita**</code> → <strong>negrita</strong></li>
-          <li><code>*cursiva*</code> → <em>cursiva</em></li>
-          <li><code>[texto](https://…)</code> → {t('markdown.ayudaEnlace')}</li>
+          <li><code>{t('ejemplosMarkdown.negritaCodigo')}</code> → <strong>{t('ejemplosMarkdown.negrita')}</strong></li>
+          <li><code>{t('ejemplosMarkdown.cursivaCodigo')}</code> → <em>{t('ejemplosMarkdown.cursiva')}</em></li>
+          <li><code>{t('ejemplosMarkdown.enlace')}</code> → {t('markdown.ayudaEnlace')}</li>
           {!enLinea && (
             <>
-              <li><code>- ítem</code> {t('markdown.ayudaLista')}</li>
-              <li><code>1. ítem</code> {t('markdown.ayudaNumerada')}</li>
-              <li><code>## Título</code> {t('markdown.ayudaTitulo')}</li>
-              <li><code>&gt; cita</code> {t('markdown.ayudaCita')}</li>
+              <li><code>{t('ejemplosMarkdown.lista')}</code> {t('markdown.ayudaLista')}</li>
+              <li><code>{t('ejemplosMarkdown.numerada')}</code> {t('markdown.ayudaNumerada')}</li>
+              <li><code>{t('ejemplosMarkdown.titulo')}</code> {t('markdown.ayudaTitulo')}</li>
+              <li><code>{t('ejemplosMarkdown.cita')}</code> {t('markdown.ayudaCita')}</li>
             </>
           )}
-          <li><code>`código`</code> → <code>código</code></li>
+          <li><code>{t('ejemplosMarkdown.codigoMarca')}</code> → <code>{t('ejemplosMarkdown.codigo')}</code></li>
         </ul>
       </details>
 

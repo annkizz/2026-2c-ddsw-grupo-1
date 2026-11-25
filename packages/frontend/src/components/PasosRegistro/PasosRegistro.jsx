@@ -1,13 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FiCheck } from 'react-icons/fi';
+import { t } from '../../i18n/t';
 import './PasosRegistro.css';
 
 // Indicador de progreso del registro: "Paso 2 de 3" + lista de pasos con aria-current.
 const PasosRegistro = ({ pasos, actual }) => (
-  <nav className="pasos-registro" aria-label="Progreso del registro">
+  <nav className="pasos-registro" aria-label={t('registro.progreso')}>
     <p className="pasos-registro__texto">
-      Paso {actual} de {pasos.length}: <strong>{pasos[actual - 1]}</strong>
+      {t('registro.pasoDe', { actual, total: pasos.length })} <strong>{pasos[actual - 1]}</strong>
     </p>
     <ol className="pasos-registro__lista">
       {pasos.map((nombre, indice) => {
@@ -24,7 +25,7 @@ const PasosRegistro = ({ pasos, actual }) => (
             </span>
             <span className="pasos-registro__nombre">
               {nombre}
-              {estado === 'hecho' && <span className="visualmente-oculto"> (completo)</span>}
+              {estado === 'hecho' && <span className="visualmente-oculto"> {t('registro.completo')}</span>}
             </span>
           </li>
         );

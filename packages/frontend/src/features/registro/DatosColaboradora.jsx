@@ -9,17 +9,18 @@ import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const OBLIGATORIOS = ['nombreFantasia', 'usuarioGitHub', 'presentacion'];
 
-const CAMPOS = {
+const crearCampos = () => ({
   nombreFantasia: { label: t('registro.nombrePublicoObligatorio'), placeholder: t('miPerfil.ejNombrePublico'), ayuda: t('registro.ayudaNombrePublico'), error: t('registro.ingresaUnNombrePublico') },
   usuarioGitHub: { label: t('registro.usuarioDeGithubObligatorio'), placeholder: t('miPerfil.ejUsuarioGithub'), ayuda: t('registro.sinLaNiElEnlace'), error: t('registro.ingresaTuUsuarioDeGithub') },
   nombre: { label: t('registro.nombreOpcional'), placeholder: t('miPerfil.ejLucia') },
   apellido: { label: t('registro.apellidoOpcional'), placeholder: t('miPerfil.ejGomez') },
   pronombres: { label: t('registro.pronombresOpcional'), placeholder: t('miPerfil.ejEllaElle'), ayuda: t('miPerfil.separalosConComas') },
   presentacion: { label: t('registro.presentacionObligatoria'), placeholder: t('miPerfil.ejPresentacion'), ayuda: t('registro.contanosQuienSosYQue'), error: t('registro.escribiUnaPresentacionBreve') }
-};
+});
 
 // Paso 1 de 3: datos personales
 const DatosColaboradora = ({ datos, setDatos, onVolver, onSiguiente }) => {
+  const CAMPOS = crearCampos();
   const [faltantes, setFaltantes] = useState([]);
   const [intento, setIntento] = useState(0);
 
@@ -72,7 +73,7 @@ const DatosColaboradora = ({ datos, setDatos, onVolver, onSiguiente }) => {
       />
       <section className="registro-card" aria-labelledby="paso-datos-titulo">
         <h2 id="paso-datos-titulo">{t('registro.tusDatos')}</h2>
-        <p className="registro-card__intro">Los campos obligatorios están indicados.</p>
+        <p className="registro-card__intro">{t('registro.obligatoriosIndicados')}</p>
         <TextField {...propsDe('nombreFantasia')} />
         <TextField {...propsDe('usuarioGitHub')} />
         <TextField {...propsDe('nombre')} />

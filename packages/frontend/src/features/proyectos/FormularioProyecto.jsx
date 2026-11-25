@@ -53,11 +53,11 @@ const DATOS_INICIALES = {
 // Crear: pasos cortos, solo el primero es obligatorio; se puede ir y volver entre pasos y crear desde cualquiera.
 // Editar: las mismas partes en un menú lateral. La búsqueda se configura desde "Administrar" del proyecto.
 const PASOS_FORMULARIO = [
-  { titulo: t('formularioProyecto.pasoBasico'), campos: ['titulo', 'descripcion'], icono: FiFileText },
-  { titulo: t('formularioProyecto.pasoEtiquetas'), campos: [], opcional: true, icono: FiTag },
+  { titulo: 'formularioProyecto.pasoBasico', campos: ['titulo', 'descripcion'], icono: FiFileText },
+  { titulo: 'formularioProyecto.pasoEtiquetas', campos: [], opcional: true, icono: FiTag },
   {
-    titulo: t('formularioProyecto.pasoFechas'),
-    tituloEdicion: t('formularioProyecto.pasoCierre'),
+    titulo: 'formularioProyecto.pasoFechas',
+    tituloEdicion: 'formularioProyecto.pasoCierre',
     campos: ['fechaLimiteCierre', 'fechaLimiteBusqueda'],
     opcional: true,
     icono: FiCalendar,
@@ -194,7 +194,7 @@ const FormularioProyecto = () => {
   };
   const siguientePaso = () => irAPaso(paso + 1);
   const tituloDePaso = (indice) =>
-    esEdicion ? PASOS_FORMULARIO[indice].tituloEdicion ?? PASOS_FORMULARIO[indice].titulo : PASOS_FORMULARIO[indice].titulo;
+    t(esEdicion ? PASOS_FORMULARIO[indice].tituloEdicion ?? PASOS_FORMULARIO[indice].titulo : PASOS_FORMULARIO[indice].titulo);
 
   // Enter en un campo de una línea no envía el formulario: se crea/guarda solo con el botón.
   const evitarEnvioConEnter = (evento) => {
@@ -365,7 +365,7 @@ const FormularioProyecto = () => {
                   optional={opcional ? <span className="texto-caption">{t('comun.opcional')}</span> : undefined}
                   aria-current={indice === paso ? 'step' : undefined}
                 >
-                  {tituloPaso}
+                  {t(tituloPaso)}
                 </StepButton>
               </Step>
             ))}
@@ -648,7 +648,7 @@ const FormularioProyecto = () => {
                   disabled={guardando}
                   endIcon={<FiArrowRight aria-hidden="true" />}
                 >
-                  {t('formularioProyecto.siguiente', { titulo: PASOS_FORMULARIO[paso + 1].titulo })}
+                  {t('formularioProyecto.siguiente', { titulo: t(PASOS_FORMULARIO[paso + 1].titulo) })}
                 </Button>
               )}
               {/* Siempre disponible: lo opcional se puede completar o saltear. */}

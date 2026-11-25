@@ -13,14 +13,14 @@ const OPCIONES = [
   {
     tipo: 'colaboradora',
     Icono: FiCode,
-    titulo: 'Soy una persona colaboradora',
-    detalle: 'Quiero aportar mi tiempo y mis saberes.'
+    titulo: 'registro.personaColaboradora',
+    detalle: 'registro.detalleColaboradora'
   },
   {
     tipo: 'colectivo',
     Icono: FiUsers,
-    titulo: 'Represento a un colectivo',
-    detalle: 'Necesitamos software para nuestro proyecto.'
+    titulo: 'registro.representoColectivo',
+    detalle: 'registro.detalleColectivo'
   }
 ];
 
@@ -49,15 +49,15 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
 
   const opciones = (
     <div className="tipo-cuenta">
-      <p className="texto-secundario">¿Cómo querés sumarte a la comunidad?</p>
+      <p className="texto-secundario">{t('registro.comoSumarte')}</p>
       {OPCIONES.map(({ tipo, Icono, titulo, detalle }) => (
         <Card key={tipo} className="tipo-cuenta-opcion">
           <CardActionArea onClick={() => elegir(tipo)}>
             <div className="tipo-cuenta-contenido">
               <Icono aria-hidden="true" />
               <div>
-                <strong>{titulo}</strong>
-                <small>{detalle}</small>
+                <strong>{t(titulo)}</strong>
+                <small>{t(detalle)}</small>
               </div>
               <FiArrowRight aria-hidden="true" />
             </div>
@@ -72,9 +72,9 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina
-          titulo="Crear una cuenta"
+          titulo={t('inicio.crearCuenta')}
           subtitulo={t('registro.paso1ElegiElTipo')}
-          migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: 'Crear una cuenta' }]}
+          migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('inicio.crearCuenta') }]}
         />
         {opciones}
       </div>
@@ -84,8 +84,8 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
   return (
     <Dialogo open onClose={cerrar} aria-labelledby="tipo-cuenta-titulo">
       <DialogTitle id="tipo-cuenta-titulo" className="dialogo-titulo-con-cierre">
-        <span>Crear una cuenta</span>
-        <IconButton aria-label="Cerrar" onClick={cerrar}>
+        <span>{t('inicio.crearCuenta')}</span>
+        <IconButton aria-label={t('proyectos.cerrar')} onClick={cerrar}>
           <FiX aria-hidden="true" />
         </IconButton>
       </DialogTitle>

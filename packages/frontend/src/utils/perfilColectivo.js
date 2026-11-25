@@ -1,7 +1,7 @@
 export const CAMPOS_REQUERIDOS_COLECTIVO = [
-  { clave: 'nombreColectivo', etiqueta: 'Nombre del colectivo' },
-  { clave: 'tipoDeColectivo', etiqueta: 'Tipo de colectivo' },
-  { clave: 'descripcion', etiqueta: 'Descripción' },
+  { clave: 'nombreColectivo', etiquetaKey: 'inicio.campoNombreColectivo' },
+  { clave: 'tipoDeColectivo', etiquetaKey: 'inicio.campoTipoColectivo' },
+  { clave: 'descripcion', etiquetaKey: 'inicio.campoDescripcion' },
 ];
 
 export const camposFaltantesPerfilColectivo = (datos = {}) =>

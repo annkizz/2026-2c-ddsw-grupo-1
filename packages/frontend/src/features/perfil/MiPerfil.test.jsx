@@ -23,15 +23,15 @@ jest.mock('../../service/colaboradorasService', () => ({
   actualizarColaboradora: jest.fn(),
   obtenerMiPerfilColaboradora: jest.fn(),
   TIPOS_CONTACTO: [
-    { valor: 'EMAIL', texto: 'Email' },
-    { valor: 'WHATSAPP', texto: 'WhatsApp' },
-    { valor: 'SMS', texto: 'SMS' },
+    { valor: 'EMAIL', textoKey: 'tiposContacto.EMAIL' },
+    { valor: 'WHATSAPP', textoKey: 'tiposContacto.WHATSAPP' },
+    { valor: 'SMS', textoKey: 'tiposContacto.SMS' },
   ],
 }));
 jest.mock('../../service/colectivosService', () => ({
   actualizarColectivo: jest.fn(),
   obtenerMiPerfilColectivo: jest.fn(),
-  TIPOS_COLECTIVO: [{ valor: 'ONG', texto: 'ONG' }],
+  TIPOS_COLECTIVO: [{ valor: 'ONG', textoKey: 'tiposColectivo.ONG' }],
 }));
 
 const perfilValido = {

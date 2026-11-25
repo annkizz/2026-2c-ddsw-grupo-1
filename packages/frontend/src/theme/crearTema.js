@@ -1,6 +1,7 @@
 import { createTheme } from '@mui/material';
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 import { createElement } from 'react';
+import { t } from '../i18n/t';
 
 // Arma el tema MUI desde los tokens (designTokens.js).
 // La paleta usa los hex (MUI los necesita para calcular estados);
@@ -314,6 +315,13 @@ export const crearTema = (tokens) => {
         }
       },
       MuiAutocomplete: {
+        defaultProps: {
+          openText: t('componentesMui.abrir'),
+          closeText: t('componentesMui.cerrar'),
+          clearText: t('componentesMui.borrar'),
+          noOptionsText: t('componentesMui.sinOpciones'),
+          loadingText: t('componentesMui.cargando')
+        },
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
@@ -398,6 +406,7 @@ export const crearTema = (tokens) => {
       MuiAlert: {
         defaultProps: {
           variant: 'standard',
+          closeText: t('componentesMui.cerrar'),
           iconMapping: {
             success: icono(FiCheckCircle),
             error: icono(FiAlertCircle),

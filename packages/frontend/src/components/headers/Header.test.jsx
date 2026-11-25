@@ -132,4 +132,16 @@ describe('Header', () => {
     expect(within(nav).getByRole('link', { name: 'Buscar colaboradoras' })).toHaveAttribute('href', '/buscar-colaboradores');
     expect(within(nav).queryByRole('link', { name: 'Mis postulaciones' })).not.toBeInTheDocument();
   });
+
+  it('el administrador accede al panel y puede cerrar sesión sin un perfil', async () => {
+    const auth = configurar({ rol: 'ADMINISTRADOR', tienePerfil: false, nombreUsuario: 'Admin' });
+    renderHeader('/');
+
+    expect(screen.getByRole('link', { name: 'Proyectos destacados' })).toHaveAttribute('href', '/administrador/destacados');
+    expect(screen.queryByRole('link', { name: /Notificaciones/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Menú de usuario/ }));
+    const menu = await screen.findByRole('menu', { name: 'Menú de usuario' });
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Salir' }));
+    expect(auth.cerrarSesion).toHaveBeenCalled();
+  });
 });

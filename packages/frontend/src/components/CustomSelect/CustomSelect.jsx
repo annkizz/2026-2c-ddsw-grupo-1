@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { IconButton, InputBase } from "@mui/material";
 import { FiAlertCircle, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { ETIQUETA_MAX, etiquetaLegible, normalizarEtiqueta } from "../../utils/etiquetas";
+import { t } from "../../i18n/t";
 import "./CustomSelect.css";
 
 function normalizarTexto(texto) {
@@ -27,11 +28,11 @@ export default function CustomSelect({
   multiple = false,
   onSeleccionar,
   onQuitar,
-  placeholder = "Buscar...",
-  textoVacio = "No hay opciones para mostrar.",
+  placeholder = t('selector.buscar'),
+  textoVacio = t('selector.sinOpciones'),
   permiteCrear = false,
   maxSeleccion = Infinity,
-  textoCrear = "Crear etiqueta",
+  textoCrear = t('selector.crearEtiqueta'),
   className = "",
   ayuda,
   error,
@@ -234,7 +235,7 @@ export default function CustomSelect({
       )}
 
       {seleccionadas.length > 0 && (
-        <ul className="selector__seleccion" aria-live="polite" aria-label={`Elegidas en ${typeof etiqueta === "string" ? etiqueta : "este campo"}`}>
+        <ul className="selector__seleccion" aria-live="polite" aria-label={t('selector.elegidasEn', { campo: typeof etiqueta === "string" ? etiqueta : t('selector.esteCampo') })}>
           {seleccionadas.map((opcion) => (
             <li key={opcion.valor} className="selector__seleccionada">
               <span>{opcion.etiqueta}</span>
@@ -242,7 +243,7 @@ export default function CustomSelect({
                 <IconButton
                   type="button"
                   className="selector__quitar"
-                  aria-label={`Quitar ${opcion.etiqueta}`}
+                  aria-label={t('selector.quitar', { opcion: opcion.etiqueta })}
                   onClick={() => (onQuitar ?? onSeleccionar)?.(opcion.valor)}
                 >
                   <FiX aria-hidden="true" />
@@ -262,7 +263,7 @@ export default function CustomSelect({
         >
           {visibles.length === 0 ? (
             <li className="selector__vacio">
-              {alcanzoMaximo && permiteCrear ? `Llegaste al máximo de ${maxSeleccion} etiquetas.` : textoVacio}
+              {alcanzoMaximo && permiteCrear ? t('selector.maximo', { cantidad: maxSeleccion }) : textoVacio}
             </li>
           ) : (
             visibles.map((opcion, indice) => {

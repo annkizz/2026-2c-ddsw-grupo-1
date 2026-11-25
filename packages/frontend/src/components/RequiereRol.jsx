@@ -5,7 +5,7 @@ import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
 import { t } from '../i18n/t';
 import PaginaError from './PaginaError/PaginaError.jsx';
 
-// roles: valores de Rol del backend ('COLECTIVO' o 'COLABORADOR')
+// roles: valores de Rol del backend
 const RequiereRol = ({ roles, fallback, children }) => {
   const { cargando, sesion } = useAuth();
 

@@ -21,6 +21,7 @@ import Notificaciones from './features/notificaciones/Notificaciones.jsx';
 import MiPerfil from './features/perfil/MiPerfil.jsx';
 import FormularioProyecto from './features/proyectos/FormularioProyecto.jsx';
 import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
+import ProyectosDestacados from './features/proyectos/ProyectosDestacados.jsx';
 import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
 import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
 import Mapa from './features/busquedas/Mapa.jsx';
@@ -81,6 +82,16 @@ function App() {
                     }
                   />
                 <Route index element={<Home />} />
+                <Route
+                  path="/administrador/destacados"
+                  element={
+                    <RequiereAuth>
+                      <RequiereRol roles={['ADMINISTRADOR']}>
+                        <ProyectosDestacados />
+                      </RequiereRol>
+                    </RequiereAuth>
+                  }
+                />
                 <Route path="/proyectos" element={<ListaProyectos />} />
                 <Route path="/proyectos/:id" element={<DetalleProyecto />} />
                 <Route
@@ -143,8 +154,8 @@ function App() {
                 <Route path="/registro/listo" element={<Navigate to="/" replace />} />
 
                 {/* con sesión y perfil */}
-                <Route path="/perfil" element={<RequiereAuth><MiPerfil /></RequiereAuth>} />
-                <Route path="/notificaciones" element={<RequiereAuth><Notificaciones /></RequiereAuth>} />
+                <Route path="/perfil" element={<RequiereAuth><RequiereRol roles={['COLECTIVO', 'COLABORADOR']}><MiPerfil /></RequiereRol></RequiereAuth>} />
+                <Route path="/notificaciones" element={<RequiereAuth><RequiereRol roles={['COLECTIVO', 'COLABORADOR']}><Notificaciones /></RequiereRol></RequiereAuth>} />
                 <Route
                     path="/proyectos/nuevo"
                     element={

@@ -10,26 +10,26 @@ import { TIPOS_CONTACTO } from '../../service/colaboradorasService';
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const CELULAR_REGEX = /^\+\d{10,15}$/; // igual que el backend, pero tolerando espacios y guiones
 
-const REGLAS = {
+const crearReglas = () => ({
   EMAIL: {
-    etiqueta: 'Dirección de email',
+    etiqueta: t('medios.direccionEmail'),
     ejemplo: t('miPerfil.ejEmail'),
     esValido: (valor) => EMAIL_REGEX.test(valor.trim()),
     mensaje: t('registro.ingresaUnEmailValidoPor')
   },
   WHATSAPP: {
-    etiqueta: 'Número de WhatsApp',
+    etiqueta: t('medios.numeroWhatsapp'),
     ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
     mensaje: t('registro.ingresaUnTelefonoConCodigo')
   },
   SMS: {
-    etiqueta: 'Número de celular',
+    etiqueta: t('medios.numeroCelular'),
     ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
     mensaje: t('registro.ingresaUnTelefonoConCodigo')
   }
-};
+});
 
 // Paso 3 de 3: medios de contacto (opcional)
 const MediosDeContacto = ({
@@ -37,10 +37,11 @@ const MediosDeContacto = ({
   setDatos,
   onVolver,
   onSiguiente,
-  siguiente = 'Listo',
+  siguiente = t('medios.listo'),
   guardando,
   error
 }) => {
+  const REGLAS = crearReglas();
   const [conError, setConError] = useState([]); // posiciones de los medios inválidos
 
   const cambiarMedio = (posicion, cambios) => {
@@ -76,7 +77,7 @@ const MediosDeContacto = ({
   return (
     <form onSubmit={terminar} noValidate>
       <section className="registro-card" aria-labelledby="paso-contacto-titulo">
-        <h2 id="paso-contacto-titulo">Medios de contacto</h2>
+        <h2 id="paso-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
         <p className="medios-contacto__intro">{t('medios.intro')}</p>
         <p className="medios-contacto__privado">
           <FiLock aria-hidden="true" /> {t('medios.privado')}
@@ -102,7 +103,7 @@ const MediosDeContacto = ({
                   >
                     {TIPOS_CONTACTO.map((tipo) => (
                       <MenuItem key={tipo.valor} value={tipo.valor}>
-                        {tipo.texto}
+                        {t(tipo.textoKey)}
                       </MenuItem>
                     ))}
                   </TextField>
@@ -128,7 +129,7 @@ const MediosDeContacto = ({
                     }
                     fullWidth
                   />
-                  <IconButton aria-label={`Quitar medio de contacto ${i + 1}`} onClick={() => quitarMedio(i)}>
+                  <IconButton aria-label={t('medios.quitar', { numero: i + 1 })} onClick={() => quitarMedio(i)}>
                     <FiTrash2 aria-hidden="true" />
                   </IconButton>
                 </div>
@@ -148,7 +149,7 @@ const MediosDeContacto = ({
               onChange={(e) => setDatos({ ...datos, aceptaMensajeria: e.target.checked })}
             />
           }
-          label="Acepto recibir mensajes internos de la plataforma cuando haya proyectos relacionados con mis habilidades."
+          label={t('medios.aceptaMensajes')}
         />
       </section>
 

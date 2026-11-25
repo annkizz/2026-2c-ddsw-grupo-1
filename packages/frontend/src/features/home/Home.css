@@ -73,6 +73,14 @@
   gap: var(--space-2);
 }
 
+.home-destacados {
+  margin-top: var(--space-5);
+}
+
+.home-destacados > p {
+  color: var(--color-muted);
+}
+
 .home-ayuda:focus {
   outline: none;
 }

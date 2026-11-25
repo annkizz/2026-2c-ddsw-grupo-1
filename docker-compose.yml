@@ -12,6 +12,7 @@ x-api-env: &api-env # variables que comparten la API y el seed
   LOGTO_ISSUER: ${LOGTO_ISSUER:?Falta LOGTO_ISSUER en .env}
   LOGTO_JWKS_URL: ${LOGTO_JWKS_URL:?Falta LOGTO_JWKS_URL en .env}
   LOGTO_AUDIENCE: ${LOGTO_AUDIENCE:?Falta LOGTO_AUDIENCE en .env}
+  LOGTO_ADMIN_IDS: ${LOGTO_ADMIN_IDS:-}
 
 services:
   mongo:

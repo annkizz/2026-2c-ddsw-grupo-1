@@ -1107,15 +1107,15 @@ const DetalleProyecto = () => {
                           <>
                             {postulacion.perfilPublico && (
                               <div>
-                                <p><strong>Perfil público:</strong> {nombreDe(postulacion.perfilPublico)}</p>
-                                {postulacion.perfilPublico.pronombres?.length > 0 && <p>Pronombres: {postulacion.perfilPublico.pronombres.join(', ')}</p>}
+                                <p><strong>{t('postulacionPublica.perfil')}</strong> {nombreDe(postulacion.perfilPublico)}</p>
+                                {postulacion.perfilPublico.pronombres?.length > 0 && <p>{t('postulacionPublica.pronombres', { pronombres: postulacion.perfilPublico.pronombres.join(', ') })}</p>}
                                 {postulacion.perfilPublico.presentacion && <p>{postulacion.perfilPublico.presentacion}</p>}
-                                {postulacion.perfilPublico.usuarioGitHub && <p>GitHub: {postulacion.perfilPublico.usuarioGitHub}</p>}
-                                <p><strong>Habilidades:</strong> {postulacion.perfilPublico.habilidades?.join(', ') || 'No informadas'}</p>
-                                {postulacion.perfilPublico.id && <Link to={`/colaboradoras/${postulacion.perfilPublico.id}`}>Ver perfil público</Link>}
+                                {postulacion.perfilPublico.usuarioGitHub && <p>{t('postulacionPublica.github', { usuario: postulacion.perfilPublico.usuarioGitHub })}</p>}
+                                <p><strong>{t('postulacionPublica.habilidades')}</strong> {postulacion.perfilPublico.habilidades?.join(', ') || t('postulacionPublica.sinHabilidades')}</p>
+                                {postulacion.perfilPublico.id && <Link to={`/colaboradoras/${postulacion.perfilPublico.id}`}>{t('postulacionPublica.verPerfil')}</Link>}
                               </div>
                             )}
-                            <p className="texto-secundario">Los datos de contacto se habilitan al aceptar.</p>
+                            <p className="texto-secundario">{t('postulacionPublica.contactoAlAceptar')}</p>
                           </>
                         ) : postulacion.estado === 'ACEPTADA' ? (
                           <div className="postulacion__contacto">
@@ -1129,7 +1129,10 @@ const DetalleProyecto = () => {
                               <ul>
                                 {colaboradora.mediosDeContacto.map((medio, indice) => (
                                   <li key={`${medio.tipoDeContacto}-${indice}`}>
-                                    {medio.tipoDeContacto}: {medio.contacto}
+                                    {t('formatoTipoValor', {
+                                      tipo: ['EMAIL', 'WHATSAPP', 'SMS'].includes(medio.tipoDeContacto) ? t(`enviosNotificacion.${medio.tipoDeContacto}`) : medio.tipoDeContacto,
+                                      valor: medio.contacto,
+                                    })}
                                   </li>
                                 ))}
                               </ul>

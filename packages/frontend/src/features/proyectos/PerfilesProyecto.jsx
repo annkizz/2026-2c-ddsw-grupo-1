@@ -378,7 +378,7 @@ const PerfilesProyecto = () => {
                   variant="outlined"
                   startIcon={<FiEdit2 aria-hidden="true" />}
                   onClick={() => abrirModalEditar(perfil)}
-                  aria-label={`${t('perfilesProyecto.editarPerfil')}: ${markdownEnLineaATextoPlano(perfil.descripcion)}`}
+                  aria-label={t('formatoTipoValor', { tipo: t('perfilesProyecto.editarPerfil'), valor: markdownEnLineaATextoPlano(perfil.descripcion) })}
                 >
                   {t('perfilesProyecto.editarPerfil')}
                 </Button>
@@ -390,7 +390,7 @@ const PerfilesProyecto = () => {
                     setErrorEliminar(null);
                     setPerfilAEliminar(perfil);
                   }}
-                  aria-label={`${t('perfilesProyecto.eliminarPerfil')}: ${markdownEnLineaATextoPlano(perfil.descripcion)}`}
+                  aria-label={t('formatoTipoValor', { tipo: t('perfilesProyecto.eliminarPerfil'), valor: markdownEnLineaATextoPlano(perfil.descripcion) })}
                 >
                   {t('perfilesProyecto.eliminarPerfil')}
                 </Button>

@@ -50,6 +50,10 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
     );
   }
 
+  if (sesion.rol === 'ADMINISTRADOR') {
+    return exigirPerfil ? children : <Navigate to="/administrador/destacados" replace />;
+  }
+
   if (sesion.tienePerfil) {
     if (!exigirPerfil) {
       return <Navigate to="/" replace />;

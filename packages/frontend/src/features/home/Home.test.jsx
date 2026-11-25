@@ -75,6 +75,30 @@ describe('acceso a inicio de sesión desde Home', () => {
     expect(iniciarSesion).toHaveBeenCalledTimes(1);
   });
 
+  it('muestra destacados en la portada pública', () => {
+    useNavigate.mockReturnValue(jest.fn());
+    useAuth.mockReturnValue({ cargando: false, sesion: null });
+    useListado.mockImplementation((url) => ({
+      datos: url === '/proyectos/destacados' ? [{ id: 'p1', titulo: 'Proyecto destacado' }] : [],
+      cargando: false,
+      error: null,
+      recargar: jest.fn(),
+    }));
+
+    render(<Home />);
+    expect(screen.getByRole('heading', { name: 'Proyectos destacados' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Proyecto destacado' })).toHaveAttribute('href', '/proyectos/p1');
+  });
+
+  it('dirige la cuenta administradora al panel', () => {
+    const navigate = jest.fn();
+    useNavigate.mockReturnValue(navigate);
+    useAuth.mockReturnValue({ cargando: false, sesion: { rol: 'ADMINISTRADOR', tienePerfil: false } });
+
+    render(<Home />);
+    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', { replace: true });
+  });
+
   it.each([
     ['colectivo', 'Represento a un colectivo'],
     ['colaboradora', 'Soy una persona colaboradora'],
@@ -216,12 +240,12 @@ describe('acceso a inicio de sesión desde Home', () => {
       registrarse: jest.fn(),
       getAccessToken: jest.fn().mockResolvedValue('token'),
     });
-    useListado.mockReturnValue({
-      datos: [{ id: 21, titulo: 'Huerta comunitaria', estado: 'ACTIVO' }],
+    useListado.mockImplementation((url) => ({
+      datos: url === '/proyectos/destacados' ? [] : [{ id: 21, titulo: 'Huerta comunitaria', estado: 'ACTIVO' }],
       cargando: false,
       error: null,
       recargar: jest.fn(),
-    });
+    }));
 
     render(<Home />);
 
@@ -273,12 +297,12 @@ describe('acceso a inicio de sesión desde Home', () => {
       registrarse: jest.fn(),
       getAccessToken: jest.fn().mockResolvedValue('token'),
     });
-    useListado.mockReturnValue({
+    useListado.mockImplementation((url) => ({
       datos: [],
       cargando: false,
-      error: new Error('Network Error'),
+      error: url === '/proyectos/destacados' ? null : new Error('Network Error'),
       recargar,
-    });
+    }));
 
     render(<Home />);
 

@@ -87,7 +87,7 @@ const Notificaciones = () => {
           !Number.isInteger(resultado.pag) ||
           !Number.isInteger(resultado.totalPags)
         ) {
-          throw new Error('La respuesta de notificaciones no tiene el formato esperado.');
+          throw new Error(t('erroresInternos.notificacionesFormato'));
         }
         if (!vigente) return;
         setNotificaciones(resultado.notificaciones);
@@ -126,7 +126,7 @@ const Notificaciones = () => {
         !Number.isInteger(resultado.pag) ||
         !Number.isInteger(resultado.totalPags)
       ) {
-        throw new Error('La respuesta de notificaciones no tiene el formato esperado.');
+        throw new Error(t('erroresInternos.notificacionesFormato'));
       }
       setNotificaciones((actuales) => [...actuales, ...resultado.notificaciones]);
       setPagina(resultado.pag);
@@ -201,7 +201,7 @@ const Notificaciones = () => {
                 const fecha = fechaVisible(notificacion.fecha);
                 const accion = enlaceAccion(notificacion);
                 const contraparte = esColectivo && notificacion.tipo === 'POSTULACION_RECIBIDA'
-                  ? `De ${notificacion.nombreColaborador || t('notificaciones.usuario')}`
+                  ? t('notificaciones.de', { nombre: notificacion.nombreColaborador || t('notificaciones.usuario') })
                   : esColectivo
                   ? t('notificaciones.para', {
                       nombre: notificacion.nombreColaborador || t('notificaciones.usuario'),
@@ -236,16 +236,20 @@ const Notificaciones = () => {
                             <>
                               <FormControlLabel
                                 control={<Checkbox checked={anonimas[notificacion.id] ?? true} onChange={(e) => setAnonimas((actual) => ({ ...actual, [notificacion.id]: e.target.checked }))} />}
-                                label="Mostrar mi participación de forma anónima en el proyecto"
+                                label={t('notificaciones.participacionAnonima')}
                               />
                               {erroresRespuesta[notificacion.id] && <Alert severity="error" role="alert">{erroresRespuesta[notificacion.id]}</Alert>}
                               <div>
-                                <Button variant="contained" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'ACEPTADA')}>Aceptar</Button>
-                                <Button disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'RECHAZADA')}>Rechazar</Button>
+                                <Button variant="contained" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'ACEPTADA')}>{t('notificaciones.aceptar')}</Button>
+                                <Button disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'RECHAZADA')}>{t('notificaciones.rechazar')}</Button>
                               </div>
                             </>
                           ) : (
-                            <p>Invitación {notificacion.estadoInvitacion?.toLowerCase()}</p>
+                            <p>{t('notificaciones.invitacionEstado', {
+                              estado: ['PENDIENTE', 'ACEPTADA', 'RECHAZADA'].includes(notificacion.estadoInvitacion)
+                                ? t(`notificaciones.estadosInvitacion.${notificacion.estadoInvitacion}`)
+                                : notificacion.estadoInvitacion?.toLowerCase() ?? '',
+                            })}</p>
                           )}
                         </>
                       )}
@@ -253,7 +257,10 @@ const Notificaciones = () => {
                         <ul>
                           {notificacion.envios.map((envio, indice) => (
                             <li key={`${envio.tipoDeContacto}-${indice}`}>
-                              {envio.tipoDeContacto}: {envio.estado}
+                              {t('formatoTipoValor', {
+                                tipo: ['EMAIL', 'WHATSAPP', 'SMS'].includes(envio.tipoDeContacto) ? t(`enviosNotificacion.${envio.tipoDeContacto}`) : envio.tipoDeContacto,
+                                valor: ['ENVIADO', 'SIMULADO', 'FALLIDO'].includes(envio.estado) ? t(`enviosNotificacion.${envio.estado}`) : envio.estado,
+                              })}
                               {envio.detalle ? ` — ${envio.detalle}` : ''}
                             </li>
                           ))}

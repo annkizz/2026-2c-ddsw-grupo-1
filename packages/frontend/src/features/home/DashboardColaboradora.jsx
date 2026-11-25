@@ -17,6 +17,7 @@ import {
 import DashboardCard from './components/DashboardCard.jsx';
 import DashboardEmptyState from './components/DashboardEmptyState.jsx';
 import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
+import DestacadosPortada from './components/DestacadosPortada.jsx';
 
 const DashboardColaboradora = () => {
   const navigate = useNavigate();
@@ -70,15 +71,15 @@ const DashboardColaboradora = () => {
         <EncabezadoPagina
           id="dashboard-titulo"
           antetitulo={t('inicio.tuEspacioDeColaboradora')}
-          titulo="Encontrá un proyecto para aportar"
+          titulo={t('inicio.encontraProyecto')}
         />
 
         <div className="dashboard-grid">
           <DashboardCard
             className="dashboard-card--destacada"
             icon={<FiSearch />}
-            title="Buscar proyectos"
-            description="Filtrá por habilidades, etiquetas, colectivo o provincia."
+            title={t('navegacion.buscarProyectos')}
+            description={t('inicio.filtraProyectos')}
           >
             <Button
               variant="contained"
@@ -86,26 +87,28 @@ const DashboardColaboradora = () => {
               onClick={() => navigate('/buscar-proyectos')}
               startIcon={<FiSearch aria-hidden="true" />}
             >
-              Explorar proyectos
+              {t('inicio.explorarProyectos')}
             </Button>
           </DashboardCard>
 
           <DashboardCard
             className="dashboard-card--ubicacion"
             icon={<FiMapPin />}
-            title="Explorar por ubicación"
-            description="Descubrí proyectos activos en el mapa y elegí una provincia."
+            title={t('inicio.explorarUbicacion')}
+            description={t('inicio.descubriEnMapa')}
           >
             <Button variant="outlined" onClick={() => navigate('/mapa')} startIcon={<FiMapPin aria-hidden="true" />}>
-              Abrir mapa
+              {t('inicio.abrirMapa')}
             </Button>
           </DashboardCard>
         </div>
 
+        <DestacadosPortada />
+
         <section className="dashboard-recomendaciones" aria-labelledby="recomendaciones-titulo">
           <div className="dashboard-recomendaciones__encabezado">
-            <h2 id="recomendaciones-titulo">Recomendados para vos</h2>
-            <p>Coinciden con las habilidades de tu perfil.</p>
+            <h2 id="recomendaciones-titulo">{t('inicio.recomendados')}</h2>
+            <p>{t('inicio.coincidenHabilidades')}</p>
           </div>
 
           {!idColaborador ? (
@@ -114,7 +117,7 @@ const DashboardColaboradora = () => {
               mensaje={t('inicio.volveAIniciarSesionPara')}
             />
           ) : recomendacionesState.cargando ? (
-            <EsqueletoGrilla cantidad={3} etiqueta="Buscando proyectos para vos…" />
+            <EsqueletoGrilla cantidad={3} etiqueta={t('inicio.buscandoRecomendaciones')} />
           ) : recomendacionesState.error ? (
             <AlertaError
               error={recomendacionesState.error}
@@ -126,8 +129,8 @@ const DashboardColaboradora = () => {
           ) : proyectosRecomendados.length === 0 ? (
             <DashboardEmptyState
               icon={FiSearch}
-              title="Todavía no encontramos coincidencias"
-              description="Usá «Explorar proyectos» para ver todos los proyectos activos."
+              title={t('inicio.sinCoincidencias')}
+              description={t('inicio.explorarSinCoincidencias')}
             />
           ) : (
             <ul className="tarjetas dashboard-recomendaciones-lista">
@@ -140,7 +143,7 @@ const DashboardColaboradora = () => {
 
         {cargandoPerfil ? (
           <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
-            <span className="visualmente-oculto">Comprobando si falta completar tu perfil…</span>
+            <span className="visualmente-oculto">{t('inicio.comprobandoPerfil')}</span>
             <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
           </div>
         ) : errorPerfil ? (
@@ -155,9 +158,9 @@ const DashboardColaboradora = () => {
             completados={completados}
             total={totalCamposPerfil}
             faltantes={camposFaltantes}
-            beneficio="Un perfil completo ayuda a los colectivos a encontrarte."
-            titulo="Completá tu perfil de colaboradora"
-            accion="Completar mi perfil"
+            beneficio={t('inicio.beneficioPerfil')}
+            titulo={t('inicio.completarPerfilColaboradora')}
+            accion={t('inicio.completarMiPerfil')}
             onCompletar={() => navigate('/perfil')}
           />
         ) : null}

@@ -67,6 +67,42 @@ describe("middleware de autenticacion", () => {
     expect(req.usuario).toEqual({ _id: "u1", logtoId: "logto-1" });
     expect(next).toHaveBeenCalledTimes(1);
   });
+
+  it("asigna administrador a un usuario configurado que aún no tiene rol", async () => {
+    usuarioRepository.asignarRol = jest.fn().mockResolvedValue({ _id: "u1", rol: "ADMINISTRADOR" });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "otro, logto-1 " });
+    const { req, resultado } = ejecutar({ authorization: "Bearer bueno" });
+
+    await resultado;
+
+    expect(usuarioRepository.asignarRol).toHaveBeenCalledWith("u1", "ADMINISTRADOR");
+    expect(req.usuario.rol).toBe("ADMINISTRADOR");
+  });
+
+  it("no cambia un rol existente ni asigna administrador a otra cuenta", async () => {
+    usuarioRepository.asignarRol = jest.fn();
+    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({ _id: "u1", rol: "COLECTIVO" });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "logto-1" });
+    await ejecutar({ authorization: "Bearer bueno" }).resultado;
+
+    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({ _id: "u1", rol: null });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "otro" });
+    await ejecutar({ authorization: "Bearer bueno" }).resultado;
+
+    expect(usuarioRepository.asignarRol).not.toHaveBeenCalled();
+  });
+
+  it("recupera el rol asignado por otra solicitud concurrente", async () => {
+    usuarioRepository.buscarOCrearPorLogtoId
+      .mockResolvedValueOnce({ _id: "u1", rol: null })
+      .mockResolvedValueOnce({ _id: "u1", rol: "ADMINISTRADOR" });
+    usuarioRepository.asignarRol = jest.fn().mockResolvedValue(null);
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "logto-1" });
+    const { req, resultado } = ejecutar({ authorization: "Bearer bueno" });
+
+    await resultado;
+    expect(req.usuario.rol).toBe("ADMINISTRADOR");
+  });
 });
 
 describe("requerirRol", () => {

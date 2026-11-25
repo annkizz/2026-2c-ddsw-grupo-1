@@ -42,19 +42,19 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
   return (
     <form onSubmit={siguiente} noValidate>
       <section className="registro-card" aria-labelledby="paso-habilidades-titulo">
-        <h2 id="paso-habilidades-titulo">Indicá tus habilidades</h2>
+        <h2 id="paso-habilidades-titulo">{t('registro.indicaHabilidades')}</h2>
         <p className="registro-card__intro">{t('registro.elegiAlMenosUnaLas')}</p>
         <CustomSelect
           id="registro-habilidades"
-          etiqueta="Habilidades"
+          etiqueta={t('registro.habilidades')}
           opciones={opciones}
           seleccion={datos.habilidades}
           multiple
           onSeleccionar={alternar}
           ayuda={t('registro.podesBuscarEscribiendoParteDel')}
-          error={error && !habilidadesState.error && !sinOpciones ? 'Elegí al menos una habilidad disponible.' : undefined}
-          placeholder={habilidadesState.cargando ? 'Cargando habilidades…' : t('perfilesProyecto.placeholderHabilidades')}
-          textoVacio={habilidadesState.cargando ? 'Cargando habilidades…' : 'No hay habilidades con ese texto.'}
+          error={error && !habilidadesState.error && !sinOpciones ? t('registro.elegiHabilidadDisponible') : undefined}
+          placeholder={habilidadesState.cargando ? t('registro.cargandoHabilidades') : t('perfilesProyecto.placeholderHabilidades')}
+          textoVacio={habilidadesState.cargando ? t('registro.cargandoHabilidades') : t('registro.sinHabilidadesTexto')}
         />
         {habilidadesState.error && (
           <AlertaError
@@ -65,11 +65,11 @@ const Habilidades = ({ datos, setDatos, onVolver, onSiguiente }) => {
         )}
         {sinOpciones && (
           <Alert severity="warning" role="alert">
-            No hay habilidades disponibles para registrar el perfil.
+            {t('registro.sinHabilidades')}
           </Alert>
         )}
       </section>
-      <AccionesRegistro onVolver={onVolver} siguiente="Siguiente" />
+      <AccionesRegistro onVolver={onVolver} siguiente={t('registro.siguiente')} />
     </form>
   );
 };

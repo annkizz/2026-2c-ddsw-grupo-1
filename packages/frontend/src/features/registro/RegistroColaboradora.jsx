@@ -12,8 +12,6 @@ import Habilidades from './Habilidades.jsx';
 import MediosDeContacto from './MediosDeContacto.jsx';
 import './Registro.css';
 
-const PASOS = [t('registro.tusDatos'), 'Habilidades', 'Contacto'];
-
 const DATOS_INICIALES = {
   nombreFantasia: '',
   usuarioGitHub: '',
@@ -50,7 +48,7 @@ const RegistroColaboradora = () => {
       const nuevaSesion = await recargarSesion();
       if (!nuevaSesion?.tienePerfil) {
         setError(
-          'El servidor no confirmó el perfil. Podés volver a intentar verificarlo sin reenviar el formulario.'
+          t('registro.verificarPerfil')
         );
         return;
       }
@@ -70,7 +68,7 @@ const RegistroColaboradora = () => {
         titulo={t('registro.crearTuPerfilDeColaboradora')}
         subtitulo={t('registro.conEstosDatosLosColectivos')}
       >
-        <PasosRegistro pasos={PASOS} actual={paso} />
+        <PasosRegistro pasos={[t('registro.tusDatos'), t('registro.habilidades'), t('registro.contacto')]} actual={paso} />
       </EncabezadoPagina>
       {paso === 1 && (
         <DatosColaboradora
@@ -97,7 +95,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? 'Verificar registro' : t('registro.crearMiPerfil')}
+          siguiente={registroCreado ? t('registro.verificarRegistro') : t('registro.crearMiPerfil')}
           guardando={guardando}
           error={error}
         />

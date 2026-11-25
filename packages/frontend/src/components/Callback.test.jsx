@@ -56,6 +56,17 @@ describe('destino del callback de Logto', () => {
     expect(navigate).toHaveBeenCalledWith('/', { replace: true });
   });
 
+  it('lleva al panel administrativo sin pedir un perfil de colectivo o colaboradora', () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+      cargando: false,
+    });
+
+    render(<Callback />);
+    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', { replace: true });
+  });
+
   it('lleva al inicio del colectivo cuando la cuenta ya tiene perfil', () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,

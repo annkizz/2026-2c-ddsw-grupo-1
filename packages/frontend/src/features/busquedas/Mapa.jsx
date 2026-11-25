@@ -35,7 +35,7 @@ function nivelDeRegion(cantidad, maximo) {
 // Rangos reales de cada tono para la referencia ("1", "2 a 3", "4 a 6"…). Se omiten los tonos sin rango.
 function rangosDeLeyenda(maximo) {
   if (maximo <= 0) return [];
-  if (maximo === 1) return [{ nivel: 5, texto: "1 proyecto" }];
+  if (maximo === 1) return [{ nivel: 5, texto: t('mapa.unProyecto', { cantidad: 1 }) }];
   const rangos = [];
   for (let nivel = 1; nivel <= 5; nivel += 1) {
     const desde = Math.floor(((nivel - 1) * maximo) / 5) + 1;
@@ -44,8 +44,8 @@ function rangosDeLeyenda(maximo) {
     rangos.push({
       nivel,
       texto: desde === hasta
-        ? `${desde} proyecto${desde === 1 ? "" : "s"}`
-        : `De ${desde} a ${hasta} proyectos`,
+        ? t(desde === 1 ? 'mapa.unProyecto' : 'mapa.variosProyectos', { cantidad: desde })
+        : t('mapa.rangoProyectos', { desde, hasta }),
     });
   }
   return rangos;
@@ -113,8 +113,8 @@ export default function Mapa() {
   return (
     <div className="contenedor-pagina">
       <EncabezadoPagina
-        titulo="Proyectos por provincia"
-        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Mapa" }]}
+        titulo={t('mapa.titulo')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: t('navegacion.mapa') }]}
       />
 
       {cargando && <EsqueletoDetalle etiqueta={t('mapa.cargandoElMapa')} />}
@@ -130,10 +130,10 @@ export default function Mapa() {
         <>
           <p className="contador-resultados" role="status" aria-live="polite">
             {totalProyectos === 0
-              ? "Todavía no hay proyectos activos con ubicación."
-              : `${totalProyectos} proyecto${totalProyectos === 1 ? "" : "s"} activo${
-                  totalProyectos === 1 ? "" : "s"
-                } con ubicación en ${grupos.length} provincias.`}
+              ? t('mapa.sinUbicaciones')
+              : t(totalProyectos === 1 ? 'mapa.unProyectoConUbicacion' : 'mapa.variosProyectosConUbicacion', {
+                  total: totalProyectos, provincias: grupos.length,
+                })}
           </p>
 
           <div className="mapa-contenedor">
@@ -142,7 +142,7 @@ export default function Mapa() {
                 className="mapa"
                 viewBox={`0 0 ${PROVINCIAS_MAPA.ancho} ${PROVINCIAS_MAPA.alto}`}
                 role="group"
-                aria-label="Mapa coroplético de proyectos por provincia"
+                aria-label={t('mapa.etiquetaMapa')}
               >
                 {REGIONES.map((region) => {
                   const grupo = grupoPorCodigo[region.codigo];
@@ -158,7 +158,7 @@ export default function Mapa() {
                       tabIndex={0}
                       role="button"
                       aria-pressed={activa}
-                      aria-label={`${region.nombre}: ${cantidad} proyecto${cantidad === 1 ? "" : "s"}`}
+                      aria-label={t(cantidad === 1 ? 'mapa.unProyectoProvincia' : 'mapa.variosProyectosProvincia', { provincia: region.nombre, cantidad })}
                       onMouseDown={(evento) => evento.preventDefault()}
                       onClick={(evento) => {
                         seleccionar(region.codigo);
@@ -196,12 +196,12 @@ export default function Mapa() {
 
               <div className="leyenda">
                 <p className="leyenda__titulo" id="leyenda-titulo">
-                  Referencia: cantidad de proyectos activos
+                  {t('mapa.referencia')}
                 </p>
                 <ul className="leyenda__escala" aria-labelledby="leyenda-titulo">
                   <li>
                     <span className="leyenda__color leyenda__color--0" aria-hidden="true" />
-                    Sin proyectos
+                    {t('mapa.sinProyectos')}
                   </li>
                   {rangosDeLeyenda(maximo).map(({ nivel, texto }) => (
                     <li key={nivel}>
@@ -210,7 +210,7 @@ export default function Mapa() {
                     </li>
                   ))}
                 </ul>
-                <p className="texto-secundario">Cuanto más oscuro, más proyectos. El número sobre cada provincia es la cantidad exacta.</p>
+                <p className="texto-secundario">{t('mapa.descripcionReferencia')}</p>
               </div>
             </div>
 
@@ -219,14 +219,14 @@ export default function Mapa() {
               {regionSeleccionada ? (
                 <section className="resultados" aria-labelledby="mapa-seleccion-titulo">
                   <div className="resultados__encabezado resultados__encabezado--fila">
-                    <h2 id="mapa-seleccion-titulo">Proyectos en {regionSeleccionada.nombre}</h2>
+                    <h2 id="mapa-seleccion-titulo">{t('mapa.proyectosEn', { provincia: regionSeleccionada.nombre })}</h2>
                     <Button
                       variant="outlined"
                       type="button"
                       startIcon={<FiX aria-hidden="true" />}
                       onClick={() => setSeleccionada(null)}
                     >
-                      Quitar selección
+                      {t('mapa.quitarSeleccion')}
                     </Button>
                   </div>
                   {grupoSeleccionado ? <ul className="tarjetas tarjetas--una-columna">
@@ -243,20 +243,20 @@ export default function Mapa() {
                         nombreColectivo={proyecto.colectivo?.nombre}
                       />
                     ))}
-                  </ul> : <EstadoVacio icono={FiMapPin} nivelTitulo="p" titulo="No hay proyectos activos en esta provincia." />}
+                  </ul> : <EstadoVacio icono={FiMapPin} nivelTitulo="p" titulo={t('mapa.sinProyectosProvincia')} />}
                 </section>
               ) : (
                 <EstadoVacio
                   icono={FiMapPin}
                   nivelTitulo="h2"
-                  titulo="Elegí una provincia"
-                  descripcion="Tocá una provincia del mapa para ver sus proyectos activos acá."
+                  titulo={t('mapa.elegiProvincia')}
+                  descripcion={t('mapa.instruccionProvincia')}
                 />
               )}
               </div>
               <table className="tabla">
-                <caption className="tabla__caption">Proyectos activos por provincia</caption>
-                <thead><tr><th scope="col">Provincia</th><th scope="col">Proyectos</th></tr></thead>
+                <caption className="tabla__caption">{t('mapa.tablaTitulo')}</caption>
+                <thead><tr><th scope="col">{t('mapa.provincia')}</th><th scope="col">{t('mapa.proyectos')}</th></tr></thead>
                 <tbody>
                   {provincias.map((provincia) => (
                     <tr key={provincia.codigo} className={provincia.codigo === seleccionada ? "tabla__fila--activa" : undefined}>

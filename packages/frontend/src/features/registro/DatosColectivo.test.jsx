@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import DatosColectivo from './DatosColectivo';
 
 jest.mock('react-router-dom', () => ({
@@ -16,7 +16,7 @@ jest.mock('../../hooks/useListado', () => ({
 }));
 
 jest.mock('../../service/colectivosService', () => ({
-  TIPOS_COLECTIVO: [{ valor: 'ASOCIACION', texto: 'Asociación' }],
+  TIPOS_COLECTIVO: [{ valor: 'ASOCIACIONES_BARRIALES', textoKey: 'tiposColectivo.ASOCIACIONES_BARRIALES' }],
   crearColectivo: jest.fn()
 }));
 
@@ -31,5 +31,17 @@ describe('DatosColectivo', () => {
     expect(tipo.querySelector('.select-placeholder')).toBeInTheDocument();
     expect(pais).toHaveTextContent('Seleccioná un país');
     expect(pais.querySelector('.select-placeholder')).toBeInTheDocument();
+  });
+
+  it('muestra la etiqueta traducida del tipo sin cambiar su valor', () => {
+    render(<DatosColectivo />);
+
+    const tipo = screen.getByRole('combobox', { name: 'Tipo de colectivo (obligatorio)' });
+    fireEvent.mouseDown(tipo);
+    const opcion = screen.getByRole('option', { name: 'Asociación barrial' });
+    expect(opcion).toHaveAttribute('data-value', 'ASOCIACIONES_BARRIALES');
+    fireEvent.click(opcion);
+
+    expect(tipo).toHaveTextContent('Asociación barrial');
   });
 });

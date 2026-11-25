@@ -16,15 +16,11 @@ import { invitarAColaborar } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import '../Card.css';
 import { markdownATextoPlano } from '../../utils/markdown';
-
-const NOMBRE_SIN_ALIAS = 'Colaboradora sin nombre público';
+import { t } from '../../i18n/t';
+import { listarHabilidades } from '../../utils/perfiles';
 
 function nombreVisible(colaboradora) {
-  return colaboradora.nombreFantasia ?? colaboradora.usuarioGitHub ?? NOMBRE_SIN_ALIAS;
-}
-
-function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(', ') : 'ninguna';
+  return colaboradora.nombreFantasia ?? colaboradora.usuarioGitHub ?? t('tarjetas.sinNombre');
 }
 
 const iniciales = (nombre) =>
@@ -80,12 +76,12 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
         <div className="tarjeta__encabezado">
           <h3 id={idTitulo}>{nombre}</h3>
           {colaboradora.tieneCoincidencia && (
-            <Chip color="success" icon={<FiCheckCircle aria-hidden="true" />} label="Coincide" />
+            <Chip color="success" icon={<FiCheckCircle aria-hidden="true" />} label={t('tarjetas.coincide')} />
           )}
         </div>
 
         {colaboradora.pronombres?.length > 0 && (
-          <p className="tarjeta__meta">Pronombres: {colaboradora.pronombres.join(', ')}</p>
+          <p className="tarjeta__meta">{t('tarjetas.pronombres', { pronombres: colaboradora.pronombres.join(', ') })}</p>
         )}
         {colaboradora.presentacion && <p className="tarjeta__descripcion">{markdownATextoPlano(colaboradora.presentacion)}</p>}
         {colaboradora.usuarioGitHub && (
@@ -95,7 +91,7 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
               GitHub:{' '}
               <a href={`https://github.com/${colaboradora.usuarioGitHub}`} target="_blank" rel="noreferrer">
                 @{colaboradora.usuarioGitHub}
-                <span className="visualmente-oculto"> (se abre en una pestaña nueva)</span>
+                <span className="visualmente-oculto"> {t('comun.nuevaPestana')}</span>
               </a>
             </span>
           </p>
@@ -104,12 +100,12 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
         <div className="tarjeta__metas">
           <p className="tarjeta__meta">
             <span>
-              <strong>Requeridas en común:</strong> {listarHabilidades(colaboradora.requeridasCoincidentes)}
+              <strong>{t('tarjetas.requeridasEnComun')}</strong> {listarHabilidades(colaboradora.requeridasCoincidentes)}
             </span>
           </p>
           <p className="tarjeta__meta">
             <span>
-              <strong>Opcionales en común:</strong> {listarHabilidades(colaboradora.opcionalesCoincidentes)}
+              <strong>{t('tarjetas.opcionalesEnComun')}</strong> {listarHabilidades(colaboradora.opcionalesCoincidentes)}
             </span>
           </p>
         </div>
@@ -124,17 +120,17 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           aria-describedby={`${idTitulo}-contacto`}
           onClick={() => setDialogoAbierto(true)}
         >
-          {!colaboradora.aceptaMensajeria ? 'No acepta mensajes' : invitacionEnviada ? 'Invitación enviada' : 'Contactar'}
+          {!colaboradora.aceptaMensajeria ? t('tarjetas.noAceptaMensajes') : invitacionEnviada ? t('tarjetas.invitacionEnviada') : t('tarjetas.contactar')}
         </Button>
         <span id={`${idTitulo}-contacto`} className="texto-secundario">
           {colaboradora.aceptaMensajeria
-            ? 'Invitar a colaborar en este perfil.'
-            : 'Esta persona no acepta mensajes internos.'}
+            ? t('tarjetas.invitarPerfil')
+            : t('tarjetas.noAceptaMensajesDescripcion')}
         </span>
       </div>
       {invitacionEnviada && (
         <Alert severity="success" role="status">
-          La invitación quedó en la bandeja de notificaciones de la persona.
+          {t('tarjetas.invitacionBandeja')}
         </Alert>
       )}
 
@@ -147,17 +143,17 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
       >
         <form onSubmit={enviarMensaje}>
           <DialogTitle id={dialogTitleId}>
-            Contactar a {nombreVisible(colaboradora)}
+            {t('tarjetas.contactarNombre', { nombre: nombreVisible(colaboradora) })}
           </DialogTitle>
           <DialogContent>
             {resultado ? (
               <Alert severity="success" role="status">
-                La invitación quedó enviada dentro de la plataforma.
+                {t('tarjetas.invitacionPlataforma')}
               </Alert>
             ) : (
               <>
                 <p>
-                  La persona recibirá una invitación a colaborar en este perfil y podrá aceptarla o rechazarla.
+                  {t('tarjetas.invitacionDescripcion')}
                 </p>
                 {error && <Alert severity="error">{error}</Alert>}
                 <TextField
@@ -165,7 +161,7 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
                   fullWidth
                   multiline
                   minRows={4}
-                  label="Mensaje opcional"
+                  label={t('tarjetas.mensajeOpcional')}
                   value={contenido}
                   onChange={(event) => setContenido(event.target.value)}
                   slotProps={{ htmlInput: { maxLength: 500 } }}
@@ -177,18 +173,18 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           </DialogContent>
           <DialogActions>
             {resultado ? (
-              <Button onClick={cerrarDialogo}>Cerrar</Button>
+              <Button onClick={cerrarDialogo}>{t('proyectos.cerrar')}</Button>
             ) : (
               <>
                 <Button onClick={cerrarDialogo} disabled={enviando}>
-                  Cancelar
+                  {t('comun.cancelar')}
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
                   disabled={enviando}
                 >
-                  {enviando ? "Enviando…" : "Enviar invitación"}
+                  {enviando ? t('tarjetas.enviando') : t('tarjetas.enviarInvitacion')}
                 </Button>
               </>
             )}

@@ -29,6 +29,11 @@ const ETIQUETA_ROL = {
 // El logo es el único acceso a Inicio (antes había un botón "Inicio" que hacía lo mismo).
 // Lo personal (Mi perfil, Salir) vive en el menú de usuario; las notificaciones, en su botón.
 const enlacesPorRol = (rol) => {
+  if (rol === 'ADMINISTRADOR') {
+    return [
+      { to: '/administrador/destacados', texto: t('destacados.titulo'), icono: <FiFileText aria-hidden="true" /> }
+    ];
+  }
   if (rol === 'COLABORADOR') {
     return [
       { to: '/buscar-proyectos', texto: t('navegacion.buscarProyectos'), icono: <FiSearch aria-hidden="true" /> },
@@ -69,7 +74,8 @@ const Header = () => {
   const { pendientes } = useNotificacionesPendientes();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [anclaUsuario, setAnclaUsuario] = useState(null);
-  const conPerfil = isAuthenticated && sesion?.tienePerfil;
+  const esAdministrador = sesion?.rol === 'ADMINISTRADOR';
+  const conPerfil = isAuthenticated && (sesion?.tienePerfil || esAdministrador);
   const enlaces = enlacesPorRol(sesion?.rol);
   const nombre = sesion?.nombreUsuario || t('navegacion.miCuenta');
   const rol = ETIQUETA_ROL[sesion?.rol] ?? '';
@@ -143,7 +149,7 @@ const Header = () => {
 
         {conPerfil && (
           <div className="header-usuario">
-            {campana}
+            {!esAdministrador && campana}
             <button
               type="button"
               className="header-usuario__boton header-usuario--desktop"
@@ -192,13 +198,13 @@ const Header = () => {
           {rol && <span>{rol}</span>}
         </li>
         <Divider component="li" role="presentation" />
-        <MenuItem onClick={() => ir('/perfil')}>
+        {!esAdministrador && <MenuItem onClick={() => ir('/perfil')}>
           <ListItemIcon>
             <FiUser aria-hidden="true" />
           </ListItemIcon>
           {t('navegacion.miPerfil')}
-        </MenuItem>
-        <Divider component="li" role="presentation" />
+        </MenuItem>}
+        {!esAdministrador && <Divider component="li" role="presentation" />}
         <MenuItem onClick={salir} className="menu-usuario__salir">
           <ListItemIcon>
             <FiLogOut aria-hidden="true" />
@@ -235,7 +241,7 @@ const Header = () => {
           )}
           <nav id="header-navegacion-movil" className="header-nav header-nav--mobile" aria-label={t('navegacion.principal')}>
             {conPerfil && renderEnlaces()}
-            {conPerfil && (
+            {conPerfil && !esAdministrador && (
               <>
                 <NavLink
                   to="/notificaciones"

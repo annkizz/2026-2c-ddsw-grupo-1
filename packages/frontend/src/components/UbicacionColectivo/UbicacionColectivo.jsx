@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Autocomplete, MenuItem, TextField } from '@mui/material';
 import { PROVINCIAS } from '../../data/provincias';
+import { t } from '../../i18n/t';
 
 const PROVINCIAS_ARGENTINAS = PROVINCIAS.filter(({ codigo }) => codigo !== 'AR-C');
 const URL_LOCALIDADES = 'https://apis.datos.gob.ar/georef/api/localidades';
@@ -64,16 +65,16 @@ const UbicacionColectivo = ({
         const respuesta = await fetch(`${URL_LOCALIDADES}?${parametros}`, {
           signal: controller.signal
         });
-        if (!respuesta.ok) throw new Error('No se pudieron cargar las localidades.');
+        if (!respuesta.ok) throw new Error(t('erroresInternos.localidadesCarga'));
         const resultado = await respuesta.json();
         if (!Array.isArray(resultado.localidades)) {
-          throw new Error('La respuesta de localidades no tiene el formato esperado.');
+          throw new Error(t('erroresInternos.localidadesFormato'));
         }
         setCiudades(resultado.localidades.map(({ nombre }) => nombre).sort((a, b) => a.localeCompare(b)));
       } catch (fallo) {
         if (fallo.name !== 'AbortError') {
           setCiudades([]);
-          setErrorCiudades('No pudimos cargar las ciudades. Podés escribirla manualmente.');
+          setErrorCiudades(t('ubicacion.errorCiudades'));
         }
       } finally {
         if (!controller.signal.aborted) setCargandoCiudades(false);
@@ -103,13 +104,13 @@ const UbicacionColectivo = ({
   return (
     <>
       {envolverCampo(
-        'País (opcional)',
+        t('ubicacion.paisOpcional'),
         ids.pais,
         labelsAbove,
         <TextField
           id={ids.pais}
           select
-          label={labelsAbove ? undefined : 'País (opcional)'}
+          label={labelsAbove ? undefined : t('ubicacion.paisOpcional')}
           slotProps={{
             select: {
               labelId: labelsAbove ? `${ids.pais}-label` : undefined,
@@ -121,23 +122,23 @@ const UbicacionColectivo = ({
           fullWidth
         >
           <MenuItem value="">
-            <span className="select-placeholder">Seleccioná un país</span>
+            <span className="select-placeholder">{t('ubicacion.seleccionarPais')}</span>
           </MenuItem>
-          <MenuItem value="Argentina">Argentina</MenuItem>
-          <MenuItem value={OTRO_PAIS}>Otro país</MenuItem>
+          <MenuItem value="Argentina">{t('ubicacion.argentina')}</MenuItem>
+          <MenuItem value={OTRO_PAIS}>{t('ubicacion.otroPais')}</MenuItem>
         </TextField>,
       )}
 
       {paisSeleccionado === 'Argentina' && (
         <>
           {envolverCampo(
-            'Provincia (opcional)',
+            t('ubicacion.provinciaOpcional'),
             ids.provincia,
             labelsAbove,
             <TextField
               id={ids.provincia}
               select
-              label={labelsAbove ? undefined : 'Provincia (opcional)'}
+              label={labelsAbove ? undefined : t('ubicacion.provinciaOpcional')}
               slotProps={{
                 select: {
                   labelId: labelsAbove ? `${ids.provincia}-label` : undefined,
@@ -149,7 +150,7 @@ const UbicacionColectivo = ({
               fullWidth
             >
               <MenuItem value="">
-                <span className="select-placeholder">Seleccioná una provincia</span>
+                <span className="select-placeholder">{t('ubicacion.seleccionarProvincia')}</span>
               </MenuItem>
               {PROVINCIAS_ARGENTINAS.map(({ codigo, nombre }) => (
                 <MenuItem key={codigo} value={nombre}>
@@ -164,22 +165,22 @@ const UbicacionColectivo = ({
                 <>
                   <Alert severity="warning" role="alert">{errorCiudades}</Alert>
                   {envolverCampo(
-                    'Ciudad o localidad (opcional)',
+                    t('ubicacion.ciudadLocalidadOpcional'),
                     ids.ciudad,
                     labelsAbove,
                     <TextField
                       id={ids.ciudad}
-                      label={labelsAbove ? undefined : 'Ciudad o localidad (opcional)'}
+                      label={labelsAbove ? undefined : t('ubicacion.ciudadLocalidadOpcional')}
                       value={ciudad}
                       onChange={(evento) => onChange({ ciudad: evento.target.value })}
-                      placeholder="Ej.: Rosario"
+                      placeholder={t('ubicacion.ejRosario')}
                       fullWidth
                     />,
                   )}
                 </>
               ) : (
                 envolverCampo(
-                  'Ciudad o localidad (opcional)',
+                  t('ubicacion.ciudadLocalidadOpcional'),
                   ids.ciudad,
                   labelsAbove,
                   <Autocomplete
@@ -193,9 +194,9 @@ const UbicacionColectivo = ({
                       <TextField
                         {...params}
                         id={ids.ciudad}
-                        label={labelsAbove ? undefined : 'Ciudad o localidad (opcional)'}
+                        label={labelsAbove ? undefined : t('ubicacion.ciudadLocalidadOpcional')}
                         placeholder={
-                          cargandoCiudades ? 'Cargando ciudades…' : 'Elegí una ciudad o localidad'
+                          cargandoCiudades ? t('ubicacion.cargandoCiudades') : t('ubicacion.elegiCiudad')
                         }
                         
                       />
@@ -211,13 +212,13 @@ const UbicacionColectivo = ({
       {paisSeleccionado === OTRO_PAIS && (
         <>
           {envolverCampo(
-            'País (opcional)',
+            t('ubicacion.paisOpcional'),
             ids.pais,
             labelsAbove,
             <TextField
               id={ids.pais}
-              label={labelsAbove ? undefined : 'País (opcional)'}
-              placeholder="Ej.: Uruguay"
+              label={labelsAbove ? undefined : t('ubicacion.paisOpcional')}
+              placeholder={t('ubicacion.ejUruguay')}
               value={pais}
               onChange={(evento) => onChange({ pais: evento.target.value })}
               
@@ -225,13 +226,13 @@ const UbicacionColectivo = ({
             />,
           )}
           {envolverCampo(
-            'Provincia o región (opcional)',
+            t('ubicacion.provinciaRegionOpcional'),
             ids.provincia,
             labelsAbove,
             <TextField
               id={ids.provincia}
-              label={labelsAbove ? undefined : 'Provincia o región (opcional)'}
-              placeholder="Ej.: Canelones"
+              label={labelsAbove ? undefined : t('ubicacion.provinciaRegionOpcional')}
+              placeholder={t('ubicacion.ejCanelones')}
               value={provincia}
               onChange={(evento) => onChange({ provincia: evento.target.value })}
               
@@ -239,13 +240,13 @@ const UbicacionColectivo = ({
             />,
           )}
           {envolverCampo(
-            'Ciudad (opcional)',
+            t('ubicacion.ciudadOpcional'),
             ids.ciudad,
             labelsAbove,
             <TextField
               id={ids.ciudad}
-              label={labelsAbove ? undefined : 'Ciudad (opcional)'}
-              placeholder="Ej.: Montevideo"
+              label={labelsAbove ? undefined : t('ubicacion.ciudadOpcional')}
+              placeholder={t('ubicacion.ejMontevideo')}
               value={ciudad}
               onChange={(evento) => onChange({ ciudad: evento.target.value })}
               
