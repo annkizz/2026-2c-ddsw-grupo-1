@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { TipoNotificacion } from "../domain/TipoNotificacion.js";
 import { NotificacionModel } from "../schemas/notificacionSchema.js";
 
 export class NotificacionRepository {
@@ -33,6 +34,14 @@ export class NotificacionRepository {
   buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return this.model.findById(id).exec();
+  }
+
+  existeNotificacionDeRechazo(idPostulacion, idColaborador) {
+    return this.model.exists({
+      idPostulacion,
+      idColaborador,
+      tipo: TipoNotificacion.POSTULACION_RECHAZADA,
+    });
   }
 
   cambiarEstadoInvitacion(id, idColaborador, estadoActual, estadoNuevo) {

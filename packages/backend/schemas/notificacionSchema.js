@@ -66,6 +66,11 @@ notificacionSchema.index(
   { unique: true, partialFilterExpression: { tipo: "INVITACION_PROYECTO", estadoInvitacion: "PENDIENTE" } },
 );
 
+notificacionSchema.index(
+  { idPostulacion: 1, idColaborador: 1 },
+  { partialFilterExpression: { tipo: "POSTULACION_RECHAZADA" } },
+);
+
 notificacionSchema.loadClass(Notificacion);
 
 export const NotificacionModel = mongoose.model(

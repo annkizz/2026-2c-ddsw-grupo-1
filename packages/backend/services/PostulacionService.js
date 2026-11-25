@@ -156,6 +156,24 @@ export class PostulacionService {
       );
     }
 
+    const anterior = await this.postulacionRepository.obtenerUltima(
+      idProyecto,
+      idPerfil,
+      idColaborador,
+    );
+    if (
+      anterior?.estado === EstadoPostulacion.RECHAZADA &&
+      !(await this.notificacionService.existeNotificacionDeRechazo(
+        anterior._id,
+        idColaborador,
+      ))
+    ) {
+      throw new ConflictError(
+        "La postulación anterior todavía no fue notificada",
+        "POSTULACION_YA_EXISTENTE",
+      );
+    }
+
     const postulacion = new Postulacion(
       proyecto,
       perfil,

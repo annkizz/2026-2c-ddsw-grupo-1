@@ -54,6 +54,13 @@ export class PostulacionRepository {
     });
   }
 
+  obtenerUltima(idProyecto, idPerfil, idColaborador) {
+    return this.model
+      .findOne({ idProyecto, idPerfil, idColaborador })
+      .sort({ fechaPostulacion: -1, _id: -1 })
+      .exec();
+  }
+
   contarPorPerfil(idPerfil) {
     return this.model.countDocuments({ idPerfil });
   }

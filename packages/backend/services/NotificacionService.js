@@ -183,6 +183,13 @@ export class NotificacionService {
     return this.toDTO(guardada);
   }
 
+  existeNotificacionDeRechazo(idPostulacion, idColaborador) {
+    return this.notificacionRepository.existeNotificacionDeRechazo(
+      idPostulacion,
+      idColaborador,
+    );
+  }
+
   notificarResolucionPostulacion(proyecto, postulacion, estado, perfil) {
     const aceptada = estado === EstadoPostulacion.ACEPTADA;
     const detallePerfil = perfil?.descripcion
