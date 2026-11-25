@@ -4,6 +4,7 @@ import {
   crearInvitacionSchema,
   crearPostulacionSchema,
   resolverPostulacionSchema,
+  resolverInvitacionSchema,
 } from "../controllers/PostulacionController.js";
 
 export function crearPostulacionRouter(
@@ -11,6 +12,12 @@ export function crearPostulacionRouter(
   autenticar,
 ) {
   const router = express.Router({ mergeParams: true });
+
+  router
+    .route("/invitaciones/:idInvitacion")
+    .patch(autenticar, validate(resolverInvitacionSchema), (req, res) =>
+      postulacionController.resolverInvitacion(req, res),
+    );
 
   router
     .route("/perfiles/:idPerfil/invitaciones")
@@ -40,6 +47,12 @@ export function crearPostulacionRouter(
       autenticar,
       validate(resolverPostulacionSchema),
       (req, res) => postulacionController.resolver(req, res),
+    );
+
+  router
+    .route("/colaboraciones/gestion")
+    .get(autenticar, (req, res) =>
+      postulacionController.obtenerColaboracionesParaGestion(req, res),
     );
 
   router

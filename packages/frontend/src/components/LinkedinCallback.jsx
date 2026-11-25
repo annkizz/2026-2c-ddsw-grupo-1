@@ -1,17 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Alert, Button } from '@mui/material';
+import { Alert, AlertTitle, Button } from '@mui/material';
+import { FiArrowLeft } from 'react-icons/fi';
+import './Acceso.css';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { completarConexionLinkedin, CLAVE_VOLVER_A } from '../service/linkedinService';
-import { mensajeDeError } from '../service/api';
+import { mensajeDeError } from '../utils/mensajeDeError';
 import { t } from '../i18n/t';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import { useNotificar } from './Notificador/Notificador.jsx';
 
 
 const LinkedinCallback = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { getAccessToken } = useAuth();
+  const notificar = useNotificar();
   const [error, setError] = useState('');
   const yaEnviado = useRef(false); 
 
@@ -33,21 +37,29 @@ const LinkedinCallback = () => {
         const token = await getAccessToken();
         await completarConexionLinkedin(token, code, state);
         sessionStorage.removeItem(CLAVE_VOLVER_A);
+        notificar({ mensaje: t('linkedin.exitoConectado') });
         navigate(volverA, { replace: true });
       } catch (err) {
         setError(mensajeDeError(err));
       }
     })();
-  }, [params, getAccessToken, navigate, volverA]);
+  }, [params, getAccessToken, navigate, volverA, notificar]);
 
   if (error) {
     return (
-      <div style={{ maxWidth: 600, margin: '2rem auto', display: 'grid', gap: 16 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button variant="outlined" onClick={() => navigate(volverA, { replace: true })}>
-          {t('linkedin.volver')}
-        </Button>
-      </div>
+      <section className="acceso-estado" aria-labelledby="linkedin-error-titulo">
+        <Alert severity="error" role="alert">
+          <AlertTitle id="linkedin-error-titulo" component="h1">
+            {t('linkedin.errorConectarContexto')}
+          </AlertTitle>
+          {error}
+        </Alert>
+        <div className="acceso-estado__acciones">
+          <Button variant="outlined" startIcon={<FiArrowLeft aria-hidden="true" />} onClick={() => navigate(volverA, { replace: true })}>
+            {t('linkedin.volver')}
+          </Button>
+        </div>
+      </section>
     );
   }
 

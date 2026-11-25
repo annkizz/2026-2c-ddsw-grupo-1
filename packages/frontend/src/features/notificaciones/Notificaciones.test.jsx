@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
+import { resolverInvitacion } from '../../service/proyectosService';
 import Notificaciones from './Notificaciones';
 
 jest.mock('../../hooks/useAuth.jsx', () => ({
@@ -21,6 +22,7 @@ jest.mock('react-router-dom', () => {
 jest.mock('../../service/notificacionesService', () => ({
   obtenerNotificaciones: jest.fn(),
 }));
+jest.mock('../../service/proyectosService', () => ({ resolverInvitacion: jest.fn() }));
 
 describe('Notificaciones', () => {
   beforeEach(() => {
@@ -147,5 +149,23 @@ describe('Notificaciones', () => {
     expect(
       screen.getByRole('link', { name: 'Ver proyecto' }),
     ).toHaveAttribute('href', '/proyectos/proyecto-2');
+  });
+
+  it('permite aceptar una invitación con participación anónima por defecto', async () => {
+    obtenerNotificaciones.mockResolvedValue({
+      notificaciones: [{
+        id: 'inv-1', tipo: 'INVITACION_PROYECTO', contenido: 'Invitación para el perfil Tester',
+        idProyecto: 'proyecto-1', estadoInvitacion: 'PENDIENTE',
+      }],
+      totalPags: 1, pag: 1,
+    });
+    resolverInvitacion.mockResolvedValue({ estadoInvitacion: 'ACEPTADA' });
+    render(<Notificaciones />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Aceptar' }));
+    await waitFor(() => expect(resolverInvitacion).toHaveBeenCalledWith(
+      'token', 'proyecto-1', 'inv-1', 'ACEPTADA', true,
+    ));
+    expect(await screen.findByText('Invitación aceptada')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Aceptar' })).not.toBeInTheDocument();
   });
 });

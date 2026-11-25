@@ -1,11 +1,13 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLogto } from '@logto/react';
 import { obtenerSesion } from '../service/usuariosService';
 import { borrarTipo } from '../features/registro/tipoElegido';
+import { clasificarError } from '../utils/mensajeDeError';
+import { AuthContext } from './authContexto';
+import { t } from '../i18n/t';
 
 export const RESOURCE = process.env.REACT_APP_LOGTO_RESOURCES;
 
-const AuthContext = createContext(null);
 
 // Une Logto (quién sos) con el backend (GET /me: rol y si ya registraste tu perfil)
 export const AuthProvider = ({ children }) => {
@@ -21,13 +23,15 @@ export const AuthProvider = ({ children }) => {
   const [sesion, setSesion] = useState(null);
   const [cargandoSesion, setCargandoSesion] = useState(false);
   const [errorSesion, setErrorSesion] = useState(null);
+  // Clasificación para mostrar un texto humano (errores.* en es.json). errorSesion queda como detalle técnico interno.
+  const [tipoErrorSesion, setTipoErrorSesion] = useState(null);
   const pidiendoSesion = useRef(false);
 
   const getAccessToken = useCallback(async () => {
     const token = await logtoGetAccessToken(RESOURCE);
     if (!token) {
       throw new Error(
-        'Logto no devolvio el token JWT de la API. Verifica que la aplicacion tenga habilitado el refresh token y acceso al recurso de la API.'
+        t('erroresInternos.tokenLogto')
       );
     }
     return token;
@@ -36,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   const recargarSesion = useCallback(async () => {
     setCargandoSesion(true);
     setErrorSesion(null);
+    setTipoErrorSesion(null);
     try {
       const token = await getAccessToken();
       const nuevaSesion = await obtenerSesion(token);
@@ -47,12 +52,13 @@ export const AuthProvider = ({ children }) => {
       const esErrorDeRed =
         error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED';
       const mensaje = esTimeout
-        ? 'El servidor tardó demasiado en verificar tu sesión. Reintentá.'
+        ? t('erroresInternos.sesionTimeout')
         : esErrorDeRed
-          ? 'No pudimos conectarnos con el servidor. Verificá que el backend esté iniciado.'
-          : error?.response?.data?.error ?? error?.message ?? 'No se pudo verificar la sesión.';
+          ? t('erroresInternos.sesionRed')
+          : error?.response?.data?.error ?? error?.message ?? t('erroresInternos.sesion');
       const codigo = error?.response?.data?.codigo;
       setErrorSesion(codigo ? `${mensaje} (${codigo})` : mensaje);
+      setTipoErrorSesion(clasificarError(error));
       return null;
     } finally {
       setCargandoSesion(false);
@@ -63,6 +69,7 @@ export const AuthProvider = ({ children }) => {
     if (!isAuthenticated) {
       setSesion(null);
       setErrorSesion(false);
+      setTipoErrorSesion(null);
       pidiendoSesion.current = false;
       return;
     }
@@ -90,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     const email = typeof userInfo?.email === 'string' ? userInfo.email.trim() : '';
     if (!email) {
       throw new Error(
-        'Logto no devolvio el email. Verifica que la cuenta tenga un email y que la aplicacion tenga habilitado el permiso email.'
+        t('erroresInternos.emailLogto')
       );
     }
     return email;
@@ -111,6 +118,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated,
       errorLogto,
       errorSesion,
+      tipoErrorSesion,
       // true mientras Logto o el backend todavía no respondieron
       cargando:
         (!isAuthenticated && isLoading) ||
@@ -125,11 +133,14 @@ export const AuthProvider = ({ children }) => {
       getAccessToken,
       recargarSesion
     }),
-    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
+    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, tipoErrorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
+
+// Igual que useAuth pero sin exigir provider (para componentes compartidos que también se usan en tests aislados).
+export const useAuthOpcional = () => useContext(AuthContext);
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);

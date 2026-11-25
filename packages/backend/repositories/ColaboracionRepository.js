@@ -89,6 +89,16 @@ export class ColaboracionRepository {
     });
   }
 
+  crearDesdeInvitacion(colaboracion) {
+    return this.colaboracionModel.create({
+      idProyecto: colaboracion.proyecto._id,
+      idPerfil: colaboracion.perfil._id,
+      idColaborador: colaboracion.colaborador._id,
+      fecha: colaboracion.fecha,
+      esAnonima: colaboracion.esAnonima,
+    });
+  }
+
   async contarPorPerfil(idPerfil) {
     return this.colaboracionModel.countDocuments({ idPerfil });
   }

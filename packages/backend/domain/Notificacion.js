@@ -9,6 +9,7 @@ export class Notificacion {
     idProyecto,
     idPerfil,
     idPostulacion,
+    estadoInvitacion,
     envios = [],
   }) {
     this.id = id;
@@ -20,6 +21,7 @@ export class Notificacion {
     this.idProyecto = idProyecto;
     this.idPerfil = idPerfil;
     this.idPostulacion = idPostulacion;
+    this.estadoInvitacion = estadoInvitacion;
     this.envios = envios;
     this.leida = false;
   }

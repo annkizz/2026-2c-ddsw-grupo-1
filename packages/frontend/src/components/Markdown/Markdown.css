@@ -1,0 +1,110 @@
+/* Texto con formato Markdown dentro de descripciones */
+.markdown {
+  max-width: var(--reading-max-width);
+  color: var(--color-text);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown blockquote,
+.markdown pre {
+  margin: 0 0 var(--space-2);
+}
+
+.markdown .markdown__titulo {
+  margin: var(--space-3) 0 var(--space-1);
+  font-family: var(--font-family-heading);
+  line-height: var(--line-height-heading);
+}
+
+.markdown .markdown__titulo--1 {
+  font-size: var(--font-size-h3);
+}
+
+.markdown .markdown__titulo--2 {
+  font-size: 18px;
+}
+
+.markdown .markdown__titulo--3,
+.markdown .markdown__titulo--4,
+.markdown .markdown__titulo--5,
+.markdown .markdown__titulo--6 {
+  font-size: var(--font-size-body);
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: var(--space-3);
+}
+
+.markdown li + li {
+  margin-top: 4px;
+}
+
+.markdown li > ul,
+.markdown li > ol {
+  margin: 4px 0 0;
+}
+
+.markdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown a:hover {
+  color: var(--color-primary-hover);
+}
+
+.markdown code {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.markdown pre {
+  overflow-x: auto;
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+
+.markdown pre code {
+  padding: 0;
+  background: none;
+}
+
+.markdown blockquote {
+  padding: var(--space-1) var(--space-2);
+  border-left: var(--indicator-height) solid var(--color-primary-tint-strong);
+  color: var(--color-muted);
+}
+
+.markdown hr {
+  margin: var(--space-3) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border-subtle);
+}
+
+.markdown del {
+  text-decoration-thickness: 2px;
+}
+
+.markdown li > p,
+.markdown blockquote > :last-child {
+  margin-bottom: 0;
+}

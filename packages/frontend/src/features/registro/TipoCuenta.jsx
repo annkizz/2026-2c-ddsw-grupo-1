@@ -1,14 +1,35 @@
+import { t } from '../../i18n/t';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Card, CardActionArea, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
-import { FiArrowRight, FiCode, FiInfo, FiUsers, FiX } from 'react-icons/fi';
+import { Alert, Card, CardActionArea, DialogContent, DialogTitle, IconButton } from '@mui/material';
+import { FiArrowRight, FiCode, FiUsers, FiX } from 'react-icons/fi';
+import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import { guardarTipo, rutaDeRegistro } from './tipoElegido';
 import './TipoCuenta.css';
 
+const OPCIONES = [
+  {
+    tipo: 'colaboradora',
+    Icono: FiCode,
+    titulo: 'registro.personaColaboradora',
+    detalle: 'registro.detalleColaboradora'
+  },
+  {
+    tipo: 'colectivo',
+    Icono: FiUsers,
+    titulo: 'registro.representoColectivo',
+    detalle: 'registro.detalleColectivo'
+  }
+];
+
 // Pantalla "Tipo de cuenta".
-// - Dentro de Home: recibe onElegir y onCerrar (todavía no hay sesión).
-// - Como ruta /registro/tipo: sin props, sigue con el formulario del tipo elegido.
+// - Dentro de Home: recibe onElegir y onCerrar (todavía no hay sesión) y se muestra como diálogo.
+// - Como ruta /registro/tipo: sin props, es una página y sigue con el formulario del tipo elegido.
 const TipoCuenta = ({ onElegir, onCerrar }) => {
   const navigate = useNavigate();
+  const esDialogo = Boolean(onCerrar);
   const cerrar = () => {
     if (onCerrar) {
       onCerrar();
@@ -26,49 +47,56 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
     }
   };
 
+  const opciones = (
+    <div className="tipo-cuenta">
+      <p className="texto-secundario">{t('registro.comoSumarte')}</p>
+      {OPCIONES.map(({ tipo, Icono, titulo, detalle }) => (
+        <Card key={tipo} className="tipo-cuenta-opcion">
+          <CardActionArea onClick={() => elegir(tipo)}>
+            <div className="tipo-cuenta-contenido">
+              <Icono aria-hidden="true" />
+              <div>
+                <strong>{t(titulo)}</strong>
+                <small>{t(detalle)}</small>
+              </div>
+              <FiArrowRight aria-hidden="true" />
+            </div>
+          </CardActionArea>
+        </Card>
+      ))}
+      <Alert severity="info">{t('registro.elegiLaOpcionQueMejor')}</Alert>
+    </div>
+  );
+
+  if (!esDialogo) {
+    return (
+      <div className="contenedor-pagina contenedor-pagina--lectura">
+        <EncabezadoPagina
+          titulo={t('inicio.crearCuenta')}
+          subtitulo={t('registro.paso1ElegiElTipo')}
+          migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('inicio.crearCuenta') }]}
+        />
+        {opciones}
+      </div>
+    );
+  }
+
   return (
-    <Dialog open onClose={cerrar} fullWidth maxWidth="sm">
-      <DialogTitle className="tipo-cuenta-titulo">
-        <span>Crear una cuenta</span>
-        <IconButton aria-label="Cerrar" onClick={cerrar}>
-          <FiX />
+    <Dialogo open onClose={cerrar} aria-labelledby="tipo-cuenta-titulo">
+      <DialogTitle id="tipo-cuenta-titulo" className="dialogo-titulo-con-cierre">
+        <span>{t('inicio.crearCuenta')}</span>
+        <IconButton aria-label={t('proyectos.cerrar')} onClick={cerrar}>
+          <FiX aria-hidden="true" />
         </IconButton>
       </DialogTitle>
-      <DialogContent>
-        <p className="tipo-cuenta-sub">¿Cómo querés sumarte a la comunidad?</p>
-
-        <Card variant="outlined" className="tipo-cuenta-opcion">
-          <CardActionArea onClick={() => elegir('colaboradora')}>
-            <div className="tipo-cuenta-contenido">
-              <FiCode />
-              <div>
-                <strong>Soy una persona colaboradora</strong>
-                <small>Quiero aportar mi tiempo y mis saberes.</small>
-              </div>
-              <FiArrowRight />
-            </div>
-          </CardActionArea>
-        </Card>
-
-        <Card variant="outlined" className="tipo-cuenta-opcion">
-          <CardActionArea onClick={() => elegir('colectivo')}>
-            <div className="tipo-cuenta-contenido">
-              <FiUsers />
-              <div>
-                <strong>Represento a un colectivo</strong>
-                <small>Necesitamos software para nuestro proyecto.</small>
-              </div>
-              <FiArrowRight />
-            </div>
-          </CardActionArea>
-        </Card>
-
-        <Alert severity="info" icon={<FiInfo />} sx={{ background: 'none', padding: 0 }}>
-          Elegí la opción que mejor te represente. En ambos casos, sumarse es gratis.
-        </Alert>
-      </DialogContent>
-    </Dialog>
+      <DialogContent>{opciones}</DialogContent>
+    </Dialogo>
   );
+};
+
+TipoCuenta.propTypes = {
+  onElegir: PropTypes.func,
+  onCerrar: PropTypes.func
 };
 
 export default TipoCuenta;

@@ -1,6 +1,16 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@mui/material";
+import { Button } from "@mui/material";
+import { FiRotateCcw, FiSearch } from "react-icons/fi";
+import PropTypes from "prop-types";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
+import { EsqueletoGrilla, EsqueletoLista } from "../../components/Esqueletos/Esqueletos.jsx";
+import "../../components/Card.css";
+import "../proyectos/ListaProyectos.css";
+
 import CustomSelect from "../../components/CustomSelect/CustomSelect";
 import CardColaboradora from "../../components/CardColaboradora/CardColaboradora";
 import { useAuth } from "../../hooks/useAuth.jsx";
@@ -8,45 +18,44 @@ import { useCandidatas } from "../../hooks/useCandidatas";
 import { useListado } from "../../hooks/useListado";
 import "./Busquedas.css";
 import "./BuscadorColaboradores.css";
-
-function describirCompromiso(compromiso) {
-  if (!compromiso) return "Compromiso no informado";
-  const horas = compromiso.horas ?? "?";
-  const frecuencia = (compromiso.tipoCompromiso ?? "").toLowerCase();
-  const colaboracion = (compromiso.tipoColaboracion ?? "").toLowerCase();
-  return `${horas} ${horas === 1 ? "hora" : "horas"} ${frecuencia} · colaboración ${colaboracion}`;
-}
-
-function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(", ") : "ninguna";
-}
+import { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+import { markdownEnLineaATextoPlano } from '../../utils/markdown';
+import { describirCompromiso, listarHabilidades } from '../../utils/perfiles';
 //lo uso solo aca asi q vive aca en vez de en otra carpeta a components/
 
 function ResumenPerfil({ perfil }) {
   return (
     <div className="resumen-perfil">
-      <h2>{perfil.descripcion}</h2>
+      <h3><MarkdownEnLinea texto={perfil.descripcion} /></h3>
       <p className="tarjeta__meta">
-        Proyecto:{" "}
-        <Link
-          className="tarjeta__enlace"
-          to={`/proyectos/${perfil.idProyecto}`}
-        >
-          {perfil.proyecto?.titulo ?? "Ver proyecto"}
+        {t('buscadorColaboradoras.proyectoEtiqueta')}{" "}
+        <Link to={`/proyectos/${perfil.idProyecto}`}>
+          {perfil.proyecto?.titulo ?? t('tarjetas.verProyecto')}
         </Link>
       </p>
       <p className="tarjeta__meta">{describirCompromiso(perfil.compromiso)}</p>
       <p>
-        <strong>Requeridas:</strong>{" "}
+        <strong>{t('buscadorColaboradoras.requeridas')}</strong>{" "}
         {listarHabilidades(perfil.habilidadesRequeridas)}
       </p>
       <p>
-        <strong>Opcionales:</strong>{" "}
+        <strong>{t('buscadorColaboradoras.opcionales')}</strong>{" "}
         {listarHabilidades(perfil.habilidadesOpcionales)}
       </p>
     </div>
   );
 }
+
+ResumenPerfil.propTypes = {
+  perfil: PropTypes.shape({
+    descripcion: PropTypes.string,
+    idProyecto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    proyecto: PropTypes.shape({ titulo: PropTypes.string }),
+    compromiso: PropTypes.object,
+    habilidadesRequeridas: PropTypes.arrayOf(PropTypes.string),
+    habilidadesOpcionales: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
+};
 
 export default function BuscadorColaboradores() {
   const { sesion } = useAuth();
@@ -95,7 +104,16 @@ export default function BuscadorColaboradores() {
     }
   }, [idPerfil, perfiles]);
 
-  const { grupos, cargando, error, recargar, cantidadPerfiles } = useCandidatas(
+  const {
+    grupos,
+    cargando,
+    cargandoMas,
+    error,
+    recargar,
+    cargarMas,
+    hayMas,
+    cantidadPerfiles,
+  } = useCandidatas(
     perfiles,
     idPerfilAplicado,
     busquedaIniciada,
@@ -132,72 +150,59 @@ export default function BuscadorColaboradores() {
   }));
 
   const descripcionPerfiles = perfilesState.cargando
-    ? "Cargando perfiles…"
+    ? t('buscadorColaboradoras.cargandoPerfiles')
     : perfilesState.error
-      ? "No se pudieron cargar los perfiles"
-      : `${perfiles.length} perfil${
-          perfiles.length === 1 ? "" : "es"
-        } de este proyecto`;
+      ? t('buscadorColaboradoras.errorPerfiles')
+      : t(perfiles.length === 1 ? 'buscadorColaboradoras.unPerfilProyecto' : 'buscadorColaboradoras.variosPerfilesProyecto', { cantidad: perfiles.length });
 
   const opcionesPerfiles = [
     {
       valor: "",
-      etiqueta: "Todos los perfiles de este proyecto",
+      etiqueta: t('buscadorColaboradoras.todosPerfiles'),
       secundario: descripcionPerfiles,
     },
     ...perfiles.map((perfil) => ({
       valor: perfil.id,
-      etiqueta: perfil.descripcion,
+      etiqueta: markdownEnLineaATextoPlano(perfil.descripcion),
       secundario: `${perfil.compromiso?.horas ?? "?"} h`,
     })),
   ];
 
   const mensajeVacio =
     idPerfilAplicado === ""
-      ? "No encontramos personas que coincidan con las habilidades requeridas de los perfiles de este proyecto."
-      : "No encontramos personas con las habilidades requeridas para este perfil (o ya están anotadas en el proyecto).";
+      ? t('buscadorColaboradoras.sinCandidatasProyecto')
+      : t('buscadorColaboradoras.sinCandidatasPerfil');
 
   return (
-    <section className="pagina">
-      <h1>Buscar colaboradores</h1>
-      <p className="pagina__bajada">
-        Elegí uno de tus proyectos y el perfil que necesitás cubrir. La búsqueda
-        revisa solo los perfiles de ese proyecto.
-      </p>
+    <div className="contenedor-pagina">
+      <EncabezadoPagina
+        titulo={t('buscadorColaboradoras.buscarColaboradoras')}
+        subtitulo={t('buscadorColaboradoras.elegiUnoDeTusProyectos')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: t('buscadorColaboradoras.buscarColaboradoras') }]}
+      />
 
-      <div className="filtros filtros--busqueda">
+      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorColaboradoras.filtrosDeColaboradoras')}>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="proyecto"
-              etiqueta="Proyecto"
+              etiqueta={t('buscadorColaboradoras.proyecto')}
               opciones={opcionesProyectos}
-              seleccion={[idProyecto]}
+              seleccion={idProyecto ? [idProyecto] : []}
               onSeleccionar={cambiarProyecto}
               placeholder={
                 proyectosState.cargando
-                  ? "Cargando proyectos…"
-                  : "Buscá uno de tus proyectos"
+                  ? t('buscadorColaboradoras.cargandoProyectos')
+                  : t('buscadorColaboradoras.ejPortalDeTurnos')
               }
               textoVacio={
                 proyectosState.cargando
-                  ? "Cargando proyectos…"
-                  : "No hay proyectos activos con ese texto."
+                  ? t('buscadorColaboradoras.cargandoProyectos')
+                  : t('buscadorColaboradoras.sinProyectosTexto')
               }
             />
             {proyectosState.error && (
-              <div className="estado-bloque estado-bloque--compacto">
-                <p className="estado estado--error">
-                  No pudimos cargar tus proyectos. ¿Está corriendo el backend?
-                </p>
-                <button
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={proyectosState.recargar}
-                >
-                  Reintentar
-                </button>
-              </div>
+              <AlertaError error={proyectosState.error} titulo={t('buscadorColaboradoras.noPudimosCargarTusProyectos')} onReintentar={proyectosState.recargar} />
             )}
           </div>
 
@@ -205,34 +210,23 @@ export default function BuscadorColaboradores() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="perfil"
-                etiqueta="Perfil que necesitás cubrir"
+                etiqueta={t('buscadorColaboradoras.perfilCubrir')}
                 opciones={opcionesPerfiles}
-                seleccion={[idPerfil]}
+                seleccion={idPerfil ? [idPerfil] : []}
                 onSeleccionar={setIdPerfil}
                 placeholder={
                   perfilesState.cargando
-                    ? "Cargando perfiles…"
-                    : "Buscá por perfil"
+                    ? t('buscadorColaboradoras.cargandoPerfiles')
+                    : t('buscadorColaboradoras.ejTester')
                 }
                 textoVacio={
                   perfilesState.cargando
-                    ? "Cargando perfiles…"
-                    : "No hay perfiles con ese texto."
+                    ? t('buscadorColaboradoras.cargandoPerfiles')
+                    : t('buscadorColaboradoras.sinPerfilesTexto')
                 }
               />
               {perfilesState.error && (
-                <div className="estado-bloque estado-bloque--compacto">
-                  <p className="estado estado--error">
-                    No pudimos cargar los perfiles de este proyecto.
-                  </p>
-                  <button
-                    type="button"
-                    className="boton boton--secundario"
-                    onClick={perfilesState.recargar}
-                  >
-                    Reintentar
-                  </button>
-                </div>
+                <AlertaError error={perfilesState.error} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={perfilesState.recargar} />
               )}
             </div>
           )}
@@ -240,114 +234,86 @@ export default function BuscadorColaboradores() {
 
         <p className="filtros__ayuda">
           {idProyecto === ""
-            ? "Primero elegí un proyecto activo del colectivo."
-            : "Podés buscar para todos los perfiles del proyecto o elegir uno solo."}
+            ? t('buscadorColaboradoras.primeroProyecto')
+            : t('buscadorColaboradoras.todosOUnPerfil')}
         </p>
 
         <div className="filtros__acciones">
-          <button
+          <Button
             type="button"
-            className="boton boton--secundario"
+            variant="text"
+            startIcon={<FiRotateCcw aria-hidden="true" />}
             onClick={limpiarFiltros}
           >
-            Limpiar filtros
-          </button>
-          <button
+            {t('buscadorProyectos.limpiarFiltros')}
+          </Button>
+          <Button
+            variant="contained"
             type="button"
-            className="boton"
             onClick={buscar}
             disabled={!puedeBuscar}
+            startIcon={<FiSearch aria-hidden="true" />}
           >
-            Buscar
-          </button>
+            {t('navegacion.buscarColaboradoras')}
+          </Button>
         </div>
       </div>
 
       {proyectosState.cargando && (
-        <p className="estado">Cargando tus proyectos activos…</p>
+        <EsqueletoLista cantidad={2} etiqueta={t('buscadorColaboradoras.cargandoTusProyectosActivos')} />
       )}
 
       {!proyectosState.cargando &&
         !proyectosState.error &&
         proyectosState.datos.length === 0 && (
-          <div className="estado-bloque">
-            <p className="estado">
-              No tenés proyectos activos para buscar colaboradores.
-            </p>
-            <Link className="boton boton--secundario" to="/proyectos/nuevo">
-              Crear proyecto
-            </Link>
-          </div>
+          <EstadoVacio nivelTitulo="p" titulo={t('buscadorColaboradoras.noTenesProyectosActivosPara')} accion={<Button
+              variant="outlined"
+              component={Link}
+              to="/proyectos/nuevo"
+            >{t('proyectos.crearProyecto')}</Button>} />
         )}
 
       {idProyecto !== "" && perfilesState.cargando && (
-        <p className="estado">Cargando los perfiles de este proyecto…</p>
+        <EsqueletoLista cantidad={2} etiqueta={t('buscadorColaboradoras.cargandoLosPerfilesDeEste')} />
       )}
 
       {idProyecto !== "" &&
         !perfilesState.cargando &&
         !perfilesState.error &&
         perfiles.length === 0 && (
-          <div className="estado-bloque">
-            <p className="estado">
-              Este proyecto todavía no tiene perfiles cargados.
-            </p>
-            <Link
-              className="boton boton--secundario"
+          <EstadoVacio nivelTitulo="p" titulo={t('detalleProyecto.sinPerfiles')} accion={<Button
+              variant="outlined"
+              component={Link}
               to={`/proyectos/${idProyecto}/perfiles`}
-            >
-              Cargar perfiles
-            </Link>
-          </div>
+              state={{ crearPerfil: true }}
+            >{t('buscadorColaboradoras.cargarPerfiles')}</Button>} />
         )}
 
       {busquedaIniciada && (
         <section className="resultados" aria-labelledby="candidatas-titulo">
           <div className="resultados__encabezado">
             <div>
-              <h2 id="candidatas-titulo">Candidatas y candidatos</h2>
+              <h2 id="candidatas-titulo">{t('buscadorColaboradoras.candidatas')}</h2>
               <p className="resultados__bajada">
                 {idPerfilAplicado === ""
-                  ? `Revisando ${cantidadPerfiles} perfil${
-                      cantidadPerfiles === 1 ? "" : "es"
-                    } de ${proyectoSeleccionado?.titulo ?? "este proyecto"}.`
-                  : `Resultados para el perfil elegido en ${
-                      proyectoSeleccionado?.titulo ?? "este proyecto"
-                    }.`}
+                  ? t(cantidadPerfiles === 1 ? 'buscadorColaboradoras.revisandoUnPerfil' : 'buscadorColaboradoras.revisandoVariosPerfiles', {
+                      cantidad: cantidadPerfiles, proyecto: proyectoSeleccionado?.titulo ?? t('buscadorColaboradoras.esteProyecto'),
+                    })
+                  : t('buscadorColaboradoras.resultadosPerfil', { proyecto: proyectoSeleccionado?.titulo ?? t('buscadorColaboradoras.esteProyecto') })}
               </p>
             </div>
           </div>
 
           {cargando && (
-            <>
-              <p className="estado" role="status">
-                Buscando personas que coincidan…
-              </p>
-              <div className="tarjetas" aria-hidden="true">
-                {[0, 1, 2].map((indice) => (
-                  <Skeleton key={indice} variant="rounded" height={190} />
-                ))}
-              </div>
-            </>
+            <EsqueletoGrilla cantidad={3} etiqueta={t('buscadorColaboradoras.buscandoPersonasQueCoincidan')} />
           )}
 
           {error && (
-            <div className="estado-bloque">
-              <p className="estado estado--error">
-                No pudimos buscar colaboradores para los perfiles elegidos.
-              </p>
-              <button
-                type="button"
-                className="boton boton--secundario"
-                onClick={recargar}
-              >
-                Reintentar
-              </button>
-            </div>
+            <AlertaError error={error} titulo={t('buscadorColaboradoras.noPudimosBuscarColaboradoresPara')} onReintentar={recargar} />
           )}
 
           {!cargando && !error && grupos.length === 0 && (
-            <p className="estado" role="status" aria-live="polite">
+            <p className="contador-resultados" role="status" aria-live="polite">
               {mensajeVacio}
             </p>
           )}
@@ -358,12 +324,11 @@ export default function BuscadorColaboradores() {
               <section
                 className="grupo-candidatas"
                 key={perfil.id}
-                aria-label={`Candidatas para ${perfil.descripcion}`}
+                aria-label={t('buscadorColaboradoras.candidatasPara', { perfil: markdownEnLineaATextoPlano(perfil.descripcion) })}
               >
                 <ResumenPerfil perfil={perfil} />
                 <p className="tarjeta__meta">
-                  {candidatas.length} persona
-                  {candidatas.length === 1 ? "" : "s"} con coincidencia.
+                  {t(candidatas.length === 1 ? 'buscadorColaboradoras.unaCoincidencia' : 'buscadorColaboradoras.variasCoincidencias', { cantidad: candidatas.length })}
                 </p>
                 <ul className="tarjetas">
                   {candidatas.map((colaboradora) => (
@@ -378,8 +343,19 @@ export default function BuscadorColaboradores() {
               </section>
             ))}
 
+          {hayMas && (
+            <Button
+              variant="outlined"
+              type="button"
+              disabled={cargandoMas}
+              onClick={cargarMas}
+            >
+              {cargandoMas ? t('notificaciones.cargandoMas') : t('notificaciones.cargarMas')}
+            </Button>
+          )}
+
         </section>
       )}
-    </section>
+    </div>
   );
 }

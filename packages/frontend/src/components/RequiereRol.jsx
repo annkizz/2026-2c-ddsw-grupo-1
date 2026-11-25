@@ -1,26 +1,31 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { useAuth } from '../hooks/useAuth.jsx';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import { t } from '../i18n/t';
+import PaginaError from './PaginaError/PaginaError.jsx';
 
-// roles: valores de Rol del backend ('COLECTIVO' o 'COLABORADOR')
+// roles: valores de Rol del backend
 const RequiereRol = ({ roles, fallback, children }) => {
   const { cargando, sesion } = useAuth();
 
   if (cargando || !sesion) {
-    return <LoadingSplash message="Validando permisos..." />;
+    return <LoadingSplash message={t('acceso.validandoPermisos')} />;
   }
 
   if (!roles.includes(sesion.rol)) {
     return (
-      fallback || (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-          <h2>Acceso denegado</h2>
-          <p>No tenés permisos para ver esta sección.</p>
-        </div>
-      )
+      fallback || <PaginaError codigo={403} id="acceso-denegado-titulo" />
     );
   }
 
   return children;
+};
+
+RequiereRol.propTypes = {
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  fallback: PropTypes.node,
+  children: PropTypes.node,
 };
 
 export default RequiereRol;

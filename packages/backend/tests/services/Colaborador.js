@@ -15,6 +15,7 @@ describe("ColaboradorService", () => {
   let habilidadRepository;
   let colaboracionRepository;
   let proyectoRepository;
+  let postulacionRepository;
   let service;
 
   beforeEach(() => {
@@ -35,13 +36,50 @@ describe("ColaboradorService", () => {
     proyectoRepository = {
       obtenerPorIds: jest.fn(async () => []),
     };
+    postulacionRepository = {
+      obtenerPorColaborador: jest.fn(async () => []),
+    };
     service = new ColaboradorService(
       colaboradorRepository,
       habilidadRepository,
       undefined,
       colaboracionRepository,
       proyectoRepository,
+      postulacionRepository,
     );
+  });
+
+  it("consulta solo las postulaciones de la colaboradora autenticada con sus proyectos", async () => {
+    colaboradorRepository.buscarPorUsuario.mockResolvedValue({ _id: "c1" });
+    postulacionRepository.obtenerPorColaborador.mockResolvedValue([
+      { _id: "post1", idProyecto: "p1", idPerfil: "f1", estado: "PENDIENTE", esAnonima: true },
+      { _id: "post2", idProyecto: "p1", idPerfil: "f2", estado: "RECHAZADA", esAnonima: false },
+    ]);
+    proyectoRepository.obtenerPorIds.mockResolvedValue([
+      { _id: "p1", titulo: "Proyecto", descripcion: "Descripción", privado: "no exponer" },
+    ]);
+
+    const resultado = await service.obtenerMisPostulaciones({ _id: "u1" });
+
+    expect(colaboradorRepository.buscarPorUsuario).toHaveBeenCalledWith("u1");
+    expect(postulacionRepository.obtenerPorColaborador).toHaveBeenCalledWith("c1");
+    expect(proyectoRepository.obtenerPorIds).toHaveBeenCalledWith(["p1"]);
+    expect(resultado).toHaveLength(2);
+    expect(resultado[0]).toMatchObject({
+      id: "post1", idProyecto: "p1", idPerfil: "f1", estado: "PENDIENTE",
+      proyecto: { id: "p1", titulo: "Proyecto", descripcion: "Descripción" },
+    });
+    expect(resultado[0].proyecto.privado).toBeUndefined();
+  });
+
+  it("informa si falta el proyecto de una postulación", async () => {
+    colaboradorRepository.buscarPorUsuario.mockResolvedValue({ _id: "c1" });
+    postulacionRepository.obtenerPorColaborador.mockResolvedValue([
+      { _id: "post1", idProyecto: "p1" },
+    ]);
+
+    await expect(service.obtenerMisPostulaciones({ _id: "u1" }))
+      .rejects.toMatchObject({ codigo: "PROYECTO_NO_ENCONTRADO" });
   });
 
   it("guarda las habilidades como titulos (strings) tomados del catalogo", async () => {

@@ -1,23 +1,18 @@
 .acciones-registro {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border-subtle);
 }
 
-.acciones-registro .MuiButton-root {
-  height: 48px;
-  min-width: 140px;
-}
-
-.acciones-registro .MuiButton-contained {
-  min-width: 220px;
-}
-
-@media (max-width: 720px) {
+@media (max-width: 599.95px) {
   .acciones-registro {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
+
   .acciones-registro .MuiButton-root {
     width: 100%;
   }

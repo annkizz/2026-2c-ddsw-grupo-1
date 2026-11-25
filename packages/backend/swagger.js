@@ -290,6 +290,45 @@ const swaggerSpec = {
         },
       },
     },
+    "/colaboradoras/me/postulaciones": {
+      get: {
+        summary: "Obtiene las postulaciones de la colaboradora autenticada",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Postulaciones propias con el resumen de cada proyecto",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      idProyecto: { type: "string" },
+                      idPerfil: { type: "string" },
+                      estado: { type: "string", enum: ["PENDIENTE", "ACEPTADA", "RECHAZADA"] },
+                      fechaPostulacion: { type: "string", format: "date-time" },
+                      esAnonima: { type: "boolean" },
+                      proyecto: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          titulo: { type: "string" },
+                          descripcion: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "No hay una sesión válida" },
+          403: { description: "La sesión no pertenece a una colaboradora" },
+        },
+      },
+    },
     "/colaboradoras/{id}/proyectos": {
       get: {
         summary:
@@ -928,6 +967,44 @@ const swaggerSpec = {
         },
       },
     },
+    "/proyectos/{idProyecto}/colaboraciones/gestion": {
+      get: {
+        summary: "Lista las colaboraciones para la gestión del colectivo dueño",
+        description:
+          "Incluye la identidad de las colaboraciones anónimas y solo está disponible para el colectivo propietario.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "idProyecto", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          200: {
+            description: "Colaboraciones del proyecto",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      idColaborador: { type: "string" },
+                      idPerfil: { type: "string", nullable: true },
+                      nombreFantasia: { type: "string" },
+                      nombre: { type: "string" },
+                      apellido: { type: "string" },
+                      usuarioGitHub: { type: "string" },
+                      esAnonima: { type: "boolean" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: "No hay una sesión válida" },
+          403: { description: "La sesión no pertenece al colectivo dueño" },
+          404: { description: "Proyecto o colaboradora no encontrada" },
+        },
+      },
+    },
     "/proyectos/{idProyecto}/perfiles/{idPerfil}/postulaciones": {
       post: {
         summary: "Crea una postulación pendiente a un perfil del proyecto",
@@ -1124,7 +1201,7 @@ const swaggerSpec = {
       delete: {
         summary: "Da de baja a una colaboradora del proyecto",
         description:
-          "La colaboración permanece en el historial y libera la vacante del perfil. Requiere autenticación de la colaboradora asociada o del colectivo dueño.",
+          "Elimina la colaboración y libera la vacante del perfil. Requiere autenticación de la colaboradora asociada o del colectivo dueño.",
         parameters: [
           {
             in: "path",
@@ -1147,7 +1224,6 @@ const swaggerSpec = {
             description:
               "El actor autenticado no puede dar de baja esta colaboración",
           },
-          409: { description: "La colaboración ya fue dada de baja" },
         },
       },
     },

@@ -1,32 +1,35 @@
-import { useState } from 'react';
-import { Alert, Card, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
-import { FiLock, FiX } from 'react-icons/fi';
+import { t } from '../../i18n/t';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { Alert, Checkbox, FormControlLabel, IconButton, MenuItem, TextField } from '@mui/material';
+import { FiAlertCircle, FiLock, FiTrash2 } from 'react-icons/fi';
+import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
 import AccionesRegistro from '../../components/AccionesRegistro/AccionesRegistro.jsx';
 import { TIPOS_CONTACTO } from '../../service/colaboradorasService';
 
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const CELULAR_REGEX = /^\+\d{10,15}$/; // igual que el backend, pero tolerando espacios y guiones
 
-const REGLAS = {
+const crearReglas = () => ({
   EMAIL: {
-    etiqueta: 'Dirección de email',
-    ejemplo: 'nombre@dominio.com',
+    etiqueta: t('medios.direccionEmail'),
+    ejemplo: t('miPerfil.ejEmail'),
     esValido: (valor) => EMAIL_REGEX.test(valor.trim()),
-    mensaje: 'Ingresá un email válido. Ej.: nombre@dominio.com.'
+    mensaje: t('registro.ingresaUnEmailValidoPor')
   },
   WHATSAPP: {
-    etiqueta: 'Número de WhatsApp',
-    ejemplo: '+54 9 11 4567 8901',
+    etiqueta: t('medios.numeroWhatsapp'),
+    ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono válido con código de país.'
+    mensaje: t('registro.ingresaUnTelefonoConCodigo')
   },
   SMS: {
-    etiqueta: 'Número de celular',
-    ejemplo: '+54 9 11 4567 8901',
+    etiqueta: t('medios.numeroCelular'),
+    ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
-    mensaje: 'Ingresá un teléfono válido con código de país.'
+    mensaje: t('registro.ingresaUnTelefonoConCodigo')
   }
-};
+});
 
 // Paso 3 de 3: medios de contacto (opcional)
 const MediosDeContacto = ({
@@ -34,10 +37,11 @@ const MediosDeContacto = ({
   setDatos,
   onVolver,
   onSiguiente,
-  siguiente = 'Listo',
+  siguiente = t('medios.listo'),
   guardando,
   error
 }) => {
+  const REGLAS = crearReglas();
   const [conError, setConError] = useState([]); // posiciones de los medios inválidos
 
   const cambiarMedio = (posicion, cambios) => {
@@ -63,52 +67,80 @@ const MediosDeContacto = ({
       if (!REGLAS[medio.tipo].esValido(medio.valor)) invalidos.push(i);
     });
     setConError(invalidos);
-    if (invalidos.length === 0) onSiguiente();
+    if (invalidos.length > 0) {
+      document.getElementById(`medio-valor-${invalidos[0]}`)?.focus();
+      return;
+    }
+    onSiguiente();
   };
 
   return (
     <form onSubmit={terminar} noValidate>
-      <Card variant="outlined" className="registro-card">
-        <h2>Cómo podemos contactarte</h2>
-        <Alert severity="warning" icon={<FiLock />} sx={{ marginBottom: 2 }}>
-          Tus medios de contacto son privados y no se muestran públicamente.
-        </Alert>
+      <section className="registro-card" aria-labelledby="paso-contacto-titulo">
+        <h2 id="paso-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
+        <p className="medios-contacto__intro">{t('medios.intro')}</p>
+        <p className="medios-contacto__privado">
+          <FiLock aria-hidden="true" /> {t('medios.privado')}
+        </p>
 
-        {datos.medios.length === 0 && (
-          <>
-            <strong>Medios de contacto (opcional)</strong>
-            <p className="medios-vacio">
-              Todavía no agregaste medios de contacto. Podés continuar sin completar este paso.
-            </p>
-          </>
+        {datos.medios.length === 0 ? (
+          <p className="medios-contacto__vacio">
+            {t('medios.vacio')}
+          </p>
+        ) : (
+          <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
+            {datos.medios.map((medio, i) => (
+              <li className="medios-item" key={i}>
+                <p className="medios-item__titulo">{t('medios.numero', { numero: i + 1 })}</p>
+                <div className="medios-fila">
+                  <TextField
+                    id={`medio-tipo-${i}`}
+                    select
+                    label={t('medios.tipo')}
+                    value={medio.tipo}
+                    onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}
+                    fullWidth
+                  >
+                    {TIPOS_CONTACTO.map((tipo) => (
+                      <MenuItem key={tipo.valor} value={tipo.valor}>
+                        {t(tipo.textoKey)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    id={`medio-valor-${i}`}
+                    label={REGLAS[medio.tipo].etiqueta}
+                    placeholder={REGLAS[medio.tipo].ejemplo}
+                    value={medio.valor}
+                    onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
+                    onBlur={() => {
+                      if (medio.valor && !REGLAS[medio.tipo].esValido(medio.valor) && !conError.includes(i)) {
+                        setConError([...conError, i]);
+                      }
+                    }}
+                    error={conError.includes(i)}
+                    helperText={
+                      conError.includes(i) ? (
+                        <>
+                          <FiAlertCircle aria-hidden="true" />
+                          <span>{REGLAS[medio.tipo].mensaje}</span>
+                        </>
+                      ) : undefined
+                    }
+                    fullWidth
+                  />
+                  <IconButton aria-label={t('medios.quitar', { numero: i + 1 })} onClick={() => quitarMedio(i)}>
+                    <FiTrash2 aria-hidden="true" />
+                  </IconButton>
+                </div>
+              </li>
+            ))}
+          </ol>
         )}
 
-        {datos.medios.map((medio, i) => (
-          <div className="medios-fila" key={i}>
-            <TextField select label="Tipo" value={medio.tipo} onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}>
-              {TIPOS_CONTACTO.map((tipo) => (
-                <MenuItem key={tipo.valor} value={tipo.valor}>
-                  {tipo.texto}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label={REGLAS[medio.tipo].etiqueta}
-              placeholder={REGLAS[medio.tipo].ejemplo}
-              value={medio.valor}
-              onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
-              error={conError.includes(i)}
-              helperText={conError.includes(i) ? REGLAS[medio.tipo].mensaje : ' '}
-            />
-            <IconButton aria-label="Quitar medio de contacto" onClick={() => quitarMedio(i)}>
-              <FiX />
-            </IconButton>
-          </div>
-        ))}
-
-        <button type="button" className="medios-agregar" onClick={agregarMedio}>
-          + Agregar medio de contacto
-        </button>
+        <div>
+          <AgregarMedioContactoButton onClick={agregarMedio} />
+        </div>
 
         <FormControlLabel
           control={
@@ -117,12 +149,12 @@ const MediosDeContacto = ({
               onChange={(e) => setDatos({ ...datos, aceptaMensajeria: e.target.checked })}
             />
           }
-          label="Acepto recibir mensajes internos de la plataforma cuando haya proyectos relacionados con mis habilidades."
+          label={t('medios.aceptaMensajes')}
         />
-      </Card>
+      </section>
 
       {error && (
-        <Alert severity="error" sx={{ marginTop: 2 }}>
+        <Alert severity="error" role="alert" className="registro-error">
           {error}
         </Alert>
       )}
@@ -130,6 +162,16 @@ const MediosDeContacto = ({
       <AccionesRegistro onVolver={onVolver} siguiente={siguiente} guardando={guardando} />
     </form>
   );
+};
+
+MediosDeContacto.propTypes = {
+  datos: PropTypes.object.isRequired,
+  setDatos: PropTypes.func.isRequired,
+  onVolver: PropTypes.func,
+  onSiguiente: PropTypes.func.isRequired,
+  siguiente: PropTypes.node,
+  guardando: PropTypes.bool,
+  error: PropTypes.node
 };
 
 export default MediosDeContacto;

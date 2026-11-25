@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth.jsx';
-import { mensajeDeError } from '../service/api';
+import { mensajeDeError } from '../utils/mensajeDeError';
+import { t } from '../i18n/t';
 import {
   CLAVE_VOLVER_A,
   obtenerEstadoLinkedin,
@@ -20,7 +21,7 @@ export const useLinkedin = (habilitado = true) => {
       const token = await getAccessToken();
       setEstado(await obtenerEstadoLinkedin(token));
     } catch (err) {
-      setError(mensajeDeError(err));
+      setError(mensajeDeError(err, t('linkedin.errorConectarContexto')));
     }
   }, [getAccessToken]);
 
@@ -38,7 +39,7 @@ export const useLinkedin = (habilitado = true) => {
       sessionStorage.setItem(CLAVE_VOLVER_A, window.location.pathname);
       window.location.assign(url); 
     } catch (err) {
-      setError(mensajeDeError(err));
+      setError(mensajeDeError(err, t('linkedin.errorConectarContexto')));
     }
   }, [getAccessToken]);
 
@@ -49,7 +50,7 @@ export const useLinkedin = (habilitado = true) => {
       await desconectarLinkedin(token);
       await recargar();
     } catch (err) {
-      setError(mensajeDeError(err));
+      setError(mensajeDeError(err, t('linkedin.errorConectarContexto')));
     }
   }, [getAccessToken, recargar]);
 

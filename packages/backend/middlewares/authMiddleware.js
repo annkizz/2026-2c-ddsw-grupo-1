@@ -1,4 +1,5 @@
 import { ForbiddenError, UnauthorizedError } from "../errors/AppError.js";
+import { Rol } from "../domain/Rol.js";
 
 // Verifica los JWT que emite Logto (firma contra su JWKS, issuer y audience).
 // Las variables se leen recien en el primer request, asi el backend arranca sin Logto configurado.
@@ -77,15 +78,26 @@ function extraerToken(authorization) {
 }
 
 // Deja en req.usuario al usuario local (lo crea la primera vez que lo ve).
-export function crearAutenticar(usuarioRepository, verificarToken) {
+export function crearAutenticar(usuarioRepository, verificarToken, env = process.env) {
+  const idsAdministradores = new Set(
+    (env.LOGTO_ADMIN_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean),
+  );
+
   return async (req, res, next) => {
     const token = extraerToken(req.headers.authorization);
     const payload = await verificarToken(token);
 
-    req.usuario = await usuarioRepository.buscarOCrearPorLogtoId(
+    let usuario = await usuarioRepository.buscarOCrearPorLogtoId(
       payload.sub,
       payload.username,
     );
+    if (idsAdministradores.has(payload.sub) && !usuario.rol) {
+      usuario =
+        (await usuarioRepository.asignarRol(usuario._id, Rol.ADMINISTRADOR)) ??
+        (await usuarioRepository.buscarOCrearPorLogtoId(payload.sub, payload.username));
+    }
+
+    req.usuario = usuario;
     next();
   };
 }

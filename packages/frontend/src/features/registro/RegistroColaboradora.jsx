@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { t } from '../../i18n/t';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { crearColaboradora } from '../../service/colaboradorasService';
-import { mensajeDeError } from '../../service/api';
+import { mensajeDeError } from '../../utils/mensajeDeError';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import PasosRegistro from '../../components/PasosRegistro/PasosRegistro.jsx';
 import { borrarTipo } from './tipoElegido';
 import DatosColaboradora from './DatosColaboradora.jsx';
 import Habilidades from './Habilidades.jsx';
@@ -45,23 +48,28 @@ const RegistroColaboradora = () => {
       const nuevaSesion = await recargarSesion();
       if (!nuevaSesion?.tienePerfil) {
         setError(
-          'El servidor no confirmó el perfil. Podés volver a intentar verificarlo sin reenviar el formulario.'
+          t('registro.verificarPerfil')
         );
         return;
       }
 
       borrarTipo();
-      navigate('/mis-colaboraciones');
+      navigate('/', { replace: true });
     } catch (e) {
-      setError(mensajeDeError(e));
+      setError(mensajeDeError(e, t('registro.noPudimosCrearTuPerfil')));
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <div className="registro">
-      <h1>Registrar Colaboradora</h1>
+    <div className="contenedor-pagina contenedor-pagina--formulario registro">
+      <EncabezadoPagina
+        titulo={t('registro.crearTuPerfilDeColaboradora')}
+        subtitulo={t('registro.conEstosDatosLosColectivos')}
+      >
+        <PasosRegistro pasos={[t('registro.tusDatos'), t('registro.habilidades'), t('registro.contacto')]} actual={paso} />
+      </EncabezadoPagina>
       {paso === 1 && (
         <DatosColaboradora
           datos={datos}
@@ -87,7 +95,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? 'Verificar registro' : 'Listo'}
+          siguiente={registroCreado ? t('registro.verificarRegistro') : t('registro.crearMiPerfil')}
           guardando={guardando}
           error={error}
         />

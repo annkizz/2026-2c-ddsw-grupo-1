@@ -51,10 +51,24 @@ const notificacionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Postulacion",
     },
+    estadoInvitacion: {
+      type: String,
+      enum: ["PENDIENTE", "ACEPTADA", "RECHAZADA"],
+    },
     envios: { type: [envioSchema], default: [] },
     leida: { type: Boolean, required: true, default: false },
   },
   { timestamps: true, collection: "notificaciones" },
+);
+
+notificacionSchema.index(
+  { idProyecto: 1, idPerfil: 1, idColaborador: 1 },
+  { unique: true, partialFilterExpression: { tipo: "INVITACION_PROYECTO", estadoInvitacion: "PENDIENTE" } },
+);
+
+notificacionSchema.index(
+  { idPostulacion: 1, idColaborador: 1 },
+  { partialFilterExpression: { tipo: "POSTULACION_RECHAZADA" } },
 );
 
 notificacionSchema.loadClass(Notificacion);

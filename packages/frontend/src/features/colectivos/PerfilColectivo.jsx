@@ -1,26 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Chip, CircularProgress } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { obtenerColectivoPorId, TIPOS_COLECTIVO } from '../../service/colectivosService';
-import { mensajeDeError } from '../../service/api';
+import { obtenerProyectos } from '../../service/proyectosService';
+import CardProyecto from '../../components/CardProyecto/CardProyecto';
+import '../../components/Card.css';
 import { etiquetaLegible } from '../../utils/etiquetas';
-import '../perfil/PerfilPublico.css';
+import PerfilPublicoVista from '../perfil/PerfilPublicoVista.jsx';
+import { t } from '../../i18n/t';
 
 const PerfilColectivo = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [colectivo, setColectivo] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [intento, setIntento] = useState(0);
 
   useEffect(() => {
     let vigente = true;
+    setCargando(true);
+    setError(null);
     obtenerColectivoPorId(id)
       .then((perfil) => {
         if (vigente) setColectivo(perfil);
       })
       .catch((fallo) => {
-        if (vigente) setError(mensajeDeError(fallo));
+        if (vigente) setError(fallo);
       })
       .finally(() => {
         if (vigente) setCargando(false);
@@ -29,55 +33,56 @@ const PerfilColectivo = () => {
     return () => {
       vigente = false;
     };
+  }, [id, intento]);
+
+  // Proyectos activos del colectivo: aprovechan el ancho y dan contexto a quien llega desde un proyecto.
+  const [proyectos, setProyectos] = useState([]);
+  useEffect(() => {
+    let vigente = true;
+    obtenerProyectos({ idColectivo: id, estado: 'ACTIVO' })
+      .then((datos) => {
+        const lista = Array.isArray(datos) ? datos : datos?.proyectos ?? datos?.items ?? [];
+        if (vigente) setProyectos(lista.filter((proyecto) => String(proyecto.idColectivo ?? id) === String(id) && proyecto.estado !== 'FINALIZADO'));
+      })
+      .catch(() => {
+        if (vigente) setProyectos([]);
+      });
+    return () => {
+      vigente = false;
+    };
   }, [id]);
 
-  if (cargando) {
-    return <div className="perfil-publico-cargando" role="status"><CircularProgress /></div>;
-  }
-
-  if (error || !colectivo) {
-    return (
-      <main className="perfil-publico">
-        <Alert severity="error">{error || 'No encontramos este perfil.'}</Alert>
-        <Button onClick={() => navigate(-1)}>Volver</Button>
-      </main>
-    );
-  }
-
-  const tipo = TIPOS_COLECTIVO.find((opcion) => opcion.valor === colectivo.tipoDeColectivo);
-  const ubicacion = [
-    colectivo.ubicacion?.ciudad,
-    colectivo.ubicacion?.provincia,
-    colectivo.ubicacion?.pais,
-  ].filter(Boolean).join(', ');
+  const reintentar = useCallback(() => setIntento((n) => n + 1), []);
+  const tipo = TIPOS_COLECTIVO.find((opcion) => opcion.valor === colectivo?.tipoDeColectivo);
+  const ubicacion = [colectivo?.ubicacion?.ciudad, colectivo?.ubicacion?.provincia, colectivo?.ubicacion?.pais]
+    .filter(Boolean)
+    .join(', ');
 
   return (
-    <main className="perfil-publico">
-      <Button className="perfil-publico-volver" onClick={() => navigate(-1)}>Volver</Button>
-      <Card className="perfil-publico-cabecera" variant="outlined">
-        <p className="perfil-publico-tipo">COLECTIVO</p>
-        <h1>{colectivo.nombre}</h1>
-        {tipo && <p>{tipo.texto}</p>}
-        {ubicacion && <p>{ubicacion}</p>}
-        <p>{colectivo.descripcion}</p>
-      </Card>
-
-      <Card className="perfil-publico-seccion" variant="outlined">
-        <h2>Habilidades y áreas de trabajo</h2>
-        {colectivo.etiquetas?.length ? (
-          <div className="perfil-publico-etiquetas">
-            {colectivo.etiquetas.map((etiqueta) => (
-              <Chip key={etiqueta} label={etiquetaLegible(etiqueta)} />
+    <PerfilPublicoVista
+      tipo={t('perfilPublico.colectivo')}
+      esColectivo
+      cargando={cargando}
+      error={error}
+      encontrado={Boolean(colectivo)}
+      onReintentar={reintentar}
+      titulo={colectivo?.nombre}
+      datos={[tipo ? t(tipo.textoKey) : null, ubicacion || null, colectivo?.descripcion || null]}
+      seccionTitulo={t('miPerfil.habilidadesYAreas')}
+      chips={(colectivo?.etiquetas ?? []).map(etiquetaLegible)}
+      textoSinChips={t('perfilPublico.sinAreas')}
+    >
+      {proyectos.length > 0 && (
+        <section className="perfil-publico__proyectos" aria-labelledby="perfil-colectivo-proyectos">
+          <h2 id="perfil-colectivo-proyectos">{t('perfilPublico.proyectosActivos', { cantidad: proyectos.length })}</h2>
+          <ul className="tarjetas">
+            {proyectos.map((proyecto) => (
+              <CardProyecto key={proyecto.id} proyecto={proyecto} nombreColectivo={colectivo?.nombre} />
             ))}
-          </div>
-        ) : (
-          <p>Aún no agregó áreas de trabajo.</p>
-        )}
-      </Card>
-      <p className="perfil-publico-privacidad">
-        Los medios de contacto son privados y no se muestran en este perfil.
-      </p>
-    </main>
+          </ul>
+        </section>
+      )}
+    </PerfilPublicoVista>
   );
 };
 

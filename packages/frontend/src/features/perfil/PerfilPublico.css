@@ -1,74 +1,62 @@
+/* Perfiles públicos (colaboradora y colectivo) */
 .perfil-publico {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: min(900px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 64px;
-  color: #23313f;
+  gap: var(--space-3);
 }
 
-.perfil-publico-volver {
-  align-self: flex-start;
+.perfil-publico .encabezado-pagina {
+  margin-bottom: 0;
 }
 
-.perfil-publico-cabecera,
-.perfil-publico-seccion {
+.perfil-publico__tarjeta {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 24px;
-  border-color: #dce3e8;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
-.perfil-publico-cabecera h1,
-.perfil-publico-seccion h2,
-.perfil-publico-cabecera p,
-.perfil-publico-seccion p {
-  margin: 0;
+.perfil-publico__tarjeta h2 {
+  font-size: var(--font-size-h3);
 }
 
-.perfil-publico-cabecera h1 {
-  font-size: 28px;
+.perfil-publico__descripcion {
+  max-width: var(--reading-max-width);
+  color: var(--color-text);
 }
 
-.perfil-publico-cabecera p,
-.perfil-publico-seccion p,
-.perfil-publico-privacidad {
-  color: #617180;
+.perfil-publico__meta {
+  color: var(--color-muted);
+  font-size: var(--font-size-h3);
 }
 
-.perfil-publico-tipo {
-  color: #617180;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.perfil-publico-pronombres {
-  font-size: 14px;
-}
-
-.perfil-publico-etiquetas {
+.perfil-publico__principal {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.perfil-publico-privacidad {
-  margin: 0;
-  font-size: 13px;
+.perfil-publico__proyectos h2 {
+  font-size: var(--font-size-h3);
 }
 
-.perfil-publico-cargando {
-  min-height: 55vh;
-  display: grid;
-  place-items: center;
+.perfil-publico__privacidad {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
-@media (max-width: 600px) {
-  .perfil-publico-cabecera,
-  .perfil-publico-seccion {
-    padding: 18px;
+@media (max-width: 599.95px) {
+  .perfil-publico__tarjeta {
+    padding: var(--space-2);
   }
+}
+
+.perfil-publico__proyectos .tarjetas {
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 }

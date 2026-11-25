@@ -1,11 +1,10 @@
+import { t } from '../../i18n/t';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Alert,
+  AlertTitle,
   Button,
-  CircularProgress,
   Checkbox,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
@@ -15,7 +14,14 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { FiCheck, FiLock, FiPlus, FiX } from 'react-icons/fi';
+import PropTypes from 'prop-types';
+import { FiAlertCircle, FiCheck, FiKey, FiLock, FiMail, FiSave, FiStar, FiTrash2, FiUser } from 'react-icons/fi';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import Dialogo from '../../components/Dialogo/Dialogo.jsx';
+import { EsqueletoFormulario } from '../../components/Esqueletos/Esqueletos.jsx';
+import { useNotificar } from '../../components/Notificador/Notificador.jsx';
+import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -30,9 +36,13 @@ import {
   obtenerMiPerfilColectivo,
   TIPOS_COLECTIVO,
 } from '../../service/colectivosService';
+// Excepción documentada en CAMBIOS-UI.md: el error al guardar conserva el texto que verifica MiPerfil.test.jsx.
 import { mensajeDeError } from '../../service/api';
+import { camposFaltantesPerfilColaboradora } from '../../utils/perfilColaboradora';
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
+import { camposFaltantesPerfilColectivo } from '../../utils/perfilColectivo';
 import './MiPerfil.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const PERFIL_VACIO = {
   nombreFantasia: '',
@@ -102,33 +112,37 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
   };
 
   if (!email.trim()) {
-    agregar('email', 'Email', 'No pudimos verificar el email de la cuenta en Logto.', 'cuenta', 'email-cuenta');
+    agregar('email', t('miPerfil.email'), t('miPerfil.emailNoVerificado'), 'cuenta', 'email-cuenta');
   } else if (!EMAIL_VALIDO.test(email.trim())) {
-    agregar('email', 'Email', 'Ingresá un email válido en tu cuenta de Logto.', 'cuenta', 'email-cuenta');
+    agregar('email', t('miPerfil.email'), t('miPerfil.emailInvalido'), 'cuenta', 'email-cuenta');
   }
 
   if (esColaboradora) {
-    if (!datos.nombreFantasia.trim()) {
-      agregar('nombreFantasia', 'Nombre de fantasía', 'El nombre de fantasía es obligatorio.', 'perfil', 'nombre-fantasia');
+    const camposFaltantes = new Set(
+      camposFaltantesPerfilColaboradora(datos).map(({ clave }) => clave),
+    );
+    if (camposFaltantes.has('nombreFantasia')) {
+      agregar('nombreFantasia', t('miPerfil.nombreFantasia'), t('miPerfil.errorNombreFantasia'), 'perfil', 'nombre-fantasia');
     }
-    if (datos.habilidades.length === 0) {
-      agregar('habilidades', 'Habilidades', 'Elegí al menos una habilidad.', 'habilidades', 'mi-perfil-habilidades');
+    if (camposFaltantes.has('habilidades')) {
+      agregar('habilidades', t('registro.habilidades'), t('miPerfil.errorHabilidad'), 'habilidades', 'mi-perfil-habilidades');
     }
   } else {
-    if (!datos.nombreColectivo.trim()) {
-      agregar('nombreColectivo', 'Nombre del colectivo', 'El nombre del colectivo es obligatorio.', 'perfil', 'nombre-colectivo');
+    const camposFaltantes = new Set(camposFaltantesPerfilColectivo(datos).map(({ clave }) => clave));
+    if (camposFaltantes.has('nombreColectivo')) {
+      agregar('nombreColectivo', t('inicio.campoNombreColectivo'), t('miPerfil.errorNombreColectivo'), 'perfil', 'nombre-colectivo');
     }
-    if (!datos.tipoDeColectivo) {
-      agregar('tipoDeColectivo', 'Tipo de colectivo', 'Elegí el tipo de colectivo.', 'perfil', 'tipo-colectivo');
+    if (camposFaltantes.has('tipoDeColectivo')) {
+      agregar('tipoDeColectivo', t('inicio.campoTipoColectivo'), t('miPerfil.errorTipoColectivo'), 'perfil', 'tipo-colectivo');
     }
-    if (!datos.descripcion.trim()) {
-      agregar('descripcion', 'Descripción', 'La descripción es obligatoria.', 'perfil', 'descripcion-colectivo');
+    if (camposFaltantes.has('descripcion')) {
+      agregar('descripcion', t('inicio.campoDescripcion'), t('miPerfil.errorDescripcion'), 'perfil', 'descripcion-colectivo');
     }
     if (datos.etiquetas.length > ETIQUETAS_MAX) {
       agregar(
         'etiquetas',
-        'Áreas de trabajo',
-        `Podés elegir hasta ${ETIQUETAS_MAX} áreas de trabajo.`,
+        t('miPerfil.areasTrabajo'),
+        t('miPerfil.maximoAreas', { maximo: ETIQUETAS_MAX }),
         'areas',
         'mi-perfil-habilidades',
       );
@@ -137,11 +151,12 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
 
   datos.medios.forEach((medio, indice) => {
     if (!validarMedio(medio)) {
-      const tipo = TIPOS_CONTACTO.find((opcion) => opcion.valor === medio.tipo)?.texto ?? 'Contacto';
+      const tipoContacto = TIPOS_CONTACTO.find((opcion) => opcion.valor === medio.tipo);
+      const tipo = tipoContacto ? t(tipoContacto.textoKey) : t('registro.contacto');
       const mensaje = medio.tipo === 'EMAIL'
-        ? 'Ingresá un email válido.'
-        : 'Ingresá un número válido con código de país, por ejemplo +5491145678901.';
-      agregar(`medio-${indice}`, `${tipo}, contacto ${indice + 1}`, mensaje, 'contacto', `medio-contacto-${indice}`);
+        ? t('miPerfil.emailContactoInvalido')
+        : t('miPerfil.numeroContactoInvalido');
+      agregar(`medio-${indice}`, t('miPerfil.contactoNumero', { tipo, numero: indice + 1 }), mensaje, 'contacto', `medio-contacto-${indice}`);
     }
   });
 
@@ -164,6 +179,10 @@ const MiPerfil = () => {
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState({});
   const [errorServidor, setErrorServidor] = useState('');
+  const [errorCarga, setErrorCarga] = useState(null);
+  const [intentoCarga, setIntentoCarga] = useState(0);
+  const [intentoResumen, setIntentoResumen] = useState(0);
+  const notificar = useNotificar();
   const [avisoEmail, setAvisoEmail] = useState('');
   const [exito, setExito] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState('cuenta');
@@ -173,21 +192,19 @@ const MiPerfil = () => {
     [datos, datosIniciales],
   );
 
-  const secciones = useMemo(
-    () => [
-      ['cuenta', 'Cuenta'],
-      ['perfil', 'Perfil'],
-      [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? 'Habilidades' : 'Áreas de trabajo'],
-      ['contacto', 'Contacto'],
-    ],
-    [esColaboradora],
-  );
+  const secciones = [
+    ['cuenta', t('miPerfil.cuenta'), FiKey],
+    ['perfil', t('miPerfil.perfil'), FiUser],
+    [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? t('registro.habilidades') : t('miPerfil.areasTrabajo'), FiStar],
+    ['contacto', t('miPerfil.mediosDeContacto'), FiMail],
+  ];
 
   useEffect(() => {
     let vigente = true;
     const cargar = async () => {
       setCargando(true);
       setErrorServidor('');
+      setErrorCarga(null);
       try {
         const token = await getAccessToken();
         const perfil = esColaboradora
@@ -203,12 +220,12 @@ const MiPerfil = () => {
         } catch {
           if (vigente) {
             setAvisoEmail(
-              'No pudimos leer el email desde Logto. Verificá el permiso email de la aplicación y volvé a iniciar sesión.',
+              t('miPerfil.avisoEmail'),
             );
           }
         }
       } catch (cargaError) {
-        if (vigente) setErrorServidor(mensajeDeError(cargaError));
+        if (vigente) setErrorCarga(cargaError);
       } finally {
         if (vigente) setCargando(false);
       }
@@ -217,7 +234,7 @@ const MiPerfil = () => {
     return () => {
       vigente = false;
     };
-  }, [esColaboradora, getAccessToken, obtenerEmailCuenta]);
+  }, [esColaboradora, getAccessToken, obtenerEmailCuenta, intentoCarga]);
 
   const cambiar = (campo, valor) => {
     setDatos((actual) => ({ ...actual, [campo]: valor }));
@@ -256,7 +273,7 @@ const MiPerfil = () => {
     if (Object.keys(nuevosErrores).length > 0) {
       const primerError = Object.values(nuevosErrores)[0];
       setSeccionActiva(primerError.seccion);
-      document.getElementById(primerError.id)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      setIntentoResumen((n) => n + 1);
       return;
     }
 
@@ -311,6 +328,7 @@ const MiPerfil = () => {
       }
       setDatosIniciales(datos);
       setExito(true);
+      notificar({ mensaje: t('miPerfil.perfilGuardado') });
     } catch (guardadoError) {
       setErrorServidor(mensajeDeError(guardadoError));
     } finally {
@@ -318,10 +336,36 @@ const MiPerfil = () => {
     }
   };
 
+  const mensajeCampo = (error, ayuda) =>
+    error ? (
+      <>
+        <FiAlertCircle aria-hidden="true" />
+        <span>{error}</span>
+      </>
+    ) : (
+      ayuda
+    );
+
+  const titulo = t(esColaboradora ? 'miPerfil.tituloColaboradora' : 'miPerfil.tituloColectivo');
+  const migas = [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('navegacion.miPerfil') }];
+
   if (cargando) {
     return (
-      <div className="mi-perfil-cargando" role="status">
-        <CircularProgress />
+      <div className="contenedor-pagina">
+        <EsqueletoFormulario campos={5} etiqueta={t('miPerfil.cargandoTuPerfil')} />
+      </div>
+    );
+  }
+
+  if (errorCarga) {
+    return (
+      <div className="contenedor-pagina contenedor-pagina--lectura">
+        <EncabezadoPagina titulo={titulo} migas={migas} />
+        <AlertaError
+          error={errorCarga}
+          titulo={t('miPerfil.noPudimosCargarTuPerfil')}
+          onReintentar={() => setIntentoCarga((n) => n + 1)}
+        />
       </div>
     );
   }
@@ -335,325 +379,376 @@ const MiPerfil = () => {
     etiqueta: etiquetaLegible(item),
   }));
   const etiquetas = esColaboradora ? datos.habilidades : datos.etiquetas;
+  const cantidadErrores = Object.keys(errores).length;
+  const errorSeleccion = errores.habilidades?.mensaje ?? errores.etiquetas?.mensaje;
 
   return (
-    <div className="mi-perfil">
-      <Link to="/proyectos" className="mi-perfil-volver">‹ Volver a mi cuenta</Link>
-      <header className="mi-perfil-cabecera">
-        <h1>Tu perfil de {esColaboradora ? 'colaboradora' : 'colectivo'}</h1>
-        <p>Mantené tus datos al día para que la comunidad pueda encontrarte.</p>
-        <small>Los campos marcados como obligatorios deben completarse.</small>
-      </header>
+    <div className={`contenedor-pagina mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
+      <EncabezadoPagina titulo={titulo} migas={migas} />
 
-      {errorServidor && (
-        <Alert className="mi-perfil-estado" severity="error" role="alert">
-          No pudimos guardar los cambios: {errorServidor}
-        </Alert>
-      )}
-
+      {/* Una sección a la vez (panel lateral): el formulario completo era demasiado largo. */}
       <div className="mi-perfil-disposicion">
-        <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
-          <span>MI CUENTA</span>
-          {secciones.map(([id, etiqueta]) => (
-            <button
-              type="button"
-              key={id}
-              className={seccionActiva === id ? 'activo' : ''}
-              onClick={() => {
-                setSeccionActiva(id);
-                document.getElementById(`mi-perfil-${id}`)?.scrollIntoView?.({ behavior: 'smooth' });
-              }}
-              aria-current={seccionActiva === id ? 'location' : undefined}
-            >
-              {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
-            </button>
-          ))}
-          <small>Tus datos, bajo tu control.</small>
+        <nav className="mi-perfil-nav" aria-label={t('miPerfil.secciones')}>
+          <ul className="lateral-nav">
+            {secciones.map(([id, etiqueta, Icono]) => {
+              const erroresSeccion = Object.values(errores).filter((detalle) => detalle.seccion === id).length;
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className="lateral-nav__item"
+                    onClick={() => setSeccionActiva(id)}
+                    aria-current={seccionActiva === id ? 'location' : undefined}
+                  >
+                    <Icono aria-hidden="true" />
+                    <span>{etiqueta}</span>
+                    {erroresSeccion > 0 && (
+                      <span className="insignia insignia--error">
+                        <FiAlertCircle aria-hidden="true" />
+                        {erroresSeccion}
+                        <span className="visualmente-oculto"> {t(erroresSeccion === 1 ? 'miPerfil.unCampoRevisar' : 'miPerfil.variosCamposRevisar')}</span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
         <div className="mi-perfil-contenido">
-          {Object.keys(errores).length > 0 && (
-            <section className="mi-perfil-resumen-errores" role="alert" aria-labelledby="mi-perfil-errores-titulo">
-              <h2 id="mi-perfil-errores-titulo">
-                Revisá {Object.keys(errores).length} {Object.keys(errores).length === 1 ? 'campo' : 'campos'}
-              </h2>
-              <p>Corregí los campos para guardar los cambios.</p>
-              <ul>
-                {Object.entries(errores).map(([campo, detalle]) => (
-                  <li key={campo}>
-                    <a
-                      href={`#${detalle.id}`}
-                      onClick={(evento) => {
-                        evento.preventDefault();
-                        setSeccionActiva(detalle.seccion);
-                        document.getElementById(detalle.id)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-                        document.getElementById(detalle.id)?.focus();
-                      }}
-                    >
-                      {detalle.etiqueta}: {detalle.mensaje}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {cantidadErrores > 0 && (
+            <ResumenErroresPerfil
+              errores={errores}
+              cantidad={cantidadErrores}
+              intento={intentoResumen}
+              onIr={(detalle) => {
+                setSeccionActiva(detalle.seccion);
+                // La sección se monta en el próximo render: recién ahí existe el campo.
+                window.setTimeout(() => {
+                  const campo = document.getElementById(detalle.id);
+                  campo?.scrollIntoView?.({ block: 'center' });
+                  campo?.focus();
+                }, 0);
+              }}
+            />
           )}
 
-        <form className="mi-perfil-formulario" onSubmit={guardar}>
-          <section className="mi-perfil-tarjeta" id="mi-perfil-cuenta">
-            <h2>Cuenta</h2>
-            <TextField
-              id="email-cuenta"
-              label="Email (obligatorio)"
-              value={email}
-              fullWidth
-              size="small"
-              disabled
-              error={Boolean(errores.email)}
-              helperText={errores.email?.mensaje || 'Este email se usa para iniciar sesión. Se administra desde Logto.'}
-            />
-            {avisoEmail && <Alert severity="warning">{avisoEmail}</Alert>}
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={() => cambiarContrasena(email)}
-            >
-              Cambiar contraseña
-            </Button>
-          </section>
-
-          <section className="mi-perfil-tarjeta" id="mi-perfil-perfil">
-            <h2>Perfil</h2>
-            {esColaboradora ? (
-              <>
-                <TextField
-                  id="nombre-fantasia"
-                  label="Nombre de fantasía (obligatorio)"
-                  value={datos.nombreFantasia}
-                  onChange={(e) => cambiar('nombreFantasia', e.target.value)}
-                  error={Boolean(errores.nombreFantasia)}
-                  helperText={errores.nombreFantasia?.mensaje}
-                  fullWidth
-                />
-                <TextField
-                  label="Usuario de GitHub o GitLab (opcional)"
-                  value={datos.usuarioGitHub}
-                  onChange={(e) => cambiar('usuarioGitHub', e.target.value)}
-                  helperText="Sin @ ni enlace al perfil."
-                  fullWidth
-                />
-                <div className="mi-perfil-dos-columnas">
-                  <TextField label="Nombre (opcional)" value={datos.nombre} onChange={(e) => cambiar('nombre', e.target.value)} />
-                  <TextField label="Apellido (opcional)" value={datos.apellido} onChange={(e) => cambiar('apellido', e.target.value)} />
-                </div>
-                <TextField
-                  label="Pronombres (opcional)"
-                  value={datos.pronombres}
-                  onChange={(e) => cambiar('pronombres', e.target.value)}
-                  fullWidth
-                />
-                <TextField
-                  label="Presentación breve (opcional)"
-                  value={datos.presentacion}
-                  onChange={(e) => cambiar('presentacion', e.target.value)}
-                  multiline
-                  minRows={3}
-                  slotProps={{ htmlInput: { maxLength: 280 } }}
-                  helperText={`${datos.presentacion.length}/280`}
-                  fullWidth
-                />
-              </>
-            ) : (
-              <>
-                <TextField
-                  id="nombre-colectivo"
-                  label="Nombre del colectivo (obligatorio)"
-                  value={datos.nombreColectivo}
-                  onChange={(e) => cambiar('nombreColectivo', e.target.value)}
-                  error={Boolean(errores.nombreColectivo)}
-                  helperText={errores.nombreColectivo?.mensaje}
-                  fullWidth
-                />
-                <TextField
-                  id="tipo-colectivo"
-                  label="Tipo de colectivo (obligatorio)"
-                  select
-                  value={datos.tipoDeColectivo}
-                  onChange={(e) => cambiar('tipoDeColectivo', e.target.value)}
-                  error={Boolean(errores.tipoDeColectivo)}
-                  helperText={errores.tipoDeColectivo?.mensaje}
-                  fullWidth
+          <form className="mi-perfil-formulario" onSubmit={guardar} noValidate>
+            {seccionActiva === 'cuenta' && (
+            <section className="mi-perfil-tarjeta" id="mi-perfil-cuenta" aria-labelledby="mi-perfil-cuenta-titulo">
+              <h2 id="mi-perfil-cuenta-titulo">{t('miPerfil.cuenta')}</h2>
+              <TextField
+                id="email-cuenta"
+                label={t('miPerfil.emailObligatorio')}
+                value={email}
+                fullWidth
+                disabled
+                error={Boolean(errores.email)}
+                helperText={mensajeCampo(
+                  errores.email?.mensaje,
+                  t('miPerfil.ayudaEmail')
+                )}
+              />
+              {avisoEmail && (
+                <Alert severity="warning" role="alert">
+                  {avisoEmail}
+                </Alert>
+              )}
+              <div>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  startIcon={<FiKey aria-hidden="true" />}
+                  onClick={() => cambiarContrasena(email)}
                 >
-                  {TIPOS_COLECTIVO.map((tipo) => (
-                    <MenuItem key={tipo.valor} value={tipo.valor}>{tipo.texto}</MenuItem>
-                  ))}
-                </TextField>
-                <UbicacionColectivo
-                  pais={datos.pais}
-                  provincia={datos.provincia}
-                  ciudad={datos.ciudad}
-                  onChange={cambiarUbicacion}
-                />
-                <TextField
-                  id="descripcion-colectivo"
-                  label="Descripción (obligatoria)"
-                  value={datos.descripcion}
-                  onChange={(e) => cambiar('descripcion', e.target.value)}
-                  error={Boolean(errores.descripcion)}
-                  helperText={errores.descripcion?.mensaje}
-                  multiline
-                  minRows={4}
-                  fullWidth
-                />
-              </>
+                  {t('miPerfil.cambiarContrasena')}
+                </Button>
+              </div>
+            </section>
             )}
-          </section>
 
-          <section className="mi-perfil-tarjeta" id={`mi-perfil-${esColaboradora ? 'habilidades' : 'areas'}`}>
-            <h2>{esColaboradora ? 'Habilidades' : 'Habilidades y áreas de trabajo'}</h2>
-            <p>
-              {esColaboradora
-                ? 'Elegí las habilidades que querés aportar.'
-                : 'Agregá etiquetas para describir las áreas de trabajo de tu colectivo.'}
-            </p>
-            {listado.error && (
-              <Alert severity="warning" action={<Button onClick={listado.recargar}>Reintentar</Button>}>
-                No pudimos cargar las opciones disponibles.
+            {seccionActiva === 'perfil' && (
+            <section className="mi-perfil-tarjeta" id="mi-perfil-perfil" aria-labelledby="mi-perfil-perfil-titulo">
+              <h2 id="mi-perfil-perfil-titulo">{t('miPerfil.perfil')}</h2>
+              {esColaboradora ? (
+                <>
+                  <TextField
+                    id="nombre-fantasia"
+                    label={t('miPerfil.nombreFantasiaObligatorio')}
+                    placeholder={t('miPerfil.ejNombrePublico')}
+                    value={datos.nombreFantasia}
+                    onChange={(e) => cambiar('nombreFantasia', e.target.value)}
+                    error={Boolean(errores.nombreFantasia)}
+                    helperText={mensajeCampo(errores.nombreFantasia?.mensaje)}
+                    required
+                    fullWidth
+                  />
+                  <TextField
+                    id="usuario-github"
+                    label={t('miPerfil.usuarioCodigoOpcional')}
+                    placeholder={t('miPerfil.ejUsuarioGithub')}
+                    value={datos.usuarioGitHub}
+                    onChange={(e) => cambiar('usuarioGitHub', e.target.value)}
+                    helperText={t('miPerfil.ayudaUsuarioCodigo')}
+                    fullWidth
+                  />
+                  <div className="mi-perfil-dos-columnas">
+                    <TextField
+                      id="nombre-persona"
+                      label={t('registro.nombreOpcional')}
+                      placeholder={t('miPerfil.ejLucia')}
+                      value={datos.nombre}
+                      onChange={(e) => cambiar('nombre', e.target.value)}
+                      fullWidth
+                    />
+                    <TextField
+                      id="apellido-persona"
+                      label={t('registro.apellidoOpcional')}
+                      placeholder={t('miPerfil.ejGomez')}
+                      value={datos.apellido}
+                      onChange={(e) => cambiar('apellido', e.target.value)}
+                      fullWidth
+                    />
+                  </div>
+                  <TextField
+                    id="pronombres"
+                    label={t('registro.pronombresOpcional')}
+                    placeholder={t('miPerfil.ejEllaElle')}
+                    value={datos.pronombres}
+                    onChange={(e) => cambiar('pronombres', e.target.value)}
+                    helperText={t('miPerfil.separalosConComas')}
+                    fullWidth
+                  />
+                  <CampoMarkdown
+                    id="presentacion"
+                    label={t('miPerfil.presentacionOpcional')}
+                    placeholder={t('miPerfil.ejPresentacion')}
+                    value={datos.presentacion}
+                    onChange={(e) => cambiar('presentacion', e.target.value)}
+                    multiline
+                    minRows={3}
+                    slotProps={{ htmlInput: { maxLength: 280 } }}
+                    helperText={t('miPerfil.caracteres', { cantidad: datos.presentacion.length })}
+                    fullWidth
+                  />
+                </>
+              ) : (
+                <>
+                  <TextField
+                    id="nombre-colectivo"
+                    label={t('miPerfil.nombreColectivoObligatorio')}
+                    placeholder={t('registro.nombreColectivoEjemplo')}
+                    value={datos.nombreColectivo}
+                    onChange={(e) => cambiar('nombreColectivo', e.target.value)}
+                    error={Boolean(errores.nombreColectivo)}
+                    helperText={mensajeCampo(errores.nombreColectivo?.mensaje)}
+                    required
+                    fullWidth
+                  />
+                  <TextField
+                    id="tipo-colectivo"
+                    label={t('registro.tipoColectivoObligatorio')}
+                    select
+                    value={datos.tipoDeColectivo}
+                    onChange={(e) => cambiar('tipoDeColectivo', e.target.value)}
+                    error={Boolean(errores.tipoDeColectivo)}
+                    helperText={mensajeCampo(errores.tipoDeColectivo?.mensaje)}
+                    required
+                    fullWidth
+                  >
+                    {TIPOS_COLECTIVO.map((tipo) => (
+                      <MenuItem key={tipo.valor} value={tipo.valor}>
+                        {t(tipo.textoKey)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <UbicacionColectivo
+                    pais={datos.pais}
+                    provincia={datos.provincia}
+                    ciudad={datos.ciudad}
+                    onChange={cambiarUbicacion}
+                    labelsAbove
+                    idPrefix="mi-perfil-ubicacion"
+                  />
+                  <CampoMarkdown
+                    id="descripcion-colectivo"
+                    label={t('registro.descripcionObligatoria')}
+                    placeholder={t('miPerfil.ejDescripcionColectivo')}
+                    value={datos.descripcion}
+                    onChange={(e) => cambiar('descripcion', e.target.value)}
+                    error={Boolean(errores.descripcion)}
+                    helperText={mensajeCampo(errores.descripcion?.mensaje)}
+                    required
+                    multiline
+                    minRows={4}
+                    fullWidth
+                  />
+                </>
+              )}
+            </section>
+            )}
+
+            {(seccionActiva === 'habilidades' || seccionActiva === 'areas') && (
+            <section
+              className="mi-perfil-tarjeta"
+              id={`mi-perfil-${esColaboradora ? 'habilidades' : 'areas'}`}
+              aria-labelledby="mi-perfil-seleccion-titulo"
+            >
+              <h2 id="mi-perfil-seleccion-titulo">{t(esColaboradora ? 'registro.habilidades' : 'miPerfil.habilidadesYAreas')}</h2>
+              <p className="texto-secundario">
+                {esColaboradora
+                  ? t('miPerfil.elegiHabilidades')
+                  : t('miPerfil.agregaAreas')}
+              </p>
+              {listado.error && (
+                <AlertaError
+                  error={listado.error}
+                  titulo={t('miPerfil.noPudimosCargarLasOpciones')}
+                  onReintentar={listado.recargar}
+                />
+              )}
+              <CustomSelect
+                id="mi-perfil-habilidades"
+                etiqueta={esColaboradora ? t('miPerfil.habilidadesObligatorio') : t('miPerfil.areasYEtiquetasOpcional')}
+                opciones={esColaboradora ? opcionesHabilidades : opcionesAreas}
+                seleccion={etiquetas}
+                multiple
+                maxSeleccion={esColaboradora ? undefined : ETIQUETAS_MAX}
+                permiteCrear={!esColaboradora}
+                error={errorSeleccion}
+                onSeleccionar={(valor) => cambiar(esColaboradora ? 'habilidades' : 'etiquetas', [...etiquetas, valor])}
+                onQuitar={(valor) =>
+                  cambiar(
+                    esColaboradora ? 'habilidades' : 'etiquetas',
+                    etiquetas.filter((actual) => actual !== valor),
+                  )
+                }
+                placeholder={listado.cargando ? t('miPerfil.cargandoOpciones') : t('perfilesProyecto.placeholderHabilidades')}
+                textoVacio={listado.cargando ? t('miPerfil.cargandoOpciones') : t('miPerfil.sinCoincidencias')}
+              />
+            </section>
+            )}
+
+            {seccionActiva === 'contacto' && (
+            <section className="mi-perfil-tarjeta medios-contacto" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
+              <h2 id="mi-perfil-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
+              <p className="medios-contacto__intro">{t('medios.intro')}</p>
+              <p className="medios-contacto__privado">
+                <FiLock aria-hidden="true" /> {t('medios.privado')}
+              </p>
+              {datos.medios.length === 0 ? (
+                <p className="medios-contacto__vacio">{t('medios.vacio')}</p>
+              ) : (
+                <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
+                  {datos.medios.map((medio, indice) => (
+                    <li className="medios-item" key={`${indice}-${medio.tipo}`}>
+                      <p className="medios-item__titulo">{t('medios.numero', { numero: indice + 1 })}</p>
+                      <div className="medios-fila">
+                      <TextField
+                        id={`medio-tipo-${indice}`}
+                        label={t('medios.tipo')}
+                        select
+                        value={medio.tipo}
+                        onChange={(e) => cambiarMedio(indice, { tipo: e.target.value })}
+                        fullWidth
+                      >
+                        {TIPOS_CONTACTO.map((tipo) => (
+                          <MenuItem key={tipo.valor} value={tipo.valor}>
+                            {t(tipo.textoKey)}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <TextField
+                        id={`medio-contacto-${indice}`}
+                        label={medio.tipo === 'EMAIL' ? t('medios.direccionEmail') : t('miPerfil.numeroConCodigoDePais')}
+                        placeholder={medio.tipo === 'EMAIL' ? t('miPerfil.ejEmail') : t('miPerfil.ejTelefono')}
+                        value={medio.valor}
+                        onChange={(e) => cambiarMedio(indice, { valor: e.target.value })}
+                        error={Boolean(errores[`medio-${indice}`])}
+                        helperText={mensajeCampo(errores[`medio-${indice}`]?.mensaje)}
+                        fullWidth
+                      />
+                      <IconButton
+                        type="button"
+                        aria-label={t('medios.quitar', { numero: indice + 1 })}
+                        onClick={() => cambiar('medios', datos.medios.filter((_, i) => i !== indice))}
+                      >
+                        <FiTrash2 aria-hidden="true" />
+                      </IconButton>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <div>
+                <AgregarMedioContactoButton
+                  onClick={() => cambiar('medios', [...datos.medios, { tipo: 'EMAIL', valor: '' }])}
+                />
+              </div>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={datos.aceptaMensajeria}
+                    onChange={(e) => cambiar('aceptaMensajeria', e.target.checked)}
+                  />
+                }
+                label={t('miPerfil.aceptaMensajes')}
+              />
+            </section>
+            )}
+
+            {errorServidor && (
+              <Alert className="mi-perfil-estado" severity="error" role="alert">
+                <span>{t('miPerfil.errorGuardar', { error: errorServidor })}</span>
+                <p className="texto-secundario">{t('miPerfil.tusDatosSiguenAcaPodes')}</p>
               </Alert>
             )}
-            <CustomSelect
-              id="mi-perfil-habilidades"
-              etiqueta={esColaboradora ? 'Habilidades (obligatorio)' : 'Áreas y etiquetas'}
-              opciones={esColaboradora ? opcionesHabilidades : opcionesAreas}
-              seleccion={etiquetas}
-              multiple
-              maxSeleccion={esColaboradora ? undefined : ETIQUETAS_MAX}
-              permiteCrear={!esColaboradora}
-              onSeleccionar={(valor) => cambiar(esColaboradora ? 'habilidades' : 'etiquetas', [...etiquetas, valor])}
-              onQuitar={(valor) =>
-                cambiar(
-                  esColaboradora ? 'habilidades' : 'etiquetas',
-                  etiquetas.filter((actual) => actual !== valor),
-                )
-              }
-              placeholder={listado.cargando ? 'Cargando opciones…' : 'Buscá una opción'}
-              textoVacio={listado.cargando ? 'Cargando opciones…' : 'No hay coincidencias.'}
-            />
-            {errores.habilidades && (
-              <p className="mi-perfil-error-campo" role="alert">{errores.habilidades.mensaje}</p>
-            )}
-            {errores.etiquetas && (
-              <p className="mi-perfil-error-campo" role="alert">{errores.etiquetas.mensaje}</p>
-            )}
-          </section>
 
-          <section className="mi-perfil-tarjeta" id="mi-perfil-contacto">
-            <h2>Contacto</h2>
-            <Alert severity="info" icon={<FiLock />}>
-              Tus medios de contacto son privados y no se muestran públicamente.
-            </Alert>
-            {datos.medios.map((medio, indice) => (
-              <div className="mi-perfil-contacto-fila" key={`${indice}-${medio.tipo}`}>
-                <TextField
-                  label="Tipo"
-                  select
-                  value={medio.tipo}
-                  onChange={(e) => cambiarMedio(indice, { tipo: e.target.value })}
-                  size="small"
-                >
-                  {TIPOS_CONTACTO.map((tipo) => (
-                    <MenuItem key={tipo.valor} value={tipo.valor}>{tipo.texto}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  id={`medio-contacto-${indice}`}
-                  label="Valor"
-                  value={medio.valor}
-                  onChange={(e) => cambiarMedio(indice, { valor: e.target.value })}
-                  error={Boolean(errores[`medio-${indice}`])}
-                  helperText={errores[`medio-${indice}`]?.mensaje}
-                  size="small"
-                />
-                <IconButton
-                  type="button"
-                  aria-label="Quitar medio de contacto"
-                  onClick={() => cambiar('medios', datos.medios.filter((_, i) => i !== indice))}
-                >
-                  <FiX />
-                </IconButton>
-              </div>
-            ))}
-            <Button
-              type="button"
-              startIcon={<FiPlus />}
-              onClick={() => cambiar('medios', [...datos.medios, { tipo: 'EMAIL', valor: '' }])}
-            >
-              Agregar medio de contacto
-            </Button>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={datos.aceptaMensajeria}
-                  onChange={(e) => cambiar('aceptaMensajeria', e.target.checked)}
-                />
-              }
-              label="Quiero recibir mensajes internos sobre proyectos relacionados con mi perfil."
-            />
-          </section>
-
-          <div className="mi-perfil-acciones">
-            <Button
-              type="button"
-              variant="outlined"
-              disabled={guardando}
-              onClick={() => {
-                if (hayCambios) {
-                  setConfirmarDescartar(true);
-                } else {
-                  setErrores({});
-                  setErrorServidor('');
-                  setExito(false);
-                }
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={guardando || (listado.error && esColaboradora)}
-              startIcon={guardando ? <CircularProgress size={18} color="inherit" /> : undefined}
-            >
-              {guardando ? 'Guardando…' : 'Guardar cambios'}
-            </Button>
-          </div>
-          {exito && (
-            <Alert
-              className="mi-perfil-estado-confirmacion"
-              severity="success"
-              role="status"
-              icon={<FiCheck aria-hidden="true" />}
-            >
-              Los cambios ya fueron aplicados.
-            </Alert>
-          )}
-        </form>
+            <div className="mi-perfil-acciones">
+              <Button
+                type="button"
+                variant="outlined"
+                disabled={guardando}
+                onClick={() => {
+                  if (hayCambios) {
+                    setConfirmarDescartar(true);
+                  } else {
+                    setErrores({});
+                    setErrorServidor('');
+                    setExito(false);
+                  }
+                }}
+              >
+                {t('comun.cancelar')}
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={Boolean(listado.error && esColaboradora)}
+                loading={guardando}
+                startIcon={<FiSave aria-hidden="true" />}
+              >
+                {guardando ? t('registro.guardando') : t('miPerfil.guardarCambios')}
+              </Button>
+            </div>
+            {exito && (
+              <Alert className="mi-perfil-estado" severity="success" role="status" icon={<FiCheck aria-hidden="true" />}>
+                {t('miPerfil.cambiosAplicados')}
+              </Alert>
+            )}
+          </form>
         </div>
       </div>
 
-      <Dialog
-        open={confirmarDescartar}
-        onClose={() => setConfirmarDescartar(false)}
-        aria-labelledby="descartar-cambios-titulo"
-      >
-        <DialogTitle id="descartar-cambios-titulo">¿Descartar los cambios?</DialogTitle>
+      <Dialogo open={confirmarDescartar} onClose={() => setConfirmarDescartar(false)} aria-labelledby="descartar-cambios-titulo">
+        <DialogTitle id="descartar-cambios-titulo">{t('miPerfil.descartarPregunta')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Vas a perder los cambios que no guardaste. Esta acción no se puede deshacer.
-          </DialogContentText>
+          <DialogContentText>{t('miPerfil.vasAPerderLosCambios')}</DialogContentText>
         </DialogContent>
-        <DialogActions className="mi-perfil-dialogo-acciones">
-          <Button onClick={() => setConfirmarDescartar(false)} variant="contained">
-            Seguir editando
+        <DialogActions>
+          <Button onClick={() => setConfirmarDescartar(false)} variant="outlined">
+            {t('miPerfil.seguirEditando')}
           </Button>
           <Button
             onClick={() => {
@@ -663,14 +758,54 @@ const MiPerfil = () => {
               setExito(false);
               setConfirmarDescartar(false);
             }}
-            variant="outlined"
+            variant="contained"
+            color="error"
+            startIcon={<FiTrash2 aria-hidden="true" />}
           >
-            Descartar cambios
+            {t('miPerfil.descartarCambios')}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialogo>
     </div>
   );
+};
+
+// Resumen de errores de Mi perfil: conserva el título "Revisá N campos" y enlaza a cada campo.
+const ResumenErroresPerfil = ({ errores, cantidad, intento, onIr }) => {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (intento > 0) ref.current?.focus();
+  }, [intento]);
+  return (
+    <Alert severity="error" role="alert" ref={ref} tabIndex={-1} className="resumen-errores" aria-labelledby="mi-perfil-errores-titulo">
+      <AlertTitle id="mi-perfil-errores-titulo" component="h2">
+        {t(cantidad === 1 ? 'miPerfil.revisarUnCampo' : 'miPerfil.revisarVariosCampos', { cantidad })}
+      </AlertTitle>
+      <p>{t('miPerfil.corregirCampos')}</p>
+      <ul className="resumen-errores__lista">
+        {Object.entries(errores).map(([campo, detalle]) => (
+          <li key={campo}>
+            <a
+              href={`#${detalle.id}`}
+              onClick={(evento) => {
+                evento.preventDefault();
+                onIr(detalle);
+              }}
+            >
+              {detalle.etiqueta}: {detalle.mensaje}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Alert>
+  );
+};
+
+ResumenErroresPerfil.propTypes = {
+  errores: PropTypes.object.isRequired,
+  cantidad: PropTypes.number.isRequired,
+  intento: PropTypes.number.isRequired,
+  onIr: PropTypes.func.isRequired,
 };
 
 export default MiPerfil;

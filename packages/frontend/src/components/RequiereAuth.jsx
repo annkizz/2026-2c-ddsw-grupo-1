@@ -1,6 +1,11 @@
 
+import React from 'react';
+import PropTypes from 'prop-types';
 import { Navigate } from 'react-router-dom';
-import { Alert, Button } from '@mui/material';
+import { Alert, AlertTitle, Button } from '@mui/material';
+import { FiLogOut, FiRefreshCw } from 'react-icons/fi';
+import { t } from '../i18n/t';
+import './Acceso.css';
 import { useAuth } from '../hooks/useAuth.jsx';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
 import { leerTipo } from '../features/registro/tipoElegido';
@@ -11,12 +16,13 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
     cargando,
     sesion,
     errorSesion,
+    tipoErrorSesion,
     recargarSesion,
     cerrarSesion,
   } = useAuth();
 
   if (cargando) {
-    return <LoadingSplash message="Conectando..." />;
+    return <LoadingSplash message={t('acceso.verificandoSesion')} />;
   }
 
   if (!isAuthenticated) {
@@ -25,41 +31,32 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
 
   if (errorSesion || !sesion) {
     return (
-      <div
-        role="alert"
-        style={{
-          padding: '2rem',
-          maxWidth: 520,
-          margin: '0 auto',
-          textAlign: 'center',
-        }}
-      >
-        <Alert severity="error" sx={{ mb: 2 }}>
-          No pudimos verificar tu sesión con el servidor.
+      <section className="acceso-estado" aria-labelledby="acceso-error-titulo">
+        <Alert severity="error" role="alert">
+          <AlertTitle id="acceso-error-titulo" component="h1">
+            {t('acceso.errorSesionTitulo')}
+          </AlertTitle>
+          {t(`errores.${tipoErrorSesion ?? 'inesperado'}`)}
         </Alert>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: 12,
-            justifyContent: 'center',
-          }}
-        >
-          <Button variant="contained" onClick={recargarSesion}>
-            Reintentar
+        <div className="acceso-estado__acciones">
+          <Button variant="contained" startIcon={<FiRefreshCw aria-hidden="true" />} onClick={recargarSesion}>
+            {t('comun.reintentar')}
           </Button>
-
-          <Button variant="outlined" onClick={cerrarSesion}>
-            Salir
+          <Button variant="outlined" startIcon={<FiLogOut aria-hidden="true" />} onClick={cerrarSesion}>
+            {t('navegacion.salir')}
           </Button>
         </div>
-      </div>
+      </section>
     );
+  }
+
+  if (sesion.rol === 'ADMINISTRADOR') {
+    return exigirPerfil ? children : <Navigate to="/administrador/destacados" replace />;
   }
 
   if (sesion.tienePerfil) {
     if (!exigirPerfil) {
-      return <Navigate to="/perfil" replace />;
+      return <Navigate to="/" replace />;
     }
 
     return children;
@@ -70,6 +67,12 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
   }
 
   return children;
+};
+
+RequiereAuth.propTypes = {
+  children: PropTypes.node,
+  exigirPerfil: PropTypes.bool,
+  tipoRegistro: PropTypes.string,
 };
 
 export default RequiereAuth;

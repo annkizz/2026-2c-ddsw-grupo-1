@@ -3,16 +3,11 @@ import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { crearNotificacion } from "../service/notificacionesService";
 import { invitarAColaborar } from "../service/proyectosService";
 import CardColaboradora from "./CardColaboradora/CardColaboradora";
 
 jest.mock("../hooks/useAuth.jsx", () => ({
   useAuth: jest.fn(),
-}));
-
-jest.mock("../service/notificacionesService", () => ({
-  crearNotificacion: jest.fn(),
 }));
 
 jest.mock("../service/proyectosService", () => ({
@@ -25,16 +20,15 @@ describe("CardColaboradora - mensajería interna", () => {
     useAuth.mockReturnValue({
       getAccessToken: jest.fn().mockResolvedValue("token"),
     });
-    crearNotificacion.mockResolvedValue({
-      envios: [{ tipoDeContacto: "EMAIL", estado: "SIMULADO" }],
-    });
-    invitarAColaborar.mockResolvedValue({ tipo: "INVITACION_POSTULACION" });
+    invitarAColaborar.mockResolvedValue({ tipo: "INVITACION_PROYECTO" });
   });
 
-  it("envía un mensaje solo a una colaboradora que aceptó mensajería", async () => {
+  it("envía una invitación con mensaje opcional", async () => {
     render(
       <ul>
         <CardColaboradora
+          idProyecto="proyecto-1"
+          idPerfil="perfil-1"
           colaboradora={{
             id: "colaboradora-1",
             nombreFantasia: "Ada",
@@ -46,22 +40,19 @@ describe("CardColaboradora - mensajería interna", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Contactar" }));
     await userEvent.type(
-      screen.getByRole("textbox", { name: "Mensaje" }),
+      screen.getByRole("textbox", { name: "Mensaje opcional" }),
       "Hola, queremos invitarte.",
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Enviar mensaje" }),
+      screen.getByRole("button", { name: "Enviar invitación" }),
     );
 
     await waitFor(() => {
-      expect(crearNotificacion).toHaveBeenCalledWith("token", {
-        idColaborador: "colaboradora-1",
-        contenido: "Hola, queremos invitarte.",
-      });
+      expect(invitarAColaborar).toHaveBeenCalledWith("token", "proyecto-1", "perfil-1", "colaboradora-1", "Hola, queremos invitarte.");
     });
     expect(
       await screen.findByText(
-        "El mensaje quedó enviado dentro de la plataforma.",
+        "La invitación quedó enviada dentro de la plataforma.",
       ),
     ).toBeInTheDocument();
   });
@@ -82,10 +73,10 @@ describe("CardColaboradora - mensajería interna", () => {
     expect(
       screen.getByRole("button", { name: "No acepta mensajes" }),
     ).toBeDisabled();
-    expect(crearNotificacion).not.toHaveBeenCalled();
+    expect(invitarAColaborar).not.toHaveBeenCalled();
   });
 
-  it("permite invitar a la colaboradora al perfil que se está buscando", async () => {
+  it("permite enviar una invitación sin mensaje", async () => {
     render(
       <ul>
         <CardColaboradora
@@ -101,8 +92,9 @@ describe("CardColaboradora - mensajería interna", () => {
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Invitar a postularse" }),
+      screen.getByRole("button", { name: "Contactar" }),
     );
+    await userEvent.click(screen.getByRole("button", { name: "Enviar invitación" }));
 
     await waitFor(() => {
       expect(invitarAColaborar).toHaveBeenCalledWith(
@@ -110,6 +102,7 @@ describe("CardColaboradora - mensajería interna", () => {
         "proyecto-1",
         "perfil-1",
         "colaboradora-1",
+        "",
       );
     });
     expect(

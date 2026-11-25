@@ -1,63 +1,349 @@
-import { useEffect, useState } from 'react';
+import { t } from '../../i18n/t';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, CircularProgress } from '@mui/material';
-import { FiArrowRight, FiCode, FiRepeat, FiUsers } from 'react-icons/fi';
+import { Button, Skeleton } from '@mui/material';
+import {
+  FiArrowRight,
+  FiCheck,
+  FiCode,
+  FiFolder,
+  FiPlus,
+  FiRepeat,
+  FiSearch,
+  FiUserPlus,
+  FiUsers,
+  FiEdit3,
+} from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { obtenerMiPerfilColectivo } from '../../service/colectivosService';
+import { obtenerProyectos } from '../../service/proyectosService';
+import {
+  CAMPOS_REQUERIDOS_COLECTIVO,
+  camposFaltantesPerfilColectivo,
+} from '../../utils/perfilColectivo';
+import { ID_AYUDA } from '../../utils/rutasUI';
+import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
+import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import DashboardCard from './components/DashboardCard.jsx';
+import DashboardEmptyState from './components/DashboardEmptyState.jsx';
+import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
+import DashboardColaboradora from './DashboardColaboradora.jsx';
+import DestacadosPortada from './components/DestacadosPortada.jsx';
 import TipoCuenta from '../registro/TipoCuenta.jsx';
 import './Home.css';
 
 const Home = () => {
+  const pasosAyuda = [
+    { icono: FiUserPlus, titulo: t('inicio.creaTuCuenta'), texto: t('inicio.elegiSiTeSumasComo') },
+    { icono: FiEdit3, titulo: t('inicio.completaTuPerfil'), texto: t('inicio.contaQueHaceTuColectivo') },
+    { icono: FiRepeat, titulo: t('inicio.conectaConProyectos'), texto: t('inicio.losColectivosPublicanProyectosY') },
+  ];
   const navigate = useNavigate();
-  const { cargando, sesion, errorLogto, iniciarSesion, registrarse } = useAuth();
+  const {
+    cargando,
+    sesion,
+    errorLogto,
+    iniciarSesion,
+    registrarse,
+    getAccessToken,
+  } = useAuth();
   const [eligiendoTipo, setEligiendoTipo] = useState(false);
+  const [proyectos, setProyectos] = useState([]);
+  const [cargandoProyectos, setCargandoProyectos] = useState(true);
+  const [errorProyectos, setErrorProyectos] = useState(null);
+  const [intentoCarga, setIntentoCarga] = useState(0);
+  const [camposPerfilFaltantes, setCamposPerfilFaltantes] = useState([]);
+  const [cargandoPerfil, setCargandoPerfil] = useState(true);
+  const [errorPerfil, setErrorPerfil] = useState(null);
+  const [intentoPerfil, setIntentoPerfil] = useState(0);
+  const esDashboardColectivo = sesion?.rol === 'COLECTIVO' && sesion?.tienePerfil;
+  const esDashboardColaboradora = sesion?.rol === 'COLABORADOR' && sesion?.tienePerfil;
 
-  // Solo las cuentas con perfil salen del inicio automáticamente.
+  // Cuentas con perfil pero sin panel propio (por ejemplo, administración) van al listado público.
   useEffect(() => {
-    if (sesion?.tienePerfil) {
-      const destino =
-        sesion.rol === 'COLABORADOR' ? '/mis-colaboraciones' : '/perfil';
-      navigate(destino, { replace: true });
+    if (sesion?.rol === 'ADMINISTRADOR') {
+      navigate('/administrador/destacados', { replace: true });
+    } else if (sesion?.tienePerfil && !esDashboardColectivo && !esDashboardColaboradora) {
+      navigate('/proyectos', { replace: true });
     }
-  }, [sesion, navigate]);
+  }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
+
+  // Un enlace a /#como-funciona se desplaza a esa sección al llegar.
+  useEffect(() => {
+    if (window.location.hash === `#${ID_AYUDA}`) {
+      document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: 'start' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!esDashboardColectivo) return undefined;
+    let vigente = true;
+
+    const cargarProyectos = async () => {
+      setCargandoProyectos(true);
+      setErrorProyectos(null);
+      try {
+        if (!sesion.idColectivo) {
+          throw new Error(t('erroresInternos.colectivoNoIdentificado'));
+        }
+
+        const resultado = await obtenerProyectos();
+        if (!Array.isArray(resultado)) {
+          throw new Error(t('erroresInternos.listaProyectos'));
+        }
+
+        if (vigente) {
+          setProyectos(resultado.filter((proyecto) => proyecto.idColectivo === sesion.idColectivo));
+        }
+      } catch (error) {
+        if (vigente) setErrorProyectos(error);
+      } finally {
+        if (vigente) setCargandoProyectos(false);
+      }
+    };
+
+    cargarProyectos();
+    return () => {
+      vigente = false;
+    };
+  }, [esDashboardColectivo, sesion, intentoCarga]);
+
+  useEffect(() => {
+    if (!esDashboardColectivo) return undefined;
+    let vigente = true;
+
+    const cargarPerfil = async () => {
+      setCargandoPerfil(true);
+      setErrorPerfil(null);
+      try {
+        const token = await getAccessToken();
+        const perfil = await obtenerMiPerfilColectivo(token);
+        if (vigente) {
+          setCamposPerfilFaltantes(
+            camposFaltantesPerfilColectivo({
+              nombreColectivo: perfil?.nombre ?? '',
+              tipoDeColectivo: perfil?.tipoDeColectivo ?? '',
+              descripcion: perfil?.descripcion ?? '',
+            }),
+          );
+        }
+      } catch (error) {
+        if (vigente) setErrorPerfil(error);
+      } finally {
+        if (vigente) setCargandoPerfil(false);
+      }
+    };
+
+    cargarPerfil();
+    return () => {
+      vigente = false;
+    };
+  }, [esDashboardColectivo, getAccessToken, intentoPerfil]);
+
+  if (esDashboardColaboradora) return <DashboardColaboradora />;
+
+  if (esDashboardColectivo) {
+    const sinProyectos = !cargandoProyectos && !errorProyectos && proyectos.length === 0;
+    const activos = proyectos.filter((proyecto) => proyecto.estado !== 'FINALIZADO').length;
+    const finalizados = proyectos.filter((proyecto) => proyecto.estado === 'FINALIZADO').length;
+
+    return (
+      <div className="contenedor-pagina home--dashboard">
+        <section className="dashboard" aria-labelledby="dashboard-titulo">
+          <EncabezadoPagina
+            id="dashboard-titulo"
+            antetitulo={t('inicio.espacioDeTuColectivo')}
+            titulo={t('inicio.impulsarHoy')}
+          />
+
+          <div className="dashboard-grid">
+            <DashboardCard
+              className="dashboard-card--destacada"
+              icon={sinProyectos ? null : <FiCode />}
+              title={sinProyectos ? null : t('inicio.publicarUnProyecto')}
+              description={sinProyectos ? null : t('inicio.sumarColaboradoras')}
+            >
+              {sinProyectos ? (
+                <DashboardEmptyState
+                  icon={FiPlus}
+                  title={t('inicio.primerProyectoTitulo')}
+                  description={t('inicio.primerProyectoDescripcion')}
+                  actionLabel={t('inicio.crearPrimerProyecto')}
+                  actionVariant="contained"
+                  onAction={() => navigate('/proyectos/nuevo')}
+                  nivelTitulo="h2"
+                />
+              ) : (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate('/proyectos/nuevo')}
+                  startIcon={<FiPlus aria-hidden="true" />}
+                >
+                  {t('inicio.publicarProyecto')}
+                </Button>
+              )}
+            </DashboardCard>
+
+            <DashboardCard className="dashboard-card--proyectos" icon={<FiFolder />} title={t('inicio.estadoProyectos')}>
+              {cargandoProyectos ? (
+                <div className="dashboard-contadores" aria-busy="true" role="status">
+                  <span className="visualmente-oculto">{t('inicio.cargandoProyectos')}</span>
+                  {[0, 1].map((i) => (
+                    <div key={i} aria-hidden="true">
+                      <Skeleton variant="text" width="var(--space-6)" height="var(--space-6)" />
+                      <Skeleton variant="text" width="var(--space-10)" />
+                    </div>
+                  ))}
+                </div>
+              ) : errorProyectos ? (
+                <AlertaError
+                  error={errorProyectos}
+                  titulo={t('buscadorColaboradoras.noPudimosCargarTusProyectos')}
+                  onReintentar={() => setIntentoCarga((intento) => intento + 1)}
+                />
+              ) : sinProyectos ? (
+                <DashboardEmptyState
+                  title={t('inicio.sinProyectosPublicados')}
+                  description={t('inicio.sinProyectosDescripcion')}
+                />
+              ) : (
+                <>
+                  <div className="dashboard-contadores" aria-live="polite">
+                    <div>
+                      <strong>{activos}</strong>
+                      <span>
+                        <FiArrowRight aria-hidden="true" /> {t('proyectos.activos')}
+                      </span>
+                    </div>
+                    <div>
+                      <strong>{finalizados}</strong>
+                      <span>
+                        <FiCheck aria-hidden="true" /> {t('proyectos.finalizados')}
+                      </span>
+                    </div>
+                  </div>
+                  <Button variant="outlined" onClick={() => navigate('/proyectos')} endIcon={<FiArrowRight aria-hidden="true" />}>
+                    {t('inicio.verMisProyectos')}
+                  </Button>
+                </>
+              )}
+            </DashboardCard>
+
+            <DashboardCard
+              className="dashboard-card--buscar"
+              icon={<FiUsers />}
+              title={t('inicio.encontrarColaboradoras')}
+              description={t('inicio.explorarPerfiles')}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/buscar-colaboradores')}
+                startIcon={<FiSearch aria-hidden="true" />}
+              >
+                {t('navegacion.buscarColaboradoras')}
+              </Button>
+            </DashboardCard>
+          </div>
+
+          <DestacadosPortada />
+
+          {cargandoPerfil ? (
+            <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
+              <span className="visualmente-oculto">{t('inicio.comprobandoPerfil')}</span>
+              <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
+            </div>
+          ) : errorPerfil ? (
+            <AlertaError
+              className="dashboard-alerta-perfil"
+              error={errorPerfil}
+              titulo={t('inicio.noPudimosComprobarSiTu')}
+              onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
+            />
+          ) : camposPerfilFaltantes.length > 0 ? (
+            <IndicadorProgresoPerfil
+              completados={CAMPOS_REQUERIDOS_COLECTIVO.length - camposPerfilFaltantes.length}
+              total={CAMPOS_REQUERIDOS_COLECTIVO.length}
+              faltantes={camposPerfilFaltantes}
+              titulo={t('inicio.completarPerfilColectivo')}
+              accion={t('inicio.completarMiPerfil')}
+              onCompletar={() => navigate('/perfil')}
+            />
+          ) : null}
+        </section>
+      </div>
+    );
+  }
 
   return (
-    <div className="home">
-      <section className="home-hero">
-        <p className="home-eyebrow">Tecnología con propósito</p>
-        <h1>El código es mejor cuando nos conecta.</h1>
-        <p className="home-lead">Unimos a colectivos que necesitan software con personas que quieren colaborar.</p>
-        <div className="home-pares">
-          <span><FiCode /> Personas</span>
-          <FiRepeat />
-          <span><FiUsers /> Colectivos</span>
-        </div>
-        <small>Software compartido. Impacto colectivo.</small>
-      </section>
+    <div className="contenedor-pagina home">
+      <div className="home-portada">
+        <section className="home-hero" aria-labelledby="home-titulo">
+          <EncabezadoPagina
+            id="home-titulo"
+            className="encabezado-pagina--hero"
+            antetitulo={t('inicio.tecnologiaConProposito')}
+            titulo={t('inicio.lema')}
+            subtitulo={t('inicio.unimosAColectivosQueNecesitan')}
+          />
+          <ul className="home-pares">
+            <li>
+              <FiUsers aria-hidden="true" /> {t('inicio.colectivosPublican')}
+            </li>
+            <li>
+              <FiCode aria-hidden="true" /> {t('inicio.colaboradorasSuman')}
+            </li>
+          </ul>
+        </section>
 
-      <section className="home-login">
-        <h2>Iniciar sesión</h2>
-        <p className="home-sub">Qué bueno encontrarte de nuevo.</p>
-        {/* El email y la contraseña se piden en la pantalla de Logto */}
-        <Button
-          variant="contained"
-          fullWidth
-          size="large"
-          onClick={iniciarSesion}
-          disabled={cargando && !errorLogto}
-          startIcon={cargando && !errorLogto ? <CircularProgress size={18} color="inherit" /> : null}
-          endIcon={cargando && !errorLogto ? null : <FiArrowRight />}
-        >
-          {cargando && !errorLogto ? 'Ingresando…' : 'Ingresar'}
-        </Button>
-        {errorLogto && (
-          <Alert severity="error" sx={{ marginTop: 2 }}>
-            No pudimos abrir el inicio de sesión de Logto: {errorLogto.message}
-          </Alert>
-        )}
-        <p className="home-cambio">
-          ¿Primera vez acá?
-          <button onClick={() => setEligiendoTipo(true)}>Crear una cuenta</button>
-        </p>
+        <section className="home-login" aria-labelledby="home-login-titulo">
+          <h2 id="home-login-titulo">{t('comun.iniciarSesion')}</h2>
+          {/* El email y la contraseña se piden en la pantalla de Logto */}
+          <Button
+            variant="contained"
+            color="secondary"
+            fullWidth
+            size="large"
+            onClick={iniciarSesion}
+            loading={cargando && !errorLogto}
+            endIcon={cargando && !errorLogto ? null : <FiArrowRight aria-hidden="true" />}
+          >
+            {cargando && !errorLogto ? t('inicio.ingresando') : t('inicio.ingresar')}
+          </Button>
+          {errorLogto && (
+            <AlertaError
+              className="home-login__error"
+              error={errorLogto}
+              titulo={t('inicio.noPudimosAbrirElInicio')}
+            />
+          )}
+          <p className="home-cambio">
+            {t('inicio.primeraVez')}
+            <Button variant="text" onClick={() => setEligiendoTipo(true)}>
+              {t('inicio.crearCuenta')}
+            </Button>
+          </p>
+        </section>
+      </div>
+
+      <DestacadosPortada />
+
+      <section id={ID_AYUDA} className="home-ayuda" aria-labelledby="home-ayuda-titulo" tabIndex={-1}>
+        <h2 id="home-ayuda-titulo">{t('navegacion.comoFunciona')}</h2>
+        <p className="home-ayuda__intro">{t('inicio.tresPasosParaEmpezarA')}</p>
+        <ol className="home-ayuda__pasos">
+          {pasosAyuda.map(({ icono: Icono, titulo, texto }, indice) => (
+            <li key={titulo} className="home-ayuda__paso">
+              <span className="home-ayuda__icono" aria-hidden="true">
+                <Icono />
+              </span>
+              <h3>
+                <span className="home-ayuda__numero">{t('inicio.paso', { numero: indice + 1 })}</span> {titulo}
+              </h3>
+              <p>{texto}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {eligiendoTipo && (

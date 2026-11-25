@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
+import { IconButton, InputBase } from "@mui/material";
+import { FiAlertCircle, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { ETIQUETA_MAX, etiquetaLegible, normalizarEtiqueta } from "../../utils/etiquetas";
+import { t } from "../../i18n/t";
 import "./CustomSelect.css";
 
 function normalizarTexto(texto) {
@@ -24,11 +28,14 @@ export default function CustomSelect({
   multiple = false,
   onSeleccionar,
   onQuitar,
-  placeholder = "Buscar...",
-  textoVacio = "No hay opciones para mostrar.",
+  placeholder = t('selector.buscar'),
+  textoVacio = t('selector.sinOpciones'),
   permiteCrear = false,
   maxSeleccion = Infinity,
-  textoCrear = "Crear etiqueta",
+  textoCrear = t('selector.crearEtiqueta'),
+  className = "",
+  ayuda,
+  error,
 }) {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState("");
@@ -45,7 +52,7 @@ export default function CustomSelect({
 
   const seleccionadas = useMemo(
     () =>
-      seleccion.map(
+      seleccion.filter((valor) => valor !== "" && valor != null).map(
         (valor) =>
           opcionesNormalizadas.find((opcion) => opcion.valor === valor) ?? {
             valor,
@@ -127,7 +134,9 @@ export default function CustomSelect({
     onSeleccionar?.(opcion.valor);
     setConsulta("");
     setIndiceActivo(0);
-    if (!multiple) setAbierto(false);
+    // La lista se cierra al elegir (también en selección múltiple): así se puede seguir con el
+    // formulario sin tener que hacer clic afuera. Se vuelve a abrir al escribir, con ↓ o con un clic.
+    setAbierto(false);
   };
 
   const alCambiarTexto = (evento) => {
@@ -174,57 +183,75 @@ export default function CustomSelect({
     }
   };
 
+  const idAyuda = ayuda ? `${id}-ayuda` : undefined;
+  const idError = error ? `${id}-error` : undefined;
+  const describidoPor = [idError, idAyuda].filter(Boolean).join(" ") || undefined;
+
   return (
-    <div className="selector" onBlur={alPerderFoco}>
+    <div
+      className={["selector", error ? "selector--error" : "", className].filter(Boolean).join(" ")}
+      onBlur={alPerderFoco}
+    >
       <label className="selector__label" htmlFor={id}>
         {etiqueta}
       </label>
 
-      <div
-        className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}
-      >
-        <input
-          id={id}
-          type="text"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={abierto}
-          aria-controls={`${id}-lista`}
-          aria-activedescendant={
-            abierto && visibles[indiceActivo]
-              ? `${id}-opcion-${indiceActivo}`
-              : undefined
-          }
-          autoComplete="off"
+      <div className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}>
+        <InputBase
+          className="selector__input"
           value={consulta}
           placeholder={placeholder}
           onChange={alCambiarTexto}
           onFocus={() => setAbierto(true)}
+          onClick={() => setAbierto(true)}
           onKeyDown={alPresionarTecla}
+          inputProps={{
+            id,
+            type: "text",
+            role: "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": abierto,
+            "aria-controls": `${id}-lista`,
+            "aria-activedescendant":
+              abierto && visibles[indiceActivo] ? `${id}-opcion-${indiceActivo}` : undefined,
+            "aria-invalid": error ? true : undefined,
+            "aria-describedby": describidoPor,
+            autoComplete: "off",
+          }}
         />
-        <span className="selector__flecha" aria-hidden="true">
-          ▾
-        </span>
+        <FiChevronDown className="selector__flecha" aria-hidden="true" />
       </div>
 
+      {error && (
+        <p className="selector__error" id={idError}>
+          <FiAlertCircle aria-hidden="true" />
+          <span>{error}</span>
+        </p>
+      )}
+      {ayuda && (
+        <p className="selector__ayuda" id={idAyuda}>
+          {ayuda}
+        </p>
+      )}
+
       {seleccionadas.length > 0 && (
-        <div className="selector__seleccion" aria-live="polite">
+        <ul className="selector__seleccion" aria-live="polite" aria-label={t('selector.elegidasEn', { campo: typeof etiqueta === "string" ? etiqueta : t('selector.esteCampo') })}>
           {seleccionadas.map((opcion) => (
-            <span className="selector__seleccionada" key={opcion.valor}>
-              {opcion.etiqueta}
+            <li key={opcion.valor} className="selector__seleccionada">
+              <span>{opcion.etiqueta}</span>
               {puedeQuitar && (
-                <button
+                <IconButton
                   type="button"
                   className="selector__quitar"
-                  aria-label={`Quitar ${opcion.etiqueta}`}
+                  aria-label={t('selector.quitar', { opcion: opcion.etiqueta })}
                   onClick={() => (onQuitar ?? onSeleccionar)?.(opcion.valor)}
                 >
-                  ×
-                </button>
+                  <FiX aria-hidden="true" />
+                </IconButton>
               )}
-            </span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {abierto && (
@@ -236,9 +263,7 @@ export default function CustomSelect({
         >
           {visibles.length === 0 ? (
             <li className="selector__vacio">
-              {alcanzoMaximo && permiteCrear
-                ? `Llegaste al máximo de ${maxSeleccion} etiquetas.`
-                : textoVacio}
+              {alcanzoMaximo && permiteCrear ? t('selector.maximo', { cantidad: maxSeleccion }) : textoVacio}
             </li>
           ) : (
             visibles.map((opcion, indice) => {
@@ -249,11 +274,9 @@ export default function CustomSelect({
                   id={`${id}-opcion-${indice}`}
                   role="option"
                   aria-selected={activa}
-                  className={`selector__opcion${
-                    indice === indiceActivo ? " selector__opcion--activa" : ""
-                  }${activa ? " selector__opcion--elegida" : ""}${
-                    opcion.esNueva ? " selector__opcion--nueva" : ""
-                  }`}
+                  className={`selector__opcion${indice === indiceActivo ? " selector__opcion--activa" : ""}${
+                    activa ? " selector__opcion--elegida" : ""
+                  }${opcion.esNueva ? " selector__opcion--nueva" : ""}`}
                   onMouseDown={(evento) => evento.preventDefault()}
                   onClick={() => seleccionar(opcion)}
                 >
@@ -264,18 +287,10 @@ export default function CustomSelect({
                   ) : (
                     <>
                       <span>{opcion.etiqueta}</span>
-                      {opcion.secundario && (
-                        <span className="selector__secundario">
-                          {opcion.secundario}
-                        </span>
-                      )}
+                      {opcion.secundario && <span className="selector__secundario">{opcion.secundario}</span>}
                     </>
                   )}
-                  {activa && (
-                    <span className="selector__tilde" aria-hidden="true">
-                      ✓
-                    </span>
-                  )}
+                  {activa && <FiCheck className="selector__tilde" aria-hidden="true" />}
                 </li>
               );
             })
@@ -285,3 +300,21 @@ export default function CustomSelect({
     </div>
   );
 }
+
+CustomSelect.propTypes = {
+  id: PropTypes.string.isRequired,
+  etiqueta: PropTypes.node.isRequired,
+  opciones: PropTypes.array,
+  seleccion: PropTypes.array,
+  multiple: PropTypes.bool,
+  onSeleccionar: PropTypes.func,
+  onQuitar: PropTypes.func,
+  placeholder: PropTypes.string,
+  textoVacio: PropTypes.node,
+  permiteCrear: PropTypes.bool,
+  maxSeleccion: PropTypes.number,
+  textoCrear: PropTypes.string,
+  className: PropTypes.string,
+  ayuda: PropTypes.node,
+  error: PropTypes.node,
+};

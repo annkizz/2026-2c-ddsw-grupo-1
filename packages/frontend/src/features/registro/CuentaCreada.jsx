@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@mui/material';
 import { FiArrowRight, FiCheck } from 'react-icons/fi';
+import { t } from '../../i18n/t';
 import './Registro.css';
 
 const CuentaCreada = () => {
@@ -10,16 +11,16 @@ const CuentaCreada = () => {
         <div className="cuenta-creada-icono">
           <FiCheck />
         </div>
-        <h1>¡Cuenta creada!</h1>
+        <h1>{t('registro.cuentaCreada')}</h1>
         <p>
-          ¡Te damos la bienvenida a Código a Voluntad!
+          {t('registro.bienvenida')}
           <br />
-          Ya podés compartir tus habilidades y sumar a proyectos en comunidad.
+          {t('registro.bienvenidaDescripcion')}
         </p>
       </Card>
       <div className="cuenta-creada-boton">
-        <Button variant="contained" component={Link} to="/perfil" endIcon={<FiArrowRight />}>
-          Ir a mi perfil
+        <Button variant="contained" component={Link} to="/" endIcon={<FiArrowRight />}>
+          {t('registro.irInicio')}
         </Button>
       </div>
     </div>

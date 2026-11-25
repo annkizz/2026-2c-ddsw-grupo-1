@@ -1,0 +1,73 @@
+.esqueleto__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.esqueleto-grilla .esqueleto__contenido {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--card-min-width), 100%), 1fr));
+  gap: var(--space-3);
+}
+
+.esqueleto-card,
+.esqueleto-item,
+.esqueleto-detalle .esqueleto__contenido,
+.esqueleto-perfil .esqueleto__contenido,
+.esqueleto-formulario .esqueleto__contenido {
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.esqueleto-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.esqueleto-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.esqueleto-item__texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.esqueleto-fila {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.esqueleto-detalle__bloques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--card-min-width), 100%), 1fr));
+  gap: var(--space-2);
+}
+
+.esqueleto-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.esqueleto-pagina {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+}
+
+.esqueleto__mensaje {
+  margin: 0 0 var(--space-2);
+  color: var(--color-muted);
+}

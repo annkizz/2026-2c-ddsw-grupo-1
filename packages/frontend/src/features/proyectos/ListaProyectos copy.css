@@ -21,7 +21,7 @@
 
 .proyectos-intro p {
   margin: 0;
-  color: var(--muted);
+  color: var(--color-muted);
   font-size: 14px;
 }
 
@@ -44,7 +44,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .proyectos-grupo-estado {
@@ -57,7 +57,7 @@
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .proyectos-opciones-estado {
@@ -67,7 +67,7 @@
 }
 
 .proyectos-conteo {
-  color: var(--muted);
+  color: var(--color-muted);
   font-size: 14px;
   margin: 0 0 20px;
 }
@@ -80,9 +80,9 @@
 }
 
 .proyecto-card {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -94,26 +94,26 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 600;
   width: fit-content;
 }
 
 .proyecto-badge.activo {
-  background: #eef3f7;
-  color: var(--navy);
+  background: var(--color-info-light);
+  color: var(--color-primary);
 }
 
 .proyecto-badge.finalizado {
-  background: #edf7ed;
-  color: #1e6b3a;
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
 }
 
 .proyecto-card h2 {
   font-size: 20px;
   margin: 0;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .proyecto-progreso-seccion {
@@ -126,11 +126,11 @@
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .proyecto-progreso-cabecera span:last-child {
-  color: var(--ink);
+  color: var(--color-text);
   font-weight: 600;
 }
 
@@ -139,7 +139,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .proyecto-meta div {
@@ -154,7 +154,7 @@
   gap: 8px;
   margin-top: 4px;
   padding-top: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .proyectos-mensaje-estado {
@@ -165,7 +165,7 @@
   justify-content: center;
   gap: 16px;
   text-align: center;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .proyectos-dialogo-titulo {
@@ -194,7 +194,7 @@
 }
 
 .proyecto-detalle-desc {
-  color: var(--muted);
+  color: var(--color-muted);
   line-height: 1.6;
   margin: 0 0 16px;
 }
@@ -204,7 +204,7 @@
   flex-direction: column;
   gap: 6px;
   font-size: 14px;
-  color: var(--ink);
+  color: var(--color-text);
 }
 
 .proyecto-detalle-meta p {

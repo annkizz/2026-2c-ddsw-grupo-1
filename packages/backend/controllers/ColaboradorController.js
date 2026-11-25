@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ColaboradorService } from "../services/ColaboradorService.js";
 import { medioDeContactoSchema } from "../schemas/zod/medioDeContactoSchema.js";
+import { paginacionSchema } from "../schemas/zod/paginacionSchema.js";
+import { BadRequestError } from "../errors/AppError.js";
 
 export const colaboradorSchema = z
   .object({
@@ -59,11 +61,42 @@ export class ColaboradorController {
     res.status(200).json(colaboraciones);
   }
 
+  async obtenerMisPostulaciones(req, res) {
+    const postulaciones = await this.colaboradorService.obtenerMisPostulaciones(req.usuario);
+    res.status(200).json(postulaciones);
+  }
+
   obtenerTodos = async (req, res) => {
-    const colaboradores = await this.colaboradorService.obtenerTodos();
+    let pag = null;
+    let limite = null;
+    if (req.query.pag !== undefined || req.query.limite !== undefined) {
+      const paginacion = paginacionSchema.safeParse(req.query);
+      if (!paginacion.success) {
+        throw new BadRequestError(
+          "Los parámetros de paginación son inválidos",
+          "PAGINACION_INVALIDA",
+        );
+      }
+      pag = paginacion.data.pag;
+      limite = paginacion.data.limite;
+    }
+    const colaboradores = await this.colaboradorService.obtenerTodos(pag, limite);
+    if (pag === null) {
+      res
+        .status(200)
+        .json(colaboradores.map((colaborador) => this.toPublicDTO(colaborador)));
+      return;
+    }
     res
       .status(200)
-      .json(colaboradores.map((colaborador) => this.toPublicDTO(colaborador)));
+      .json({
+        colaboradoras: colaboradores.colaboradores.map((colaborador) =>
+          this.toPublicDTO(colaborador),
+        ),
+        total: colaboradores.total,
+        pag: colaboradores.pag,
+        totalPags: colaboradores.totalPags,
+      });
   };
 
   toPublicDTO(colaborador) {
