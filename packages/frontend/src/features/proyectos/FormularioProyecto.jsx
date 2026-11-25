@@ -50,7 +50,8 @@ const DATOS_INICIALES = {
   fechaLimiteBusqueda: '',
 };
 
-// Crear: pasos cortos, solo el primero es obligatorio; se puede ir y volver entre pasos y crear desde cualquiera.
+// Crear: pasos cortos, solo el primero es obligatorio. Se recorren en orden (se puede volver a uno ya visto)
+// y "Crear proyecto" aparece recién en el último, para que nadie cree el proyecto sin saber que los otros existen.
 // Editar: las mismas partes en un menú lateral. La búsqueda se configura desde "Administrar" del proyecto.
 const PASOS_FORMULARIO = [
   { titulo: 'formularioProyecto.pasoBasico', campos: ['titulo', 'descripcion'], icono: FiFileText },
@@ -85,6 +86,7 @@ const FormularioProyecto = () => {
   const [intentoResumen, setIntentoResumen] = useState(0);
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
   const [paso, setPaso] = useState(0);
+  const [pasoMaximo, setPasoMaximo] = useState(0); // el paso más lejano al que llegó el usuario
   const etiquetasState = useListado('/etiquetas');
 
   const cargar = useCallback(async () => {
@@ -186,11 +188,17 @@ const FormularioProyecto = () => {
   const validarFormularioCompleto = () =>
     validarCampos(esEdicion ? ['titulo', 'descripcion', 'fechaLimiteCierre'] : ['titulo', 'descripcion', 'fechaLimiteCierre', 'fechaLimiteBusqueda']);
 
+  // Hasta dónde se puede saltar: cualquier paso ya visto o el siguiente al actual. Nunca más lejos.
+  const pasoAlcanzable = (indice) => esEdicion || indice <= Math.max(pasoMaximo, paso + 1);
+
   const irAPaso = (destino) => {
+    if (!pasoAlcanzable(destino)) return;
     // Para avanzar se revisa el paso actual; para volver atrás, nunca.
     if (destino > paso && !validarCampos(PASOS_FORMULARIO[paso].campos)) return;
+    const nuevoPaso = Math.max(0, Math.min(ULTIMO_PASO, destino));
     setIntentoResumen(0);
-    setPaso(Math.max(0, Math.min(ULTIMO_PASO, destino)));
+    setPaso(nuevoPaso);
+    setPasoMaximo((maximo) => Math.max(maximo, nuevoPaso));
   };
   const siguientePaso = () => irAPaso(paso + 1);
   const tituloDePaso = (indice) =>
@@ -225,6 +233,11 @@ const FormularioProyecto = () => {
 
   const guardar = async (e) => {
     e.preventDefault();
+    // Al crear, solo se envía desde el último paso; antes de eso, enviar equivale a "Siguiente".
+    if (!esEdicion && paso < ULTIMO_PASO) {
+      siguientePaso();
+      return;
+    }
     if (!validarFormularioCompleto()) return;
 
     setGuardando(true);
@@ -362,6 +375,7 @@ const FormularioProyecto = () => {
                 <StepButton
                   type="button"
                   onClick={() => irAPaso(indice)}
+                  disabled={!pasoAlcanzable(indice)}
                   optional={opcional ? <span className="texto-caption">{t('comun.opcional')}</span> : undefined}
                   aria-current={indice === paso ? 'step' : undefined}
                 >
@@ -446,6 +460,7 @@ const FormularioProyecto = () => {
         {paso === 1 && (
           <section className="form-proyecto-card" aria-labelledby="form-proyecto-etiquetas-titulo">
             <h2 id="form-proyecto-etiquetas-titulo">{tituloDePaso(1)}</h2>
+            {!esEdicion && <p className="texto-secundario">{t('formularioProyecto.pasoOpcionalAyuda')}</p>}
             <div>
               <CustomSelect
                 id="proyecto-etiquetas"
@@ -532,6 +547,7 @@ const FormularioProyecto = () => {
 
         {paso === 2 && (
           <div className="form-proyecto-columna">
+            {!esEdicion && <p className="texto-secundario">{t('formularioProyecto.pasoFinalAyuda')}</p>}
             <section className="form-proyecto-card" aria-labelledby="form-proyecto-cierre">
               <h2 id="form-proyecto-cierre">{t('formularioProyecto.cardCierre')}</h2>
               <TextField
@@ -642,7 +658,8 @@ const FormularioProyecto = () => {
               {!esEdicion && paso < ULTIMO_PASO && (
                 <Button
                   key="siguiente"
-                  variant="outlined"
+                  variant="contained"
+                  color="secondary"
                   type="button"
                   onClick={siguientePaso}
                   disabled={guardando}
@@ -651,23 +668,25 @@ const FormularioProyecto = () => {
                   {t('formularioProyecto.siguiente', { titulo: t(PASOS_FORMULARIO[paso + 1].titulo) })}
                 </Button>
               )}
-              {/* Siempre disponible: lo opcional se puede completar o saltear. */}
-              <Button
-                key="guardar"
-                variant="contained"
-                color="secondary"
-                type="submit"
-                loading={guardando}
-                startIcon={<FiSave aria-hidden="true" />}
-              >
-                {guardando
-                  ? t('formularioProyecto.guardando')
-                  : errorServidor
-                    ? t('formularioProyecto.reintentar')
-                    : esEdicion
-                      ? t('formularioProyecto.botonGuardar')
-                      : t('formularioProyecto.botonCrear')}
-              </Button>
+              {/* Al editar se guarda desde cualquier sección; al crear, solo en el último paso. */}
+              {(esEdicion || paso === ULTIMO_PASO) && (
+                <Button
+                  key="guardar"
+                  variant="contained"
+                  color="secondary"
+                  type="submit"
+                  loading={guardando}
+                  startIcon={<FiSave aria-hidden="true" />}
+                >
+                  {guardando
+                    ? t('formularioProyecto.guardando')
+                    : errorServidor
+                      ? t('formularioProyecto.reintentar')
+                      : esEdicion
+                        ? t('formularioProyecto.botonGuardar')
+                        : t('formularioProyecto.botonCrear')}
+                </Button>
+              )}
             </>
           )}
         </div>

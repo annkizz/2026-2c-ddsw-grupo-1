@@ -265,6 +265,8 @@
     "ayudaNoDisponibleFinalizado": "Esta opción no está disponible en proyectos finalizados.",
     "cancelar": "Cancelar",
     "botonCrear": "Crear proyecto",
+    "pasoOpcionalAyuda": "Este paso es opcional: completalo ahora o seguí con \"Siguiente\". Lo podés agregar después desde Editar.",
+    "pasoFinalAyuda": "Último paso. Las fechas son opcionales: si no las necesitás, dejalas en blanco y creá el proyecto.",
     "botonGuardar": "Guardar cambios",
     "guardando": "Guardando…",
     "reintentar": "Reintentar",

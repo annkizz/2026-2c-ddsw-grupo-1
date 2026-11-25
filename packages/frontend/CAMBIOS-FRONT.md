@@ -15,7 +15,7 @@ Solo se tocó `packages/frontend`. El backend quedó igual.
 | "No autorizado" → 4xx | Página `PaginaError` con el código grande ("Error 403", "Error 404"). Las alertas de error muestran el código HTTP, por ejemplo "(Error 403)". |
 | Pantalla de proyecto muy larga | `DetalleProyecto` ahora tiene pestañas: Resumen · Perfiles · Postulaciones · Equipo · Logros (las de gestión solo para el colectivo dueño). Las acciones de administración van en el botón "Administrar". |
 | Otras páginas largas | Mi perfil: una sección a la vez con panel lateral (también para colectivos). Buscar proyectos: filtros en un panel lateral. |
-| Formulario largo y difícil | Crear proyecto en 3 pasos (Lo básico → Etiquetas y ubicación → Fechas y búsqueda). Solo el primero es obligatorio. Al editar, se puede saltar a cualquier paso y guardar desde cualquiera. |
+| Formulario largo y difícil | Crear proyecto en 3 pasos (Lo básico → Etiquetas y ubicación → Fechas y búsqueda). Solo el primero es obligatorio, pero se recorren los tres: "Crear proyecto" aparece recién en el último. Al editar, se puede saltar a cualquier sección y guardar desde cualquiera. |
 | Postulación: habilidades que cumple | La colaboradora ve en cada perfil y al postularse cuáles tiene y cuáles le faltan. El colectivo ve en cada postulación las habilidades del perfil y, al aceptarla, cuáles cumple la persona. |
 | Símbolo de notificación | La campana muestra un número con las notificaciones sin ver; al abrir la bandeja vuelve a 0 y las nuevas quedan marcadas. |
 | Medio de contacto confuso | Texto más grande, explicación de para qué sirve, cada medio numerado ("Medio de contacto 1") y "Tipo de medio" en vez de "Tipo". |
@@ -38,7 +38,7 @@ Solo se tocó `packages/frontend`. El backend quedó igual.
 | Administrar / Editar | "Editar datos del proyecto" pasó adentro de "Administrar", junto a perfiles, búsqueda y avance. La búsqueda ya no se repite al editar. |
 | Sin perfiles | El dueño ve un aviso con el botón "Cargar perfiles" (en Resumen y en Perfiles). |
 | Etiquetas | La lista se cierra después de elegir una. Se vuelve a abrir al escribir, con ↓ o con un clic. |
-| Pasos del formulario | Se puede volver con "Anterior" o tocando cualquier paso. "Crear proyecto" está disponible en todos los pasos. Enter ya no envía el formulario. |
+| Pasos del formulario | Se avanza con "Siguiente" (botón principal) y se puede volver con "Anterior" o tocando un paso ya visto; no se puede saltar a uno que todavía no se vio. "Crear proyecto" aparece solo en el último paso, así nadie crea el proyecto sin saber que existen las etiquetas, la ubicación y las fechas. Los pasos opcionales lo avisan con un texto: se pueden dejar en blanco. Enter ya no envía el formulario. |
 | Búsqueda en el paso 3 | Se corrigió: el botón "Siguiente" se convertía en "Crear proyecto" en el mismo clic y el proyecto se creaba sin dejar configurar la búsqueda. |
 | Editar proyecto | Menú lateral (Lo básico · Etiquetas y ubicación · Fecha de cierre) en lugar de pasos. La ubicación se muestra solo para leer porque el backend no permite cambiarla (`proyectoEdicionSchema`). |
 | Buscar colaboradoras | Ya no aparece la píldora vacía antes de elegir un proyecto. |

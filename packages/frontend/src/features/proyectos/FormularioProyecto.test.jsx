@@ -44,6 +44,8 @@ describe('FormularioProyecto por pasos', () => {
 
     expect(screen.getByRole('heading', { name: 'Lo básico' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Fecha de cierre automático (opcional)')).not.toBeInTheDocument();
+    // En el primer paso todavía no se puede crear: el botón aparece recién en el último.
+    expect(screen.queryByRole('button', { name: 'Crear proyecto' })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Siguiente: Etiquetas y ubicación' }));
     expect(await screen.findByText('Revisá 2 campos antes de continuar')).toBeInTheDocument();
@@ -59,6 +61,7 @@ describe('FormularioProyecto por pasos', () => {
 
     expect(await screen.findByRole('heading', { name: 'Etiquetas y ubicación' })).toBeInTheDocument();
     expect(crearProyecto).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Crear proyecto' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Siguiente: Fechas y búsqueda' }));
 
     expect(await screen.findByLabelText('Fecha de cierre automático (opcional)')).toBeInTheDocument();
@@ -72,19 +75,23 @@ describe('FormularioProyecto por pasos', () => {
     );
   });
 
-  it('permite volver a un paso anterior y crear sin recorrer los opcionales', async () => {
+  it('no deja saltear pasos que no se vieron, pero sí volver a los ya vistos', async () => {
     render(<FormularioProyecto />);
+
+    // Desde el primer paso no se puede saltar directo al último.
+    expect(screen.getByRole('tab', { name: /Fechas y búsqueda/ })).toBeDisabled();
 
     await userEvent.type(screen.getByRole('textbox', { name: 'Título (obligatorio)' }), 'Huerta');
     await userEvent.type(screen.getByRole('textbox', { name: 'Descripción (obligatoria)' }), 'Turnos');
     await userEvent.click(screen.getByRole('button', { name: 'Siguiente: Etiquetas y ubicación' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Anterior' }));
-    expect(screen.getByRole('textbox', { name: 'Título (obligatorio)' })).toHaveValue('Huerta');
+    await userEvent.click(screen.getByRole('button', { name: 'Siguiente: Fechas y búsqueda' }));
 
-    await userEvent.click(screen.getByRole('tab', { name: /Etiquetas y ubicación/ }));
-    expect(await screen.findByRole('heading', { name: 'Etiquetas y ubicación' })).toBeInTheDocument();
+    // Ya vio los tres pasos: puede volver al primero, corregir y saltar de nuevo al último.
     await userEvent.click(screen.getByRole('tab', { name: /Lo básico/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }));
+    expect(screen.getByRole('textbox', { name: 'Título (obligatorio)' })).toHaveValue('Huerta');
+    expect(screen.queryByRole('button', { name: 'Crear proyecto' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: /Fechas y búsqueda/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Crear proyecto' }));
 
     await waitFor(() => expect(crearProyecto).toHaveBeenCalledTimes(1));
   });
