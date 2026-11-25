@@ -5,6 +5,7 @@ import {
   FiChevronDown,
   FiCode,
   FiFileText,
+  FiGlobe,
   FiLogOut,
   FiLink,
   FiMap,
@@ -17,14 +18,14 @@ import {
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useNotificacionesPendientes } from '../../hooks/useNotificacionesPendientes.js';
-import { t } from '../../i18n/t';
+import { cambiarIdioma, t, useIdioma } from '../../i18n/t';
 import './Header.css';
 
 
 const ETIQUETA_ROL = {
-  COLECTIVO: 'Colectivo',
-  COLABORADOR: 'Colaborador',
-  ADMINISTRADOR: 'Administración'
+  COLECTIVO: 'navegacion.rolColectivo',
+  COLABORADOR: 'navegacion.rolColaborador',
+  ADMINISTRADOR: 'navegacion.rolAdministrador'
 };
 
 // El logo es el único acceso a Inicio (antes había un botón "Inicio" que hacía lo mismo).
@@ -71,16 +72,18 @@ const textoPendientes = (cantidad) =>
       : t('navegacion.notificacionesVarias', { cantidad });
 
 const Header = () => {
+  const idioma = useIdioma();
   const { isAuthenticated, sesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const { pendientes } = useNotificacionesPendientes();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [anclaUsuario, setAnclaUsuario] = useState(null);
+  const [anclaIdioma, setAnclaIdioma] = useState(null);
   const esAdministrador = sesion?.rol === 'ADMINISTRADOR';
   const conPerfil = isAuthenticated && (sesion?.tienePerfil || esAdministrador);
   const enlaces = enlacesPorRol(sesion?.rol);
   const nombre = sesion?.nombreUsuario || t('navegacion.miCuenta');
-  const rol = ETIQUETA_ROL[sesion?.rol] ?? '';
+  const rol = ETIQUETA_ROL[sesion?.rol] ? t(ETIQUETA_ROL[sesion.rol]) : '';
   const insignia = pendientes > 9 ? '9+' : pendientes;
 
   const cerrarMenu = () => setMenuAbierto(false);
@@ -150,6 +153,19 @@ const Header = () => {
           <div className="header-nav header-nav--desktop" />
         )}
 
+        <button
+          type="button"
+          className="header-idioma"
+          aria-label={t('navegacion.idioma')}
+          aria-haspopup="menu"
+          aria-expanded={Boolean(anclaIdioma)}
+          aria-controls={anclaIdioma ? 'menu-idioma' : undefined}
+          onClick={(evento) => setAnclaIdioma(evento.currentTarget)}
+        >
+          <FiGlobe aria-hidden="true" />
+          <span>{idioma === 'pt' ? 'PT' : 'ES'}</span>
+        </button>
+
         {conPerfil && (
           <div className="header-usuario">
             {!esAdministrador && campana}
@@ -186,6 +202,33 @@ const Header = () => {
         </IconButton>
         )}
       </div>
+
+      <Menu
+        id="menu-idioma"
+        anchorEl={anclaIdioma}
+        open={Boolean(anclaIdioma)}
+        onClose={() => setAnclaIdioma(null)}
+        slotProps={{ list: { 'aria-label': t('navegacion.idioma') } }}
+      >
+        {[
+          { codigo: 'es', nombre: 'Español' },
+          { codigo: 'pt', nombre: 'Português do Brasil (em revisão)' }
+        ].map(({ codigo, nombre }) => (
+          <MenuItem
+            key={codigo}
+            role="menuitemradio"
+            aria-checked={idioma === codigo}
+            selected={idioma === codigo}
+            onClick={() => {
+              cambiarIdioma(codigo);
+              setAnclaIdioma(null);
+            }}
+            lang={codigo === 'pt' ? 'pt-BR' : 'es'}
+          >
+            {nombre}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <Menu
         id="menu-usuario"

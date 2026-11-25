@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useAuth, useAuthOpcional } from '../../hooks/useAuth.jsx';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
+import { cambiarIdioma } from '../../i18n/t';
 import Header from './Header';
 
 jest.mock('../../hooks/useAuth.jsx', () => ({ useAuth: jest.fn(), useAuthOpcional: jest.fn() }));
@@ -57,6 +58,7 @@ const renderHeader = (path = '/notificaciones') => {
 describe('Header', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    cambiarIdioma('es');
     window.localStorage.clear();
     obtenerNotificaciones.mockResolvedValue({ notificaciones: [], total: 0, pag: 1, totalPags: 0 });
     configurar({ ...sesionBase, rol: 'COLABORADOR' });
@@ -121,6 +123,17 @@ describe('Header', () => {
 
     expect(screen.queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Abrir menú' })).not.toBeInTheDocument();
+  });
+
+  it('permite elegir portugués sin iniciar sesión y recuerda la elección', async () => {
+    configurar(null, false);
+    renderHeader('/');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Idioma' }));
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: 'Português do Brasil (em revisão)' }));
+
+    expect(screen.getByRole('button', { name: 'Idioma' })).toHaveTextContent('PT');
+    expect(window.localStorage.getItem('idioma')).toBe('pt');
   });
 
   it('el colectivo ve sus proyectos y la búsqueda de colaboradoras', () => {

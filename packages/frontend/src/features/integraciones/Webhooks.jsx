@@ -35,7 +35,7 @@ import { useNotificar } from '../../components/Notificador/Notificador.jsx';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
-import { t } from '../../i18n/t';
+import { obtenerLocale, t } from '../../i18n/t';
 import { mensajeDeError } from '../../service/api';
 import {
   actualizarWebhook,
@@ -66,7 +66,7 @@ const fechaVisible = (fecha) => {
   if (!fecha) return null;
   const date = new Date(fecha);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
+  return date.toLocaleString(obtenerLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 };
 
 const Webhooks = () => {
