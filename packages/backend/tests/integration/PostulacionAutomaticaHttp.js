@@ -111,17 +111,17 @@ function crearAppDePostulaciones(tipoAceptacion, limiteColaboraciones = null) {
       return { modifiedCount: 1 };
     },
     rechazarPendientesPorPerfil: async (idPerfil) => {
-      let modifiedCount = 0;
+      const rechazadas = [];
       for (const postulacion of postulaciones.values()) {
         if (
           String(postulacion.idPerfil) === String(idPerfil) &&
           postulacion.estado === EstadoPostulacion.PENDIENTE
         ) {
           postulacion.estado = EstadoPostulacion.RECHAZADA;
-          modifiedCount += 1;
+          rechazadas.push(postulacion);
         }
       }
-      return { modifiedCount };
+      return rechazadas;
     },
     obtenerPorProyecto: async (idProyecto) =>
       [...postulaciones.values()].filter(
@@ -129,25 +129,42 @@ function crearAppDePostulaciones(tipoAceptacion, limiteColaboraciones = null) {
       ),
   };
 
+  const notificacionService = {
+    crearEventoSistema: async () => {},
+    notificarResolucionPostulacion: async () => {},
+  };
   const service = new PostulacionService(
     proyectoRepository,
     perfilRepository,
     colaboradorService,
     colaboracionRepository,
     postulacionRepository,
+    undefined,
+    notificacionService,
   );
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.auth = {
+    req.usuario = {
+      _id: req.get("x-actor-id"),
       rol: req.get("x-actor-role"),
-      id: req.get("x-actor-id"),
     };
     next();
   });
+  const usuarioService = {
+    obtenerSesion: async (usuario) => ({
+      rol: usuario.rol,
+      idColectivo: usuario.rol === "COLECTIVO" ? usuario._id : null,
+      idColaborador: usuario.rol === "COLABORADOR" ? usuario._id : null,
+    }),
+  };
+  const autenticar = (_req, _res, next) => next();
   app.use(
     "/proyectos/:idProyecto",
-    crearPostulacionRouter(new PostulacionController(service)),
+    crearPostulacionRouter(
+      new PostulacionController(service, usuarioService),
+      autenticar,
+    ),
   );
   app.use(notFoundHandler);
   app.use(errorHandler);
@@ -158,7 +175,7 @@ function crearAppDePostulaciones(tipoAceptacion, limiteColaboraciones = null) {
 const urlDePostulacion =
   `/proyectos/${ID_PROYECTO}/perfiles/${ID_PERFIL}/postulaciones`;
 
-describe("Postulaciones automáticas - integración HTTP", () => {
+describe("Postulaciones y modos de aceptación - integración HTTP", () => {
   it("acepta automáticamente todas las postulaciones en modo SIN_LIMITE", async () => {
     const { app, colaboraciones } = crearAppDePostulaciones(
       TipoAceptacion.SIN_LIMITE,
@@ -167,9 +184,9 @@ describe("Postulaciones automáticas - integración HTTP", () => {
     for (const idColaborador of ["colaboradora-1", "colaboradora-2"]) {
       const response = await request(app)
         .post(urlDePostulacion)
-        .set("x-actor-role", "COLABORADORA")
+        .set("x-actor-role", "COLABORADOR")
         .set("x-actor-id", idColaborador)
-        .send({ idColaborador });
+        .send({});
 
       expect(response.status).toBe(201);
       expect(response.body.estado).toBe(EstadoPostulacion.ACEPTADA);
@@ -178,8 +195,8 @@ describe("Postulaciones automáticas - integración HTTP", () => {
     expect(colaboraciones).toHaveLength(2);
   });
 
-  it("cierra las vacantes y rechaza postulaciones pendientes al alcanzar el límite", async () => {
-    const { app, perfil, postulaciones } = crearAppDePostulaciones(
+  it("deja la aceptación manual y cierra el perfil al alcanzar el límite", async () => {
+    const { app, perfil, postulaciones, colaboraciones } = crearAppDePostulaciones(
       TipoAceptacion.LLENAR_VACANTES,
       1,
     );
@@ -193,22 +210,37 @@ describe("Postulaciones automáticas - integración HTTP", () => {
 
     const response = await request(app)
       .post(urlDePostulacion)
-      .set("x-actor-role", "COLABORADORA")
+      .set("x-actor-role", "COLABORADOR")
       .set("x-actor-id", "colaboradora-1")
-      .send({ idColaborador: "colaboradora-1" });
+      .send({});
 
     expect(response.status).toBe(201);
-    expect(response.body.estado).toBe(EstadoPostulacion.ACEPTADA);
+    expect(response.body.estado).toBe(EstadoPostulacion.PENDIENTE);
+    expect(perfil.busquedaAbierta).toBe(true);
+    expect(colaboraciones).toHaveLength(0);
+    expect(postulaciones.get("postulacion-previa").estado).toBe(
+      EstadoPostulacion.PENDIENTE,
+    );
+
+    const aceptada = await request(app)
+      .patch(`/proyectos/${ID_PROYECTO}/postulaciones/${response.body.id}`)
+      .set("x-actor-role", "COLECTIVO")
+      .set("x-actor-id", ID_COLECTIVO)
+      .send({ decision: EstadoPostulacion.ACEPTADA });
+
+    expect(aceptada.status).toBe(200);
+    expect(aceptada.body.estado).toBe(EstadoPostulacion.ACEPTADA);
     expect(perfil.busquedaAbierta).toBe(false);
     expect(postulaciones.get("postulacion-previa").estado).toBe(
       EstadoPostulacion.RECHAZADA,
     );
+    expect(colaboraciones).toHaveLength(1);
 
     const siguientePostulacion = await request(app)
       .post(urlDePostulacion)
-      .set("x-actor-role", "COLABORADORA")
+      .set("x-actor-role", "COLABORADOR")
       .set("x-actor-id", "colaboradora-2")
-      .send({ idColaborador: "colaboradora-2" });
+      .send({});
 
     expect(siguientePostulacion.status).toBe(409);
     expect(siguientePostulacion.body.codigo).toBe("BUSQUEDA_CERRADA");
@@ -221,9 +253,9 @@ describe("Postulaciones automáticas - integración HTTP", () => {
 
     const response = await request(app)
       .post(urlDePostulacion)
-      .set("x-actor-role", "COLABORADORA")
+      .set("x-actor-role", "COLABORADOR")
       .set("x-actor-id", "colaboradora-1")
-      .send({ idColaborador: "colaboradora-1" });
+      .send({});
 
     expect(response.status).toBe(201);
     expect(response.body.estado).toBe(EstadoPostulacion.PENDIENTE);

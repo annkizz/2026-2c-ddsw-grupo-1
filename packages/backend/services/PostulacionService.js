@@ -186,10 +186,7 @@ export class PostulacionService {
         throw error;
       }
 
-      if (
-        perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE ||
-        perfil.tipoAceptacion === TipoAceptacion.LLENAR_VACANTES
-      ) {
+      if (perfil.tipoAceptacion === TipoAceptacion.SIN_LIMITE) {
         return await this.aceptarPostulacion(proyecto, guardada, idProyecto);
       }
 

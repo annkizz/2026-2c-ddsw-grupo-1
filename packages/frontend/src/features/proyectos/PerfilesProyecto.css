@@ -37,6 +37,26 @@
   gap: var(--space-2);
 }
 
+.perfil-tipo-aceptacion {
+  gap: var(--space-1);
+}
+
+.perfil-tipo-aceptacion .MuiFormControlLabel-root {
+  align-items: flex-start;
+  margin-left: 0;
+}
+
+.perfil-tipo-aceptacion .MuiRadio-root {
+  padding-top: 0;
+}
+
+.perfil-tipo-aceptacion__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+}
+
 @media (max-width: 599.95px) {
   .form-fila-2 {
     grid-template-columns: minmax(0, 1fr);
