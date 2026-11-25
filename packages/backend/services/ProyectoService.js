@@ -6,8 +6,9 @@ import { normalizarEtiquetas } from "../domain/etiquetas.js";
 import {
   construirUbicacionDeProyecto,
   normalizarProvincia,
+  normalizarPais,
+  normalizarCoordenadas,
   PAIS_ARGENTINA,
-  ubicacionHeredadaDeColectivo,
 } from "../domain/provincias.js";
 import {
   BadRequestError,
@@ -25,8 +26,15 @@ import { EstadoPostulacion } from "../domain/EstadoPostulacion.js";
 import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 import { NotificacionService } from "./NotificacionService.js";
 
-const NIVELES_MAPA = new Set(["provincia", "pais"]);
+const NIVELES_MAPA = new Set(["provincia", "pais", "proyecto"]);
 const ESTADOS_VALIDOS = new Set(Object.values(Estado));
+const tieneCoordenadasValidas = (ubicacion) =>
+  Number.isFinite(ubicacion?.latitud) &&
+  Number.isFinite(ubicacion?.longitud) &&
+  ubicacion.latitud >= -90 &&
+  ubicacion.latitud <= 90 &&
+  ubicacion.longitud >= -180 &&
+  ubicacion.longitud <= 180;
 
 export class ProyectoService {
   constructor(
@@ -49,6 +57,54 @@ export class ProyectoService {
     this.postulacionRepository = postulacionRepository;
     this.despachadorWebhooks = despachadorWebhooks;
     this.notificacionService = notificacionService;
+  }
+
+  normalizarUbicacionProyecto(ubicacionIngresada) {
+    if (normalizarPais(ubicacionIngresada?.pais) === null) {
+      throw new BadRequestError(
+        "el país ingresado no es válido",
+        "PAIS_INVALIDO",
+      );
+    }
+    if (normalizarProvincia(ubicacionIngresada?.provincia) === null) {
+      throw new BadRequestError(
+        "la provincia ingresada no es válida",
+        "PROVINCIA_INVALIDA",
+      );
+    }
+    if (
+      typeof ubicacionIngresada?.ciudad !== "string" ||
+      ubicacionIngresada.ciudad.trim() === ""
+    ) {
+      throw new BadRequestError(
+        "la localidad es obligatoria",
+        "LOCALIDAD_REQUERIDA",
+      );
+    }
+
+    const coordenadas = normalizarCoordenadas(
+      ubicacionIngresada.latitud,
+      ubicacionIngresada.longitud,
+    );
+    if (
+      coordenadas === null ||
+      coordenadas.latitud === undefined ||
+      coordenadas.longitud === undefined
+    ) {
+      throw new BadRequestError(
+        "elegí la ubicación exacta en el mapa o buscá una dirección",
+        "COORDENADAS_INVALIDAS",
+      );
+    }
+
+    const ubicacion = construirUbicacionDeProyecto(ubicacionIngresada);
+    if (ubicacion === null) {
+      throw new BadRequestError(
+        "los datos de ubicación no son válidos",
+        "UBICACION_INVALIDA",
+      );
+    }
+    return ubicacion;
   }
 
   crear = async (datosProyecto, usuario) => {
@@ -74,18 +130,10 @@ export class ProyectoService {
       this.validarFechaLimite(fechaLimiteCierre);
     }
 
-    let ubicacion;
-    if (datosProyecto.ubicacion === undefined) {
-      ubicacion = ubicacionHeredadaDeColectivo(colectivo);
-    } else {
-      ubicacion = construirUbicacionDeProyecto(datosProyecto.ubicacion);
-      if (ubicacion === null) {
-        throw new BadRequestError(
-          "la provincia ingresada no es válida",
-          "PROVINCIA_INVALIDA",
-        );
-      }
-    }
+    const ubicacion =
+      datosProyecto.ubicacion === undefined
+        ? null
+        : this.normalizarUbicacionProyecto(datosProyecto.ubicacion);
 
     const busquedaAbierta = datosProyecto.busquedaAbierta ?? false;
     const fechaLimiteBusqueda = datosProyecto.fechaLimiteBusqueda ?? null;
@@ -550,6 +598,32 @@ export class ProyectoService {
     }
 
     const proyectos = await this.proyectoRepository.obtenerActivosParaMapa();
+
+    if (nivel === "proyecto") {
+      return proyectos
+        .filter((proyecto) => tieneCoordenadasValidas(proyecto.ubicacion))
+        .map((proyecto) => {
+          const ubicacion = proyecto.ubicacion;
+          const colectivo = proyecto.idColectivo;
+          return {
+            id: String(proyecto._id),
+            titulo: proyecto.titulo,
+            descripcion: proyecto.descripcion,
+            latitud: ubicacion.latitud,
+            longitud: ubicacion.longitud,
+            ciudad: ubicacion.ciudad ?? null,
+            direccion: ubicacion.direccion ?? null,
+            provincia:
+              ubicacion.nombreProvincia ?? ubicacion.codigoProvincia ?? null,
+            codigoProvincia: ubicacion.codigoProvincia ?? null,
+            colectivo: {
+              id: colectivo ? String(colectivo._id ?? colectivo) : null,
+              nombre: colectivo?.nombre ?? null,
+            },
+          };
+        });
+    }
+
     const grupos = new Map();
 
     for (const proyecto of proyectos) {
@@ -557,10 +631,6 @@ export class ProyectoService {
       if (region === null) {
         continue;
       }
-      if (nivel === "provincia" && region.codigo === "AR-C") {
-        continue;
-      }
-
       let grupo = grupos.get(region.codigo);
       if (grupo === undefined) {
         grupo = {
@@ -578,7 +648,15 @@ export class ProyectoService {
       grupo.proyectos.push({
         id: String(proyecto._id),
         titulo: proyecto.titulo,
+        descripcion: proyecto.descripcion,
         ciudad: proyecto.ubicacion.ciudad ?? null,
+        direccion: proyecto.ubicacion.direccion ?? null,
+        ...(tieneCoordenadasValidas(proyecto.ubicacion)
+          ? {
+              latitud: proyecto.ubicacion.latitud,
+              longitud: proyecto.ubicacion.longitud,
+            }
+          : {}),
         colectivo: {
           id: colectivo ? String(colectivo._id ?? colectivo) : null,
           nombre: colectivo?.nombre ?? null,
@@ -722,6 +800,12 @@ export class ProyectoService {
       datosNormalizados.etiquetas = normalizarEtiquetas(
         datosNormalizados.etiquetas,
       );
+    }
+    if (datosNormalizados.ubicacion !== undefined) {
+      datosNormalizados.ubicacion =
+        datosNormalizados.ubicacion === null
+          ? null
+          : this.normalizarUbicacionProyecto(datosNormalizados.ubicacion);
     }
     proyecto.editarDatos(datosNormalizados);
     return this.toDTO(await this.proyectoRepository.save(proyecto));

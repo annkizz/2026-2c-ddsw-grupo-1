@@ -93,11 +93,14 @@ export class Proyecto {
     }
   }
 
-  editarDatos({ titulo, descripcion, etiquetas }) {
+  editarDatos({ titulo, descripcion, etiquetas, ubicacion }) {
     this.titulo = titulo;
     this.descripcion = descripcion;
     if (etiquetas !== undefined) {
       this.etiquetas = etiquetas;
+    }
+    if (ubicacion !== undefined) {
+      this.ubicacion = ubicacion;
     }
   }
 

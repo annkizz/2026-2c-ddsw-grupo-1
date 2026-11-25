@@ -584,7 +584,7 @@ describe("ProyectoService", () => {
   });
 
   describe("req 15: ubicaciones", () => {
-    it("hereda la ubicacion del colectivo si el proyecto no la manda", async () => {
+    it("no hereda la ubicacion del colectivo si el proyecto no la manda", async () => {
       colectivo.ubicacion = {
         pais: "Argentina",
         provincia: "Córdoba",
@@ -597,13 +597,7 @@ describe("ProyectoService", () => {
         descripcion: "D",
       });
 
-      expect(creado.ubicacion).toEqual({
-        codigoPais: "AR",
-        nombrePais: "Argentina",
-        codigoProvincia: "AR-X",
-        nombreProvincia: "Córdoba",
-        ciudad: "Córdoba",
-      });
+      expect(creado.ubicacion).toBeNull();
     });
 
     it("la ubicacion propia manda sobre la del colectivo", async () => {
@@ -613,7 +607,14 @@ describe("ProyectoService", () => {
         idColectivo: "col-1",
         titulo: "T",
         descripcion: "D",
-        ubicacion: { provincia: "Mendoza", ciudad: "Godoy Cruz" },
+        ubicacion: {
+          pais: "Argentina",
+          provincia: "Mendoza",
+          ciudad: "Godoy Cruz",
+          direccion: "Plaza Godoy Cruz",
+          latitud: -32.89,
+          longitud: -68.83,
+        },
       });
 
       expect(creado.ubicacion).toEqual({
@@ -622,6 +623,9 @@ describe("ProyectoService", () => {
         codigoProvincia: "AR-M",
         nombreProvincia: "Mendoza",
         ciudad: "Godoy Cruz",
+        direccion: "Plaza Godoy Cruz",
+        latitud: -32.89,
+        longitud: -68.83,
       });
     });
 
@@ -641,9 +645,31 @@ describe("ProyectoService", () => {
           idColectivo: "col-1",
           titulo: "T",
           descripcion: "D",
-          ubicacion: { provincia: "Narnia" },
+          ubicacion: {
+            pais: "Argentina",
+            provincia: "Narnia",
+            ciudad: "Ciudad",
+            latitud: -34,
+            longitud: -58,
+          },
         }),
       ).rejects.toMatchObject({ codigo: "PROVINCIA_INVALIDA" });
+      expect(proyectoRepository.save).not.toHaveBeenCalled();
+    });
+
+    it("requiere localidad y ubicación exacta cuando el proyecto declara país", async () => {
+      await expect(
+        crearProyecto({
+          idColectivo: "col-1",
+          titulo: "T",
+          descripcion: "D",
+          ubicacion: {
+            pais: "Argentina",
+            provincia: "Mendoza",
+            ciudad: "Godoy Cruz",
+          },
+        }),
+      ).rejects.toMatchObject({ codigo: "COORDENADAS_INVALIDAS" });
       expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
 
@@ -689,6 +715,7 @@ describe("ProyectoService", () => {
         {
           _id: "p-1",
           titulo: "Uno",
+          descripcion: "Descripcion uno",
           idColectivo: { _id: "col-1", nombre: "Colectivo Uno" },
           ubicacion: {
             codigoPais: "AR",
@@ -701,6 +728,7 @@ describe("ProyectoService", () => {
         {
           _id: "p-2",
           titulo: "Dos",
+          descripcion: "Descripcion dos",
           idColectivo: { _id: "col-1", nombre: "Colectivo Uno" },
           ubicacion: {
             codigoPais: "AR",
@@ -713,6 +741,7 @@ describe("ProyectoService", () => {
         {
           _id: "p-3",
           titulo: "Tres",
+          descripcion: "Descripcion tres",
           idColectivo: { _id: "col-2", nombre: "Colectivo Dos" },
           ubicacion: {
             codigoPais: "AR",
@@ -753,21 +782,26 @@ describe("ProyectoService", () => {
       expect(resultado[0].proyectos[0]).toEqual({
         id: "p-1",
         titulo: "Uno",
+        descripcion: "Descripcion uno",
         ciudad: "Godoy Cruz",
+        direccion: null,
         colectivo: { id: "col-1", nombre: "Colectivo Uno" },
       });
-      expect(resultado[1]).toMatchObject({
+      expect(resultado.find((grupo) => grupo.codigo === "AR-X")).toMatchObject({
         nivel: "provincia",
         codigo: "AR-X",
         nombre: "Córdoba",
         cantidad: 1,
       });
-      expect(
-        resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
-      ).not.toContain("p-4");
-      expect(
-        resultado.flatMap((grupo) => grupo.proyectos).map((p) => p.id),
-      ).not.toContain("p-5");
+      expect(resultado.find((grupo) => grupo.codigo === "AR-C")).toMatchObject({
+        nombre: "Ciudad Autónoma de Buenos Aires",
+        cantidad: 1,
+      });
+      const idsIncluidos = resultado
+        .flatMap((grupo) => grupo.proyectos)
+        .map((proyecto) => proyecto.id);
+      expect(idsIncluidos).not.toContain("p-4");
+      expect(idsIncluidos).toContain("p-5");
     });
 
     it("puede agrupar por pais sin cambiar el resto del contrato", async () => {
@@ -775,6 +809,7 @@ describe("ProyectoService", () => {
         {
           _id: "p-1",
           titulo: "Uno",
+          descripcion: "Descripción uno",
           idColectivo: { _id: "col-1", nombre: "Colectivo Uno" },
           ubicacion: {
             codigoPais: "AR",
@@ -798,10 +833,55 @@ describe("ProyectoService", () => {
             {
               id: "p-1",
               titulo: "Uno",
+              descripcion: "Descripción uno",
               ciudad: "Godoy Cruz",
+              direccion: null,
               colectivo: { id: "col-1", nombre: "Colectivo Uno" },
             },
           ],
+        },
+      ]);
+    });
+
+    it("devuelve solo proyectos con coordenadas para los marcadores del mapa", async () => {
+      proyectoRepository.obtenerActivosParaMapa.mockResolvedValue([
+        {
+          _id: "p-geolocalizado",
+          titulo: "Proyecto con coordenadas",
+          descripcion: "Descripción del proyecto",
+          idColectivo: { _id: "col-1", nombre: "Colectivo Uno" },
+          ubicacion: {
+            codigoProvincia: "AR-M",
+            nombreProvincia: "Mendoza",
+            ciudad: "Godoy Cruz",
+            latitud: -32.89,
+            longitud: -68.83,
+          },
+        },
+        {
+          _id: "p-sin-coordenadas",
+          titulo: "Proyecto solo provincial",
+          idColectivo: { _id: "col-1", nombre: "Colectivo Uno" },
+          ubicacion: {
+            codigoProvincia: "AR-M",
+            nombreProvincia: "Mendoza",
+            ciudad: "Mendoza",
+          },
+        },
+      ]);
+
+      await expect(service.obtenerUbicaciones("proyecto")).resolves.toEqual([
+        {
+          id: "p-geolocalizado",
+          titulo: "Proyecto con coordenadas",
+          descripcion: "Descripción del proyecto",
+          latitud: -32.89,
+          longitud: -68.83,
+          ciudad: "Godoy Cruz",
+          direccion: null,
+          provincia: "Mendoza",
+          codigoProvincia: "AR-M",
+          colectivo: { id: "col-1", nombre: "Colectivo Uno" },
         },
       ]);
     });

@@ -790,17 +790,45 @@ const swaggerSpec = {
                   ubicacion: {
                     type: "object",
                     description:
-                      "req 15: opcional. Si no se envia, se hereda la ubicacion del colectivo; si el colectivo tampoco tiene, el proyecto queda sin ubicacion.",
+                      "req 15: opcional y propia del proyecto; nunca se hereda del colectivo. Si se envía, requiere país, provincia, localidad y coordenadas exactas elegidas en el mapa o mediante búsqueda de dirección.",
                     properties: {
+                      pais: {
+                        type: "string",
+                        enum: ["Argentina"],
+                        example: "Argentina",
+                      },
                       provincia: {
                         type: "string",
-                        example: "Cordoba",
+                        example: "AR-M",
                         description:
                           "Nombre o alias de provincia (se normaliza a codigo ISO 3166-2:AR en la respuesta). La ubicacion guardada incluye ademas codigoPais/nombrePais para que el mapa pueda agrupar por pais.",
                       },
-                      ciudad: { type: "string", example: "Córdoba" },
+                      ciudad: { type: "string", example: "Godoy Cruz" },
+                      direccion: {
+                        type: "string",
+                        nullable: true,
+                        example: "Plaza Godoy Cruz, Mendoza, Argentina",
+                      },
+                      latitud: {
+                        type: "number",
+                        minimum: -90,
+                        maximum: 90,
+                        example: -31.42,
+                      },
+                      longitud: {
+                        type: "number",
+                        minimum: -180,
+                        maximum: 180,
+                        example: -64.18,
+                      },
                     },
-                    required: ["provincia"],
+                    required: [
+                      "pais",
+                      "provincia",
+                      "ciudad",
+                      "latitud",
+                      "longitud",
+                    ],
                     additionalProperties: false,
                   },
                   busquedaAbierta: {
@@ -843,9 +871,9 @@ const swaggerSpec = {
     },
     "/proyectos/ubicaciones": {
       get: {
-        summary: "Distribucion de proyectos activos por region (req 15)",
+        summary: "Ubicaciones geográficas de proyectos activos (req 15)",
         description:
-          "Devuelve los proyectos activos que cuentan con ubicacion agrupados por provincia (nivel=provincia, default) o por pais (nivel=pais), con la cantidad de cada grupo y el detalle (titulo, ciudad y colectivo) para el listado del mapa. Los proyectos finalizados no se incluyen. Ordenado por cantidad descendente y luego por nombre.",
+          "Por defecto agrupa por provincia y devuelve el detalle para la tabla; nivel=pais agrupa por país; nivel=proyecto devuelve solo proyectos con coordenadas para dibujar marcadores. Todos los niveles excluyen proyectos finalizados. El agrupamiento se ordena por cantidad descendente y luego por nombre.",
         parameters: [
           {
             in: "query",
@@ -853,11 +881,11 @@ const swaggerSpec = {
             required: false,
             schema: {
               type: "string",
-              enum: ["provincia", "pais"],
+              enum: ["provincia", "pais", "proyecto"],
               default: "provincia",
             },
             description:
-              "Region por la que se agrupa. provincia usa codigoProvincia; pais usa codigoPais.",
+              "Agrupación geográfica o lista de proyectos con coordenadas: provincia, pais o proyecto.",
           },
         ],
         responses: {
@@ -868,39 +896,96 @@ const swaggerSpec = {
                 schema: {
                   type: "array",
                   items: {
-                    type: "object",
-                    properties: {
-                      nivel: {
-                        type: "string",
-                        enum: ["provincia", "pais"],
-                        example: "provincia",
-                      },
-                      codigo: { type: "string", example: "AR-M" },
-                      nombre: { type: "string", example: "Mendoza" },
-                      cantidad: { type: "integer", example: 2 },
-                      proyectos: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            id: { type: "string" },
-                            titulo: { type: "string" },
-                            ciudad: {
-                              type: "string",
-                              nullable: true,
-                              example: "Godoy Cruz",
-                            },
-                            colectivo: {
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          nivel: {
+                            type: "string",
+                            enum: ["provincia", "pais"],
+                            example: "provincia",
+                          },
+                          codigo: { type: "string", example: "AR-M" },
+                          nombre: { type: "string", example: "Mendoza" },
+                          cantidad: { type: "integer", example: 2 },
+                          proyectos: {
+                            type: "array",
+                            items: {
                               type: "object",
                               properties: {
                                 id: { type: "string" },
-                                nombre: { type: "string" },
+                                titulo: { type: "string" },
+                                descripcion: { type: "string" },
+                                ciudad: {
+                                  type: "string",
+                                  nullable: true,
+                                  example: "Godoy Cruz",
+                                },
+                                direccion: {
+                                  type: "string",
+                                  nullable: true,
+                                },
+                                latitud: {
+                                  type: "number",
+                                  minimum: -90,
+                                  maximum: 90,
+                                  nullable: true,
+                                },
+                                longitud: {
+                                  type: "number",
+                                  minimum: -180,
+                                  maximum: 180,
+                                  nullable: true,
+                                },
+                                colectivo: {
+                                  type: "object",
+                                  properties: {
+                                    id: { type: "string" },
+                                    nombre: { type: "string" },
+                                  },
+                                },
                               },
                             },
                           },
                         },
                       },
-                    },
+                      {
+                        type: "object",
+                        required: [
+                          "id",
+                          "titulo",
+                          "latitud",
+                          "longitud",
+                          "codigoProvincia",
+                        ],
+                        properties: {
+                          id: { type: "string" },
+                          titulo: { type: "string" },
+                          descripcion: { type: "string" },
+                          latitud: {
+                            type: "number",
+                            minimum: -90,
+                            maximum: 90,
+                          },
+                          longitud: {
+                            type: "number",
+                            minimum: -180,
+                            maximum: 180,
+                          },
+                          ciudad: { type: "string", nullable: true },
+                          direccion: { type: "string", nullable: true },
+                          provincia: { type: "string" },
+                          codigoProvincia: { type: "string" },
+                          colectivo: {
+                            type: "object",
+                            properties: {
+                              id: { type: "string", nullable: true },
+                              nombre: { type: "string", nullable: true },
+                            },
+                          },
+                        },
+                      },
+                    ],
                   },
                 },
               },
@@ -909,6 +994,59 @@ const swaggerSpec = {
           400: {
             description: "El nivel del mapa no es valido",
           },
+        },
+      },
+    },
+    "/proyectos/geocodificar": {
+      post: {
+        summary: "Busca direcciones para ubicar un proyecto",
+        description:
+          "Búsqueda manual con Nominatim de OpenStreetMap. Las solicitudes se envían a través del backend, se limitan a una por segundo y se cachean. No usar como autocompletado ni enviar datos personales o confidenciales.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["direccion", "provincia", "ciudad"],
+                properties: {
+                  direccion: {
+                    type: "string",
+                    minLength: 3,
+                    maxLength: 200,
+                  },
+                  provincia: { type: "string", example: "AR-M" },
+                  ciudad: { type: "string", example: "Godoy Cruz" },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Direcciones encontradas para que la persona elija",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["id", "direccion", "latitud", "longitud"],
+                    properties: {
+                      id: { type: "string" },
+                      direccion: { type: "string" },
+                      latitud: { type: "number" },
+                      longitud: { type: "number" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: "Dirección, localidad o provincia inválida" },
+          502: { description: "El geocodificador no está disponible" },
         },
       },
     },
@@ -1575,7 +1713,7 @@ const swaggerSpec = {
         },
       },
       put: {
-        summary: "Edita el título, la descripción y las etiquetas de un proyecto",
+        summary: "Edita los datos y la ubicación propia de un proyecto",
         parameters: [
           {
             in: "path",
@@ -1605,6 +1743,32 @@ const swaggerSpec = {
                     example: ["Accesibilidad Web", "Salud"],
                     description:
                       "req 34: Lista de etiquetas personalizadas (max 10, de 1 a 30 caracteres c/u).",
+                  },
+                  ubicacion: {
+                    type: "object",
+                    nullable: true,
+                    description:
+                      "Ubicación exacta del proyecto. null la elimina; si se omite, se conserva. No se hereda del colectivo.",
+                    properties: {
+                      pais: { type: "string", enum: ["Argentina"] },
+                      provincia: { type: "string", example: "AR-M" },
+                      ciudad: { type: "string", example: "Godoy Cruz" },
+                      direccion: { type: "string", nullable: true },
+                      latitud: { type: "number", minimum: -90, maximum: 90 },
+                      longitud: {
+                        type: "number",
+                        minimum: -180,
+                        maximum: 180,
+                      },
+                    },
+                    required: [
+                      "pais",
+                      "provincia",
+                      "ciudad",
+                      "latitud",
+                      "longitud",
+                    ],
+                    additionalProperties: false,
                   },
                 },
                 additionalProperties: false,

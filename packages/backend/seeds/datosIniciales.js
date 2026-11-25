@@ -74,7 +74,7 @@ export function crearDatosIniciales({
       titulo: "Portal de turnos solidarios",
       descripcion: "Sitio para que voluntarias y voluntarios reserven turnos.",
       etiquetas: ["Salud", "Voluntariado", "Turnos"],
-      // req 15: sin ubicacion propia; hereda Buenos Aires de su colectivo.
+      // req 15: no declara ubicacion propia; no se muestra en el mapa.
       estado: "ACTIVO",
       fechaInicio: enDias(-30),
       fechaLimiteCierre: null,
@@ -127,8 +127,13 @@ export function crearDatosIniciales({
       titulo: "Mapa de comedores comunitarios",
       descripcion: "Mapa interactivo y accesible de comedores de todo el país.",
       etiquetas: ["Alimentos", "Accesibilidad Web", "Datos Abiertos"],
-      // req 15: ubicacion propia (su colectivo no tiene): Mendoza.
-      ubicacion: { provincia: "Mendoza", ciudad: "Godoy Cruz" },
+      // req 15: ubicacion propia en Mendoza, independiente del colectivo.
+      ubicacion: {
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+        latitud: -32.927,
+        longitud: -68.844,
+      },
       estado: "ACTIVO",
       fechaInicio: enDias(-10),
       fechaLimiteCierre: enDias(60),
@@ -158,7 +163,7 @@ export function crearDatosIniciales({
       descripcion:
         "Sistema para registrar las donaciones que recibe la despensa.",
       etiquetas: ["Alimentos", "Comunidad"],
-      // req 15: sin ubicacion propia; hereda Córdoba de su colectivo.
+      // req 15: no declara ubicacion propia; no se muestra en el mapa.
       estado: "FINALIZADO",
       fechaInicio: enDias(-120),
       fechaLimiteCierre: enDias(-20),
@@ -198,7 +203,12 @@ export function crearDatosIniciales({
         "Proyecto para probar anotación, cierre programado y cierre automático.",
       // req 15: ubicacion propia distinta a la del colectivo (Buenos Aires):
       // el mapa cuenta al proyecto en Mendoza, no al colectivo.
-      ubicacion: { provincia: "Mendoza", ciudad: "Mendoza" },
+      ubicacion: {
+        provincia: "Mendoza",
+        ciudad: "Mendoza",
+        latitud: -32.8895,
+        longitud: -68.8458,
+      },
       estado: "ACTIVO",
       fechaInicio: enDias(-1),
       fechaLimiteCierre: enMinutos(minutosParaCierre),

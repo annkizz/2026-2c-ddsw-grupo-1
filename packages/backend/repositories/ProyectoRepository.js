@@ -86,7 +86,7 @@ export class ProyectoRepository {
   obtenerActivosParaMapa() {
     return this.proyectoModel
       .find({ estado: Estado.ACTIVO })
-      .select("titulo ubicacion idColectivo")
+      .select("titulo descripcion ubicacion idColectivo")
       .populate("idColectivo", "nombre")
       .sort({ fechaInicio: -1 })
       .exec();

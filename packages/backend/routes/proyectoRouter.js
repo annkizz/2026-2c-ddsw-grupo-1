@@ -7,6 +7,7 @@ import {
   proyectoEdicionSchema,
   busquedaSchema,
   destacarProyectoSchema,
+  geocodificarUbicacionSchema,
 } from "../controllers/ProyectoController.js";
 import { crearPerfilRouter } from "./perfilRouter.js";
 import { crearPostulacionRouter } from "./postulacionRouter.js";
@@ -38,6 +39,15 @@ export function crearProyectoRouter(
   router
     .route("/ubicaciones")
     .get((req, res) => proyectoController.obtenerUbicaciones(req, res));
+
+  router
+    .route("/geocodificar")
+    .post(
+      autenticar,
+      requerirRol(Rol.COLECTIVO),
+      validate(geocodificarUbicacionSchema),
+      (req, res) => proyectoController.geocodificar(req, res),
+    );
 
   router
     .route("/:idProyecto/colaboraciones")

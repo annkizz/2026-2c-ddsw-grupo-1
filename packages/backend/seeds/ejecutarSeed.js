@@ -4,10 +4,7 @@ import { Proyecto } from "../domain/Proyecto.js";
 import { Colaborador } from "../domain/Colaborador.js";
 import { Colaboracion } from "../domain/Colaboracion.js";
 import { normalizarEtiquetas } from "../domain/etiquetas.js";
-import {
-  construirUbicacionDeProyecto,
-  ubicacionHeredadaDeColectivo,
-} from "../domain/provincias.js";
+import { construirUbicacionDeProyecto } from "../domain/provincias.js";
 
 //recibe los datos iniciales y los inserta usando repo real
 
@@ -45,13 +42,6 @@ export async function ejecutarSeed(
   await db.borrarDatosDeProyectos(idsProyectosSeed);
   const perfilesGuardados = new Map();
 
-  // req 15: la seed crea los colectivos despues de los proyectos, asi que el
-  // fallback de ubicacion se resuelve con un lookup en memoria de los datos.
-  const colectivosPorId = {};
-  for (const c of datos.colectivos) {
-    colectivosPorId[c.id] = c;
-  }
-
   for (const p of datos.proyectos) {
     for (const perfil of p.perfiles) {
       const guardado = await db.guardarPerfil({
@@ -76,10 +66,13 @@ export async function ejecutarSeed(
         p.busquedaAbierta ?? false,
         p.fechaLimiteBusqueda ?? null,
         normalizarEtiquetas(p.etiquetas), // req 34
-        // req 15: ubicacion propia o heredada del colectivo
+        // req 15: solo se guarda la ubicacion declarada por el proyecto.
         p.ubicacion !== undefined
-          ? construirUbicacionDeProyecto(p.ubicacion)
-          : ubicacionHeredadaDeColectivo(colectivosPorId[p.idColectivo]),
+          ? construirUbicacionDeProyecto({
+              ...p.ubicacion,
+              pais: p.ubicacion.pais ?? "Argentina",
+            })
+          : null,
         p.destacado ?? false,
         p.destacadoHasta ?? null,
       ),

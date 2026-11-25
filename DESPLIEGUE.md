@@ -118,6 +118,9 @@ El estado de carga se guarda en Mongo. `SEED_FORCE=true` vuelve a cargarla y rei
 de los proyectos demo; los proyectos creados por la API quedan intactos. Si se publica una versión nueva de los datos,
 actualizá `idVersionSeed` en `packages/backend/seeds/seed.js` o forzá la carga en la VM.
 
+La versión `demo-entrega-3-v2` actualiza la geolocalización de los proyectos demo. Al aplicarla, se vuelven a cargar esos
+proyectos y sus datos asociados; las ubicaciones de proyectos creados fuera de la seed no se modifican.
+
 **Esperado:** `Seed listo: 24 habilidades, 6 colectivos, 10 proyectos, 13 perfiles, 7 logros, 15 colaboradoras, 6 colaboraciones`.
 
 Los datos incluyen proyectos activos y finalizados, búsquedas abiertas y cerradas, ubicaciones en varias provincias,

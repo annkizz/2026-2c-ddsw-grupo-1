@@ -4,9 +4,28 @@ import { ETIQUETA_MAX, ETIQUETAS_MAX } from "../domain/etiquetas.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 import { paginacionSchema } from "../schemas/zod/paginacionSchema.js";
 import { BadRequestError } from "../errors/AppError.js";
+import { GeolocalizacionService } from "../services/GeolocalizacionService.js";
 
 const fechaLimiteCierreSchema = z.coerce.date();
 const fechaLimiteBusquedaSchema = z.coerce.date().nullable();
+const ubicacionProyectoSchema = z
+  .object({
+    pais: z.literal("Argentina"),
+    provincia: z.string().trim().min(1),
+    ciudad: z.string().trim().min(1),
+    direccion: z.string().trim().max(300).nullable().optional(),
+    latitud: z.number().min(-90).max(90),
+    longitud: z.number().min(-180).max(180),
+  })
+  .strict();
+
+export const geocodificarUbicacionSchema = z
+  .object({
+    direccion: z.string().trim().min(3).max(200),
+    provincia: z.string().trim().min(1),
+    ciudad: z.string().trim().min(1),
+  })
+  .strict();
 
 export const proyectoSchema = z
   .object({
@@ -22,13 +41,7 @@ export const proyectoSchema = z
       .max(ETIQUETAS_MAX)
       .optional(),
     // req 15
-    ubicacion: z
-      .object({
-        provincia: z.string().trim().min(1),
-        ciudad: z.string().trim().min(1).optional(),
-      })
-      .strict()
-      .optional(),
+    ubicacion: ubicacionProyectoSchema.optional(),
   })
   .strict();
 
@@ -60,6 +73,7 @@ export const proyectoEdicionSchema = z
       .array(z.string().min(1).max(ETIQUETA_MAX))
       .max(ETIQUETAS_MAX)
       .optional(),
+    ubicacion: ubicacionProyectoSchema.nullable().optional(),
   })
   .strict();
 
@@ -85,9 +99,20 @@ export const destacarProyectoSchema = z.union([
 ]);
 
 export class ProyectoController {
-  constructor(proyectoService = new ProyectoService()) {
+  constructor(
+    proyectoService = new ProyectoService(),
+    geolocalizacionService = new GeolocalizacionService(),
+  ) {
     this.proyectoService = proyectoService;
+    this.geolocalizacionService = geolocalizacionService;
   }
+
+  geocodificar = async (req, res) => {
+    const resultados = await this.geolocalizacionService.buscarDirecciones(
+      req.body,
+    );
+    res.status(200).json(resultados);
+  };
 
   crear = async (req, res) => {
     const proyectoNuevo = await this.proyectoService.crear(

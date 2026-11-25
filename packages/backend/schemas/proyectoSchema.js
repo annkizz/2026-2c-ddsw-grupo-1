@@ -9,6 +9,9 @@ const ubicacionSchema = new mongoose.Schema(
     codigoProvincia: { type: String, trim: true },
     nombreProvincia: { type: String, trim: true },
     ciudad: { type: String, trim: true },
+    direccion: { type: String, trim: true },
+    latitud: { type: Number, min: -90, max: 90 },
+    longitud: { type: Number, min: -180, max: 180 },
   },
   { _id: false },
 );

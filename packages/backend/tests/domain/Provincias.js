@@ -2,8 +2,8 @@ import { describe, expect, it } from "@jest/globals";
 import {
   PROVINCIAS,
   construirUbicacionDeProyecto,
+  normalizarPais,
   normalizarProvincia,
-  ubicacionHeredadaDeColectivo,
 } from "../../domain/provincias.js";
 
 describe("catalogo de provincias (req 15)", () => {
@@ -56,14 +56,29 @@ describe("catalogo de provincias (req 15)", () => {
     expect(normalizarProvincia(undefined)).toBeNull();
     expect(normalizarProvincia(123)).toBeNull();
   });
+
+  it("normaliza Argentina y rechaza otros países fuera del alcance", () => {
+    expect(normalizarPais("argentina")).toEqual({
+      codigoPais: "AR",
+      nombrePais: "Argentina",
+    });
+    expect(normalizarPais("AR")).toEqual({
+      codigoPais: "AR",
+      nombrePais: "Argentina",
+    });
+    expect(normalizarPais("Uruguay")).toBeNull();
+  });
 });
 
 describe("ubicacion de un proyecto (req 15)", () => {
-  it("normaliza la provincia y deja la ciudad opcional", () => {
+  it("normaliza el país, la provincia y la localidad", () => {
     expect(
       construirUbicacionDeProyecto({
+        pais: "Argentina",
         provincia: "Mendoza",
         ciudad: "Godoy Cruz",
+        latitud: -32.89,
+        longitud: -68.83,
       }),
     ).toEqual({
       codigoPais: "AR",
@@ -71,14 +86,101 @@ describe("ubicacion de un proyecto (req 15)", () => {
       codigoProvincia: "AR-M",
       nombreProvincia: "Mendoza",
       ciudad: "Godoy Cruz",
+      direccion: null,
+      latitud: -32.89,
+      longitud: -68.83,
     });
+  });
 
-    expect(construirUbicacionDeProyecto({ provincia: "mendoza" })).toEqual({
+  it("normaliza coordenadas geograficas dentro de sus rangos", () => {
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+        direccion: "Plaza Godoy Cruz",
+        latitud: "-32.89",
+        longitud: "-68.83",
+      }),
+    ).toEqual({
       codigoPais: "AR",
       nombrePais: "Argentina",
       codigoProvincia: "AR-M",
       nombreProvincia: "Mendoza",
-      ciudad: null,
+      ciudad: "Godoy Cruz",
+      direccion: "Plaza Godoy Cruz",
+      latitud: -32.89,
+      longitud: -68.83,
+    });
+  });
+
+  it("rechaza coordenadas incompletas o fuera de rango", () => {
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+      }),
+    ).toBeNull();
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+        latitud: -32.89,
+      }),
+    ).toBeNull();
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+        latitud: -91,
+        longitud: -68.83,
+      }),
+    ).toBeNull();
+  });
+
+  it("rechaza ubicaciones sin país, provincia o localidad", () => {
+    expect(
+      construirUbicacionDeProyecto({
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+      }),
+    ).toBeNull();
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "Mendoza",
+      }),
+    ).toBeNull();
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Uruguay",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+      }),
+    ).toBeNull();
+  });
+
+  it("normaliza el nombre de la provincia", () => {
+    expect(
+      construirUbicacionDeProyecto({
+        pais: "Argentina",
+        provincia: "mendoza",
+        ciudad: "  Godoy Cruz  ",
+        latitud: -32.89,
+        longitud: -68.83,
+      }),
+    ).toEqual({
+      codigoPais: "AR",
+      nombrePais: "Argentina",
+      codigoProvincia: "AR-M",
+      nombreProvincia: "Mendoza",
+      ciudad: "Godoy Cruz",
+      direccion: null,
+      latitud: -32.89,
+      longitud: -68.83,
     });
   });
 
@@ -86,32 +188,5 @@ describe("ubicacion de un proyecto (req 15)", () => {
     expect(construirUbicacionDeProyecto({ provincia: "Narnia" })).toBeNull();
     expect(construirUbicacionDeProyecto({})).toBeNull();
     expect(construirUbicacionDeProyecto(null)).toBeNull();
-  });
-
-  it("hereda la provincia y la ciudad del colectivo", () => {
-    expect(
-      ubicacionHeredadaDeColectivo({
-        ubicacion: { provincia: "Córdoba", ciudad: "Córdoba" },
-      }),
-    ).toEqual({
-      codigoPais: "AR",
-      nombrePais: "Argentina",
-      codigoProvincia: "AR-X",
-      nombreProvincia: "Córdoba",
-      ciudad: "Córdoba",
-    });
-  });
-
-  it("queda sin ubicacion si el colectivo no tiene o no se reconoce", () => {
-    expect(ubicacionHeredadaDeColectivo(null)).toBeNull();
-    expect(ubicacionHeredadaDeColectivo({})).toBeNull();
-    expect(
-      ubicacionHeredadaDeColectivo({ ubicacion: { ciudad: "Córdoba" } }),
-    ).toBeNull();
-    expect(
-      ubicacionHeredadaDeColectivo({
-        ubicacion: { provincia: "Narnia" },
-      }),
-    ).toBeNull();
   });
 });

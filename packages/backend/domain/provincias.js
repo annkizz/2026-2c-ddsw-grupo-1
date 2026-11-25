@@ -53,8 +53,47 @@ function normalizarTexto(texto) {
     .replace(/\s+/g, " ");
 }
 
+export function normalizarCoordenadas(latitud, longitud) {
+  const latitudVacia =
+    latitud == null || (typeof latitud === "string" && latitud.trim() === "");
+  const longitudVacia =
+    longitud == null ||
+    (typeof longitud === "string" && longitud.trim() === "");
+
+  if (latitudVacia && longitudVacia) {
+    return {};
+  }
+  if (latitudVacia || longitudVacia) {
+    return null;
+  }
+
+  const latitudNumerica = Number(latitud);
+  const longitudNumerica = Number(longitud);
+  if (
+    !Number.isFinite(latitudNumerica) ||
+    !Number.isFinite(longitudNumerica) ||
+    latitudNumerica < -90 ||
+    latitudNumerica > 90 ||
+    longitudNumerica < -180 ||
+    longitudNumerica > 180
+  ) {
+    return null;
+  }
+
+  return { latitud: latitudNumerica, longitud: longitudNumerica };
+}
+
 export function provinciaPorCodigo(codigo) {
   return PROVINCIAS.find((una) => una.codigoProvincia === codigo) ?? null;
+}
+
+export function normalizarPais(texto) {
+  if (typeof texto !== "string") {
+    return null;
+  }
+
+  const clave = normalizarTexto(texto);
+  return clave === "argentina" || clave === "ar" ? PAIS_ARGENTINA : null;
 }
 
 export function normalizarProvincia(texto) {
@@ -83,42 +122,43 @@ export function normalizarProvincia(texto) {
   );
 }
 
-// req 15: la ubicacion del proyecto es opcional. Si el proyecto la ingresa,
-// la provincia es obligatoria pero la ciudad queda opcional. Si no manda ubicacion, se hereda la
-// del colectivo; si el colectivo tampoco tiene, queda sin ubicacion.
+// req 15: la ubicación del proyecto es opcional y no se hereda del colectivo.
+// Si se declara, debe incluir país, provincia, localidad y coordenadas exactas.
 export function construirUbicacionDeProyecto(ubicacion) {
   if (!ubicacion || typeof ubicacion !== "object") {
     return null;
   }
 
+  const pais = normalizarPais(ubicacion.pais);
   const provincia = normalizarProvincia(ubicacion.provincia);
+  const ciudad =
+    typeof ubicacion.ciudad === "string" ? ubicacion.ciudad.trim() : "";
 
-  if (provincia === null) {
+  if (pais === null || provincia === null || ciudad === "") {
+    return null;
+  }
+
+  const coordenadas = normalizarCoordenadas(
+    ubicacion.latitud,
+    ubicacion.longitud,
+  );
+  if (
+    coordenadas === null ||
+    coordenadas.latitud === undefined ||
+    coordenadas.longitud === undefined
+  ) {
     return null;
   }
 
   return {
-    ...PAIS_ARGENTINA,
+    ...pais,
     codigoProvincia: provincia.codigoProvincia,
     nombreProvincia: provincia.nombreProvincia,
-    ciudad: ubicacion.ciudad ?? null,
-  };
-}
-
-export function ubicacionHeredadaDeColectivo(colectivo) {
-  if (!colectivo || !colectivo.ubicacion) {
-    return null;
-  }
-
-  const provincia = normalizarProvincia(colectivo.ubicacion.provincia);
-  if (provincia === null) {
-    return null;
-  }
-
-  return {
-    ...PAIS_ARGENTINA,
-    codigoProvincia: provincia.codigoProvincia,
-    nombreProvincia: provincia.nombreProvincia,
-    ciudad: colectivo.ubicacion.ciudad ?? null,
+    ciudad,
+    direccion:
+      typeof ubicacion.direccion === "string" && ubicacion.direccion.trim()
+        ? ubicacion.direccion.trim()
+        : null,
+    ...coordenadas,
   };
 }

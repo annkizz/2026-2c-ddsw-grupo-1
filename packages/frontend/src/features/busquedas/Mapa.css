@@ -1,7 +1,6 @@
-/* Mapa coroplético y tabla accesible de proyectos activos */
 .mapa-contenedor {
   display: grid;
-  grid-template-columns: minmax(0, var(--map-max-width)) minmax(0, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
   align-items: start;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
@@ -22,94 +21,33 @@
   box-shadow: var(--shadow-sm);
 }
 
-.mapa {
-  display: block;
+.mapa.leaflet-container {
+  z-index: 0;
   width: 100%;
-  height: auto;
+  height: 520px;
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
 }
 
-.provincia {
-  stroke: var(--color-map-stroke);
-  stroke-width: var(--border-width);
-  cursor: pointer;
-  transition: opacity var(--transition-fast) var(--transition-easing);
+.mapa-marcador {
+  border: 0;
+  background: transparent;
 }
 
-.provincia:hover {
-  opacity: 0.85;
+.mapa-marcador span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
 }
 
-/* Foco distinto de la selección (2.4.7): trazo punteado oscuro, legible sobre cualquier relleno
-   y en los dos modos de color; no depende del tono. */
-.provincia:focus-visible {
-  outline: none;
-  stroke: var(--color-text);
-  stroke-width: calc(var(--border-width-strong) + var(--focus-ring-width));
-  stroke-dasharray: var(--space-1) var(--focus-ring-width);
+.mapa-marcador:focus-visible span {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: 2px;
 }
-
-.mapa__numero {
-  fill: var(--color-text);
-  stroke: var(--color-surface);
-  stroke-width: var(--focus-ring-width);
-  paint-order: stroke;
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-bold);
-  pointer-events: none;
-  user-select: none;
-}
-
-.mapa__numero--cero {
-  fill: var(--color-muted);
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-medium);
-}
-
-.leyenda {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.leyenda__titulo {
-  font-weight: var(--font-weight-medium);
-}
-
-.leyenda__escala {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--font-size-secundario);
-}
-
-.leyenda__escala li {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.leyenda__intermedios {
-  gap: 0;
-}
-
-.leyenda__color {
-  display: inline-block;
-  width: var(--icon-size-md);
-  height: var(--icon-size-md);
-  border: var(--border-width) solid var(--color-map-stroke);
-  border-radius: var(--radius-sm);
-}
-
-.leyenda__color--0 { background: var(--color-map-empty); }
-.leyenda__color--1 { background: var(--color-map-1); }
-.leyenda__color--2 { background: var(--color-map-2); }
-.leyenda__color--3 { background: var(--color-map-3); }
-.leyenda__color--4 { background: var(--color-map-4); }
-.leyenda__color--5 { background: var(--color-map-5); }
 
 .tabla {
   width: 100%;
@@ -164,21 +102,15 @@
 }
 
 .mapa-fuente {
-  margin-top: var(--space-4);
+  margin: 0;
+}
+
+.tarjetas--una-columna {
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
 @media (max-width: 899.95px) {
   .mapa-contenedor {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.leyenda__escala {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.tarjetas--una-columna {
-  grid-template-columns: minmax(0, 1fr) !important;
 }

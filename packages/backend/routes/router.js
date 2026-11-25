@@ -5,6 +5,7 @@ import { HabilidadRepository } from "../repositories/HabilidadRepository.js";
 import { ProyectoController } from "../controllers/ProyectoController.js";
 import { ProyectoService } from "../services/ProyectoService.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
+import { GeolocalizacionService } from "../services/GeolocalizacionService.js";
 import { ColaboracionRepository } from "../repositories/ColaboracionRepository.js";
 import { crearHabilidadRouter } from "./habilidadRouter.js";
 import { crearProyectoRouter } from "./proyectoRouter.js";
@@ -125,7 +126,11 @@ const proyectoService = new ProyectoService(
   despachadorWebhooks,
   notificacionService,
 );
-const proyectoController = new ProyectoController(proyectoService);
+const geolocalizacionService = new GeolocalizacionService();
+const proyectoController = new ProyectoController(
+  proyectoService,
+  geolocalizacionService,
+);
 
 const perfilService = new PerfilService(
   perfilRepository,

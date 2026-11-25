@@ -144,6 +144,15 @@ export const obtenerUbicacionesProyectos = async (params) => {
   return response.data;
 };
 
+export const geocodificarDireccion = async (token, ubicacion) => {
+  const response = await api.post(
+    '/proyectos/geocodificar',
+    ubicacion,
+    conToken(token),
+  );
+  return response.data;
+};
+
 export const actualizarProyecto = async (token, idProyecto, proyecto) => {
   const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
   return response.data;

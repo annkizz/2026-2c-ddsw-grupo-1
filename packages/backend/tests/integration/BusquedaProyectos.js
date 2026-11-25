@@ -287,9 +287,7 @@ describe("búsqueda con al menos una coincidencia (GET /proyectos?modo=cualquier
       "/proyectos?modo=cualquiera&provincia=AR-X&provincia=AR-B",
     );
     expect(provincias.status).toBe(200);
-    expect(provincias.body.map((proyecto) => proyecto.id).sort()).toEqual(
-      [PROYECTO_INVENTARIO, PROYECTO_PORTAL].sort(),
-    );
+    expect(provincias.body).toEqual([]);
 
     const colectivos = await request(app).get(
       `/proyectos?modo=cualquiera&estado=ACTIVO&idColectivo=${COLECTIVO_MANOS}&idColectivo=c00000000000000000000003`,

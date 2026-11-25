@@ -41,10 +41,15 @@ jest.setTimeout(60000);
 const COLECTIVO_BUENOS_AIRES = "c00000000000000000000001";
 const COLECTIVO_CORDOBA = "c00000000000000000000002";
 const COLECTIVO_SIN_UBICACION = "c00000000000000000000003";
-const PROYECTO_PORTAL = "a00000000000000000000001"; // hereda Buenos Aires
+const PROYECTO_PORTAL = "a00000000000000000000001"; // sin ubicación propia
 const PROYECTO_MAPA = "a00000000000000000000002"; // propio Mendoza
 const PROYECTO_INVENTARIO = "a00000000000000000000003"; // finalizado, no va al mapa
 const PROYECTO_LABORATORIO = "a00000000000000000000004"; // propio Mendoza
+const USUARIOS_POR_COLECTIVO = {
+  [COLECTIVO_BUENOS_AIRES]: "b00000000000000000000001",
+  [COLECTIVO_CORDOBA]: "b00000000000000000000002",
+  [COLECTIVO_SIN_UBICACION]: "b00000000000000000000003",
+};
 
 const construirApp = () => {
   const habilidadRepository = new HabilidadRepository();
@@ -65,7 +70,20 @@ const construirApp = () => {
     colaboracionRepository,
     perfilRepository,
   );
-  const proyectoController = new ProyectoController(proyectoService);
+  const geolocalizacionService = {
+    buscarDirecciones: jest.fn(async () => [
+      {
+        id: "osm-1",
+        direccion: "Plaza Godoy Cruz, Mendoza, Argentina",
+        latitud: -32.89,
+        longitud: -68.83,
+      },
+    ]),
+  };
+  const proyectoController = new ProyectoController(
+    proyectoService,
+    geolocalizacionService,
+  );
   const perfilService = new PerfilService(
     perfilRepository,
     proyectoRepository,
@@ -83,7 +101,12 @@ const construirApp = () => {
       null,
       (req, res, next) => {
         // La suite no valida JWT: simula una colectiva autenticada.
-        req.usuario = { rol: "COLECTIVO" };
+        req.usuario = {
+          rol: "COLECTIVO",
+          _id:
+            USUARIOS_POR_COLECTIVO[req.body?.idColectivo] ??
+            USUARIOS_POR_COLECTIVO[COLECTIVO_BUENOS_AIRES],
+        };
         next();
       },
     ),
@@ -109,6 +132,14 @@ afterAll(async () => {
 beforeEach(async () => {
   await limpiarLaBase();
   await sembrarDatosIniciales();
+  await Promise.all(
+    Object.entries(USUARIOS_POR_COLECTIVO).map(([idColectivo, idUsuario]) =>
+      ColectivoModel.updateOne(
+        { _id: idColectivo },
+        { $set: { usuario: idUsuario } },
+      ),
+    ),
+  );
 });
 
 describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", () => {
@@ -118,7 +149,6 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     expect(status).toBe(200);
     expect(body.map((grupo) => [grupo.codigo, grupo.cantidad])).toEqual([
       ["AR-M", 2],
-      ["AR-B", 1],
     ]);
   });
 
@@ -133,7 +163,7 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
       nivel: "pais",
       codigo: "AR",
       nombre: "Argentina",
-      cantidad: 3,
+      cantidad: 2,
     });
   });
 
@@ -151,28 +181,19 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     const proyectos = body.flatMap((grupo) => grupo.proyectos);
 
     expect(body.some((grupo) => grupo.codigo === "AR-X")).toBe(false);
-    expect(body.some((grupo) => grupo.codigo === "AR-C")).toBe(false);
     expect(proyectos.map((proyecto) => proyecto.id)).not.toContain(
       PROYECTO_INVENTARIO,
     );
   });
 
-  it("hereda la provincia del colectivo cuando el proyecto no tiene ubicacion", async () => {
+  it("no incluye la ubicacion del colectivo si el proyecto no declara una", async () => {
     const { body } = await request(app).get("/proyectos/ubicaciones");
-    const buenosAires = body.find((grupo) => grupo.codigo === "AR-B");
+    const proyectos = body.flatMap((grupo) => grupo.proyectos);
 
-    expect(buenosAires.nombre).toBe("Buenos Aires");
-    expect(buenosAires.proyectos).toEqual([
-      {
-        id: PROYECTO_PORTAL,
-        titulo: "Portal de turnos solidarios",
-        ciudad: "Lomas de Zamora",
-        colectivo: {
-          id: COLECTIVO_BUENOS_AIRES,
-          nombre: "Fundación Manos Solidarias",
-        },
-      },
-    ]);
+    expect(proyectos.map((proyecto) => proyecto.id)).not.toContain(
+      PROYECTO_PORTAL,
+    );
+    expect(body.some((grupo) => grupo.codigo === "AR-B")).toBe(false);
   });
 
   it("la ubicacion propia del proyecto manda sobre la del colectivo", async () => {
@@ -186,7 +207,10 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     // ubicacion propia en Mendoza: el mapa lo cuenta en Mendoza.
     expect(laboratorio).toMatchObject({
       titulo: "Laboratorio de pruebas",
+      descripcion:
+        "Proyecto para probar anotación, cierre programado y cierre automático.",
       ciudad: "Mendoza",
+      direccion: null,
       colectivo: {
         id: "c00000000000000000000001",
         nombre: "Fundación Manos Solidarias",
@@ -200,7 +224,7 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     );
 
     expect(status).toBe(200);
-    expect(body.map((proyecto) => proyecto.id)).toEqual([PROYECTO_INVENTARIO]);
+    expect(body).toEqual([]);
   });
 
   it("acepta el codigo ISO como filtro", async () => {
@@ -226,7 +250,14 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
       idColectivo: COLECTIVO_CORDOBA,
       titulo: "Nuevo",
       descripcion: "Desc",
-      ubicacion: { provincia: "  mendoza ", ciudad: "Godoy Cruz" },
+      ubicacion: {
+        pais: "Argentina",
+        provincia: "  mendoza ",
+        ciudad: "Godoy Cruz",
+        direccion: "Plaza Godoy Cruz",
+        latitud: -32.89,
+        longitud: -68.83,
+      },
     });
 
     expect(status).toBe(201);
@@ -236,10 +267,41 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
       codigoProvincia: "AR-M",
       nombreProvincia: "Mendoza",
       ciudad: "Godoy Cruz",
+      direccion: "Plaza Godoy Cruz",
+      latitud: -32.89,
+      longitud: -68.83,
     });
+
+    const ubicacionesGeolocalizadas = await request(app).get(
+      "/proyectos/ubicaciones?nivel=proyecto",
+    );
+    expect(ubicacionesGeolocalizadas.status).toBe(200);
+    expect(ubicacionesGeolocalizadas.body).toContainEqual(
+      expect.objectContaining({
+        id: body.id,
+        descripcion: "Desc",
+        latitud: -32.89,
+        longitud: -68.83,
+        direccion: "Plaza Godoy Cruz",
+        codigoProvincia: "AR-M",
+      }),
+    );
+    const distribucion = await request(app).get("/proyectos/ubicaciones");
+    const mendoza = distribucion.body.find(
+      (grupo) => grupo.codigo === "AR-M",
+    );
+    expect(mendoza.proyectos).toContainEqual(
+      expect.objectContaining({
+        id: body.id,
+        descripcion: "Desc",
+        latitud: -32.89,
+        longitud: -68.83,
+        direccion: "Plaza Godoy Cruz",
+      }),
+    );
   });
 
-  it("hereda la ubicacion del colectivo al crear si no se manda", async () => {
+  it("no hereda la ubicacion del colectivo al crear si no se manda", async () => {
     const { status, body } = await request(app).post("/proyectos").send({
       idColectivo: COLECTIVO_CORDOBA,
       titulo: "Nuevo",
@@ -247,13 +309,7 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
     });
 
     expect(status).toBe(201);
-    expect(body.ubicacion).toEqual({
-      codigoPais: "AR",
-      nombrePais: "Argentina",
-      codigoProvincia: "AR-X",
-      nombreProvincia: "Córdoba",
-      ciudad: "Córdoba",
-    });
+    expect(body.ubicacion).toBeNull();
   });
 
   it("permite crear sin ubicacion si el colectivo tampoco tiene", async () => {
@@ -272,10 +328,68 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
       idColectivo: COLECTIVO_CORDOBA,
       titulo: "Nuevo",
       descripcion: "Desc",
-      ubicacion: { provincia: "Narnia" },
+      ubicacion: {
+        pais: "Argentina",
+        provincia: "Narnia",
+        ciudad: "Ciudad",
+        latitud: -34,
+        longitud: -58,
+      },
     });
 
     expect(status).toBe(400);
     expect(body.codigo).toBe("PROVINCIA_INVALIDA");
+  });
+
+  it("responde 400 cuando se envia una sola coordenada", async () => {
+    const { status } = await request(app).post("/proyectos").send({
+      idColectivo: COLECTIVO_CORDOBA,
+      titulo: "Nuevo",
+      descripcion: "Desc",
+      ubicacion: {
+        pais: "Argentina",
+        provincia: "Mendoza",
+        ciudad: "Godoy Cruz",
+        latitud: -32.89,
+      },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it("rechaza ubicaciones sin localidad", async () => {
+    const { status } = await request(app).post("/proyectos").send({
+      idColectivo: COLECTIVO_CORDOBA,
+      titulo: "Nuevo",
+      descripcion: "Desc",
+      ubicacion: {
+        pais: "Argentina",
+        provincia: "Mendoza",
+        latitud: -32.89,
+        longitud: -68.83,
+      },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it("ofrece búsqueda de direcciones a la colectiva autenticada", async () => {
+    const { status, body } = await request(app)
+      .post("/proyectos/geocodificar")
+      .send({
+        direccion: "Plaza Godoy Cruz",
+        ciudad: "Godoy Cruz",
+        provincia: "AR-M",
+      });
+
+    expect(status).toBe(200);
+    expect(body).toEqual([
+      {
+        id: "osm-1",
+        direccion: "Plaza Godoy Cruz, Mendoza, Argentina",
+        latitud: -32.89,
+        longitud: -68.83,
+      },
+    ]);
   });
 });

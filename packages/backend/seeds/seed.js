@@ -14,7 +14,7 @@ import { crearAdaptadorDeSeed } from "./adaptadorDeSeed.js";
 
 // Minutos que tarda en cerrarse solo el proyecto "Laboratorio de pruebas".
 const minutosParaCierre = Number(process.env.SEED_CIERRE_MINUTOS ?? 5);
-const idVersionSeed = "demo-entrega-3-v1";
+const idVersionSeed = "demo-entrega-3-v2";
 
 await MongoDBClient.connect();
 

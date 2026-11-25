@@ -8,15 +8,13 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  MenuItem,
   Step,
   StepButton,
-  StepLabel,
   Stepper,
   Switch,
   TextField,
 } from '@mui/material';
-import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiMapPin, FiSave, FiTag } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiSave, FiTag } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
@@ -26,7 +24,6 @@ import { useNotificar } from '../../components/Notificador/Notificador.jsx';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
-import { PROVINCIAS } from '../../data/provincias';
 import {
   crearProyecto,
   actualizarProyecto,
@@ -38,13 +35,18 @@ import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import './FormularioProyecto.css';
 import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
+import UbicacionProyecto from './UbicacionProyecto.jsx';
 
 const DATOS_INICIALES = {
   titulo: '',
   descripcion: '',
   etiquetas: [],
+  pais: '',
   provincia: '',
   ciudad: '',
+  direccion: null,
+  latitud: null,
+  longitud: null,
   fechaLimiteCierre: '',
   busquedaAbierta: false,
   fechaLimiteBusqueda: '',
@@ -97,8 +99,12 @@ const FormularioProyecto = () => {
           titulo: proyecto.titulo || '',
           descripcion: proyecto.descripcion || '',
           etiquetas: proyecto.etiquetas ?? [],
+          pais: proyecto.ubicacion?.nombrePais ?? '',
           provincia: proyecto.ubicacion?.codigoProvincia ?? '',
           ciudad: proyecto.ubicacion?.ciudad ?? '',
+          direccion: proyecto.ubicacion?.direccion ?? null,
+          latitud: proyecto.ubicacion?.latitud ?? null,
+          longitud: proyecto.ubicacion?.longitud ?? null,
           fechaLimiteCierre: aInputFecha(proyecto.fechaLimiteCierre),
           busquedaAbierta: Boolean(proyecto.busquedaAbierta),
           fechaLimiteBusqueda: aInputFecha(proyecto.fechaLimiteBusqueda),
@@ -119,6 +125,11 @@ const FormularioProyecto = () => {
 
   // En edición, una fecha que no tocaste no se vuelve a validar
   const cambio = (campo) => !inicial || datos[campo] !== inicial[campo];
+  const camposUbicacion = ['pais', 'provincia', 'ciudad', 'direccion', 'latitud', 'longitud'];
+  const ubicacionCambio =
+    !esEdicion ||
+    !inicial ||
+    camposUbicacion.some((campo) => datos[campo] !== inicial[campo]);
 
   const cambiarCampo = (campo, valor) => {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
@@ -136,12 +147,13 @@ const FormularioProyecto = () => {
     if (errorServidor) setErrorServidor(null);
   };
 
-  const cambiarProvincia = (e) => {
-    const provincia = e.target.value;
-    setDatos((prev) => ({
+  const cambiarUbicacion = (cambios) => {
+    setDatos((prev) => ({ ...prev, ...cambios }));
+    setErrores((prev) => ({
       ...prev,
-      provincia,
-      ciudad: provincia ? prev.ciudad : '',
+      provincia: '',
+      ciudad: '',
+      punto: '',
     }));
     if (errorServidor) setErrorServidor(null);
   };
@@ -186,6 +198,40 @@ const FormularioProyecto = () => {
   const validarFormularioCompleto = () =>
     validarCampos(esEdicion ? ['titulo', 'descripcion', 'fechaLimiteCierre'] : ['titulo', 'descripcion', 'fechaLimiteCierre', 'fechaLimiteBusqueda']);
 
+  const validarUbicacion = () => {
+    if (esEdicion && !ubicacionCambio) return true;
+
+    const tienePais = datos.pais !== '';
+    const erroresUbicacion = {
+      provincia:
+        tienePais && !datos.provincia
+          ? t('formularioProyecto.errProvinciaRequerida')
+          : '',
+      ciudad:
+        tienePais && !datos.ciudad.trim()
+          ? t('formularioProyecto.errLocalidadRequerida')
+          : '',
+      punto:
+        tienePais &&
+        (!Number.isFinite(datos.latitud) ||
+          !Number.isFinite(datos.longitud) ||
+          datos.latitud < -90 ||
+          datos.latitud > 90 ||
+          datos.longitud < -180 ||
+          datos.longitud > 180)
+          ? t('formularioProyecto.errPuntoRequerido')
+          : '',
+    };
+    setErrores((prev) => ({ ...prev, ...erroresUbicacion }));
+
+    const hayErrores = Object.values(erroresUbicacion).some(Boolean);
+    if (hayErrores) {
+      setPaso(1);
+      setIntentoResumen((actual) => actual + 1);
+    }
+    return !hayErrores;
+  };
+
   const irAPaso = (destino) => {
     // Para avanzar se revisa el paso actual; para volver atrás, nunca.
     if (destino > paso && !validarCampos(PASOS_FORMULARIO[paso].campos)) return;
@@ -225,7 +271,9 @@ const FormularioProyecto = () => {
 
   const guardar = async (e) => {
     e.preventDefault();
-    if (!validarFormularioCompleto()) return;
+    if (!validarFormularioCompleto() || !validarUbicacion()) {
+      return;
+    }
 
     setGuardando(true);
     setErrorServidor(null);
@@ -236,18 +284,24 @@ const FormularioProyecto = () => {
       const fechaCierre = datos.fechaLimiteCierre ? aIso(datos.fechaLimiteCierre) : null;
       const fechaBusqueda =
         datos.busquedaAbierta && datos.fechaLimiteBusqueda ? aIso(datos.fechaLimiteBusqueda) : null;
-      const ubicacion = datos.provincia
-        ? {
-            provincia: datos.provincia,
-            ...(datos.ciudad.trim() ? { ciudad: datos.ciudad.trim() } : {}),
-          }
-        : undefined;
+      const ubicacion =
+        datos.pais && ubicacionCambio
+          ? {
+              pais: datos.pais,
+              provincia: datos.provincia,
+              ciudad: datos.ciudad.trim(),
+              direccion: datos.direccion,
+              latitud: datos.latitud,
+              longitud: datos.longitud,
+            }
+          : undefined;
 
       if (esEdicion) {
         await actualizarProyecto(token, id, {
           titulo,
           descripcion,
           etiquetas: datos.etiquetas,
+          ...(ubicacionCambio ? { ubicacion: ubicacion ?? null } : {}),
         });
 
         if (!esFinalizado && fechaCierre && cambio('fechaLimiteCierre')) {
@@ -313,6 +367,9 @@ const FormularioProyecto = () => {
     descripcion: 'proyecto-descripcion',
     fechaLimiteCierre: 'proyecto-cierre',
     fechaLimiteBusqueda: 'proyecto-limite-busqueda',
+    provincia: 'proyecto-provincia',
+    ciudad: 'proyecto-ciudad',
+    punto: 'proyecto-direccion',
   };
   const listaErrores = Object.entries(errores)
     .filter(([, mensaje]) => mensaje)
@@ -480,53 +537,17 @@ const FormularioProyecto = () => {
                 </Alert>
               )}
             </div>
-
-            {esEdicion ? (
-              <div className="form-proyecto-ubicacion form-proyecto-ubicacion--fija">
-                <p className="perfil-buscado__etiqueta">{t('formularioProyecto.ubicacion')}</p>
-                <p>
-                  <FiMapPin aria-hidden="true" />{' '}
-                  {[datos.ciudad, PROVINCIAS.find(({ codigo }) => codigo === datos.provincia)?.nombre].filter(Boolean).join(', ') ||
-                    t('formularioProyecto.ubicacionDelColectivo')}
-                </p>
-                <p className="texto-secundario">{t('formularioProyecto.ubicacionNoEditable')}</p>
-              </div>
-            ) : (
-              <fieldset className="form-proyecto-ubicacion">
-                <legend>{t('formularioProyecto.ubicacion')}</legend>
-                <p className="texto-secundario">{t('formularioProyecto.ayudaUbicacion')}</p>
-                <div className="form-proyecto-ubicacion__campos">
-                  <TextField
-                    id="proyecto-provincia"
-                    select
-                    label={t('formularioProyecto.labelProvincia')}
-                    value={datos.provincia}
-                    onChange={cambiarProvincia}
-                    disabled={camposBloqueados}
-                    fullWidth
-                    slotProps={{ select: { displayEmpty: true } }}
-                  >
-                    <MenuItem value="">{t('formularioProyecto.opcionProvinciaHeredada')}</MenuItem>
-                    {PROVINCIAS.map(({ codigo, nombre }) => (
-                      <MenuItem key={codigo} value={codigo}>
-                        {nombre}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-
-                  <TextField
-                    id="proyecto-ciudad"
-                    label={t('formularioProyecto.labelCiudad')}
-                    placeholder={t('formularioProyecto.placeholderCiudad')}
-                    value={datos.ciudad}
-                    onChange={(e) => cambiarCampo('ciudad', e.target.value)}
-                    disabled={camposBloqueados || !datos.provincia}
-                    helperText={!datos.provincia ? t('formularioProyecto.ayudaCiudad') : undefined}
-                    fullWidth
-                  />
-                </div>
-              </fieldset>
-            )}
+            <UbicacionProyecto
+              ubicacion={datos}
+              onChange={cambiarUbicacion}
+              errores={{
+                provincia: errores.provincia,
+                ciudad: errores.ciudad,
+                punto: errores.punto,
+              }}
+              getAccessToken={getAccessToken}
+              disabled={camposBloqueados}
+            />
           </section>
         )}
 
