@@ -9,7 +9,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   TextField,
 } from '@mui/material';
 import { FiAlertCircle, FiArrowLeft, FiLock, FiPlus, FiSave, FiTrash2, FiEdit2, FiUsers } from 'react-icons/fi';
@@ -64,10 +69,22 @@ export const construirPayloadPerfil = (form) => ({
     tipoColaboracion: form.tipoColaboracion,
   },
   tipoAceptacion: form.tipoAceptacion,
-  ...(form.limiteColaboraciones !== ''
+  ...(form.tipoAceptacion !== 'SIN_LIMITE' && form.limiteColaboraciones !== ''
     ? { limiteColaboraciones: Number(form.limiteColaboraciones) }
     : {}),
 });
+
+export const validarLimiteColaboraciones = ({ tipoAceptacion, limiteColaboraciones }) => {
+  if (tipoAceptacion === 'SIN_LIMITE') return '';
+  if (tipoAceptacion === 'LLENAR_VACANTES' && limiteColaboraciones === '') {
+    return t('perfilesProyecto.errLimiteRequerido');
+  }
+  if (limiteColaboraciones !== '') {
+    const limite = Number(limiteColaboraciones);
+    if (!Number.isInteger(limite) || limite < 1) return t('perfilesProyecto.errLimite');
+  }
+  return '';
+};
 
 const PerfilesProyecto = () => {
   const { id } = useParams();
@@ -176,12 +193,8 @@ const PerfilesProyecto = () => {
     if (!form.horas || !Number.isInteger(horas) || horas < 1) {
       errs.horas = t('perfilesProyecto.errHoras');
     }
-    if (form.limiteColaboraciones !== '') {
-      const limite = Number(form.limiteColaboraciones);
-      if (!Number.isInteger(limite) || limite < 1) {
-        errs.limiteColaboraciones = t('perfilesProyecto.errLimite');
-      }
-    }
+    const errorLimite = validarLimiteColaboraciones(form);
+    if (errorLimite) errs.limiteColaboraciones = errorLimite;
     setErrores(errs);
     setIntentoResumen((n) => n + 1);
     return Object.keys(errs).length === 0;
@@ -248,6 +261,16 @@ const PerfilesProyecto = () => {
     ) : (
       ayuda
     );
+
+  const cambiarTipoAceptacion = (e) => {
+    const tipoAceptacion = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      tipoAceptacion,
+      ...(tipoAceptacion === 'SIN_LIMITE' ? { limiteColaboraciones: '' } : {}),
+    }));
+    setErrores((prev) => ({ ...prev, limiteColaboraciones: '' }));
+  };
 
   const IDS = {
     descripcion: 'perfil-descripcion',
@@ -530,19 +553,68 @@ const PerfilesProyecto = () => {
               ))}
             </TextField>
 
-            <TextField
-              id="perfil-limite"
-              type="number"
-              label={t('perfilesProyecto.limiteColaboraciones')}
-              placeholder={t('perfilesProyecto.placeholderCupo')}
-              value={form.limiteColaboraciones}
-              onChange={(e) => setForm({ ...form, limiteColaboraciones: e.target.value })}
-              error={Boolean(errores.limiteColaboraciones)}
-              helperText={mensajeCampo(errores.limiteColaboraciones, t('perfilesProyecto.ayudaCupo'))}
-              disabled={guardando}
-              fullWidth
-              slotProps={{ htmlInput: { min: 1, step: 1 } }}
-            />
+            <FormControl component="fieldset" disabled={guardando} fullWidth>
+              <FormLabel component="legend">{t('perfilesProyecto.tipoAceptacion')}</FormLabel>
+              <RadioGroup
+                aria-label={t('perfilesProyecto.tipoAceptacion')}
+                value={form.tipoAceptacion}
+                onChange={cambiarTipoAceptacion}
+                className="perfil-tipo-aceptacion"
+              >
+                <FormControlLabel
+                  value="LLENAR_VACANTES"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionLlenarVacantes')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaLlenarVacantes')}</span>
+                    </span>
+                  }
+                />
+                <FormControlLabel
+                  value="SIN_LIMITE"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionSinLimite')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaSinLimite')}</span>
+                    </span>
+                  }
+                />
+                <FormControlLabel
+                  value="MANUAL"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionManual')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaManual')}</span>
+                    </span>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {form.tipoAceptacion !== 'SIN_LIMITE' && (
+              <TextField
+                id="perfil-limite"
+                type="number"
+                label={t('perfilesProyecto.limiteColaboraciones')}
+                placeholder={t('perfilesProyecto.placeholderCupo')}
+                value={form.limiteColaboraciones}
+                onChange={(e) => setForm({ ...form, limiteColaboraciones: e.target.value })}
+                error={Boolean(errores.limiteColaboraciones)}
+                helperText={mensajeCampo(
+                  errores.limiteColaboraciones,
+                  form.tipoAceptacion === 'LLENAR_VACANTES'
+                    ? t('perfilesProyecto.ayudaCupoRequerido')
+                    : t('perfilesProyecto.ayudaCupo'),
+                )}
+                disabled={guardando}
+                required={form.tipoAceptacion === 'LLENAR_VACANTES'}
+                fullWidth
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+              />
+            )}
 
             {errorGuardar && (
               <AlertaError error={errorGuardar} titulo={t('perfilesProyecto.errorGuardarTitulo')}>

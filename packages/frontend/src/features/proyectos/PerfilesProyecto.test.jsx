@@ -1,4 +1,4 @@
-import { construirPayloadPerfil } from './PerfilesProyecto';
+import { construirPayloadPerfil, validarLimiteColaboraciones } from './PerfilesProyecto';
 
 jest.mock('../../hooks/useAuth.jsx', () => ({
   useAuth: jest.fn(),
@@ -44,5 +44,58 @@ describe('construirPayloadPerfil', () => {
 
     expect(payload).not.toHaveProperty('limiteColaboraciones');
     expect(payload.tipoAceptacion).toBe('MANUAL');
+  });
+
+  it('envía un límite requerido para llenar vacantes', () => {
+    const payload = construirPayloadPerfil({
+      ...formValido,
+      tipoAceptacion: 'LLENAR_VACANTES',
+      limiteColaboraciones: '3',
+    });
+
+    expect(payload.tipoAceptacion).toBe('LLENAR_VACANTES');
+    expect(payload.limiteColaboraciones).toBe(3);
+  });
+
+  it('omite el límite para el modo sin límite', () => {
+    const payload = construirPayloadPerfil({
+      ...formValido,
+      tipoAceptacion: 'SIN_LIMITE',
+    });
+
+    expect(payload.tipoAceptacion).toBe('SIN_LIMITE');
+    expect(payload).not.toHaveProperty('limiteColaboraciones');
+  });
+});
+
+describe('validarLimiteColaboraciones', () => {
+  it('exige un límite entero positivo para llenar vacantes', () => {
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'LLENAR_VACANTES',
+      limiteColaboraciones: '',
+    })).toBe('Indicá un límite de colaboraciones de al menos 1 para usar esta opción.');
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'LLENAR_VACANTES',
+      limiteColaboraciones: '1.5',
+    })).toBe('Ingresá un número entero de al menos 1');
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'LLENAR_VACANTES',
+      limiteColaboraciones: '0',
+    })).toBe('Ingresá un número entero de al menos 1');
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'LLENAR_VACANTES',
+      limiteColaboraciones: '1',
+    })).toBe('');
+  });
+
+  it('permite límite opcional en modo manual y no lo valida sin límite', () => {
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'MANUAL',
+      limiteColaboraciones: '',
+    })).toBe('');
+    expect(validarLimiteColaboraciones({
+      tipoAceptacion: 'SIN_LIMITE',
+      limiteColaboraciones: 'inválido',
+    })).toBe('');
   });
 });
