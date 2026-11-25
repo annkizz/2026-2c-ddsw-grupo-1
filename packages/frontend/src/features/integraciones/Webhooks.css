@@ -1,0 +1,145 @@
+.webhooks-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.webhooks-pagina h2,
+.webhooks-pagina h3,
+.webhooks-pagina p {
+  margin-top: 0;
+}
+
+.webhooks-ayuda,
+.webhooks-secreto,
+.webhooks-error,
+.webhooks-limite {
+  width: 100%;
+}
+
+.webhooks-secreto p {
+  margin-bottom: var(--space-2);
+}
+
+.webhooks-secreto code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  user-select: all;
+}
+
+.webhooks-lista-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.webhooks-lista-encabezado h2 {
+  margin-bottom: 0;
+}
+
+.webhooks-formulario,
+.webhooks-tarjeta {
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.webhooks-formulario .MuiCardContent-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.webhooks-formulario .MuiCardContent-root > h2 {
+  margin-bottom: 0;
+}
+
+.webhooks-eventos {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.webhooks-eventos legend {
+  padding: 0 var(--space-1);
+  font-weight: var(--font-weight-medium);
+}
+
+.webhooks-formulario__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.webhooks-formulario__acciones {
+  justify-content: flex-end;
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.webhooks-lista {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.webhooks-tarjeta__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.webhooks-tarjeta__encabezado h3 {
+  overflow-wrap: anywhere;
+  margin-bottom: var(--space-1);
+}
+
+.webhooks-tarjeta__encabezado p,
+.webhooks-tarjeta__eventos {
+  margin-bottom: var(--space-2);
+}
+
+.webhooks-tarjeta__entrega {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--font-size-secundario);
+}
+
+.webhooks-resultado {
+  overflow-wrap: anywhere;
+}
+
+.webhooks-tarjeta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+@media (max-width: 599.95px) {
+  .webhooks-lista-encabezado,
+  .webhooks-tarjeta__encabezado {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .webhooks-formulario__fila {
+    grid-template-columns: 1fr;
+  }
+
+  .webhooks-tarjeta__acciones > .MuiButton-root {
+    flex: 1 1 45%;
+  }
+}

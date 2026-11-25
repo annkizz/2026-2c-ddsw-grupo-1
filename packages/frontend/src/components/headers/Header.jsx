@@ -6,6 +6,7 @@ import {
   FiCode,
   FiFileText,
   FiLogOut,
+  FiLink,
   FiMap,
   FiMenu,
   FiSearch,
@@ -44,7 +45,8 @@ const enlacesPorRol = (rol) => {
   if (rol === 'COLECTIVO') {
     return [
       { to: '/proyectos', texto: t('navegacion.misProyectos'), icono: <FiFileText aria-hidden="true" /> },
-      { to: '/buscar-colaboradores', texto: t('navegacion.buscarColaboradoras'), icono: <FiSearch aria-hidden="true" /> }
+      { to: '/buscar-colaboradores', texto: t('navegacion.buscarColaboradoras'), icono: <FiSearch aria-hidden="true" /> },
+      { to: '/integraciones/webhooks', texto: t('navegacion.integraciones'), icono: <FiLink aria-hidden="true" /> }
     ];
   }
   return [

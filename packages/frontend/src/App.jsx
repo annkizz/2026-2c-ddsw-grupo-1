@@ -26,6 +26,7 @@ import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
 import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
 import Mapa from './features/busquedas/Mapa.jsx';
 import LinkedinCallback from './components/LinkedinCallback.jsx';
+import Webhooks from './features/integraciones/Webhooks.jsx';
 import { crearTema } from './theme/crearTema.js';
 import { tokensBase } from './designTokens.js';
 import { NotificadorProvider } from './components/Notificador/Notificador.jsx';
@@ -182,6 +183,16 @@ function App() {
                       <RequiereAuth>
                         <RequiereRol roles={['COLECTIVO']}>
                           <PerfilesProyecto />
+                        </RequiereRol>
+                      </RequiereAuth>
+                    }
+                  />
+                  <Route
+                    path="/integraciones/webhooks"
+                    element={
+                      <RequiereAuth>
+                        <RequiereRol roles={['COLECTIVO']}>
+                          <Webhooks />
                         </RequiereRol>
                       </RequiereAuth>
                     }

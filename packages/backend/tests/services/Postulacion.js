@@ -83,6 +83,7 @@ describe("PostulacionService", () => {
         _id: "post-1",
       })),
       existePendiente: jest.fn(async () => false),
+      obtenerUltima: jest.fn(async () => null),
       obtenerPorProyecto: jest.fn(async () => []),
       buscarPorId: jest.fn(async () => crearPostulacion()),
       actualizarEstadoSiPendiente: jest.fn(async (_id, estado) =>
@@ -94,6 +95,7 @@ describe("PostulacionService", () => {
     notificacionService = {
       crearEventoSistema: jest.fn(async (datos) => datos),
       notificarResolucionPostulacion: jest.fn(async () => undefined),
+      existeNotificacionDeRechazo: jest.fn(async () => true),
       notificacionRepository: {
         buscarPorId: jest.fn(),
         cambiarEstadoInvitacion: jest.fn(),
@@ -298,6 +300,36 @@ describe("PostulacionService", () => {
           actorColaboradora,
         ),
       ).rejects.toMatchObject({ codigo: "POSTULACION_YA_EXISTENTE" });
+    });
+
+    it("no permite volver a postularse hasta que se guarde la notificación del rechazo", async () => {
+      postulacionRepository.obtenerUltima.mockResolvedValue(
+        crearPostulacion({ estado: EstadoPostulacion.RECHAZADA }),
+      );
+      notificacionService.existeNotificacionDeRechazo.mockResolvedValue(false);
+
+      await expect(
+        service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora),
+      ).rejects.toMatchObject({
+        codigo: "POSTULACION_YA_EXISTENTE",
+        status: 409,
+      });
+
+      expect(postulacionRepository.save).not.toHaveBeenCalled();
+      expect(
+        notificacionService.existeNotificacionDeRechazo,
+      ).toHaveBeenCalledWith("post-1", ID_COLABORADOR);
+    });
+
+    it("permite volver a postularse después de guardar la notificación del rechazo", async () => {
+      postulacionRepository.obtenerUltima.mockResolvedValue(
+        crearPostulacion({ estado: EstadoPostulacion.RECHAZADA }),
+      );
+      notificacionService.existeNotificacionDeRechazo.mockResolvedValue(true);
+
+      await service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora);
+
+      expect(postulacionRepository.save).toHaveBeenCalledTimes(1);
     });
 
     it("no permite que un colectivo cree una postulación", async () => {

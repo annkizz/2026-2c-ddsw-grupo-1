@@ -130,6 +130,7 @@ describe('Header', () => {
     const nav = screen.getByRole('navigation', { name: 'Navegación principal' });
     expect(within(nav).getByRole('link', { name: 'Mis proyectos' })).toHaveAttribute('href', '/proyectos');
     expect(within(nav).getByRole('link', { name: 'Buscar colaboradoras' })).toHaveAttribute('href', '/buscar-colaboradores');
+    expect(within(nav).getByRole('link', { name: 'Integraciones' })).toHaveAttribute('href', '/integraciones/webhooks');
     expect(within(nav).queryByRole('link', { name: 'Mis postulaciones' })).not.toBeInTheDocument();
   });
 
