@@ -15,7 +15,7 @@ const anilloFoco = {
 
 const icono = (Componente) => createElement(Componente, { 'aria-hidden': true, focusable: 'false' });
 
-export const crearTema = (tokens) => {
+export const crearTema = (tokens, traducir = t) => {
   const token = (nombre) => tokens[`--${nombre}`];
 
   const theme = createTheme({
@@ -316,11 +316,11 @@ export const crearTema = (tokens) => {
       },
       MuiAutocomplete: {
         defaultProps: {
-          openText: t('componentesMui.abrir'),
-          closeText: t('componentesMui.cerrar'),
-          clearText: t('componentesMui.borrar'),
-          noOptionsText: t('componentesMui.sinOpciones'),
-          loadingText: t('componentesMui.cargando')
+          openText: traducir('componentesMui.abrir'),
+          closeText: traducir('componentesMui.cerrar'),
+          clearText: traducir('componentesMui.borrar'),
+          noOptionsText: traducir('componentesMui.sinOpciones'),
+          loadingText: traducir('componentesMui.cargando')
         },
         styleOverrides: {
           root: {
@@ -406,7 +406,7 @@ export const crearTema = (tokens) => {
       MuiAlert: {
         defaultProps: {
           variant: 'standard',
-          closeText: t('componentesMui.cerrar'),
+          closeText: traducir('componentesMui.cerrar'),
           iconMapping: {
             success: icono(FiCheckCircle),
             error: icono(FiAlertCircle),

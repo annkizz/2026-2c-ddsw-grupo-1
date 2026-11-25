@@ -119,7 +119,31 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  margin-left: auto;
+}
+
+.header-idioma {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: var(--control-min-height);
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-on-brand);
+  font: inherit;
+  cursor: pointer;
+}
+
+.header-idioma:hover {
+  background: var(--color-brand-2);
+}
+
+.header-idioma svg {
+  font-size: var(--icon-size-md);
 }
 
 .header-campana {
@@ -340,9 +364,12 @@
   }
 
   .header-usuario {
-    margin-left: auto;
+    margin-left: 0;
   }
 
+  .header-idioma {
+    margin-left: auto;
+  }
   .header-menu-toggle.MuiIconButton-root {
     display: inline-flex;
   }

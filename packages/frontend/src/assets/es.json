@@ -626,6 +626,10 @@
     "descripcion404": "Puede que el enlace esté mal escrito o que la página ya no exista."
   },
   "navegacion": {
+    "idioma": "Idioma",
+    "rolColectivo": "Colectivo",
+    "rolColaborador": "Colaborador",
+    "rolAdministrador": "Administración",
     "principal": "Navegación principal",
     "migas": "Ruta de navegación",
     "inicio": "Inicio",
