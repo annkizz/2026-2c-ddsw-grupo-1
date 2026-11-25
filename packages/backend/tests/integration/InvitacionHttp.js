@@ -19,13 +19,13 @@ describe("invitaciones HTTP", () => {
         return { ...datos, id: "invitacion" };
       },
       toDTO: (datos) => ({ id: datos._id, estadoInvitacion: datos.estadoInvitacion }),
-      notificacionRepository: {
-        buscarPorId: async () => guardada,
-        cambiarEstadoInvitacion: async (_id, _actor, anterior, nuevo) => {
-          if (guardada.estadoInvitacion !== anterior) return null;
-          guardada.estadoInvitacion = nuevo;
-          return { ...guardada };
-        },
+    };
+    const notificacionRepository = {
+      buscarPorId: async () => guardada,
+      cambiarEstadoInvitacion: async (_id, _actor, anterior, nuevo) => {
+        if (guardada.estadoInvitacion !== anterior) return null;
+        guardada.estadoInvitacion = nuevo;
+        return { ...guardada };
       },
     };
     const service = new PostulacionService(
@@ -40,6 +40,7 @@ describe("invitaciones HTTP", () => {
       { existePendiente: async () => false },
       undefined,
       notificaciones,
+      notificacionRepository,
     );
     const usuarios = {
       obtenerSesion: async (usuario) => usuario,

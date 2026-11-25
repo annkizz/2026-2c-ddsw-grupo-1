@@ -50,6 +50,7 @@ describe("PostulacionService", () => {
   let colaboracionRepository;
   let postulacionRepository;
   let notificacionService;
+  let notificacionRepository;
   let service;
 
   beforeEach(() => {
@@ -96,11 +97,11 @@ describe("PostulacionService", () => {
       crearEventoSistema: jest.fn(async (datos) => datos),
       notificarResolucionPostulacion: jest.fn(async () => undefined),
       existeNotificacionDeRechazo: jest.fn(async () => true),
-      notificacionRepository: {
-        buscarPorId: jest.fn(),
-        cambiarEstadoInvitacion: jest.fn(),
-      },
       toDTO: jest.fn((notificacion) => notificacion),
+    };
+    notificacionRepository = {
+      buscarPorId: jest.fn(),
+      cambiarEstadoInvitacion: jest.fn(),
     };
     service = new PostulacionService(
       proyectoRepository,
@@ -110,6 +111,7 @@ describe("PostulacionService", () => {
       postulacionRepository,
       undefined,
       notificacionService,
+      notificacionRepository,
     );
   });
 
@@ -136,8 +138,8 @@ describe("PostulacionService", () => {
           tipo: "INVITACION_PROYECTO",
           estadoInvitacion: "PENDIENTE",
         };
-        notificacionService.notificacionRepository.buscarPorId.mockResolvedValue(invitacion);
-        notificacionService.notificacionRepository.cambiarEstadoInvitacion.mockImplementation(
+        notificacionRepository.buscarPorId.mockResolvedValue(invitacion);
+        notificacionRepository.cambiarEstadoInvitacion.mockImplementation(
           async (_id, _colaboradora, _estado, decision) => ({ ...invitacion, estadoInvitacion: decision }),
         );
         colaboracionRepository.crearDesdeInvitacion = jest.fn(async () => undefined);
@@ -159,7 +161,7 @@ describe("PostulacionService", () => {
         expect(colaboracionRepository.crearDesdeInvitacion).toHaveBeenCalledWith(
           expect.objectContaining({ esAnonima: true, perfil, colaborador }),
         );
-        expect(notificacionService.notificacionRepository.cambiarEstadoInvitacion).toHaveBeenCalledWith("inv-1", ID_COLABORADOR, "PENDIENTE", "ACEPTADA");
+        expect(notificacionRepository.cambiarEstadoInvitacion).toHaveBeenCalledWith("inv-1", ID_COLABORADOR, "PENDIENTE", "ACEPTADA");
       });
 
       it("rechaza sin crear colaboración y bloquea una segunda respuesta", async () => {
@@ -178,7 +180,7 @@ describe("PostulacionService", () => {
         colaboracionRepository.crearDesdeInvitacion.mockRejectedValueOnce(new Error("falló"));
         await expect(service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, actorColaboradora))
           .rejects.toThrow("falló");
-        expect(notificacionService.notificacionRepository.cambiarEstadoInvitacion).toHaveBeenLastCalledWith("inv-1", ID_COLABORADOR, "ACEPTADA", "PENDIENTE");
+        expect(notificacionRepository.cambiarEstadoInvitacion).toHaveBeenLastCalledWith("inv-1", ID_COLABORADOR, "ACEPTADA", "PENDIENTE");
       });
     });
 

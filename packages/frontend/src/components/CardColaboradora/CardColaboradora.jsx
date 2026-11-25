@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert,
@@ -31,10 +31,11 @@ const iniciales = (nombre) =>
     .map((parte) => parte[0]?.toUpperCase())
     .join('');
 
-export default function CardColaboradora({ colaboradora, idProyecto, idPerfil }) {
+export default function CardColaboradora({ colaboradora, idProyecto, idPerfil, nombreProyecto, descripcionPerfil }) {
   const nombre = nombreVisible(colaboradora);
-  const idTitulo = `card-colaboradora-${colaboradora.id ?? nombre}`;
-  const dialogTitleId = `dialogo-contacto-${colaboradora.id ?? nombre}`;
+  const id = useId();
+  const idTitulo = `${id}-titulo`;
+  const dialogTitleId = `${id}-dialogo`;
   const { getAccessToken } = useAuth();
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
   const [contenido, setContenido] = useState('');
@@ -44,6 +45,7 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
   const [invitacionEnviada, setInvitacionEnviada] = useState(false);
 
   const cerrarDialogo = () => {
+    if (enviando) return;
     setDialogoAbierto(false);
     setContenido('');
     setError('');
@@ -155,6 +157,8 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
                 <p>
                   {t('tarjetas.invitacionDescripcion')}
                 </p>
+                {nombreProyecto && <p>{t('tarjetas.proyectoInvitacion', { proyecto: nombreProyecto })}</p>}
+                {descripcionPerfil && <p>{t('tarjetas.perfilInvitacion', { perfil: descripcionPerfil })}</p>}
                 {error && <Alert severity="error">{error}</Alert>}
                 <TextField
                   autoFocus
@@ -198,6 +202,8 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
 CardColaboradora.propTypes = {
   idProyecto: PropTypes.string,
   idPerfil: PropTypes.string,
+  nombreProyecto: PropTypes.string,
+  descripcionPerfil: PropTypes.string,
   colaboradora: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     nombreFantasia: PropTypes.string,

@@ -337,6 +337,8 @@ export default function BuscadorColaboradores() {
                       colaboradora={colaboradora}
                       idProyecto={idProyecto}
                       idPerfil={perfil.id}
+                      nombreProyecto={proyectoSeleccionado?.titulo}
+                      descripcionPerfil={markdownEnLineaATextoPlano(perfil.descripcion)}
                     />
                   ))}
                 </ul>

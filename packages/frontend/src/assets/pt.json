@@ -120,6 +120,8 @@
     "contactarNombre": "Entrar em contato com {nombre}",
     "invitacionPlataforma": "O convite foi enviado dentro da plataforma.",
     "invitacionDescripcion": "A pessoa receberá um convite para colaborar neste perfil e poderá aceitá-lo ou recusá-lo.",
+    "proyectoInvitacion": "Projeto: {proyecto}",
+    "perfilInvitacion": "Perfil: {perfil}",
     "mensajeOpcional": "Mensagem opcional",
     "enviando": "Enviando...",
     "enviarInvitacion": "Enviar um convite",
