@@ -15,7 +15,7 @@ import {
   TextField,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { FiAlertCircle, FiCheck, FiKey, FiLock, FiSave, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiKey, FiLock, FiMail, FiSave, FiStar, FiTrash2, FiUser } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
@@ -42,6 +42,7 @@ import { camposFaltantesPerfilColaboradora } from '../../utils/perfilColaborador
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { camposFaltantesPerfilColectivo } from '../../utils/perfilColectivo';
 import './MiPerfil.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const PERFIL_VACIO = {
   nombreFantasia: '',
@@ -111,9 +112,9 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
   };
 
   if (!email.trim()) {
-    agregar('email', 'Email', 'No pudimos verificar el email de la cuenta en Logto.', 'cuenta', 'email-cuenta');
+    agregar('email', t('miPerfil.email'), t('miPerfil.emailNoVerificado'), 'cuenta', 'email-cuenta');
   } else if (!EMAIL_VALIDO.test(email.trim())) {
-    agregar('email', 'Email', 'Ingresá un email válido en tu cuenta de Logto.', 'cuenta', 'email-cuenta');
+    agregar('email', t('miPerfil.email'), t('miPerfil.emailInvalido'), 'cuenta', 'email-cuenta');
   }
 
   if (esColaboradora) {
@@ -121,27 +122,27 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
       camposFaltantesPerfilColaboradora(datos).map(({ clave }) => clave),
     );
     if (camposFaltantes.has('nombreFantasia')) {
-      agregar('nombreFantasia', 'Nombre de fantasía', 'El nombre de fantasía es obligatorio.', 'perfil', 'nombre-fantasia');
+      agregar('nombreFantasia', t('miPerfil.nombreFantasia'), t('miPerfil.errorNombreFantasia'), 'perfil', 'nombre-fantasia');
     }
     if (camposFaltantes.has('habilidades')) {
-      agregar('habilidades', 'Habilidades', 'Elegí al menos una habilidad.', 'habilidades', 'mi-perfil-habilidades');
+      agregar('habilidades', t('registro.habilidades'), t('miPerfil.errorHabilidad'), 'habilidades', 'mi-perfil-habilidades');
     }
   } else {
     const camposFaltantes = new Set(camposFaltantesPerfilColectivo(datos).map(({ clave }) => clave));
     if (camposFaltantes.has('nombreColectivo')) {
-      agregar('nombreColectivo', 'Nombre del colectivo', 'El nombre del colectivo es obligatorio.', 'perfil', 'nombre-colectivo');
+      agregar('nombreColectivo', t('inicio.campoNombreColectivo'), t('miPerfil.errorNombreColectivo'), 'perfil', 'nombre-colectivo');
     }
     if (camposFaltantes.has('tipoDeColectivo')) {
-      agregar('tipoDeColectivo', 'Tipo de colectivo', 'Elegí el tipo de colectivo.', 'perfil', 'tipo-colectivo');
+      agregar('tipoDeColectivo', t('inicio.campoTipoColectivo'), t('miPerfil.errorTipoColectivo'), 'perfil', 'tipo-colectivo');
     }
     if (camposFaltantes.has('descripcion')) {
-      agregar('descripcion', 'Descripción', 'La descripción es obligatoria.', 'perfil', 'descripcion-colectivo');
+      agregar('descripcion', t('inicio.campoDescripcion'), t('miPerfil.errorDescripcion'), 'perfil', 'descripcion-colectivo');
     }
     if (datos.etiquetas.length > ETIQUETAS_MAX) {
       agregar(
         'etiquetas',
-        'Áreas de trabajo',
-        `Podés elegir hasta ${ETIQUETAS_MAX} áreas de trabajo.`,
+        t('miPerfil.areasTrabajo'),
+        t('miPerfil.maximoAreas', { maximo: ETIQUETAS_MAX }),
         'areas',
         'mi-perfil-habilidades',
       );
@@ -150,11 +151,12 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
 
   datos.medios.forEach((medio, indice) => {
     if (!validarMedio(medio)) {
-      const tipo = TIPOS_CONTACTO.find((opcion) => opcion.valor === medio.tipo)?.texto ?? 'Contacto';
+      const tipoContacto = TIPOS_CONTACTO.find((opcion) => opcion.valor === medio.tipo);
+      const tipo = tipoContacto ? t(tipoContacto.textoKey) : t('registro.contacto');
       const mensaje = medio.tipo === 'EMAIL'
-        ? 'Ingresá un email válido.'
-        : 'Ingresá un número válido con código de país, por ejemplo +5491145678901.';
-      agregar(`medio-${indice}`, `${tipo}, contacto ${indice + 1}`, mensaje, 'contacto', `medio-contacto-${indice}`);
+        ? t('miPerfil.emailContactoInvalido')
+        : t('miPerfil.numeroContactoInvalido');
+      agregar(`medio-${indice}`, t('miPerfil.contactoNumero', { tipo, numero: indice + 1 }), mensaje, 'contacto', `medio-contacto-${indice}`);
     }
   });
 
@@ -190,15 +192,12 @@ const MiPerfil = () => {
     [datos, datosIniciales],
   );
 
-  const secciones = useMemo(
-    () => [
-      ['cuenta', 'Cuenta'],
-      ['perfil', 'Perfil'],
-      [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? 'Habilidades' : 'Áreas de trabajo'],
-      ['contacto', 'Contacto'],
-    ],
-    [esColaboradora],
-  );
+  const secciones = [
+    ['cuenta', t('miPerfil.cuenta'), FiKey],
+    ['perfil', t('miPerfil.perfil'), FiUser],
+    [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? t('registro.habilidades') : t('miPerfil.areasTrabajo'), FiStar],
+    ['contacto', t('miPerfil.mediosDeContacto'), FiMail],
+  ];
 
   useEffect(() => {
     let vigente = true;
@@ -221,7 +220,7 @@ const MiPerfil = () => {
         } catch {
           if (vigente) {
             setAvisoEmail(
-              'No pudimos leer el email desde Logto. Verificá el permiso email de la aplicación y volvé a iniciar sesión.',
+              t('miPerfil.avisoEmail'),
             );
           }
         }
@@ -347,8 +346,8 @@ const MiPerfil = () => {
       ayuda
     );
 
-  const titulo = `Tu perfil de ${esColaboradora ? 'colaboradora' : 'colectivo'}`;
-  const migas = [{ texto: t('navegacion.inicio'), to: '/' }, { texto: 'Mi perfil' }];
+  const titulo = t(esColaboradora ? 'miPerfil.tituloColaboradora' : 'miPerfil.tituloColectivo');
+  const migas = [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('navegacion.miPerfil') }];
 
   if (cargando) {
     return (
@@ -385,34 +384,37 @@ const MiPerfil = () => {
 
   return (
     <div className={`contenedor-pagina mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
-      <EncabezadoPagina
-        titulo={titulo}
-        subtitulo={t('miPerfil.manteneTusDatosAlDia')}
-        migas={migas}
-      />
+      <EncabezadoPagina titulo={titulo} migas={migas} />
 
-      <div className={`mi-perfil-disposicion${esColaboradora ? '' : ' mi-perfil-disposicion--sin-nav'}`}>
-        {esColaboradora && (
-          <nav className="mi-perfil-nav" aria-label="Secciones de mi perfil">
-            <p className="mi-perfil-nav__titulo">{t('miPerfil.miCuenta')}</p>
-            {secciones.map(([id, etiqueta]) => (
-              <Button
-                variant="text"
-                type="button"
-                key={id}
-                className={`mi-perfil-nav__opcion${seccionActiva === id ? ' activo' : ''}`}
-                onClick={() => {
-                  setSeccionActiva(id);
-                  document.getElementById(`mi-perfil-${id}`)?.scrollIntoView?.({ block: 'start' });
-                }}
-                aria-current={seccionActiva === id ? 'location' : undefined}
-              >
-                {seccionActiva === id ? `✓ ${etiqueta} · Actual` : etiqueta}
-              </Button>
-            ))}
-            <p className="texto-secundario">Tus datos, bajo tu control.</p>
-          </nav>
-        )}
+      {/* Una sección a la vez (panel lateral): el formulario completo era demasiado largo. */}
+      <div className="mi-perfil-disposicion">
+        <nav className="mi-perfil-nav" aria-label={t('miPerfil.secciones')}>
+          <ul className="lateral-nav">
+            {secciones.map(([id, etiqueta, Icono]) => {
+              const erroresSeccion = Object.values(errores).filter((detalle) => detalle.seccion === id).length;
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className="lateral-nav__item"
+                    onClick={() => setSeccionActiva(id)}
+                    aria-current={seccionActiva === id ? 'location' : undefined}
+                  >
+                    <Icono aria-hidden="true" />
+                    <span>{etiqueta}</span>
+                    {erroresSeccion > 0 && (
+                      <span className="insignia insignia--error">
+                        <FiAlertCircle aria-hidden="true" />
+                        {erroresSeccion}
+                        <span className="visualmente-oculto"> {t(erroresSeccion === 1 ? 'miPerfil.unCampoRevisar' : 'miPerfil.variosCamposRevisar')}</span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
         <div className="mi-perfil-contenido">
           {cantidadErrores > 0 && (
@@ -422,26 +424,30 @@ const MiPerfil = () => {
               intento={intentoResumen}
               onIr={(detalle) => {
                 setSeccionActiva(detalle.seccion);
-                const campo = document.getElementById(detalle.id);
-                campo?.scrollIntoView?.({ block: 'center' });
-                campo?.focus();
+                // La sección se monta en el próximo render: recién ahí existe el campo.
+                window.setTimeout(() => {
+                  const campo = document.getElementById(detalle.id);
+                  campo?.scrollIntoView?.({ block: 'center' });
+                  campo?.focus();
+                }, 0);
               }}
             />
           )}
 
           <form className="mi-perfil-formulario" onSubmit={guardar} noValidate>
+            {seccionActiva === 'cuenta' && (
             <section className="mi-perfil-tarjeta" id="mi-perfil-cuenta" aria-labelledby="mi-perfil-cuenta-titulo">
-              <h2 id="mi-perfil-cuenta-titulo">Cuenta</h2>
+              <h2 id="mi-perfil-cuenta-titulo">{t('miPerfil.cuenta')}</h2>
               <TextField
                 id="email-cuenta"
-                label="Email (obligatorio)"
+                label={t('miPerfil.emailObligatorio')}
                 value={email}
                 fullWidth
                 disabled
                 error={Boolean(errores.email)}
                 helperText={mensajeCampo(
                   errores.email?.mensaje,
-                  'Este email se usa para iniciar sesión. Se administra desde Logto.'
+                  t('miPerfil.ayudaEmail')
                 )}
               />
               {avisoEmail && (
@@ -456,18 +462,20 @@ const MiPerfil = () => {
                   startIcon={<FiKey aria-hidden="true" />}
                   onClick={() => cambiarContrasena(email)}
                 >
-                  Cambiar contraseña
+                  {t('miPerfil.cambiarContrasena')}
                 </Button>
               </div>
             </section>
+            )}
 
+            {seccionActiva === 'perfil' && (
             <section className="mi-perfil-tarjeta" id="mi-perfil-perfil" aria-labelledby="mi-perfil-perfil-titulo">
-              <h2 id="mi-perfil-perfil-titulo">Perfil</h2>
+              <h2 id="mi-perfil-perfil-titulo">{t('miPerfil.perfil')}</h2>
               {esColaboradora ? (
                 <>
                   <TextField
                     id="nombre-fantasia"
-                    label="Nombre de fantasía (obligatorio)"
+                    label={t('miPerfil.nombreFantasiaObligatorio')}
                     placeholder={t('miPerfil.ejNombrePublico')}
                     value={datos.nombreFantasia}
                     onChange={(e) => cambiar('nombreFantasia', e.target.value)}
@@ -478,17 +486,17 @@ const MiPerfil = () => {
                   />
                   <TextField
                     id="usuario-github"
-                    label="Usuario de GitHub o GitLab (opcional)"
+                    label={t('miPerfil.usuarioCodigoOpcional')}
                     placeholder={t('miPerfil.ejUsuarioGithub')}
                     value={datos.usuarioGitHub}
                     onChange={(e) => cambiar('usuarioGitHub', e.target.value)}
-                    helperText="Sin @ ni enlace al perfil."
+                    helperText={t('miPerfil.ayudaUsuarioCodigo')}
                     fullWidth
                   />
                   <div className="mi-perfil-dos-columnas">
                     <TextField
                       id="nombre-persona"
-                      label="Nombre (opcional)"
+                      label={t('registro.nombreOpcional')}
                       placeholder={t('miPerfil.ejLucia')}
                       value={datos.nombre}
                       onChange={(e) => cambiar('nombre', e.target.value)}
@@ -496,7 +504,7 @@ const MiPerfil = () => {
                     />
                     <TextField
                       id="apellido-persona"
-                      label="Apellido (opcional)"
+                      label={t('registro.apellidoOpcional')}
                       placeholder={t('miPerfil.ejGomez')}
                       value={datos.apellido}
                       onChange={(e) => cambiar('apellido', e.target.value)}
@@ -505,23 +513,23 @@ const MiPerfil = () => {
                   </div>
                   <TextField
                     id="pronombres"
-                    label="Pronombres (opcional)"
+                    label={t('registro.pronombresOpcional')}
                     placeholder={t('miPerfil.ejEllaElle')}
                     value={datos.pronombres}
                     onChange={(e) => cambiar('pronombres', e.target.value)}
                     helperText={t('miPerfil.separalosConComas')}
                     fullWidth
                   />
-                  <TextField
+                  <CampoMarkdown
                     id="presentacion"
-                    label="Presentación breve (opcional)"
+                    label={t('miPerfil.presentacionOpcional')}
                     placeholder={t('miPerfil.ejPresentacion')}
                     value={datos.presentacion}
                     onChange={(e) => cambiar('presentacion', e.target.value)}
                     multiline
                     minRows={3}
                     slotProps={{ htmlInput: { maxLength: 280 } }}
-                    helperText={`${datos.presentacion.length} de 280 caracteres`}
+                    helperText={t('miPerfil.caracteres', { cantidad: datos.presentacion.length })}
                     fullWidth
                   />
                 </>
@@ -529,8 +537,8 @@ const MiPerfil = () => {
                 <>
                   <TextField
                     id="nombre-colectivo"
-                    label="Nombre del colectivo (obligatorio)"
-                    placeholder="Ej.: Colectivo La Semilla"
+                    label={t('miPerfil.nombreColectivoObligatorio')}
+                    placeholder={t('registro.nombreColectivoEjemplo')}
                     value={datos.nombreColectivo}
                     onChange={(e) => cambiar('nombreColectivo', e.target.value)}
                     error={Boolean(errores.nombreColectivo)}
@@ -540,7 +548,7 @@ const MiPerfil = () => {
                   />
                   <TextField
                     id="tipo-colectivo"
-                    label="Tipo de colectivo (obligatorio)"
+                    label={t('registro.tipoColectivoObligatorio')}
                     select
                     value={datos.tipoDeColectivo}
                     onChange={(e) => cambiar('tipoDeColectivo', e.target.value)}
@@ -551,7 +559,7 @@ const MiPerfil = () => {
                   >
                     {TIPOS_COLECTIVO.map((tipo) => (
                       <MenuItem key={tipo.valor} value={tipo.valor}>
-                        {tipo.texto}
+                        {t(tipo.textoKey)}
                       </MenuItem>
                     ))}
                   </TextField>
@@ -563,9 +571,9 @@ const MiPerfil = () => {
                     labelsAbove
                     idPrefix="mi-perfil-ubicacion"
                   />
-                  <TextField
+                  <CampoMarkdown
                     id="descripcion-colectivo"
-                    label="Descripción (obligatoria)"
+                    label={t('registro.descripcionObligatoria')}
                     placeholder={t('miPerfil.ejDescripcionColectivo')}
                     value={datos.descripcion}
                     onChange={(e) => cambiar('descripcion', e.target.value)}
@@ -579,17 +587,19 @@ const MiPerfil = () => {
                 </>
               )}
             </section>
+            )}
 
+            {(seccionActiva === 'habilidades' || seccionActiva === 'areas') && (
             <section
               className="mi-perfil-tarjeta"
               id={`mi-perfil-${esColaboradora ? 'habilidades' : 'areas'}`}
               aria-labelledby="mi-perfil-seleccion-titulo"
             >
-              <h2 id="mi-perfil-seleccion-titulo">{esColaboradora ? 'Habilidades' : 'Habilidades y áreas de trabajo'}</h2>
+              <h2 id="mi-perfil-seleccion-titulo">{t(esColaboradora ? 'registro.habilidades' : 'miPerfil.habilidadesYAreas')}</h2>
               <p className="texto-secundario">
                 {esColaboradora
-                  ? 'Elegí las habilidades que querés aportar.'
-                  : 'Agregá etiquetas para describir las áreas de trabajo de tu colectivo.'}
+                  ? t('miPerfil.elegiHabilidades')
+                  : t('miPerfil.agregaAreas')}
               </p>
               {listado.error && (
                 <AlertaError
@@ -600,7 +610,7 @@ const MiPerfil = () => {
               )}
               <CustomSelect
                 id="mi-perfil-habilidades"
-                etiqueta={esColaboradora ? 'Habilidades (obligatorio)' : t('miPerfil.areasYEtiquetasOpcional')}
+                etiqueta={esColaboradora ? t('miPerfil.habilidadesObligatorio') : t('miPerfil.areasYEtiquetasOpcional')}
                 opciones={esColaboradora ? opcionesHabilidades : opcionesAreas}
                 seleccion={etiquetas}
                 multiple
@@ -614,23 +624,30 @@ const MiPerfil = () => {
                     etiquetas.filter((actual) => actual !== valor),
                   )
                 }
-                placeholder={listado.cargando ? 'Cargando opciones…' : t('perfilesProyecto.placeholderHabilidades')}
-                textoVacio={listado.cargando ? 'Cargando opciones…' : 'No hay coincidencias.'}
+                placeholder={listado.cargando ? t('miPerfil.cargandoOpciones') : t('perfilesProyecto.placeholderHabilidades')}
+                textoVacio={listado.cargando ? t('miPerfil.cargandoOpciones') : t('miPerfil.sinCoincidencias')}
               />
             </section>
+            )}
 
-            <section className="mi-perfil-tarjeta" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
-              <h2 id="mi-perfil-contacto-titulo">Contacto</h2>
-              <Alert severity="info" icon={<FiLock aria-hidden="true" />}>
-                Tus medios de contacto son privados y no se muestran públicamente.
-              </Alert>
-              {datos.medios.length > 0 && (
-                <ul className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
+            {seccionActiva === 'contacto' && (
+            <section className="mi-perfil-tarjeta medios-contacto" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
+              <h2 id="mi-perfil-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
+              <p className="medios-contacto__intro">{t('medios.intro')}</p>
+              <p className="medios-contacto__privado">
+                <FiLock aria-hidden="true" /> {t('medios.privado')}
+              </p>
+              {datos.medios.length === 0 ? (
+                <p className="medios-contacto__vacio">{t('medios.vacio')}</p>
+              ) : (
+                <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
                   {datos.medios.map((medio, indice) => (
-                    <li className="medios-fila" key={`${indice}-${medio.tipo}`}>
+                    <li className="medios-item" key={`${indice}-${medio.tipo}`}>
+                      <p className="medios-item__titulo">{t('medios.numero', { numero: indice + 1 })}</p>
+                      <div className="medios-fila">
                       <TextField
                         id={`medio-tipo-${indice}`}
-                        label="Tipo"
+                        label={t('medios.tipo')}
                         select
                         value={medio.tipo}
                         onChange={(e) => cambiarMedio(indice, { tipo: e.target.value })}
@@ -638,13 +655,13 @@ const MiPerfil = () => {
                       >
                         {TIPOS_CONTACTO.map((tipo) => (
                           <MenuItem key={tipo.valor} value={tipo.valor}>
-                            {tipo.texto}
+                            {t(tipo.textoKey)}
                           </MenuItem>
                         ))}
                       </TextField>
                       <TextField
                         id={`medio-contacto-${indice}`}
-                        label={medio.tipo === 'EMAIL' ? 'Dirección de email' : t('miPerfil.numeroConCodigoDePais')}
+                        label={medio.tipo === 'EMAIL' ? t('medios.direccionEmail') : t('miPerfil.numeroConCodigoDePais')}
                         placeholder={medio.tipo === 'EMAIL' ? t('miPerfil.ejEmail') : t('miPerfil.ejTelefono')}
                         value={medio.valor}
                         onChange={(e) => cambiarMedio(indice, { valor: e.target.value })}
@@ -654,14 +671,15 @@ const MiPerfil = () => {
                       />
                       <IconButton
                         type="button"
-                        aria-label={`Quitar medio de contacto ${indice + 1}`}
+                        aria-label={t('medios.quitar', { numero: indice + 1 })}
                         onClick={() => cambiar('medios', datos.medios.filter((_, i) => i !== indice))}
                       >
                         <FiTrash2 aria-hidden="true" />
                       </IconButton>
+                      </div>
                     </li>
                   ))}
-                </ul>
+                </ol>
               )}
               <div>
                 <AgregarMedioContactoButton
@@ -675,13 +693,14 @@ const MiPerfil = () => {
                     onChange={(e) => cambiar('aceptaMensajeria', e.target.checked)}
                   />
                 }
-                label="Quiero recibir mensajes internos sobre proyectos relacionados con mi perfil."
+                label={t('miPerfil.aceptaMensajes')}
               />
             </section>
+            )}
 
             {errorServidor && (
               <Alert className="mi-perfil-estado" severity="error" role="alert">
-                <span>{`No pudimos guardar los cambios: ${errorServidor}`}</span>
+                <span>{t('miPerfil.errorGuardar', { error: errorServidor })}</span>
                 <p className="texto-secundario">{t('miPerfil.tusDatosSiguenAcaPodes')}</p>
               </Alert>
             )}
@@ -701,7 +720,7 @@ const MiPerfil = () => {
                   }
                 }}
               >
-                Cancelar
+                {t('comun.cancelar')}
               </Button>
               <Button
                 type="submit"
@@ -710,12 +729,12 @@ const MiPerfil = () => {
                 loading={guardando}
                 startIcon={<FiSave aria-hidden="true" />}
               >
-                {guardando ? 'Guardando…' : 'Guardar cambios'}
+                {guardando ? t('registro.guardando') : t('miPerfil.guardarCambios')}
               </Button>
             </div>
             {exito && (
               <Alert className="mi-perfil-estado" severity="success" role="status" icon={<FiCheck aria-hidden="true" />}>
-                Los cambios ya fueron aplicados.
+                {t('miPerfil.cambiosAplicados')}
               </Alert>
             )}
           </form>
@@ -723,13 +742,13 @@ const MiPerfil = () => {
       </div>
 
       <Dialogo open={confirmarDescartar} onClose={() => setConfirmarDescartar(false)} aria-labelledby="descartar-cambios-titulo">
-        <DialogTitle id="descartar-cambios-titulo">¿Descartar los cambios?</DialogTitle>
+        <DialogTitle id="descartar-cambios-titulo">{t('miPerfil.descartarPregunta')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('miPerfil.vasAPerderLosCambios')}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmarDescartar(false)} variant="outlined">
-            Seguir editando
+            {t('miPerfil.seguirEditando')}
           </Button>
           <Button
             onClick={() => {
@@ -743,7 +762,7 @@ const MiPerfil = () => {
             color="error"
             startIcon={<FiTrash2 aria-hidden="true" />}
           >
-            Descartar cambios
+            {t('miPerfil.descartarCambios')}
           </Button>
         </DialogActions>
       </Dialogo>
@@ -760,9 +779,9 @@ const ResumenErroresPerfil = ({ errores, cantidad, intento, onIr }) => {
   return (
     <Alert severity="error" role="alert" ref={ref} tabIndex={-1} className="resumen-errores" aria-labelledby="mi-perfil-errores-titulo">
       <AlertTitle id="mi-perfil-errores-titulo" component="h2">
-        Revisá {cantidad} {cantidad === 1 ? 'campo' : 'campos'}
+        {t(cantidad === 1 ? 'miPerfil.revisarUnCampo' : 'miPerfil.revisarVariosCampos', { cantidad })}
       </AlertTitle>
-      <p>Corregí los campos para guardar los cambios.</p>
+      <p>{t('miPerfil.corregirCampos')}</p>
       <ul className="resumen-errores__lista">
         {Object.entries(errores).map(([campo, detalle]) => (
           <li key={campo}>

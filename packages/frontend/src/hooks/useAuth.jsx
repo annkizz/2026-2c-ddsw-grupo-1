@@ -4,6 +4,7 @@ import { obtenerSesion } from '../service/usuariosService';
 import { borrarTipo } from '../features/registro/tipoElegido';
 import { clasificarError } from '../utils/mensajeDeError';
 import { AuthContext } from './authContexto';
+import { t } from '../i18n/t';
 
 export const RESOURCE = process.env.REACT_APP_LOGTO_RESOURCES;
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const token = await logtoGetAccessToken(RESOURCE);
     if (!token) {
       throw new Error(
-        'Logto no devolvio el token JWT de la API. Verifica que la aplicacion tenga habilitado el refresh token y acceso al recurso de la API.'
+        t('erroresInternos.tokenLogto')
       );
     }
     return token;
@@ -51,10 +52,10 @@ export const AuthProvider = ({ children }) => {
       const esErrorDeRed =
         error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED';
       const mensaje = esTimeout
-        ? 'El servidor tardó demasiado en verificar tu sesión. Reintentá.'
+        ? t('erroresInternos.sesionTimeout')
         : esErrorDeRed
-          ? 'No pudimos conectarnos con el servidor. Verificá que el backend esté iniciado.'
-          : error?.response?.data?.error ?? error?.message ?? 'No se pudo verificar la sesión.';
+          ? t('erroresInternos.sesionRed')
+          : error?.response?.data?.error ?? error?.message ?? t('erroresInternos.sesion');
       const codigo = error?.response?.data?.codigo;
       setErrorSesion(codigo ? `${mensaje} (${codigo})` : mensaje);
       setTipoErrorSesion(clasificarError(error));
@@ -96,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     const email = typeof userInfo?.email === 'string' ? userInfo.email.trim() : '';
     if (!email) {
       throw new Error(
-        'Logto no devolvio el email. Verifica que la cuenta tenga un email y que la aplicacion tenga habilitado el permiso email.'
+        t('erroresInternos.emailLogto')
       );
     }
     return email;

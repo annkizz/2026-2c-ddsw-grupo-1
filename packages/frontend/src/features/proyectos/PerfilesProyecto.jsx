@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Alert,
   Autocomplete,
@@ -9,7 +9,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   TextField,
 } from '@mui/material';
 import { FiAlertCircle, FiArrowLeft, FiLock, FiPlus, FiSave, FiTrash2, FiEdit2, FiUsers } from 'react-icons/fi';
@@ -39,6 +44,9 @@ import {
   textoCupo,
 } from '../../utils/perfiles';
 import './PerfilesProyecto.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
+import { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+import { markdownEnLineaATextoPlano } from '../../utils/markdown';
 
 const PERFIL_VACIO = {
   descripcion: '',
@@ -61,13 +69,27 @@ export const construirPayloadPerfil = (form) => ({
     tipoColaboracion: form.tipoColaboracion,
   },
   tipoAceptacion: form.tipoAceptacion,
-  ...(form.limiteColaboraciones !== ''
+  ...(form.tipoAceptacion !== 'SIN_LIMITE' && form.limiteColaboraciones !== ''
     ? { limiteColaboraciones: Number(form.limiteColaboraciones) }
     : {}),
 });
 
+export const validarLimiteColaboraciones = ({ tipoAceptacion, limiteColaboraciones }) => {
+  if (tipoAceptacion === 'SIN_LIMITE') return '';
+  if (tipoAceptacion === 'LLENAR_VACANTES' && limiteColaboraciones === '') {
+    return t('perfilesProyecto.errLimiteRequerido');
+  }
+  if (limiteColaboraciones !== '') {
+    const limite = Number(limiteColaboraciones);
+    if (!Number.isInteger(limite) || limite < 1) return t('perfilesProyecto.errLimite');
+  }
+  return '';
+};
+
 const PerfilesProyecto = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { sesion, getAccessToken } = useAuth();
   const notificar = useNotificar();
 
@@ -108,6 +130,14 @@ const PerfilesProyecto = () => {
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  useEffect(() => {
+    if (!cargando && proyecto && sesion?.idColectivo &&
+        proyecto.idColectivo === sesion.idColectivo && location.state?.crearPerfil) {
+      setModalAbierto(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [cargando, proyecto, sesion?.idColectivo, location, navigate]);
 
   const cargarHabilidades = useCallback(() => {
     setErrorHabilidades(null);
@@ -163,12 +193,8 @@ const PerfilesProyecto = () => {
     if (!form.horas || !Number.isInteger(horas) || horas < 1) {
       errs.horas = t('perfilesProyecto.errHoras');
     }
-    if (form.limiteColaboraciones !== '') {
-      const limite = Number(form.limiteColaboraciones);
-      if (!Number.isInteger(limite) || limite < 1) {
-        errs.limiteColaboraciones = t('perfilesProyecto.errLimite');
-      }
-    }
+    const errorLimite = validarLimiteColaboraciones(form);
+    if (errorLimite) errs.limiteColaboraciones = errorLimite;
     setErrores(errs);
     setIntentoResumen((n) => n + 1);
     return Object.keys(errs).length === 0;
@@ -236,6 +262,16 @@ const PerfilesProyecto = () => {
       ayuda
     );
 
+  const cambiarTipoAceptacion = (e) => {
+    const tipoAceptacion = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      tipoAceptacion,
+      ...(tipoAceptacion === 'SIN_LIMITE' ? { limiteColaboraciones: '' } : {}),
+    }));
+    setErrores((prev) => ({ ...prev, limiteColaboraciones: '' }));
+  };
+
   const IDS = {
     descripcion: 'perfil-descripcion',
     habilidadesRequeridas: 'perfil-requeridas',
@@ -294,7 +330,6 @@ const PerfilesProyecto = () => {
       <EncabezadoPagina
         titulo={t('perfilesProyecto.titulo')}
         antetitulo={proyecto.titulo}
-        subtitulo={t('perfilesProyecto.subtitulo')}
         migas={migas}
         accion={botonAgregar}
       />
@@ -316,7 +351,7 @@ const PerfilesProyecto = () => {
             <li key={perfil.id} className="tarjeta" aria-labelledby={`admin-perfil-${perfil.id}`}>
               <div className="tarjeta__cuerpo">
                 <h2 id={`admin-perfil-${perfil.id}`} className="tarjeta__titulo">
-                  {perfil.descripcion}
+                  <MarkdownEnLinea texto={perfil.descripcion} />
                 </h2>
 
                 <div className="perfil-admin__bloque">
@@ -366,7 +401,7 @@ const PerfilesProyecto = () => {
                   variant="outlined"
                   startIcon={<FiEdit2 aria-hidden="true" />}
                   onClick={() => abrirModalEditar(perfil)}
-                  aria-label={`${t('perfilesProyecto.editarPerfil')}: ${perfil.descripcion}`}
+                  aria-label={t('formatoTipoValor', { tipo: t('perfilesProyecto.editarPerfil'), valor: markdownEnLineaATextoPlano(perfil.descripcion) })}
                 >
                   {t('perfilesProyecto.editarPerfil')}
                 </Button>
@@ -378,7 +413,7 @@ const PerfilesProyecto = () => {
                     setErrorEliminar(null);
                     setPerfilAEliminar(perfil);
                   }}
-                  aria-label={`${t('perfilesProyecto.eliminarPerfil')}: ${perfil.descripcion}`}
+                  aria-label={t('formatoTipoValor', { tipo: t('perfilesProyecto.eliminarPerfil'), valor: markdownEnLineaATextoPlano(perfil.descripcion) })}
                 >
                   {t('perfilesProyecto.eliminarPerfil')}
                 </Button>
@@ -405,7 +440,7 @@ const PerfilesProyecto = () => {
               intento={intentoResumen}
             />
 
-            <TextField
+            <CampoMarkdown enLinea
               id="perfil-descripcion"
               label={t('perfilesProyecto.labelDescripcion')}
               placeholder={t('perfilesProyecto.placeholderDescripcion')}
@@ -518,19 +553,68 @@ const PerfilesProyecto = () => {
               ))}
             </TextField>
 
-            <TextField
-              id="perfil-limite"
-              type="number"
-              label={t('perfilesProyecto.limiteColaboraciones')}
-              placeholder={t('perfilesProyecto.placeholderCupo')}
-              value={form.limiteColaboraciones}
-              onChange={(e) => setForm({ ...form, limiteColaboraciones: e.target.value })}
-              error={Boolean(errores.limiteColaboraciones)}
-              helperText={mensajeCampo(errores.limiteColaboraciones, t('perfilesProyecto.ayudaCupo'))}
-              disabled={guardando}
-              fullWidth
-              slotProps={{ htmlInput: { min: 1, step: 1 } }}
-            />
+            <FormControl component="fieldset" disabled={guardando} fullWidth>
+              <FormLabel component="legend">{t('perfilesProyecto.tipoAceptacion')}</FormLabel>
+              <RadioGroup
+                aria-label={t('perfilesProyecto.tipoAceptacion')}
+                value={form.tipoAceptacion}
+                onChange={cambiarTipoAceptacion}
+                className="perfil-tipo-aceptacion"
+              >
+                <FormControlLabel
+                  value="LLENAR_VACANTES"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionLlenarVacantes')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaLlenarVacantes')}</span>
+                    </span>
+                  }
+                />
+                <FormControlLabel
+                  value="SIN_LIMITE"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionSinLimite')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaSinLimite')}</span>
+                    </span>
+                  }
+                />
+                <FormControlLabel
+                  value="MANUAL"
+                  control={<Radio />}
+                  label={
+                    <span className="perfil-tipo-aceptacion__opcion">
+                      <strong>{t('perfilesProyecto.opcionManual')}</strong>
+                      <span className="texto-secundario">{t('perfilesProyecto.ayudaManual')}</span>
+                    </span>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {form.tipoAceptacion !== 'SIN_LIMITE' && (
+              <TextField
+                id="perfil-limite"
+                type="number"
+                label={t('perfilesProyecto.limiteColaboraciones')}
+                placeholder={t('perfilesProyecto.placeholderCupo')}
+                value={form.limiteColaboraciones}
+                onChange={(e) => setForm({ ...form, limiteColaboraciones: e.target.value })}
+                error={Boolean(errores.limiteColaboraciones)}
+                helperText={mensajeCampo(
+                  errores.limiteColaboraciones,
+                  form.tipoAceptacion === 'LLENAR_VACANTES'
+                    ? t('perfilesProyecto.ayudaCupoRequerido')
+                    : t('perfilesProyecto.ayudaCupo'),
+                )}
+                disabled={guardando}
+                required={form.tipoAceptacion === 'LLENAR_VACANTES'}
+                fullWidth
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+              />
+            )}
 
             {errorGuardar && (
               <AlertaError error={errorGuardar} titulo={t('perfilesProyecto.errorGuardarTitulo')}>
@@ -564,7 +648,7 @@ const PerfilesProyecto = () => {
         <DialogTitle id="eliminar-perfil-titulo">{t('perfilesProyecto.modalEliminarTitulo')}</DialogTitle>
         <DialogContent className="dialogo-formulario">
           <DialogContentText id="eliminar-perfil-texto">
-            {perfilAEliminar && <strong>{perfilAEliminar.descripcion}. </strong>}
+            {perfilAEliminar && <strong><MarkdownEnLinea texto={perfilAEliminar.descripcion} />. </strong>}
             {t('perfilesProyecto.mensajeEliminar')}
           </DialogContentText>
           {errorEliminar && <AlertaError error={errorEliminar} titulo={t('perfilesProyecto.errorEliminarTitulo')} />}

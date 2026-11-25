@@ -41,16 +41,16 @@ const PerfilColaboradora = () => {
       error={error}
       encontrado={Boolean(colaboradora)}
       onReintentar={reintentar}
-      titulo={colaboradora?.nombreFantasia || nombre || 'Perfil de colaboradora'}
+      titulo={colaboradora?.nombreFantasia || nombre || t('perfilPublico.perfilColaboradora')}
       datos={[
         nombre && colaboradora?.nombreFantasia ? nombre : null,
-        colaboradora?.pronombres?.length > 0 ? `Pronombres: ${colaboradora.pronombres.join(', ')}` : null,
-        colaboradora?.usuarioGitHub ? `GitHub o GitLab: ${colaboradora.usuarioGitHub}` : null,
+        colaboradora?.pronombres?.length > 0 ? t('tarjetas.pronombres', { pronombres: colaboradora.pronombres.join(', ') }) : null,
+        colaboradora?.usuarioGitHub ? t('perfilPublico.usuarioCodigo', { usuario: colaboradora.usuarioGitHub }) : null,
         colaboradora?.presentacion || null,
       ]}
-      seccionTitulo="Habilidades"
+      seccionTitulo={t('registro.habilidades')}
       chips={colaboradora?.habilidades ?? []}
-      textoSinChips="Aún no agregó habilidades."
+      textoSinChips={t('perfilPublico.sinHabilidades')}
     />
   );
 };

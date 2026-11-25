@@ -18,14 +18,6 @@
   padding: var(--space-3) var(--space-4);
 }
 
-.footer-ayuda {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: var(--control-min-height);
-  font-weight: var(--font-weight-medium);
-}
-
 @media (max-width: 599.95px) {
   .footer__contenido {
     flex-direction: column;

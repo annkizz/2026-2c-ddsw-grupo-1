@@ -28,28 +28,16 @@ import DashboardCard from './components/DashboardCard.jsx';
 import DashboardEmptyState from './components/DashboardEmptyState.jsx';
 import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
 import DashboardColaboradora from './DashboardColaboradora.jsx';
+import DestacadosPortada from './components/DestacadosPortada.jsx';
 import TipoCuenta from '../registro/TipoCuenta.jsx';
 import './Home.css';
 
-const PASOS_AYUDA = [
-  {
-    icono: FiUserPlus,
-    titulo: t('inicio.creaTuCuenta'),
-    texto: t('inicio.elegiSiTeSumasComo'),
-  },
-  {
-    icono: FiEdit3,
-    titulo: 'Completá tu perfil',
-    texto: t('inicio.contaQueHaceTuColectivo'),
-  },
-  {
-    icono: FiRepeat,
-    titulo: t('inicio.conectaConProyectos'),
-    texto: t('inicio.losColectivosPublicanProyectosY'),
-  },
-];
-
 const Home = () => {
+  const pasosAyuda = [
+    { icono: FiUserPlus, titulo: t('inicio.creaTuCuenta'), texto: t('inicio.elegiSiTeSumasComo') },
+    { icono: FiEdit3, titulo: t('inicio.completaTuPerfil'), texto: t('inicio.contaQueHaceTuColectivo') },
+    { icono: FiRepeat, titulo: t('inicio.conectaConProyectos'), texto: t('inicio.losColectivosPublicanProyectosY') },
+  ];
   const navigate = useNavigate();
   const {
     cargando,
@@ -71,14 +59,16 @@ const Home = () => {
   const esDashboardColectivo = sesion?.rol === 'COLECTIVO' && sesion?.tienePerfil;
   const esDashboardColaboradora = sesion?.rol === 'COLABORADOR' && sesion?.tienePerfil;
 
-  // El colectivo autenticado usa el inicio como panel; el resto conserva el flujo actual.
+  // Cuentas con perfil pero sin panel propio (por ejemplo, administración) van al listado público.
   useEffect(() => {
-    if (sesion?.tienePerfil && !esDashboardColectivo && !esDashboardColaboradora) {
-      navigate('/perfil', { replace: true });
+    if (sesion?.rol === 'ADMINISTRADOR') {
+      navigate('/administrador/destacados', { replace: true });
+    } else if (sesion?.tienePerfil && !esDashboardColectivo && !esDashboardColaboradora) {
+      navigate('/proyectos', { replace: true });
     }
   }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
 
-  // "¿Necesitás ayuda?" lleva a /#como-funciona: al llegar, se desplaza a esa sección.
+  // Un enlace a /#como-funciona se desplaza a esa sección al llegar.
   useEffect(() => {
     if (window.location.hash === `#${ID_AYUDA}`) {
       document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: 'start' });
@@ -94,12 +84,12 @@ const Home = () => {
       setErrorProyectos(null);
       try {
         if (!sesion.idColectivo) {
-          throw new Error('No pudimos identificar tu colectivo para cargar los proyectos.');
+          throw new Error(t('erroresInternos.colectivoNoIdentificado'));
         }
 
         const resultado = await obtenerProyectos();
         if (!Array.isArray(resultado)) {
-          throw new Error('No pudimos leer la lista de proyectos.');
+          throw new Error(t('erroresInternos.listaProyectos'));
         }
 
         if (vigente) {
@@ -163,27 +153,22 @@ const Home = () => {
           <EncabezadoPagina
             id="dashboard-titulo"
             antetitulo={t('inicio.espacioDeTuColectivo')}
-            titulo="¿Qué querés impulsar hoy?"
-            subtitulo="Publicá proyectos, revisá su estado y encontrá colaboradoras."
+            titulo={t('inicio.impulsarHoy')}
           />
 
           <div className="dashboard-grid">
             <DashboardCard
               className="dashboard-card--destacada"
               icon={sinProyectos ? null : <FiCode />}
-              title={sinProyectos ? null : 'Publicar un proyecto'}
-              description={
-                sinProyectos
-                  ? null
-                  : 'Compartí una iniciativa y contá qué tipo de colaboración necesitás.'
-              }
+              title={sinProyectos ? null : t('inicio.publicarUnProyecto')}
+              description={sinProyectos ? null : t('inicio.sumarColaboradoras')}
             >
               {sinProyectos ? (
                 <DashboardEmptyState
                   icon={FiPlus}
-                  title="Empezá por tu primer proyecto"
-                  description="Un proyecto cuenta qué necesita tu colectivo para sumar personas colaboradoras."
-                  actionLabel="Crear mi primer proyecto"
+                  title={t('inicio.primerProyectoTitulo')}
+                  description={t('inicio.primerProyectoDescripcion')}
+                  actionLabel={t('inicio.crearPrimerProyecto')}
                   actionVariant="contained"
                   onAction={() => navigate('/proyectos/nuevo')}
                   nivelTitulo="h2"
@@ -191,18 +176,19 @@ const Home = () => {
               ) : (
                 <Button
                   variant="contained"
+                  color="secondary"
                   onClick={() => navigate('/proyectos/nuevo')}
                   startIcon={<FiPlus aria-hidden="true" />}
                 >
-                  Publicar proyecto
+                  {t('inicio.publicarProyecto')}
                 </Button>
               )}
             </DashboardCard>
 
-            <DashboardCard className="dashboard-card--proyectos" icon={<FiFolder />} title="Estado de tus proyectos">
+            <DashboardCard className="dashboard-card--proyectos" icon={<FiFolder />} title={t('inicio.estadoProyectos')}>
               {cargandoProyectos ? (
                 <div className="dashboard-contadores" aria-busy="true" role="status">
-                  <span className="visualmente-oculto">Cargando tus proyectos…</span>
+                  <span className="visualmente-oculto">{t('inicio.cargandoProyectos')}</span>
                   {[0, 1].map((i) => (
                     <div key={i} aria-hidden="true">
                       <Skeleton variant="text" width="var(--space-6)" height="var(--space-6)" />
@@ -218,8 +204,8 @@ const Home = () => {
                 />
               ) : sinProyectos ? (
                 <DashboardEmptyState
-                  title="Aún no hay proyectos publicados"
-                  description="Cuando publiques el primero, acá vas a ver cuántos están activos y finalizados."
+                  title={t('inicio.sinProyectosPublicados')}
+                  description={t('inicio.sinProyectosDescripcion')}
                 />
               ) : (
                 <>
@@ -227,18 +213,18 @@ const Home = () => {
                     <div>
                       <strong>{activos}</strong>
                       <span>
-                        <FiArrowRight aria-hidden="true" /> Activos
+                        <FiArrowRight aria-hidden="true" /> {t('proyectos.activos')}
                       </span>
                     </div>
                     <div>
                       <strong>{finalizados}</strong>
                       <span>
-                        <FiCheck aria-hidden="true" /> Finalizados
+                        <FiCheck aria-hidden="true" /> {t('proyectos.finalizados')}
                       </span>
                     </div>
                   </div>
                   <Button variant="outlined" onClick={() => navigate('/proyectos')} endIcon={<FiArrowRight aria-hidden="true" />}>
-                    Ver mis proyectos
+                    {t('inicio.verMisProyectos')}
                   </Button>
                 </>
               )}
@@ -247,22 +233,24 @@ const Home = () => {
             <DashboardCard
               className="dashboard-card--buscar"
               icon={<FiUsers />}
-              title="Encontrar colaboradoras"
-              description="Explorá perfiles y habilidades para sumar a tu iniciativa."
+              title={t('inicio.encontrarColaboradoras')}
+              description={t('inicio.explorarPerfiles')}
             >
               <Button
                 variant="outlined"
                 onClick={() => navigate('/buscar-colaboradores')}
                 startIcon={<FiSearch aria-hidden="true" />}
               >
-                Buscar colaboradoras
+                {t('navegacion.buscarColaboradoras')}
               </Button>
             </DashboardCard>
           </div>
 
+          <DestacadosPortada />
+
           {cargandoPerfil ? (
             <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
-              <span className="visualmente-oculto">Comprobando si falta completar tu perfil…</span>
+              <span className="visualmente-oculto">{t('inicio.comprobandoPerfil')}</span>
               <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
             </div>
           ) : errorPerfil ? (
@@ -277,8 +265,8 @@ const Home = () => {
               completados={CAMPOS_REQUERIDOS_COLECTIVO.length - camposPerfilFaltantes.length}
               total={CAMPOS_REQUERIDOS_COLECTIVO.length}
               faltantes={camposPerfilFaltantes}
-              titulo="Completá el perfil de tu colectivo"
-              accion="Completar mi perfil"
+              titulo={t('inicio.completarPerfilColectivo')}
+              accion={t('inicio.completarMiPerfil')}
               onCompletar={() => navigate('/perfil')}
             />
           ) : null}
@@ -295,34 +283,32 @@ const Home = () => {
             id="home-titulo"
             className="encabezado-pagina--hero"
             antetitulo={t('inicio.tecnologiaConProposito')}
-            titulo="El código es mejor cuando nos conecta."
+            titulo={t('inicio.lema')}
             subtitulo={t('inicio.unimosAColectivosQueNecesitan')}
           />
-          <div className="home-pares" aria-hidden="true">
-            <span>
-              <FiCode /> Personas
-            </span>
-            <FiRepeat />
-            <span>
-              <FiUsers /> Colectivos
-            </span>
-          </div>
-          <p className="texto-secundario">Software compartido. Impacto colectivo.</p>
+          <ul className="home-pares">
+            <li>
+              <FiUsers aria-hidden="true" /> {t('inicio.colectivosPublican')}
+            </li>
+            <li>
+              <FiCode aria-hidden="true" /> {t('inicio.colaboradorasSuman')}
+            </li>
+          </ul>
         </section>
 
         <section className="home-login" aria-labelledby="home-login-titulo">
-          <h2 id="home-login-titulo">Iniciar sesión</h2>
-          <p className="home-sub">Qué bueno encontrarte de nuevo.</p>
+          <h2 id="home-login-titulo">{t('comun.iniciarSesion')}</h2>
           {/* El email y la contraseña se piden en la pantalla de Logto */}
           <Button
             variant="contained"
+            color="secondary"
             fullWidth
             size="large"
             onClick={iniciarSesion}
             loading={cargando && !errorLogto}
             endIcon={cargando && !errorLogto ? null : <FiArrowRight aria-hidden="true" />}
           >
-            {cargando && !errorLogto ? 'Ingresando…' : 'Ingresar'}
+            {cargando && !errorLogto ? t('inicio.ingresando') : t('inicio.ingresar')}
           </Button>
           {errorLogto && (
             <AlertaError
@@ -332,25 +318,27 @@ const Home = () => {
             />
           )}
           <p className="home-cambio">
-            ¿Primera vez acá?
+            {t('inicio.primeraVez')}
             <Button variant="text" onClick={() => setEligiendoTipo(true)}>
-              Crear una cuenta
+              {t('inicio.crearCuenta')}
             </Button>
           </p>
         </section>
       </div>
 
+      <DestacadosPortada />
+
       <section id={ID_AYUDA} className="home-ayuda" aria-labelledby="home-ayuda-titulo" tabIndex={-1}>
         <h2 id="home-ayuda-titulo">{t('navegacion.comoFunciona')}</h2>
         <p className="home-ayuda__intro">{t('inicio.tresPasosParaEmpezarA')}</p>
         <ol className="home-ayuda__pasos">
-          {PASOS_AYUDA.map(({ icono: Icono, titulo, texto }, indice) => (
+          {pasosAyuda.map(({ icono: Icono, titulo, texto }, indice) => (
             <li key={titulo} className="home-ayuda__paso">
               <span className="home-ayuda__icono" aria-hidden="true">
                 <Icono />
               </span>
               <h3>
-                <span className="home-ayuda__numero">Paso {indice + 1}.</span> {titulo}
+                <span className="home-ayuda__numero">{t('inicio.paso', { numero: indice + 1 })}</span> {titulo}
               </h3>
               <p>{texto}</p>
             </li>

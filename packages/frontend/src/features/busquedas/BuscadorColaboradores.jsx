@@ -18,37 +18,28 @@ import { useCandidatas } from "../../hooks/useCandidatas";
 import { useListado } from "../../hooks/useListado";
 import "./Busquedas.css";
 import "./BuscadorColaboradores.css";
-
-function describirCompromiso(compromiso) {
-  if (!compromiso) return "Compromiso no informado";
-  const horas = compromiso.horas ?? "?";
-  const frecuencia = (compromiso.tipoCompromiso ?? "").toLowerCase();
-  const colaboracion = (compromiso.tipoColaboracion ?? "").toLowerCase();
-  return `${horas} ${horas === 1 ? "hora" : "horas"} ${frecuencia} · colaboración ${colaboracion}`;
-}
-
-function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(", ") : "ninguna";
-}
+import { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+import { markdownEnLineaATextoPlano } from '../../utils/markdown';
+import { describirCompromiso, listarHabilidades } from '../../utils/perfiles';
 //lo uso solo aca asi q vive aca en vez de en otra carpeta a components/
 
 function ResumenPerfil({ perfil }) {
   return (
     <div className="resumen-perfil">
-      <h3>{perfil.descripcion}</h3>
+      <h3><MarkdownEnLinea texto={perfil.descripcion} /></h3>
       <p className="tarjeta__meta">
-        Proyecto:{" "}
+        {t('buscadorColaboradoras.proyectoEtiqueta')}{" "}
         <Link to={`/proyectos/${perfil.idProyecto}`}>
-          {perfil.proyecto?.titulo ?? "Ver proyecto"}
+          {perfil.proyecto?.titulo ?? t('tarjetas.verProyecto')}
         </Link>
       </p>
       <p className="tarjeta__meta">{describirCompromiso(perfil.compromiso)}</p>
       <p>
-        <strong>Requeridas:</strong>{" "}
+        <strong>{t('buscadorColaboradoras.requeridas')}</strong>{" "}
         {listarHabilidades(perfil.habilidadesRequeridas)}
       </p>
       <p>
-        <strong>Opcionales:</strong>{" "}
+        <strong>{t('buscadorColaboradoras.opcionales')}</strong>{" "}
         {listarHabilidades(perfil.habilidadesOpcionales)}
       </p>
     </div>
@@ -159,30 +150,28 @@ export default function BuscadorColaboradores() {
   }));
 
   const descripcionPerfiles = perfilesState.cargando
-    ? "Cargando perfiles…"
+    ? t('buscadorColaboradoras.cargandoPerfiles')
     : perfilesState.error
-      ? "No se pudieron cargar los perfiles"
-      : `${perfiles.length} perfil${
-          perfiles.length === 1 ? "" : "es"
-        } de este proyecto`;
+      ? t('buscadorColaboradoras.errorPerfiles')
+      : t(perfiles.length === 1 ? 'buscadorColaboradoras.unPerfilProyecto' : 'buscadorColaboradoras.variosPerfilesProyecto', { cantidad: perfiles.length });
 
   const opcionesPerfiles = [
     {
       valor: "",
-      etiqueta: "Todos los perfiles de este proyecto",
+      etiqueta: t('buscadorColaboradoras.todosPerfiles'),
       secundario: descripcionPerfiles,
     },
     ...perfiles.map((perfil) => ({
       valor: perfil.id,
-      etiqueta: perfil.descripcion,
+      etiqueta: markdownEnLineaATextoPlano(perfil.descripcion),
       secundario: `${perfil.compromiso?.horas ?? "?"} h`,
     })),
   ];
 
   const mensajeVacio =
     idPerfilAplicado === ""
-      ? "No encontramos personas que coincidan con las habilidades requeridas de los perfiles de este proyecto."
-      : "No encontramos personas con las habilidades requeridas para este perfil (o ya están anotadas en el proyecto).";
+      ? t('buscadorColaboradoras.sinCandidatasProyecto')
+      : t('buscadorColaboradoras.sinCandidatasPerfil');
 
   return (
     <div className="contenedor-pagina">
@@ -197,19 +186,19 @@ export default function BuscadorColaboradores() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="proyecto"
-              etiqueta="Proyecto"
+              etiqueta={t('buscadorColaboradoras.proyecto')}
               opciones={opcionesProyectos}
-              seleccion={[idProyecto]}
+              seleccion={idProyecto ? [idProyecto] : []}
               onSeleccionar={cambiarProyecto}
               placeholder={
                 proyectosState.cargando
-                  ? "Cargando proyectos…"
+                  ? t('buscadorColaboradoras.cargandoProyectos')
                   : t('buscadorColaboradoras.ejPortalDeTurnos')
               }
               textoVacio={
                 proyectosState.cargando
-                  ? "Cargando proyectos…"
-                  : "No hay proyectos activos con ese texto."
+                  ? t('buscadorColaboradoras.cargandoProyectos')
+                  : t('buscadorColaboradoras.sinProyectosTexto')
               }
             />
             {proyectosState.error && (
@@ -221,19 +210,19 @@ export default function BuscadorColaboradores() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="perfil"
-                etiqueta="Perfil que necesitás cubrir"
+                etiqueta={t('buscadorColaboradoras.perfilCubrir')}
                 opciones={opcionesPerfiles}
-                seleccion={[idPerfil]}
+                seleccion={idPerfil ? [idPerfil] : []}
                 onSeleccionar={setIdPerfil}
                 placeholder={
                   perfilesState.cargando
-                    ? "Cargando perfiles…"
+                    ? t('buscadorColaboradoras.cargandoPerfiles')
                     : t('buscadorColaboradoras.ejTester')
                 }
                 textoVacio={
                   perfilesState.cargando
-                    ? "Cargando perfiles…"
-                    : "No hay perfiles con ese texto."
+                    ? t('buscadorColaboradoras.cargandoPerfiles')
+                    : t('buscadorColaboradoras.sinPerfilesTexto')
                 }
               />
               {perfilesState.error && (
@@ -245,8 +234,8 @@ export default function BuscadorColaboradores() {
 
         <p className="filtros__ayuda">
           {idProyecto === ""
-            ? "Primero elegí un proyecto activo del colectivo."
-            : "Podés buscar para todos los perfiles del proyecto o elegir uno solo."}
+            ? t('buscadorColaboradoras.primeroProyecto')
+            : t('buscadorColaboradoras.todosOUnPerfil')}
         </p>
 
         <div className="filtros__acciones">
@@ -256,7 +245,7 @@ export default function BuscadorColaboradores() {
             startIcon={<FiRotateCcw aria-hidden="true" />}
             onClick={limpiarFiltros}
           >
-            Limpiar filtros
+            {t('buscadorProyectos.limpiarFiltros')}
           </Button>
           <Button
             variant="contained"
@@ -265,7 +254,7 @@ export default function BuscadorColaboradores() {
             disabled={!puedeBuscar}
             startIcon={<FiSearch aria-hidden="true" />}
           >
-            Buscar colaboradoras
+            {t('navegacion.buscarColaboradoras')}
           </Button>
         </div>
       </div>
@@ -296,6 +285,7 @@ export default function BuscadorColaboradores() {
               variant="outlined"
               component={Link}
               to={`/proyectos/${idProyecto}/perfiles`}
+              state={{ crearPerfil: true }}
             >{t('buscadorColaboradoras.cargarPerfiles')}</Button>} />
         )}
 
@@ -303,15 +293,13 @@ export default function BuscadorColaboradores() {
         <section className="resultados" aria-labelledby="candidatas-titulo">
           <div className="resultados__encabezado">
             <div>
-              <h2 id="candidatas-titulo">Candidatas y candidatos</h2>
+              <h2 id="candidatas-titulo">{t('buscadorColaboradoras.candidatas')}</h2>
               <p className="resultados__bajada">
                 {idPerfilAplicado === ""
-                  ? `Revisando ${cantidadPerfiles} perfil${
-                      cantidadPerfiles === 1 ? "" : "es"
-                    } de ${proyectoSeleccionado?.titulo ?? "este proyecto"}.`
-                  : `Resultados para el perfil elegido en ${
-                      proyectoSeleccionado?.titulo ?? "este proyecto"
-                    }.`}
+                  ? t(cantidadPerfiles === 1 ? 'buscadorColaboradoras.revisandoUnPerfil' : 'buscadorColaboradoras.revisandoVariosPerfiles', {
+                      cantidad: cantidadPerfiles, proyecto: proyectoSeleccionado?.titulo ?? t('buscadorColaboradoras.esteProyecto'),
+                    })
+                  : t('buscadorColaboradoras.resultadosPerfil', { proyecto: proyectoSeleccionado?.titulo ?? t('buscadorColaboradoras.esteProyecto') })}
               </p>
             </div>
           </div>
@@ -336,12 +324,11 @@ export default function BuscadorColaboradores() {
               <section
                 className="grupo-candidatas"
                 key={perfil.id}
-                aria-label={`Candidatas para ${perfil.descripcion}`}
+                aria-label={t('buscadorColaboradoras.candidatasPara', { perfil: markdownEnLineaATextoPlano(perfil.descripcion) })}
               >
                 <ResumenPerfil perfil={perfil} />
                 <p className="tarjeta__meta">
-                  {candidatas.length} persona
-                  {candidatas.length === 1 ? "" : "s"} con coincidencia.
+                  {t(candidatas.length === 1 ? 'buscadorColaboradoras.unaCoincidencia' : 'buscadorColaboradoras.variasCoincidencias', { cantidad: candidatas.length })}
                 </p>
                 <ul className="tarjetas">
                   {candidatas.map((colaboradora) => (
@@ -363,7 +350,7 @@ export default function BuscadorColaboradores() {
               disabled={cargandoMas}
               onClick={cargarMas}
             >
-              {cargandoMas ? "Cargando…" : "Cargar más"}
+              {cargandoMas ? t('notificaciones.cargandoMas') : t('notificaciones.cargarMas')}
             </Button>
           )}
 

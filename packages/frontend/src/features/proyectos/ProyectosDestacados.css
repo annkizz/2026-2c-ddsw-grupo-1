@@ -1,0 +1,49 @@
+.panel-destacados__lista {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-destacados__proyecto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-destacados__proyecto h2 {
+  font-size: var(--font-size-h3);
+  overflow-wrap: anywhere;
+}
+
+.panel-destacados__proyecto p {
+  margin-top: var(--space-1);
+}
+
+.panel-destacados__estado {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.panel-destacados__formulario {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.panel-destacados__formulario .MuiTextField-root {
+  flex: 1 1 100%;
+}
+
+@media (max-width: 899.95px) {
+  .panel-destacados__proyecto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

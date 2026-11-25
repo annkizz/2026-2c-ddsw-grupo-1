@@ -12,19 +12,15 @@ import {
 } from '@mui/material';
 import { FiCheckCircle, FiGithub, FiMail } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { crearNotificacion } from '../../service/notificacionesService';
 import { invitarAColaborar } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import '../Card.css';
-
-const NOMBRE_SIN_ALIAS = 'Colaboradora sin nombre público';
+import { markdownATextoPlano } from '../../utils/markdown';
+import { t } from '../../i18n/t';
+import { listarHabilidades } from '../../utils/perfiles';
 
 function nombreVisible(colaboradora) {
-  return colaboradora.nombreFantasia ?? colaboradora.usuarioGitHub ?? NOMBRE_SIN_ALIAS;
-}
-
-function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(', ') : 'ninguna';
+  return colaboradora.nombreFantasia ?? colaboradora.usuarioGitHub ?? t('tarjetas.sinNombre');
 }
 
 const iniciales = (nombre) =>
@@ -46,7 +42,6 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
   const [error, setError] = useState('');
   const [resultado, setResultado] = useState(null);
   const [invitacionEnviada, setInvitacionEnviada] = useState(false);
-  const [errorInvitacion, setErrorInvitacion] = useState('');
 
   const cerrarDialogo = () => {
     setDialogoAbierto(false);
@@ -61,26 +56,13 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
     setError('');
     try {
       const token = await getAccessToken();
-      const respuesta = await crearNotificacion(token, {
-        idColaborador: colaboradora.id,
-        contenido: contenido.trim(),
-      });
+      const respuesta = await invitarAColaborar(token, idProyecto, idPerfil, colaboradora.id, contenido.trim());
+      setInvitacionEnviada(true);
       setResultado(respuesta);
     } catch (e) {
       setError(mensajeDeError(e));
     } finally {
       setEnviando(false);
-    }
-  };
-
-  const invitar = async () => {
-    setErrorInvitacion('');
-    try {
-      const token = await getAccessToken();
-      await invitarAColaborar(token, idProyecto, idPerfil, colaboradora.id);
-      setInvitacionEnviada(true);
-    } catch (e) {
-      setErrorInvitacion(mensajeDeError(e));
     }
   };
 
@@ -94,14 +76,14 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
         <div className="tarjeta__encabezado">
           <h3 id={idTitulo}>{nombre}</h3>
           {colaboradora.tieneCoincidencia && (
-            <Chip color="success" icon={<FiCheckCircle aria-hidden="true" />} label="Coincide" />
+            <Chip color="success" icon={<FiCheckCircle aria-hidden="true" />} label={t('tarjetas.coincide')} />
           )}
         </div>
 
         {colaboradora.pronombres?.length > 0 && (
-          <p className="tarjeta__meta">Pronombres: {colaboradora.pronombres.join(', ')}</p>
+          <p className="tarjeta__meta">{t('tarjetas.pronombres', { pronombres: colaboradora.pronombres.join(', ') })}</p>
         )}
-        {colaboradora.presentacion && <p className="tarjeta__descripcion">{colaboradora.presentacion}</p>}
+        {colaboradora.presentacion && <p className="tarjeta__descripcion">{markdownATextoPlano(colaboradora.presentacion)}</p>}
         {colaboradora.usuarioGitHub && (
           <p className="tarjeta__meta">
             <FiGithub aria-hidden="true" />
@@ -109,7 +91,7 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
               GitHub:{' '}
               <a href={`https://github.com/${colaboradora.usuarioGitHub}`} target="_blank" rel="noreferrer">
                 @{colaboradora.usuarioGitHub}
-                <span className="visualmente-oculto"> (se abre en una pestaña nueva)</span>
+                <span className="visualmente-oculto"> {t('comun.nuevaPestana')}</span>
               </a>
             </span>
           </p>
@@ -118,12 +100,12 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
         <div className="tarjeta__metas">
           <p className="tarjeta__meta">
             <span>
-              <strong>Requeridas en común:</strong> {listarHabilidades(colaboradora.requeridasCoincidentes)}
+              <strong>{t('tarjetas.requeridasEnComun')}</strong> {listarHabilidades(colaboradora.requeridasCoincidentes)}
             </span>
           </p>
           <p className="tarjeta__meta">
             <span>
-              <strong>Opcionales en común:</strong> {listarHabilidades(colaboradora.opcionalesCoincidentes)}
+              <strong>{t('tarjetas.opcionalesEnComun')}</strong> {listarHabilidades(colaboradora.opcionalesCoincidentes)}
             </span>
           </p>
         </div>
@@ -134,34 +116,23 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           variant="outlined"
           type="button"
           startIcon={<FiMail aria-hidden="true" />}
-          disabled={!colaboradora.aceptaMensajeria}
+          disabled={!colaboradora.aceptaMensajeria || !idProyecto || !idPerfil || invitacionEnviada}
           aria-describedby={`${idTitulo}-contacto`}
           onClick={() => setDialogoAbierto(true)}
         >
-          {colaboradora.aceptaMensajeria ? 'Contactar' : 'No acepta mensajes'}
+          {!colaboradora.aceptaMensajeria ? t('tarjetas.noAceptaMensajes') : invitacionEnviada ? t('tarjetas.invitacionEnviada') : t('tarjetas.contactar')}
         </Button>
         <span id={`${idTitulo}-contacto`} className="texto-secundario">
           {colaboradora.aceptaMensajeria
-            ? 'Enviar un mensaje interno.'
-            : 'Esta persona no acepta mensajes internos.'}
+            ? t('tarjetas.invitarPerfil')
+            : t('tarjetas.noAceptaMensajesDescripcion')}
         </span>
-        {idProyecto && idPerfil && (
-          <Button
-            variant="contained"
-            type="button"
-            disabled={!colaboradora.aceptaMensajeria || invitacionEnviada}
-            onClick={invitar}
-          >
-            {invitacionEnviada ? 'Invitación enviada' : 'Invitar a postularse'}
-          </Button>
-        )}
       </div>
       {invitacionEnviada && (
         <Alert severity="success" role="status">
-          La invitación quedó en la bandeja de notificaciones de la persona.
+          {t('tarjetas.invitacionBandeja')}
         </Alert>
       )}
-      {errorInvitacion && <Alert severity="error">{errorInvitacion}</Alert>}
 
       <Dialog
         open={dialogoAbierto}
@@ -172,40 +143,29 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
       >
         <form onSubmit={enviarMensaje}>
           <DialogTitle id={dialogTitleId}>
-            Contactar a {nombreVisible(colaboradora)}
+            {t('tarjetas.contactarNombre', { nombre: nombreVisible(colaboradora) })}
           </DialogTitle>
           <DialogContent>
             {resultado ? (
               <Alert severity="success" role="status">
-                El mensaje quedó enviado dentro de la plataforma.
-                {resultado.envios?.length > 0 && (
-                  <ul>
-                    {resultado.envios.map((envio) => (
-                      <li key={envio.tipoDeContacto}>
-                        {envio.tipoDeContacto}: {envio.estado}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                {t('tarjetas.invitacionPlataforma')}
               </Alert>
             ) : (
               <>
                 <p>
-                  El mensaje se guardará en la bandeja de la persona. Sus medios
-                  de contacto permanecen privados.
+                  {t('tarjetas.invitacionDescripcion')}
                 </p>
                 {error && <Alert severity="error">{error}</Alert>}
                 <TextField
                   autoFocus
-                  required
                   fullWidth
                   multiline
                   minRows={4}
-                  label="Mensaje"
+                  label={t('tarjetas.mensajeOpcional')}
                   value={contenido}
                   onChange={(event) => setContenido(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 2000 } }}
-                  helperText={`${contenido.length}/2000`}
+                  slotProps={{ htmlInput: { maxLength: 500 } }}
+                  helperText={`${contenido.length}/500`}
                   disabled={enviando}
                 />
               </>
@@ -213,18 +173,18 @@ export default function CardColaboradora({ colaboradora, idProyecto, idPerfil })
           </DialogContent>
           <DialogActions>
             {resultado ? (
-              <Button onClick={cerrarDialogo}>Cerrar</Button>
+              <Button onClick={cerrarDialogo}>{t('proyectos.cerrar')}</Button>
             ) : (
               <>
                 <Button onClick={cerrarDialogo} disabled={enviando}>
-                  Cancelar
+                  {t('comun.cancelar')}
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={enviando || contenido.trim().length < 4}
+                  disabled={enviando}
                 >
-                  {enviando ? "Enviando…" : "Enviar mensaje"}
+                  {enviando ? t('tarjetas.enviando') : t('tarjetas.enviarInvitacion')}
                 </Button>
               </>
             )}

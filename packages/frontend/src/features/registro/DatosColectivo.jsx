@@ -15,6 +15,7 @@ import { mensajeDeError } from '../../utils/mensajeDeError';
 import { ETIQUETAS_MAX } from '../../utils/etiquetas';
 import { borrarTipo } from './tipoElegido';
 import './Registro.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const DATOS_INICIALES = {
   nombre: '',
@@ -26,15 +27,6 @@ const DATOS_INICIALES = {
   descripcion: ''
 };
 const OBLIGATORIOS = ['nombre', 'tipoDeColectivo', 'descripcion'];
-const AYUDAS_CAMPOS = {
-  nombre: t('registro.ayudaNombreColectivo'),
-  descripcion: t('registro.contaQueHacenYA')
-};
-const ERRORES_CAMPOS = {
-  nombre: t('registro.ingresaElNombreDelColectivo'),
-  tipoDeColectivo: t('registro.elegiUnTipoDeColectivo'),
-  descripcion: t('registro.escribiUnaDescripcionDelColectivo')
-};
 const IDS = {
   nombre: 'registro-colectivo-nombre',
   tipoDeColectivo: 'registro-colectivo-tipo',
@@ -42,6 +34,15 @@ const IDS = {
 };
 
 const DatosColectivo = () => {
+  const AYUDAS_CAMPOS = {
+    nombre: t('registro.ayudaNombreColectivo'),
+    descripcion: t('registro.contaQueHacenYA')
+  };
+  const ERRORES_CAMPOS = {
+    nombre: t('registro.ingresaElNombreDelColectivo'),
+    tipoDeColectivo: t('registro.elegiUnTipoDeColectivo'),
+    descripcion: t('registro.escribiUnaDescripcionDelColectivo')
+  };
   const navigate = useNavigate();
   const { getAccessToken, recargarSesion } = useAuth();
   const [datos, setDatos] = useState(DATOS_INICIALES);
@@ -106,13 +107,13 @@ const DatosColectivo = () => {
       const nuevaSesion = await recargarSesion();
       if (!nuevaSesion?.tienePerfil) {
         setError(
-          'El servidor no confirmó el perfil. Podés volver a intentar verificarlo sin reenviar el formulario.'
+          t('registro.verificarPerfil')
         );
         return;
       }
 
       borrarTipo();
-      navigate('/perfil');
+      navigate('/', { replace: true });
     } catch (e) {
       setError(mensajeDeError(e, t('registro.noPudimosRegistrarElColectivo')));
     } finally {
@@ -133,26 +134,26 @@ const DatosColectivo = () => {
         />
         <section className="registro-card" aria-labelledby="registro-colectivo-datos">
           <h2 id="registro-colectivo-datos">{t('registro.datosDelColectivo')}</h2>
-          <p className="registro-card__intro">Los campos obligatorios están indicados.</p>
+          <p className="registro-card__intro">{t('registro.obligatoriosIndicados')}</p>
           <TextField
             id="registro-colectivo-nombre"
             label={t('registro.nombreObligatorio')}
-            placeholder="Ej.: Colectivo La Semilla"
+            placeholder={t('registro.nombreColectivoEjemplo')}
             {...propsDe('nombre')}
           />
           <TextField
             id="registro-colectivo-tipo"
             select
-            label="Tipo de colectivo (obligatorio)"
+            label={t('registro.tipoColectivoObligatorio')}
             slotProps={{ select: { displayEmpty: true } }}
             {...propsDe('tipoDeColectivo')}
           >
             <MenuItem value="" disabled>
-              <span className="select-placeholder">Seleccioná un tipo de colectivo</span>
+              <span className="select-placeholder">{t('registro.seleccionarTipoColectivo')}</span>
             </MenuItem>
             {TIPOS_COLECTIVO.map((tipo) => (
               <MenuItem key={tipo.valor} value={tipo.valor}>
-                {tipo.texto}
+                {t(tipo.textoKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -177,22 +178,22 @@ const DatosColectivo = () => {
               permiteCrear
               onSeleccionar={alternarEtiqueta}
               onQuitar={alternarEtiqueta}
-              ayuda={`Buscá etiquetas existentes o creá las tuyas (hasta ${ETIQUETAS_MAX}) para que tu colectivo aparezca en las búsquedas.`}
-              placeholder={etiquetasState.cargando ? 'Cargando etiquetas…' : t('formularioProyecto.placeholderEtiquetas')}
+              ayuda={t('registro.ayudaEtiquetas', { maximo: ETIQUETAS_MAX })}
+              placeholder={etiquetasState.cargando ? t('registro.cargandoEtiquetas') : t('formularioProyecto.placeholderEtiquetas')}
               textoVacio={
-                etiquetasState.cargando ? 'Cargando etiquetas…' : 'No hay etiquetas con ese texto. Podés crear una nueva.'
+                etiquetasState.cargando ? t('registro.cargandoEtiquetas') : t('registro.sinEtiquetas')
               }
             />
             {etiquetasState.error && (
               <Alert severity="warning" className="registro-aviso">
-                No pudimos cargar las etiquetas existentes. Igual podés escribir etiquetas nuevas.
+                {t('registro.errorEtiquetas')}
               </Alert>
             )}
           </div>
 
-          <TextField
+          <CampoMarkdown
             id="registro-colectivo-descripcion"
-            label="Descripción (obligatoria)"
+            label={t('registro.descripcionObligatoria')}
             placeholder={t('miPerfil.ejDescripcionColectivo')}
             multiline
             minRows={4}
@@ -211,7 +212,7 @@ const DatosColectivo = () => {
             borrarTipo();
             navigate('/');
           }}
-          siguiente={registroCreado ? 'Verificar registro' : t('registro.registrarColectivo')}
+          siguiente={registroCreado ? t('registro.verificarRegistro') : t('registro.registrarColectivo')}
           guardando={guardando}
         />
       </form>

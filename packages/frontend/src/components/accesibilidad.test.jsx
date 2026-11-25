@@ -7,12 +7,10 @@ import { ThemeProvider } from '@mui/material';
 import { Button } from '@mui/material';
 import { crearTema } from '../theme/crearTema';
 import { tokensBase } from '../designTokens';
-import { ModoColorProvider } from '../theme/ModoColorContext.jsx';
 import EncabezadoPagina from './EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from './AlertaError/AlertaError.jsx';
 import EstadoVacio from './EstadoVacio/EstadoVacio.jsx';
 import ResumenErrores from './ResumenErrores/ResumenErrores.jsx';
-import BotonModoDaltonico from './BotonModoDaltonico/BotonModoDaltonico.jsx';
 import PasosRegistro from './PasosRegistro/PasosRegistro.jsx';
 import CustomSelect from './CustomSelect/CustomSelect';
 import CardProyecto from './CardProyecto/CardProyecto.jsx';
@@ -21,6 +19,13 @@ import ChipEstado from './ChipEstado/ChipEstado.jsx';
 import Footer from './footer/Footer.jsx';
 import { EsqueletoGrilla, EsqueletoPagina } from './Esqueletos/Esqueletos.jsx';
 import PaginaNoEncontrada from '../features/errores/PaginaNoEncontrada.jsx';
+
+// CardColaboradora usa useAuth, que importa @logto/react (ESM que Jest 27 no transforma).
+// Igual que en CardColaboradora.test.jsx, se reemplaza por un mock.
+jest.mock('../hooks/useAuth.jsx', () => ({
+  useAuth: () => ({ getAccessToken: jest.fn() }),
+  useAuthOpcional: () => null
+}));
 
 // Igual que el resto de los tests del proyecto: Jest 27 no resuelve los subpaths de react-router 7.
 jest.mock('react-router-dom', () => {
@@ -36,17 +41,15 @@ MemoryRouter.propTypes = { children: PropTypes.node };
 
 expect.extend(toHaveNoViolations);
 
-// jsdom no calcula estilos reales: el contraste se valida con scripts/validar_paletas.py y axe en Chrome.
+// jsdom no calcula estilos reales: el contraste y el daltonismo se validan en designTokens.test.js.
 const opcionesAxe = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 
 const renderizar = (ui) =>
   render(
     <MemoryRouter>
-      <ModoColorProvider>
-        <ThemeProvider theme={crearTema(tokensBase)}>
-          <main>{ui}</main>
-        </ThemeProvider>
-      </ModoColorProvider>
+      <ThemeProvider theme={crearTema(tokensBase)}>
+        <main>{ui}</main>
+      </ThemeProvider>
     </MemoryRouter>
   );
 
@@ -105,10 +108,9 @@ describe('Accesibilidad de componentes compartidos (jest-axe)', () => {
     await sinViolaciones(container);
   });
 
-  it('BotonModoDaltonico, PasosRegistro y ChipEstado', async () => {
+  it('PasosRegistro y ChipEstado', async () => {
     const { container } = renderizar(
       <>
-        <BotonModoDaltonico />
         <PasosRegistro pasos={['Tus datos', 'Habilidades', 'Contacto']} actual={2} />
         <ChipEstado estado="ACTIVO" />
         <ChipEstado estado="FINALIZADO" />

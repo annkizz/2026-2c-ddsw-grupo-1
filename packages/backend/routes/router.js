@@ -21,12 +21,13 @@ import { PerfilController } from "../controllers/PerfilController.js";
 import { PerfilService } from "../services/PerfilService.js";
 import { MatchingController } from "../controllers/MatchingController.js";
 import { MatchingService } from "../services/MatchingService.js";
+import { MatchingCacheRepository } from "../repositories/MatchingCacheRepository.js";
 import { crearMatchingRouter } from "./matchingRouter.js";
 import { EtiquetaRepository } from "../repositories/EtiquetaRepository.js";
 import { EtiquetaController } from "../controllers/EtiquetaController.js";
 import { EtiquetaService } from "../services/EtiquetaService.js";
 import { crearEtiquetasRouter } from "./etiquetasRouter.js";
-export { proyectoService };
+export { matchingService, proyectoService };
 import { LogroRepository } from "../repositories/LogroRepository.js";
 import { LogroService } from "../services/LogroService.js";
 import { LogroController } from "../controllers/LogroController.js";
@@ -83,6 +84,14 @@ const colectivoRepository = new ColectivoRepository();
 const colaboradorRepository = new ColaboradorRepository();
 const proyectoRepository = new ProyectoRepository();
 const colaboracionRepository = new ColaboracionRepository();
+const perfilRepository = new PerfilRepository();
+const matchingService = new MatchingService(
+  colaboradorRepository,
+  proyectoRepository,
+  perfilRepository,
+  colaboracionRepository,
+  new MatchingCacheRepository(),
+);
 const usuarioService = new UsuarioService(
   usuarioRepository,
   colectivoRepository,
@@ -102,11 +111,12 @@ const colaboradorService = new ColaboradorService(
   usuarioService,
   colaboracionRepository,
   proyectoRepository,
+  undefined,
+  matchingService,
 );
 const colaboradorController = new ColaboradorController(colaboradorService);
 
 const postulacionRepository = new PostulacionRepository();
-const perfilRepository = new PerfilRepository();
 const notificacionRepository = new NotificacionRepository();
 const notificacionService = new NotificacionService(
   notificacionRepository,
@@ -131,6 +141,8 @@ const perfilService = new PerfilService(
   perfilRepository,
   proyectoRepository,
   habilidadRepository,
+  colectivoRepository,
+  matchingService,
 );
 const perfilController = new PerfilController(perfilService);
 const postulacionService = new PostulacionService(
@@ -172,12 +184,6 @@ const logroController = new LogroController(logroService);
 
 const notificacionController = new NotificacionController(notificacionService);
 
-const matchingService = new MatchingService(
-  colaboradorRepository,
-  proyectoRepository,
-  perfilRepository,
-  colaboracionRepository,
-);
 const matchingController = new MatchingController(matchingService);
 
 

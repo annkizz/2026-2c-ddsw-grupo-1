@@ -2,10 +2,10 @@ import api, { conToken } from './api';
 
 // Valores del enum tipoDeColectivo del backend
 export const TIPOS_COLECTIVO = [
-  { valor: 'FUNDACIONES', texto: 'Fundación' },
-  { valor: 'ASOCIACIONES_BARRIALES', texto: 'Asociación barrial' },
-  { valor: 'ONG', texto: 'ONG' },
-  { valor: 'ASAMBLEA', texto: 'Asamblea' }
+  { valor: 'FUNDACIONES', textoKey: 'tiposColectivo.FUNDACIONES' },
+  { valor: 'ASOCIACIONES_BARRIALES', textoKey: 'tiposColectivo.ASOCIACIONES_BARRIALES' },
+  { valor: 'ONG', textoKey: 'tiposColectivo.ONG' },
+  { valor: 'ASAMBLEA', textoKey: 'tiposColectivo.ASAMBLEA' }
 ];
 
 export const obtenerColectivos = async () => {

@@ -9,10 +9,14 @@ import {
   DialogContentText,
   DialogTitle,
   MenuItem,
+  Step,
+  StepButton,
+  StepLabel,
+  Stepper,
   Switch,
   TextField,
 } from '@mui/material';
-import { FiAlertCircle, FiArrowRight, FiLock, FiSave } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiMapPin, FiSave, FiTag, FiTrash2 } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
@@ -27,13 +31,13 @@ import {
   crearProyecto,
   actualizarProyecto,
   obtenerProyectoPorId,
-  configurarBusqueda,
   programarCierre,
 } from '../../service/proyectosService';
 import { t } from '../../i18n/t';
 import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
 import { aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import './FormularioProyecto.css';
+import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
 
 const DATOS_INICIALES = {
   titulo: '',
@@ -45,6 +49,23 @@ const DATOS_INICIALES = {
   busquedaAbierta: false,
   fechaLimiteBusqueda: '',
 };
+
+// Crear: pasos cortos, solo el primero es obligatorio. Se recorren en orden (se puede volver a uno ya visto)
+// y "Crear proyecto" aparece recién en el último, para que nadie cree el proyecto sin saber que los otros existen.
+// Editar: las mismas partes en un menú lateral. La búsqueda se configura desde "Administrar" del proyecto.
+const PASOS_FORMULARIO = [
+  { titulo: 'formularioProyecto.pasoBasico', campos: ['titulo', 'descripcion'], icono: FiFileText },
+  { titulo: 'formularioProyecto.pasoEtiquetas', campos: [], opcional: true, icono: FiTag },
+  {
+    titulo: 'formularioProyecto.pasoFechas',
+    tituloEdicion: 'formularioProyecto.pasoCierre',
+    campos: ['fechaLimiteCierre', 'fechaLimiteBusqueda'],
+    opcional: true,
+    icono: FiCalendar,
+  },
+];
+const ULTIMO_PASO = PASOS_FORMULARIO.length - 1;
+const pasoDelCampo = (campo) => Math.max(0, PASOS_FORMULARIO.findIndex(({ campos }) => campos.includes(campo)));
 
 const FormularioProyecto = () => {
   const { id } = useParams(); // si hay id, estamos editando
@@ -64,6 +85,8 @@ const FormularioProyecto = () => {
   const [errorCarga, setErrorCarga] = useState(null);
   const [intentoResumen, setIntentoResumen] = useState(0);
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
+  const [paso, setPaso] = useState(0);
+  const [pasoMaximo, setPasoMaximo] = useState(0); // el paso más lejano al que llegó el usuario
   const etiquetasState = useListado('/etiquetas');
 
   const cargar = useCallback(async () => {
@@ -148,15 +171,44 @@ const FormularioProyecto = () => {
     setErrores((prev) => ({ ...prev, [campo]: mensajeDeError(campo) }));
   };
 
-  const validarFormularioCompleto = () => {
+  const validarCampos = (campos) => {
     const nuevosErrores = {};
-    ['titulo', 'descripcion', 'fechaLimiteCierre', 'fechaLimiteBusqueda'].forEach((campo) => {
+    campos.forEach((campo) => {
       const mensaje = mensajeDeError(campo);
       if (mensaje) nuevosErrores[campo] = mensaje;
     });
-    setErrores(nuevosErrores);
+    setErrores((prev) => ({ ...prev, ...Object.fromEntries(campos.map((campo) => [campo, nuevosErrores[campo] ?? ''])) }));
     setIntentoResumen((n) => n + 1);
-    return Object.keys(nuevosErrores).length === 0;
+    const conError = Object.keys(nuevosErrores);
+    // Si el error está en otro paso, se vuelve a ese paso para que el campo se pueda corregir.
+    if (conError.length > 0) setPaso(pasoDelCampo(conError[0]));
+    return conError.length === 0;
+  };
+
+  const validarFormularioCompleto = () =>
+    validarCampos(esEdicion ? ['titulo', 'descripcion', 'fechaLimiteCierre'] : ['titulo', 'descripcion', 'fechaLimiteCierre', 'fechaLimiteBusqueda']);
+
+  // Hasta dónde se puede saltar: cualquier paso ya visto o el siguiente al actual. Nunca más lejos.
+  const pasoAlcanzable = (indice) => esEdicion || indice <= Math.max(pasoMaximo, paso + 1);
+
+  const irAPaso = (destino) => {
+    if (!pasoAlcanzable(destino)) return;
+    // Para avanzar se revisa el paso actual; para volver atrás, nunca.
+    if (destino > paso && !validarCampos(PASOS_FORMULARIO[paso].campos)) return;
+    const nuevoPaso = Math.max(0, Math.min(ULTIMO_PASO, destino));
+    setIntentoResumen(0);
+    setPaso(nuevoPaso);
+    setPasoMaximo((maximo) => Math.max(maximo, nuevoPaso));
+  };
+  const siguientePaso = () => irAPaso(paso + 1);
+  const tituloDePaso = (indice) =>
+    t(esEdicion ? PASOS_FORMULARIO[indice].tituloEdicion ?? PASOS_FORMULARIO[indice].titulo : PASOS_FORMULARIO[indice].titulo);
+
+  // Enter en un campo de una línea no envía el formulario: se crea/guarda solo con el botón.
+  const evitarEnvioConEnter = (evento) => {
+    if (evento.key === 'Enter' && evento.target.tagName === 'INPUT' && evento.target.type !== 'checkbox') {
+      evento.preventDefault();
+    }
   };
 
   const manejarSwitchBusqueda = (e) => {
@@ -181,6 +233,11 @@ const FormularioProyecto = () => {
 
   const guardar = async (e) => {
     e.preventDefault();
+    // Al crear, solo se envía desde el último paso; antes de eso, enviar equivale a "Siguiente".
+    if (!esEdicion && paso < ULTIMO_PASO) {
+      siguientePaso();
+      return;
+    }
     if (!validarFormularioCompleto()) return;
 
     setGuardando(true);
@@ -206,12 +263,6 @@ const FormularioProyecto = () => {
           etiquetas: datos.etiquetas,
         });
 
-        if (!esFinalizado && (cambio('busquedaAbierta') || cambio('fechaLimiteBusqueda'))) {
-          await configurarBusqueda(token, id, {
-            busquedaAbierta: datos.busquedaAbierta,
-            ...(fechaBusqueda ? { fechaLimiteBusqueda: fechaBusqueda } : {}),
-          });
-        }
         if (!esFinalizado && fechaCierre && cambio('fechaLimiteCierre')) {
           await programarCierre(token, id, fechaCierre);
         }
@@ -299,8 +350,8 @@ const FormularioProyecto = () => {
   }
 
   return (
-    <div className="contenedor-pagina">
-      <EncabezadoPagina titulo={titulo} subtitulo={t('formularioProyecto.subtitulo')} migas={migas} />
+    <div className={`contenedor-pagina${esEdicion ? '' : ' contenedor-pagina--formulario'}`}>
+      <EncabezadoPagina titulo={titulo} migas={migas} />
 
       {guardadoExitoso && (
         <Alert severity="success" role="status" className="form-proyecto-banner">
@@ -311,12 +362,68 @@ const FormularioProyecto = () => {
 
       <ResumenErrores errores={listaErrores.length > 0 && intentoResumen > 0 ? listaErrores : []} intento={intentoResumen} />
 
-      <form onSubmit={guardar} noValidate>
-        <div className="form-proyecto-grid">
-          <section className="form-proyecto-card" aria-labelledby="form-proyecto-datos">
-            <h2 id="form-proyecto-datos">{t('formularioProyecto.cardDatos')}</h2>
-            <p className="texto-secundario">{t('formularioProyecto.subtituloDatos')}</p>
+      <form onSubmit={guardar} onKeyDown={evitarEnvioConEnter} noValidate>
+        {!esEdicion && (
+          <Stepper
+            nonLinear
+            activeStep={paso}
+            className="form-proyecto-pasos"
+            aria-label={t('formularioProyecto.pasosEtiqueta')}
+          >
+            {PASOS_FORMULARIO.map(({ titulo: tituloPaso, opcional }, indice) => (
+              <Step key={tituloPaso} completed={indice < paso}>
+                <StepButton
+                  type="button"
+                  onClick={() => irAPaso(indice)}
+                  disabled={!pasoAlcanzable(indice)}
+                  optional={opcional ? <span className="texto-caption">{t('comun.opcional')}</span> : undefined}
+                  aria-current={indice === paso ? 'step' : undefined}
+                >
+                  {t(tituloPaso)}
+                </StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        )}
+        <p className="visualmente-oculto" aria-live="polite">
+          {esEdicion
+            ? tituloDePaso(paso)
+            : t('formularioProyecto.pasoActual', { actual: paso + 1, total: PASOS_FORMULARIO.length, titulo: tituloDePaso(paso) })}
+        </p>
 
+        <div className={esEdicion ? 'con-lateral form-proyecto-edicion' : ''}>
+        {esEdicion && (
+          <nav className="lateral" aria-label={t('formularioProyecto.seccionesEdicion')}>
+            <ul className="lateral-nav">
+              {PASOS_FORMULARIO.map(({ icono: Icono, campos }, indice) => {
+                const conError = campos.some((campo) => errores[campo]);
+                return (
+                  <li key={indice}>
+                    <button
+                      type="button"
+                      className="lateral-nav__item"
+                      aria-current={indice === paso ? 'true' : undefined}
+                      onClick={() => setPaso(indice)}
+                    >
+                      <Icono aria-hidden="true" />
+                      <span>{tituloDePaso(indice)}</span>
+                      {conError && (
+                        <span className="insignia insignia--error">
+                          <FiAlertCircle aria-hidden="true" />
+                          <span className="visualmente-oculto">{t('formularioProyecto.seccionConError')}</span>
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        )}
+        <div className="form-proyecto-contenido">
+        {paso === 0 && (
+          <section className="form-proyecto-card" aria-labelledby="form-proyecto-datos">
+            <h2 id="form-proyecto-datos">{tituloDePaso(0)}</h2>
             <TextField
               id="proyecto-titulo"
               label={t('formularioProyecto.labelTitulo')}
@@ -332,7 +439,7 @@ const FormularioProyecto = () => {
               slotProps={{ input: { endAdornment: guardadoExitoso ? <FiLock aria-hidden="true" /> : null } }}
             />
 
-            <TextField
+            <CampoMarkdown
               id="proyecto-descripcion"
               label={t('formularioProyecto.labelDescripcion')}
               placeholder={t('formularioProyecto.placeholderDescripcion')}
@@ -347,7 +454,13 @@ const FormularioProyecto = () => {
               minRows={5}
               fullWidth
             />
+          </section>
+        )}
 
+        {paso === 1 && (
+          <section className="form-proyecto-card" aria-labelledby="form-proyecto-etiquetas-titulo">
+            <h2 id="form-proyecto-etiquetas-titulo">{tituloDePaso(1)}</h2>
+            {!esEdicion && <p className="texto-secundario">{t('formularioProyecto.pasoOpcionalAyuda')}</p>}
             <div>
               <CustomSelect
                 id="proyecto-etiquetas"
@@ -383,7 +496,17 @@ const FormularioProyecto = () => {
               )}
             </div>
 
-            {!esEdicion && (
+            {esEdicion ? (
+              <div className="form-proyecto-ubicacion form-proyecto-ubicacion--fija">
+                <p className="perfil-buscado__etiqueta">{t('formularioProyecto.ubicacion')}</p>
+                <p>
+                  <FiMapPin aria-hidden="true" />{' '}
+                  {[datos.ciudad, PROVINCIAS.find(({ codigo }) => codigo === datos.provincia)?.nombre].filter(Boolean).join(', ') ||
+                    t('formularioProyecto.ubicacionDelColectivo')}
+                </p>
+                <p className="texto-secundario">{t('formularioProyecto.ubicacionNoEditable')}</p>
+              </div>
+            ) : (
               <fieldset className="form-proyecto-ubicacion">
                 <legend>{t('formularioProyecto.ubicacion')}</legend>
                 <p className="texto-secundario">{t('formularioProyecto.ayudaUbicacion')}</p>
@@ -420,8 +543,11 @@ const FormularioProyecto = () => {
               </fieldset>
             )}
           </section>
+        )}
 
+        {paso === 2 && (
           <div className="form-proyecto-columna">
+            {!esEdicion && <p className="texto-secundario">{t('formularioProyecto.pasoFinalAyuda')}</p>}
             <section className="form-proyecto-card" aria-labelledby="form-proyecto-cierre">
               <h2 id="form-proyecto-cierre">{t('formularioProyecto.cardCierre')}</h2>
               <TextField
@@ -438,6 +564,7 @@ const FormularioProyecto = () => {
               />
             </section>
 
+            {!esEdicion && (
             <section className="form-proyecto-card" aria-labelledby="form-proyecto-busqueda">
               <h2 id="form-proyecto-busqueda">{t('formularioProyecto.cardBusqueda')}</h2>
 
@@ -488,7 +615,12 @@ const FormularioProyecto = () => {
                 fullWidth
               />
             </section>
+            )}
+            {esEdicion && <p className="texto-secundario">{t('formularioProyecto.busquedaEnAdministrar')}</p>}
           </div>
+        )}
+
+        </div>
         </div>
 
         {errorServidor && (
@@ -508,18 +640,53 @@ const FormularioProyecto = () => {
             </Button>
           ) : (
             <>
-              <Button variant="outlined" type="button" onClick={salir} disabled={guardando}>
+              <Button variant="text" type="button" onClick={salir} disabled={guardando} className="form-proyecto-acciones__cancelar">
                 {t('formularioProyecto.cancelar')}
               </Button>
-              <Button variant="contained" type="submit" loading={guardando} startIcon={<FiSave aria-hidden="true" />}>
-                {guardando
-                  ? t('formularioProyecto.guardando')
-                  : errorServidor
-                    ? t('formularioProyecto.reintentar')
-                    : esEdicion
-                      ? t('formularioProyecto.botonGuardar')
-                      : t('formularioProyecto.botonCrear')}
-              </Button>
+              {!esEdicion && paso > 0 && (
+                <Button
+                  key="anterior"
+                  variant="outlined"
+                  type="button"
+                  onClick={() => irAPaso(paso - 1)}
+                  disabled={guardando}
+                  startIcon={<FiArrowLeft aria-hidden="true" />}
+                >
+                  {t('formularioProyecto.anterior')}
+                </Button>
+              )}
+              {!esEdicion && paso < ULTIMO_PASO && (
+                <Button
+                  key="siguiente"
+                  variant="contained"
+                  color="secondary"
+                  type="button"
+                  onClick={siguientePaso}
+                  disabled={guardando}
+                  endIcon={<FiArrowRight aria-hidden="true" />}
+                >
+                  {t('formularioProyecto.siguiente', { titulo: t(PASOS_FORMULARIO[paso + 1].titulo) })}
+                </Button>
+              )}
+              {/* Al editar se guarda desde cualquier sección; al crear, solo en el último paso. */}
+              {(esEdicion || paso === ULTIMO_PASO) && (
+                <Button
+                  key="guardar"
+                  variant="contained"
+                  color="secondary"
+                  type="submit"
+                  loading={guardando}
+                  startIcon={<FiSave aria-hidden="true" />}
+                >
+                  {guardando
+                    ? t('formularioProyecto.guardando')
+                    : errorServidor
+                      ? t('formularioProyecto.reintentar')
+                      : esEdicion
+                        ? t('formularioProyecto.botonGuardar')
+                        : t('formularioProyecto.botonCrear')}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -534,7 +701,7 @@ const FormularioProyecto = () => {
           <Button variant="outlined" onClick={() => setConfirmandoSalida(false)}>
             {t('formularioProyecto.seguirEditando')}
           </Button>
-          <Button variant="contained" color="error" onClick={() => navigate('/proyectos')}>
+          <Button variant="contained" color="error" onClick={() => navigate('/proyectos')} startIcon={<FiTrash2 aria-hidden="true" />}>
             {t('formularioProyecto.salirSinGuardar')}
           </Button>
         </DialogActions>

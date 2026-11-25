@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, CircularProgress, LinearProgress } from '@mui/material';
-import { FiArrowRight, FiInfo } from 'react-icons/fi';
+import { FiArrowRight, FiInfo, FiUserMinus } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import { mensajeDeError } from '../../service/api';
@@ -9,6 +9,7 @@ import { formatearFecha } from '../../utils/fechas';
 import { t } from '../../i18n/t';
 import DialogoBajaColaboracion from '../../components/DialogoBajaColaboracion/DialogoBajaColaboracion.jsx';
 import './MisColaboraciones.css';
+import { markdownATextoPlano } from '../../utils/markdown';
 
 const MisColaboraciones = () => {
   const { getAccessToken, sesion } = useAuth();
@@ -42,7 +43,6 @@ const MisColaboraciones = () => {
       <header className="mis-colaboraciones-intro">
         <div>
           <h1>{t('misColaboraciones.titulo')}</h1>
-          <p>{t('misColaboraciones.subtitulo')}</p>
         </div>
       </header>
 
@@ -99,7 +99,7 @@ const MisColaboraciones = () => {
                   </span>
                   <h2 id={`colaboracion-${idProyecto}`}>{proyecto.titulo}</h2>
                   <p className="mis-colaboraciones-descripcion">
-                    {proyecto.descripcion}
+                    {markdownATextoPlano(proyecto.descripcion)}
                   </p>
                   <div className="mis-colaboraciones-avance">
                     <div>
@@ -131,6 +131,7 @@ const MisColaboraciones = () => {
                     </Button>
                     <Button
                       color="error"
+                      startIcon={<FiUserMinus aria-hidden="true" />}
                       disabled={!sesion?.idColaborador}
                       onClick={() => {
                         setAvisoBaja('');

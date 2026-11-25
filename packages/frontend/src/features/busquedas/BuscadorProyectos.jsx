@@ -198,9 +198,9 @@ export default function BuscadorProyectos() {
   const opcionesColectivos = colectivosState.datos.map((colectivo) => ({
     valor: colectivo.id,
     etiqueta: colectivo.nombre,
-    secundario: colectivo.tipoDeColectivo
-      ?.replaceAll("_", " ")
-      .toLowerCase(),
+    secundario: ["FUNDACIONES", "ASOCIACIONES_BARRIALES", "ONG", "ASAMBLEA"].includes(colectivo.tipoDeColectivo)
+      ? t(`tiposColectivoBusqueda.${colectivo.tipoDeColectivo}`)
+      : colectivo.tipoDeColectivo?.replaceAll("_", " ").toLowerCase(),
   }));
 
   const opcionesProvincias = PROVINCIAS.map((provincia) => ({
@@ -211,30 +211,33 @@ export default function BuscadorProyectos() {
   return (
     <div className="contenedor-pagina">
       <EncabezadoPagina
-        titulo="Buscar proyectos"
-        subtitulo={t('buscadorProyectos.encontraProyectosEnLosQue')}
-        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: "Buscar proyectos" }]}
+        titulo={t('navegacion.buscarProyectos')}
+        migas={[{ texto: t('navegacion.inicio'), to: "/" }, { texto: t('navegacion.buscarProyectos') }]}
       />
 
-      <div className="filtros filtros--busqueda" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
+      {/* Filtros en un panel lateral: la página ya no queda larga antes de llegar a los resultados. */}
+      <div className="con-lateral buscador-disposicion">
+      <aside className="lateral">
+      <div className="filtros filtros--busqueda filtros--lateral" role="search" aria-label={t('buscadorProyectos.filtrosDeProyectos')}>
+        <h2 className="filtros__titulo">{t('buscadorProyectos.filtros')}</h2>
         <div className="filtros__fila">
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="habilidades"
-              etiqueta="Habilidades (opcional)"
+              etiqueta={t('registro.habilidades')}
               opciones={opcionesHabilidades}
               seleccion={filtros.habilidades}
               multiple
               onSeleccionar={alternarHabilidad}
               placeholder={
                 habilidadesState.cargando
-                  ? "Cargando habilidades…"
-                  : "Buscá una habilidad"
+                  ? t('registro.cargandoHabilidades')
+                  : t('buscadorProyectos.buscarHabilidad')
               }
               textoVacio={
                 habilidadesState.cargando
-                  ? "Cargando habilidades…"
-                  : "No hay habilidades con ese texto."
+                  ? t('registro.cargandoHabilidades')
+                  : t('registro.sinHabilidadesTexto')
               }
             />
             {habilidadesState.error && (
@@ -245,20 +248,20 @@ export default function BuscadorProyectos() {
           <div className="filtros__grupo filtros__grupo--buscable">
             <CustomSelect
               id="etiquetas"
-              etiqueta="Etiquetas (opcional)"
+              etiqueta={t('tarjetas.etiquetas')}
               opciones={opcionesEtiquetas}
               seleccion={filtros.etiquetas}
               multiple
               onSeleccionar={alternarEtiqueta}
               placeholder={
                 etiquetasState.cargando
-                  ? "Cargando etiquetas…"
+                  ? t('registro.cargandoEtiquetas')
                   : t('buscadorProyectos.ejSalud')
               }
               textoVacio={
                 etiquetasState.cargando
-                  ? "Cargando etiquetas…"
-                  : "No hay etiquetas con ese texto."
+                  ? t('registro.cargandoEtiquetas')
+                  : t('buscadorProyectos.sinEtiquetasTexto')
               }
             />
             {etiquetasState.error && (
@@ -271,20 +274,20 @@ export default function BuscadorProyectos() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="colectivos"
-                etiqueta="Colectivos (opcional)"
+                etiqueta={t('buscadorProyectos.colectivos')}
                 opciones={opcionesColectivos}
                 seleccion={filtros.idColectivos}
                 multiple
                 onSeleccionar={alternarColectivo}
                 placeholder={
                   colectivosState.cargando
-                    ? "Cargando colectivos…"
-                    : "Buscá colectivos"
+                    ? t('buscadorProyectos.cargandoColectivos')
+                    : t('buscadorProyectos.buscarColectivos')
                 }
                 textoVacio={
                   colectivosState.cargando
-                    ? "Cargando colectivos…"
-                    : "No hay colectivos con ese texto."
+                    ? t('buscadorProyectos.cargandoColectivos')
+                    : t('buscadorProyectos.sinColectivosTexto')
                 }
               />
               {colectivosState.error && (
@@ -295,13 +298,13 @@ export default function BuscadorProyectos() {
             <div className="filtros__grupo filtros__grupo--buscable">
               <CustomSelect
                 id="provincias"
-                etiqueta="Provincias (opcional)"
+                etiqueta={t('buscadorProyectos.provincias')}
                 opciones={opcionesProvincias}
                 seleccion={filtros.provincias}
                 multiple
                 onSeleccionar={alternarProvincia}
-                placeholder="Buscá una provincia"
-                textoVacio="No hay provincias con ese texto."
+                placeholder={t('buscadorProyectos.buscarProvincia')}
+                textoVacio={t('buscadorProyectos.sinProvinciasTexto')}
               />
             </div>
           </div>
@@ -312,51 +315,45 @@ export default function BuscadorProyectos() {
             startIcon={<FiRotateCcw aria-hidden="true" />}
             onClick={limpiarFiltros}
           >
-            Limpiar filtros
+            {t('buscadorProyectos.limpiarFiltros')}
           </Button>
-          <Button variant="contained" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
-            Buscar proyectos
+          <Button variant="contained" color="secondary" type="button" onClick={buscar} startIcon={<FiSearch aria-hidden="true" />}>
+            {t('buscadorProyectos.buscar')}
           </Button>
         </div>
 
         {hayFiltros && (
           <p className="filtros__resumen">
             {filtros.habilidades.length > 0 &&
-              `${filtros.habilidades.length} habilidad${
-                filtros.habilidades.length === 1 ? "" : "es"
-              } · `}
+              t(filtros.habilidades.length === 1 ? 'buscadorProyectos.unFiltroHabilidad' : 'buscadorProyectos.variosFiltrosHabilidad', { cantidad: filtros.habilidades.length })}
             {filtros.etiquetas.length > 0 &&
-              `${filtros.etiquetas.length} etiqueta${
-                filtros.etiquetas.length === 1 ? "" : "s"
-              } · `}
+              t(filtros.etiquetas.length === 1 ? 'buscadorProyectos.unFiltroEtiqueta' : 'buscadorProyectos.variosFiltrosEtiqueta', { cantidad: filtros.etiquetas.length })}
             {filtros.idColectivos.length > 0 &&
-              `${filtros.idColectivos.length} colectivo${
-                filtros.idColectivos.length === 1 ? "" : "s"
-              } · `}
+              t(filtros.idColectivos.length === 1 ? 'buscadorProyectos.unFiltroColectivo' : 'buscadorProyectos.variosFiltrosColectivo', { cantidad: filtros.idColectivos.length })}
             {filtros.provincias.length > 0 &&
-              `${filtros.provincias.length} provincia${
-                filtros.provincias.length === 1 ? "" : "s"
-              } · `}
+              t(filtros.provincias.length === 1 ? 'buscadorProyectos.unFiltroProvincia' : 'buscadorProyectos.variosFiltrosProvincia', { cantidad: filtros.provincias.length })}
             {filtrosPendientes
-              ? "presioná Buscar para aplicar"
-              : "filtros aplicados"}
+              ? t('buscadorProyectos.filtrosPendientes')
+              : t('buscadorProyectos.filtrosAplicados')}
           </p>
         )}
       </div>
+      </aside>
 
+      <div className="buscador-resultados">
       {!filtrosAplicados && (
         <section className="resultados" aria-labelledby="recomendados-titulo">
           <div className="resultados__encabezado">
             <div>
               <h2 id="recomendados-titulo">
-                {idColaboradora ? "Recomendados para vos" : "Proyectos activos"}
+                {idColaboradora ? t('inicio.recomendados') : t('buscadorProyectos.proyectosActivos')}
               </h2>
               <p className="resultados__bajada">
                 {idColaboradora
-                  ? "Proyectos activos que coinciden con tus habilidades. Usá los filtros y presioná Buscar para ver más."
+                  ? t('buscadorProyectos.recomendadosDescripcion')
                   : esColectivo
-                    ? "Como colectivo podés buscar proyectos activos; las recomendaciones por habilidades son para colaboradoras."
-                    : "Iniciá sesión como colaboradora para ver recomendaciones según tus habilidades. Mientras tanto, podés buscar proyectos activos."}
+                    ? t('buscadorProyectos.descripcionColectivo')
+                    : t('buscadorProyectos.descripcionSinSesion')}
               </p>
             </div>
           </div>
@@ -373,10 +370,10 @@ export default function BuscadorProyectos() {
             !coincidenciasState.error &&
             recomendados.length === 0 && (
               <EstadoVacio nivelTitulo="p" titulo={idColaboradora
-                    ? "Todavía no encontramos proyectos activos que coincidan con tus habilidades."
+                    ? t('buscadorProyectos.sinRecomendaciones')
                     : esColectivo
-                      ? "No hay recomendaciones para un colectivo. Podés ver todos los proyectos activos."
-                      : "Iniciá sesión como colaboradora para ver recomendaciones. También podés ver todos los proyectos activos."} accion={<Button
+                      ? t('buscadorProyectos.sinRecomendacionesColectivo')
+                      : t('buscadorProyectos.sinRecomendacionesSesion')} accion={<Button
                   variant="outlined"
                   type="button"
                   onClick={verTodosLosProyectos}
@@ -400,8 +397,8 @@ export default function BuscadorProyectos() {
                     onClick={coincidenciasState.cargarMas}
                   >
                     {coincidenciasState.cargandoMas
-                      ? "Cargando…"
-                      : "Cargar más"}
+                      ? t('notificaciones.cargandoMas')
+                      : t('notificaciones.cargarMas')}
                   </Button>
                 )}
               </>
@@ -412,7 +409,7 @@ export default function BuscadorProyectos() {
       {filtrosAplicados && (
         <section className="resultados" aria-labelledby="resultados-titulo">
           <div className="resultados__encabezado">
-            <h2 id="resultados-titulo">Resultados</h2>
+            <h2 id="resultados-titulo">{t('buscadorProyectos.resultados')}</h2>
           </div>
 
           {resultadosState.cargando && (
@@ -427,14 +424,11 @@ export default function BuscadorProyectos() {
             <>
               <p className="contador-resultados" role="status" aria-live="polite">
                 {resultados.length === 0
-                  ? "No encontramos proyectos activos que coincidan con al menos uno de los filtros."
-                  : `${resultados.length} proyecto${
-                      resultados.length === 1 ? "" : "s"
-                    } activo${resultados.length === 1 ? "" : "s"} con al menos
-                    una coincidencia.`}
+                  ? t('buscadorProyectos.sinResultados')
+                  : t(resultados.length === 1 ? 'buscadorProyectos.unResultado' : 'buscadorProyectos.variosResultados', { cantidad: resultados.length })}
                 {resultados.length > 0 &&
                   cantidadCoincidencias > 0 &&
-                  ` ${cantidadCoincidencias} coinciden con tus habilidades.`}
+                  t('buscadorProyectos.coincidenciasHabilidades', { cantidad: cantidadCoincidencias })}
               </p>
 
               {resultados.length > 0 && (
@@ -458,8 +452,8 @@ export default function BuscadorProyectos() {
                       onClick={resultadosState.cargarMas}
                     >
                       {resultadosState.cargandoMas
-                        ? "Cargando…"
-                        : "Cargar más"}
+                        ? t('notificaciones.cargandoMas')
+                        : t('notificaciones.cargarMas')}
                     </Button>
                   )}
                 </>
@@ -468,6 +462,8 @@ export default function BuscadorProyectos() {
           )}
         </section>
       )}
+      </div>
+      </div>
     </div>
   );
 }

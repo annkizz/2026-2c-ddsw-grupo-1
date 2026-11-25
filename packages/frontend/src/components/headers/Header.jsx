@@ -1,82 +1,145 @@
 import React, { useState } from 'react';
-import { Button, Drawer, IconButton } from '@mui/material';
-import { FiBell, FiCode, FiFileText, FiHelpCircle, FiHome, FiLogOut, FiMenu, FiUsers, FiUser, FiX } from 'react-icons/fi';
-import { Link, NavLink } from 'react-router-dom';
+import { Divider, Drawer, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material';
+import {
+  FiBell,
+  FiChevronDown,
+  FiCode,
+  FiFileText,
+  FiLogOut,
+  FiLink,
+  FiMap,
+  FiMenu,
+  FiSearch,
+  FiUser,
+  FiUsers,
+  FiX
+} from 'react-icons/fi';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import BotonModoDaltonico from '../BotonModoDaltonico/BotonModoDaltonico.jsx';
+import { useNotificacionesPendientes } from '../../hooks/useNotificacionesPendientes.js';
 import { t } from '../../i18n/t';
 import './Header.css';
 
-import { RUTA_AYUDA, irAAyuda } from '../../utils/rutasUI';
+
+const ETIQUETA_ROL = {
+  COLECTIVO: 'Colectivo',
+  COLABORADOR: 'Colaborador',
+  ADMINISTRADOR: 'Administración'
+};
+
+// El logo es el único acceso a Inicio (antes había un botón "Inicio" que hacía lo mismo).
+// Lo personal (Mi perfil, Salir) vive en el menú de usuario; las notificaciones, en su botón.
+const enlacesPorRol = (rol) => {
+  if (rol === 'ADMINISTRADOR') {
+    return [
+      { to: '/administrador/destacados', texto: t('destacados.titulo'), icono: <FiFileText aria-hidden="true" /> }
+    ];
+  }
+  if (rol === 'COLABORADOR') {
+    return [
+      { to: '/buscar-proyectos', texto: t('navegacion.buscarProyectos'), icono: <FiSearch aria-hidden="true" /> },
+      { to: '/mis-colaboraciones', texto: t('navegacion.misColaboraciones'), icono: <FiUsers aria-hidden="true" /> },
+      { to: '/mis-postulaciones', texto: t('navegacion.misPostulaciones'), icono: <FiFileText aria-hidden="true" /> }
+    ];
+  }
+  if (rol === 'COLECTIVO') {
+    return [
+      { to: '/proyectos', texto: t('navegacion.misProyectos'), icono: <FiFileText aria-hidden="true" /> },
+      { to: '/buscar-colaboradores', texto: t('navegacion.buscarColaboradoras'), icono: <FiSearch aria-hidden="true" /> },
+      { to: '/integraciones/webhooks', texto: t('navegacion.integraciones'), icono: <FiLink aria-hidden="true" /> }
+    ];
+  }
+  return [
+    { to: '/proyectos', texto: t('navegacion.proyectos'), icono: <FiFileText aria-hidden="true" /> },
+    { to: '/mapa', texto: t('navegacion.mapa'), icono: <FiMap aria-hidden="true" /> }
+  ];
+};
+
+const iniciales = (texto) =>
+  (texto || '')
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase())
+    .join('') || <FiUser aria-hidden="true" />;
+
+const textoPendientes = (cantidad) =>
+  cantidad === 0
+    ? t('navegacion.notificaciones')
+    : cantidad === 1
+      ? t('navegacion.notificacionesUna')
+      : t('navegacion.notificacionesVarias', { cantidad });
 
 const Header = () => {
   const { isAuthenticated, sesion, cerrarSesion } = useAuth();
+  const navigate = useNavigate();
+  const { pendientes } = useNotificacionesPendientes();
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const conPerfil = isAuthenticated && sesion?.tienePerfil;
-  const esColectivo = sesion?.rol === 'COLECTIVO';
-  const esColaboradora = sesion?.rol === 'COLABORADOR';
-
-  const enlaces =
-    esColectivo || esColaboradora
-      ? [
-          { to: '/', texto: t('navegacion.inicio'), icono: <FiHome aria-hidden="true" />, exacto: true },
-          ...(esColaboradora ? [
-            { to: '/mis-colaboraciones', texto: t('navegacion.misColaboraciones'), icono: <FiUsers aria-hidden="true" /> },
-            { to: '/mis-postulaciones', texto: t('navegacion.misPostulaciones'), icono: <FiFileText aria-hidden="true" /> }
-          ] : []),
-          { to: '/notificaciones', texto: t('navegacion.notificaciones'), icono: <FiBell aria-hidden="true" /> },
-          { to: '/perfil', texto: t('navegacion.miPerfil'), icono: <FiUser aria-hidden="true" /> }
-        ]
-      : [
-          { to: '/proyectos', texto: t('navegacion.proyectos') },
-          { to: '/buscar-proyectos', texto: t('navegacion.buscarProyectos') },
-          { to: '/mapa', texto: t('navegacion.mapa') },
-          { to: '/notificaciones', texto: t('navegacion.notificaciones') },
-          { to: '/perfil', texto: t('navegacion.miPerfil') }
-        ];
+  const [anclaUsuario, setAnclaUsuario] = useState(null);
+  const esAdministrador = sesion?.rol === 'ADMINISTRADOR';
+  const conPerfil = isAuthenticated && (sesion?.tienePerfil || esAdministrador);
+  const enlaces = enlacesPorRol(sesion?.rol);
+  const nombre = sesion?.nombreUsuario || t('navegacion.miCuenta');
+  const rol = ETIQUETA_ROL[sesion?.rol] ?? '';
+  const insignia = pendientes > 9 ? '9+' : pendientes;
 
   const cerrarMenu = () => setMenuAbierto(false);
+  const cerrarUsuario = () => setAnclaUsuario(null);
+  const ir = (ruta) => {
+    cerrarUsuario();
+    cerrarMenu();
+    navigate(ruta);
+  };
   const salir = () => {
+    cerrarUsuario();
     cerrarMenu();
     cerrarSesion();
   };
 
   const renderEnlaces = () =>
-    enlaces.map(({ to, texto, icono, exacto }) => (
+    enlaces.map(({ to, texto, icono }) => (
       <NavLink
         key={to}
         to={to}
-        end={exacto}
         onClick={cerrarMenu}
         className={({ isActive }) => `header-nav-link${isActive ? ' activo' : ''}`}
       >
         {icono}
-        {texto}
+        <span>{texto}</span>
       </NavLink>
     ));
 
-  const enlaceAyuda = (clase) => (
-    <Link
-      className={clase}
-      to={RUTA_AYUDA}
-      onClick={() => {
-        cerrarMenu();
-        irAAyuda();
-      }}
+  // Notificaciones como botón visible (borde + texto en desktop), con el número de no vistas.
+  // NavLink agrega aria-current="page" cuando estás en Notificaciones: así se marca la sección actual.
+  const campana = (
+    <NavLink
+      to="/notificaciones"
+      className="header-campana"
+      aria-label={textoPendientes(pendientes)}
+      onClick={cerrarMenu}
     >
-      <FiHelpCircle aria-hidden="true" />
-      <span>{t('navegacion.ayuda')}</span>
-    </Link>
+      <FiBell aria-hidden="true" />
+      <span className="header-campana__texto" aria-hidden="true">
+        {t('navegacion.notificaciones')}
+      </span>
+      {pendientes > 0 && (
+        <span className="insignia insignia--acento header-campana__numero" aria-hidden="true">
+          {insignia}
+        </span>
+      )}
+    </NavLink>
   );
 
   return (
     <header className="header">
       <div className="header__contenido">
-        <Link to="/" className="header-logo">
+        <Link to="/" className="header-logo" aria-label={t('navegacion.logoInicio')}>
           <span className="header-logo-mark" aria-hidden="true">
             <FiCode />
           </span>
-          <span className="header-logo-texto">Código a Voluntad</span>
+          <span className="header-logo-texto" aria-hidden="true">
+            Código <span className="header-logo-texto__acento">a Voluntad</span>
+          </span>
         </Link>
 
         {conPerfil ? (
@@ -84,23 +147,34 @@ const Header = () => {
             {renderEnlaces()}
           </nav>
         ) : (
-          <div className="header-nav header-nav--desktop">{enlaceAyuda('header-ayuda')}</div>
+          <div className="header-nav header-nav--desktop" />
         )}
 
-        <div className="header-usuario header-usuario--desktop">
-          <BotonModoDaltonico className="header-modo-color" />
-          {conPerfil && (
-            <Button
-              className="header-nav-salir"
-              variant="text"
-              startIcon={<FiLogOut aria-hidden="true" />}
-              onClick={cerrarSesion}
+        {conPerfil && (
+          <div className="header-usuario">
+            {!esAdministrador && campana}
+            <button
+              type="button"
+              className="header-usuario__boton header-usuario--desktop"
+              aria-haspopup="menu"
+              aria-expanded={Boolean(anclaUsuario)}
+              aria-controls={anclaUsuario ? 'menu-usuario' : undefined}
+              onClick={(evento) => setAnclaUsuario(evento.currentTarget)}
             >
-              {t('navegacion.salir')}
-            </Button>
-          )}
-        </div>
+              <span className="header-avatar" aria-hidden="true">
+                {iniciales(sesion?.nombreUsuario)}
+              </span>
+              <span className="header-usuario__textos">
+                <span className="header-usuario__nombre">{nombre}</span>
+                {rol && <span className="header-usuario__rol">{rol}</span>}
+              </span>
+              <FiChevronDown aria-hidden="true" className="header-usuario__chevron" />
+              <span className="visualmente-oculto">{t('navegacion.menuUsuario')}</span>
+            </button>
+          </div>
+        )}
 
+        {conPerfil && (
         <IconButton
           className="header-menu-toggle"
           aria-label={menuAbierto ? t('navegacion.cerrarMenu') : t('navegacion.abrirMenu')}
@@ -110,7 +184,37 @@ const Header = () => {
         >
           {menuAbierto ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
         </IconButton>
+        )}
       </div>
+
+      <Menu
+        id="menu-usuario"
+        anchorEl={anclaUsuario}
+        open={Boolean(anclaUsuario)}
+        onClose={cerrarUsuario}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ list: { 'aria-label': t('navegacion.menuUsuario') } }}
+      >
+        <li className="menu-usuario__cabecera" role="presentation">
+          <strong>{nombre}</strong>
+          {rol && <span>{rol}</span>}
+        </li>
+        <Divider component="li" role="presentation" />
+        {!esAdministrador && <MenuItem onClick={() => ir('/perfil')}>
+          <ListItemIcon>
+            <FiUser aria-hidden="true" />
+          </ListItemIcon>
+          {t('navegacion.miPerfil')}
+        </MenuItem>}
+        {!esAdministrador && <Divider component="li" role="presentation" />}
+        <MenuItem onClick={salir} className="menu-usuario__salir">
+          <ListItemIcon>
+            <FiLogOut aria-hidden="true" />
+          </ListItemIcon>
+          {t('navegacion.salir')}
+        </MenuItem>
+      </Menu>
 
       <Drawer
         anchor="right"
@@ -127,26 +231,52 @@ const Header = () => {
               <FiX aria-hidden="true" />
             </IconButton>
           </div>
+          {conPerfil && (
+            <div className="header-drawer-usuario">
+              <span className="header-avatar" aria-hidden="true">
+                {iniciales(sesion?.nombreUsuario)}
+              </span>
+              <span className="header-usuario__textos">
+                <span className="header-usuario__nombre">{nombre}</span>
+                {rol && <span className="header-usuario__rol">{rol}</span>}
+              </span>
+            </div>
+          )}
           <nav id="header-navegacion-movil" className="header-nav header-nav--mobile" aria-label={t('navegacion.principal')}>
-            {conPerfil ? (
+            {conPerfil && renderEnlaces()}
+            {conPerfil && !esAdministrador && (
               <>
-                {renderEnlaces()}
-                <Button
-                  className="header-nav-salir"
-                  variant="text"
-                  startIcon={<FiLogOut aria-hidden="true" />}
-                  onClick={salir}
+                <NavLink
+                  to="/notificaciones"
+                  onClick={cerrarMenu}
+                  className={({ isActive }) => `header-nav-link${isActive ? ' activo' : ''}`}
                 >
-                  {t('navegacion.salir')}
-                </Button>
+                  <FiBell aria-hidden="true" />
+                  <span>{t('navegacion.notificaciones')}</span>
+                  {pendientes > 0 && (
+                    <span className="insignia insignia--acento">
+                      {insignia}
+                      <span className="visualmente-oculto"> {pendientes === 1 ? t('navegacion.sinVerUna') : t('navegacion.sinVer')}</span>
+                    </span>
+                  )}
+                </NavLink>
+                <NavLink
+                  to="/perfil"
+                  onClick={cerrarMenu}
+                  className={({ isActive }) => `header-nav-link${isActive ? ' activo' : ''}`}
+                >
+                  <FiUser aria-hidden="true" />
+                  <span>{t('navegacion.miPerfil')}</span>
+                </NavLink>
               </>
-            ) : (
-              enlaceAyuda('header-nav-link header-ayuda-movil')
+            )}
+            {conPerfil && (
+              <button type="button" className="header-nav-link header-nav-salir" onClick={salir}>
+                <FiLogOut aria-hidden="true" />
+                <span>{t('navegacion.salir')}</span>
+              </button>
             )}
           </nav>
-          <div className="header-drawer-preferencias" role="group" aria-label={t('navegacion.preferencias')}>
-            <BotonModoDaltonico className="header-modo-color" />
-          </div>
         </div>
       </Drawer>
     </header>

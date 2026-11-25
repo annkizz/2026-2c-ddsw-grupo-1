@@ -113,7 +113,6 @@ const ListaProyectos = () => {
     <div className="contenedor-pagina">
       <EncabezadoPagina
         titulo={esColectivo ? t('proyectos.titulo') : t('proyectos.tituloPublico')}
-        subtitulo={esColectivo ? t('proyectos.subtitulo') : t('proyectos.subtituloPublico')}
         accion={botonCrear}
         migas={esColectivo ? [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('proyectos.titulo') }] : undefined}
       />
@@ -197,7 +196,7 @@ const ListaProyectos = () => {
                     setFiltroEstado('TODOS');
                   }}
                 >
-                  Limpiar filtros
+                  {t('buscadorProyectos.limpiarFiltros')}
                 </Button>
               }
             />
@@ -250,9 +249,9 @@ const ListaProyectos = () => {
                         variant="outlined"
                         onClick={() => navigate(`/proyectos/${proyecto.id}`)}
                         startIcon={<FiEye aria-hidden="true" />}
-                        aria-label={`Ver proyecto: ${proyecto.titulo}`}
+                        aria-label={t('accionesProyecto.ver', { titulo: proyecto.titulo })}
                       >
-                        Ver proyecto
+                        {t('tarjetas.verProyecto')}
                       </Button>
                       {esDueño && (
                         <Button
@@ -261,7 +260,7 @@ const ListaProyectos = () => {
                           startIcon={<FiEdit2 aria-hidden="true" />}
                           aria-label={t('proyectos.editarProyectoDe', { titulo: proyecto.titulo })}
                         >
-                          Editar proyecto
+                          {t('accionesProyecto.editar')}
                         </Button>
                       )}
                       {esDueño && !esFinalizado && (

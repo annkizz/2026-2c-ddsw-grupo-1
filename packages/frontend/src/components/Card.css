@@ -124,8 +124,8 @@
 }
 
 .etiqueta--coincidencia {
-  background: #edf7ed;
-  color: #1e6b3a;
+  background: var(--color-success-tint);
+  color: var(--color-success);
   font-weight: 600;
 }
 

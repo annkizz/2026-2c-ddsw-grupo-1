@@ -1,4 +1,28 @@
-/* Formulario de proyecto: 2 columnas en desktop, 1 en móvil; ancho de lectura acotado */
+/* Formulario de proyecto por pasos: una tarjeta por paso, ancho de formulario */
+.form-proyecto-pasos.MuiStepper-root {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.form-proyecto-pasos .MuiStepButton-root {
+  min-height: var(--control-min-height);
+  margin: calc(-1 * var(--space-1)) 0;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+}
+
+.form-proyecto-pasos .MuiStepButton-root[aria-current='step'] .MuiStepLabel-label {
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-width-strong);
+  text-underline-offset: var(--underline-offset);
+}
+
+.form-proyecto-acciones__cancelar.MuiButton-root {
+  margin-right: auto;
+}
 .form-proyecto-grid {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -10,7 +34,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: var(--form-max-width);
   padding: var(--space-3);
   border: var(--border-width) solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
@@ -89,10 +112,49 @@
   }
 
   .form-proyecto-acciones {
-    flex-direction: column;
+    flex-direction: column-reverse;
+  }
+
+  .form-proyecto-pasos.MuiStepper-root {
+    padding: var(--space-2);
+  }
+
+  .form-proyecto-pasos .MuiStepLabel-label {
+    display: none;
+  }
+
+  .form-proyecto-pasos .MuiStepLabel-label.Mui-active {
+    display: block;
   }
 
   .form-proyecto-acciones .MuiButton-root {
     width: 100%;
   }
+}
+
+/* Edición: menú lateral con las partes del proyecto */
+.form-proyecto-edicion {
+  align-items: start;
+}
+
+.form-proyecto-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: var(--form-max-width);
+}
+
+.form-proyecto-ubicacion--fija {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+
+.form-proyecto-ubicacion--fija svg {
+  vertical-align: -2px;
+  color: var(--color-primary);
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { obtenerCandidatas } from "../service/proyectosService";
+import { t } from "../i18n/t";
 
 export function useCandidatas(perfiles, idPerfil, habilitado) {
   const [grupos, setGrupos] = useState([]);
@@ -78,7 +79,7 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
         if (cancelado) return;
         setGrupos([]);
         setError(
-          new Error("No pudimos buscar colaboradores para los perfiles elegidos."),
+          new Error(t('erroresInternos.buscarCandidatas')),
         );
       })
       .finally(() => {

@@ -41,7 +41,7 @@ describe('destino del callback de Logto', () => {
     expect(navigate).toHaveBeenCalledWith('/registro/tipo', { replace: true });
   });
 
-  it('lleva directamente al perfil si la cuenta ya tiene uno', () => {
+  it('lleva al inicio (no al perfil) si la cuenta ya tiene uno', () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       sesion: { tienePerfil: true },
@@ -53,7 +53,18 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/perfil', { replace: true });
+    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+  });
+
+  it('lleva al panel administrativo sin pedir un perfil de colectivo o colaboradora', () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+      cargando: false,
+    });
+
+    render(<Callback />);
+    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', { replace: true });
   });
 
   it('lleva al inicio del colectivo cuando la cuenta ya tiene perfil', () => {

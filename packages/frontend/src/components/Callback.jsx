@@ -26,12 +26,11 @@ const Callback = () => {
 
   useEffect(() => {
     if (!sesion) return;
+    // Con perfil, siempre al Inicio (panel del colectivo o de la colaboradora), nunca a Mi perfil.
     navigate(
-      sesion.tienePerfil
-        ? sesion.rol === 'COLECTIVO' || sesion.rol === 'COLABORADOR'
-          ? '/'
-          : '/perfil'
-        : (leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo'),
+      sesion.rol === 'ADMINISTRADOR'
+        ? '/administrador/destacados'
+        : sesion.tienePerfil ? '/' : leerTipo() ? rutaDeRegistro(leerTipo()) : '/registro/tipo',
       { replace: true }
     );
   }, [sesion, navigate]);
@@ -62,7 +61,7 @@ const Callback = () => {
   }
 
   if (cargando) {
-    return <LoadingSplash message="Estamos verificando tus datos. Esperá un momento." />;
+    return <LoadingSplash message={t('acceso.verificandoDatos')} />;
   }
 
   if (!isAuthenticated) {
@@ -75,14 +74,14 @@ const Callback = () => {
         </Alert>
         <div className="acceso-estado__acciones">
           <Button variant="contained" startIcon={<FiHome aria-hidden="true" />} onClick={() => navigate('/', { replace: true })}>
-            Volver al inicio
+            {t('acceso.volverAlInicio')}
           </Button>
         </div>
       </main>
     );
   }
 
-  return <LoadingSplash message="Estamos verificando tus datos. Esperá un momento." />;
+  return <LoadingSplash message={t('acceso.verificandoDatos')} />;
 };
 
 export default Callback;

@@ -10,26 +10,26 @@ import { TIPOS_CONTACTO } from '../../service/colaboradorasService';
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const CELULAR_REGEX = /^\+\d{10,15}$/; // igual que el backend, pero tolerando espacios y guiones
 
-const REGLAS = {
+const crearReglas = () => ({
   EMAIL: {
-    etiqueta: 'Dirección de email',
+    etiqueta: t('medios.direccionEmail'),
     ejemplo: t('miPerfil.ejEmail'),
     esValido: (valor) => EMAIL_REGEX.test(valor.trim()),
     mensaje: t('registro.ingresaUnEmailValidoPor')
   },
   WHATSAPP: {
-    etiqueta: 'Número de WhatsApp',
+    etiqueta: t('medios.numeroWhatsapp'),
     ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
     mensaje: t('registro.ingresaUnTelefonoConCodigo')
   },
   SMS: {
-    etiqueta: 'Número de celular',
+    etiqueta: t('medios.numeroCelular'),
     ejemplo: t('miPerfil.ejTelefono'),
     esValido: (valor) => CELULAR_REGEX.test(valor.replace(/[\s-]/g, '')),
     mensaje: t('registro.ingresaUnTelefonoConCodigo')
   }
-};
+});
 
 // Paso 3 de 3: medios de contacto (opcional)
 const MediosDeContacto = ({
@@ -37,10 +37,11 @@ const MediosDeContacto = ({
   setDatos,
   onVolver,
   onSiguiente,
-  siguiente = 'Listo',
+  siguiente = t('medios.listo'),
   guardando,
   error
 }) => {
+  const REGLAS = crearReglas();
   const [conError, setConError] = useState([]); // posiciones de los medios inválidos
 
   const cambiarMedio = (posicion, cambios) => {
@@ -76,62 +77,65 @@ const MediosDeContacto = ({
   return (
     <form onSubmit={terminar} noValidate>
       <section className="registro-card" aria-labelledby="paso-contacto-titulo">
-        <h2 id="paso-contacto-titulo">Cómo podemos contactarte</h2>
-        <Alert severity="info" icon={<FiLock aria-hidden="true" />}>
-          Tus medios de contacto son privados y no se muestran públicamente.
-        </Alert>
+        <h2 id="paso-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
+        <p className="medios-contacto__intro">{t('medios.intro')}</p>
+        <p className="medios-contacto__privado">
+          <FiLock aria-hidden="true" /> {t('medios.privado')}
+        </p>
 
         {datos.medios.length === 0 ? (
-          <p className="texto-secundario">
-            <strong>{t('registro.mediosDeContactoOpcional')}</strong> Todavía no agregaste medios de contacto. Podés continuar sin
-            completar este paso.
+          <p className="medios-contacto__vacio">
+            {t('medios.vacio')}
           </p>
         ) : (
-          <ul className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
+          <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
             {datos.medios.map((medio, i) => (
-              <li className="medios-fila" key={i}>
-                <TextField
-                  id={`medio-tipo-${i}`}
-                  select
-                  label="Tipo"
-                  value={medio.tipo}
-                  onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}
-                  fullWidth
-                >
-                  {TIPOS_CONTACTO.map((tipo) => (
-                    <MenuItem key={tipo.valor} value={tipo.valor}>
-                      {tipo.texto}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  id={`medio-valor-${i}`}
-                  label={REGLAS[medio.tipo].etiqueta}
-                  placeholder={REGLAS[medio.tipo].ejemplo}
-                  value={medio.valor}
-                  onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
-                  onBlur={() => {
-                    if (medio.valor && !REGLAS[medio.tipo].esValido(medio.valor) && !conError.includes(i)) {
-                      setConError([...conError, i]);
+              <li className="medios-item" key={i}>
+                <p className="medios-item__titulo">{t('medios.numero', { numero: i + 1 })}</p>
+                <div className="medios-fila">
+                  <TextField
+                    id={`medio-tipo-${i}`}
+                    select
+                    label={t('medios.tipo')}
+                    value={medio.tipo}
+                    onChange={(e) => cambiarMedio(i, { tipo: e.target.value })}
+                    fullWidth
+                  >
+                    {TIPOS_CONTACTO.map((tipo) => (
+                      <MenuItem key={tipo.valor} value={tipo.valor}>
+                        {t(tipo.textoKey)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    id={`medio-valor-${i}`}
+                    label={REGLAS[medio.tipo].etiqueta}
+                    placeholder={REGLAS[medio.tipo].ejemplo}
+                    value={medio.valor}
+                    onChange={(e) => cambiarMedio(i, { valor: e.target.value })}
+                    onBlur={() => {
+                      if (medio.valor && !REGLAS[medio.tipo].esValido(medio.valor) && !conError.includes(i)) {
+                        setConError([...conError, i]);
+                      }
+                    }}
+                    error={conError.includes(i)}
+                    helperText={
+                      conError.includes(i) ? (
+                        <>
+                          <FiAlertCircle aria-hidden="true" />
+                          <span>{REGLAS[medio.tipo].mensaje}</span>
+                        </>
+                      ) : undefined
                     }
-                  }}
-                  error={conError.includes(i)}
-                  helperText={
-                    conError.includes(i) ? (
-                      <>
-                        <FiAlertCircle aria-hidden="true" />
-                        <span>{REGLAS[medio.tipo].mensaje}</span>
-                      </>
-                    ) : undefined
-                  }
-                  fullWidth
-                />
-                <IconButton aria-label={`Quitar medio de contacto ${i + 1}`} onClick={() => quitarMedio(i)}>
-                  <FiTrash2 aria-hidden="true" />
-                </IconButton>
+                    fullWidth
+                  />
+                  <IconButton aria-label={t('medios.quitar', { numero: i + 1 })} onClick={() => quitarMedio(i)}>
+                    <FiTrash2 aria-hidden="true" />
+                  </IconButton>
+                </div>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
 
         <div>
@@ -145,7 +149,7 @@ const MediosDeContacto = ({
               onChange={(e) => setDatos({ ...datos, aceptaMensajeria: e.target.checked })}
             />
           }
-          label="Acepto recibir mensajes internos de la plataforma cuando haya proyectos relacionados con mis habilidades."
+          label={t('medios.aceptaMensajes')}
         />
       </section>
 

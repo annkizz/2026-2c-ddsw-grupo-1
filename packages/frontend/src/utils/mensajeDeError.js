@@ -37,23 +37,32 @@ export const clasificarError = (error) => {
   return TIPOS_ERROR.inesperado;
 };
 
-// { tipo, mensaje, accion } donde accion es 'iniciarSesion', 'reintentar' o null.
+// Código HTTP visible (401, 403, 404, 500…): se muestra como "Error 403" en vez de un
+// "no autorizado" genérico. Nunca se muestra el texto ni el código interno del backend.
+export const codigoHttp = (error) => {
+  const status = error?.response?.status;
+  return Number.isInteger(status) && status >= 400 && status <= 599 ? status : null;
+};
+
+// { tipo, mensaje, accion, codigo } donde accion es 'iniciarSesion', 'reintentar' o null.
 export const describirError = (error) => {
   const tipo = clasificarError(error);
+  const codigo = codigoHttp(error);
   const accion =
     tipo === TIPOS_ERROR.sesionVencida
       ? 'iniciarSesion'
       : [TIPOS_ERROR.sinConexion, TIPOS_ERROR.servidor, TIPOS_ERROR.inesperado, TIPOS_ERROR.conflicto].includes(tipo)
         ? 'reintentar'
         : null;
-  return { tipo, mensaje: t(`errores.${tipo}`), accion };
+  return { tipo, mensaje: t(`errores.${tipo}`), accion, codigo };
 };
 
 // Texto listo para mostrar. Si se pasa un contexto ("No pudimos guardar el perfil."),
 // se antepone a la explicación del tipo de error.
 export const mensajeDeError = (error, contexto) => {
-  const { mensaje } = describirError(error);
-  return contexto ? `${contexto} ${mensaje}` : mensaje;
+  const { mensaje, codigo } = describirError(error);
+  const conCodigo = codigo ? `${mensaje} (${t('errores.etiquetaCodigo', { codigo })})` : mensaje;
+  return contexto ? `${contexto} ${conCodigo}` : conCodigo;
 };
 
 export default mensajeDeError;

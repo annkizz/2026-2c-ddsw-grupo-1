@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { FiUserMinus } from 'react-icons/fi';
 import Dialogo from '../Dialogo/Dialogo.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { darDeBajaColaboracion } from '../../service/proyectosService';
@@ -49,7 +50,7 @@ const DialogoBajaColaboracion = ({ seleccion, propia, onCerrar, onConfirmada }) 
       </DialogContent>
       <DialogActions>
         <Button onClick={cerrar} disabled={procesando}>{t('bajaColaboracion.cancelar')}</Button>
-        <Button color="error" variant="contained" onClick={confirmar} disabled={procesando}>
+        <Button color="error" variant="contained" onClick={confirmar} disabled={procesando} startIcon={<FiUserMinus aria-hidden="true" />}>
           {procesando ? t('bajaColaboracion.procesando') : t(propia ? 'bajaColaboracion.confirmarPropia' : 'bajaColaboracion.confirmarColectivo')}
         </Button>
       </DialogActions>

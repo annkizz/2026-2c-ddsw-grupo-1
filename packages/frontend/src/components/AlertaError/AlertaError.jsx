@@ -43,6 +43,9 @@ const AlertaError = ({ error, titulo, mensaje: mensajePropio, onReintentar, rein
     <Alert severity="error" role="alert" className={className}>
       {titulo && <AlertTitle>{titulo}</AlertTitle>}
       <span>{mensaje}</span>
+      {error && descripcion.codigo && (
+        <span className="alerta-codigo"> ({t('errores.etiquetaCodigo', { codigo: descripcion.codigo })})</span>
+      )}
       {children}
       {acciones && <div className="alerta-acciones">{acciones}</div>}
     </Alert>

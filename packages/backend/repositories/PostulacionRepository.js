@@ -23,13 +23,17 @@ export class PostulacionRepository {
     return this.model.findById(id).exec();
   }
 
+  eliminarSiPendiente(id) {
+    return this.model.deleteOne({ _id: id, estado: EstadoPostulacion.PENDIENTE }).exec();
+  }
+
   obtenerPorProyecto(idProyecto) {
     return this.model
       .find({ idProyecto })
       .sort({ fechaPostulacion: -1 })
       .populate(
         "idColaborador",
-        "nombreFantasia usuarioGitHub nombre apellido pronombres presentacion mediosDeContacto aceptaMensajeria",
+        "nombreFantasia usuarioGitHub nombre apellido pronombres presentacion habilidades mediosDeContacto aceptaMensajeria",
       )
       .exec();
   }
@@ -48,6 +52,13 @@ export class PostulacionRepository {
       idColaborador,
       estado: EstadoPostulacion.PENDIENTE,
     });
+  }
+
+  obtenerUltima(idProyecto, idPerfil, idColaborador) {
+    return this.model
+      .findOne({ idProyecto, idPerfil, idColaborador })
+      .sort({ fechaPostulacion: -1, _id: -1 })
+      .exec();
   }
 
   contarPorPerfil(idPerfil) {

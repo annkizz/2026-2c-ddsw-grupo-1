@@ -6,18 +6,8 @@ import { FiArrowRight, FiCheckCircle, FiFolder, FiMapPin, FiUsers } from 'react-
 import { Link } from 'react-router-dom';
 import ChipEstado from '../ChipEstado/ChipEstado.jsx';
 import '../Card.css';
-
-function describirCompromiso(compromiso) {
-  if (!compromiso) return 'Compromiso no informado';
-  const horas = compromiso.horas ?? '?';
-  const frecuencia = (compromiso.tipoCompromiso ?? '').toLowerCase();
-  const colaboracion = (compromiso.tipoColaboracion ?? '').toLowerCase();
-  return `${horas} ${horas === 1 ? 'hora' : 'horas'} ${frecuencia} · colaboración ${colaboracion}`;
-}
-
-function listarHabilidades(habilidades) {
-  return habilidades?.length > 0 ? habilidades.join(', ') : 'ninguna';
-}
+import { markdownATextoPlano, markdownEnLineaATextoPlano } from '../../utils/markdown';
+import { describirCompromiso, listarHabilidades } from '../../utils/perfiles';
 
 // Card de proyecto: media → título → meta → CTA (patrón de grilla tipo marketplace).
 export default function CardProyecto({ proyecto, nombreColectivo }) {
@@ -51,10 +41,10 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
           />
         )}
 
-        {proyecto.descripcion && <p className="tarjeta__descripcion">{proyecto.descripcion}</p>}
+        {proyecto.descripcion && <p className="tarjeta__descripcion">{markdownATextoPlano(proyecto.descripcion)}</p>}
 
         {etiquetas.length > 0 && (
-          <ul className="tarjeta__etiquetas" aria-label="Etiquetas">
+          <ul className="tarjeta__etiquetas" aria-label={t('tarjetas.etiquetas')}>
             {etiquetas.map((etiqueta) => (
               <li key={etiqueta}>
                 <Chip label={etiqueta.replaceAll('_', ' ')} />
@@ -70,14 +60,14 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
               <span>
                 {proyecto.ubicacion
                   ? `${proyecto.ubicacion.nombreProvincia}${proyecto.ubicacion.ciudad ? ` · ${proyecto.ubicacion.ciudad}` : ''}`
-                  : 'Sin ubicación'}
+                  : t('tarjetas.sinUbicacion')}
               </span>
             </p>
           )}
           {nombreColectivo && (
             <p className="tarjeta__meta">
               <FiUsers aria-hidden="true" />
-              <span>Colectivo: {nombreColectivo}</span>
+              <span>{t('tarjetas.colectivo', { nombre: nombreColectivo })}</span>
             </p>
           )}
         </div>
@@ -88,11 +78,11 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
             <ul className="lista-perfiles">
               {perfilesCompatibles.map((perfil) => (
                 <li key={perfil.id}>
-                  <strong>{perfil.descripcion}</strong> · {describirCompromiso(perfil.compromiso)}
+                  <strong>{markdownEnLineaATextoPlano(perfil.descripcion)}</strong> · {describirCompromiso(perfil.compromiso)}
                   <br />
-                  Requeridas en común: {listarHabilidades(perfil.requeridasCoincidentes)}
+                  {t('tarjetas.requeridasEnComun')} {listarHabilidades(perfil.requeridasCoincidentes)}
                   <br />
-                  Opcionales en común: {listarHabilidades(perfil.opcionalesCoincidentes)}
+                  {t('tarjetas.opcionalesEnComun')} {listarHabilidades(perfil.opcionalesCoincidentes)}
                 </li>
               ))}
             </ul>
@@ -106,9 +96,9 @@ export default function CardProyecto({ proyecto, nombreColectivo }) {
           to={`/proyectos/${proyecto.id}`}
           variant="outlined"
           endIcon={<FiArrowRight aria-hidden="true" />}
-          aria-label={`Ver proyecto: ${proyecto.titulo}`}
+          aria-label={t('tarjetas.verProyectoTitulo', { titulo: proyecto.titulo })}
         >
-          Ver proyecto
+          {t('tarjetas.verProyecto')}
         </Button>
       </div>
     </li>

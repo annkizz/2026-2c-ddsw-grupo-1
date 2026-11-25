@@ -2,9 +2,9 @@ import api, { conToken } from './api';
 
 // Valores de TipoDeContacto del backend
 export const TIPOS_CONTACTO = [
-  { valor: 'EMAIL', texto: 'Email' },
-  { valor: 'WHATSAPP', texto: 'WhatsApp' },
-  { valor: 'SMS', texto: 'SMS' }
+  { valor: 'EMAIL', textoKey: 'tiposContacto.EMAIL' },
+  { valor: 'WHATSAPP', textoKey: 'tiposContacto.WHATSAPP' },
+  { valor: 'SMS', textoKey: 'tiposContacto.SMS' }
 ];
 
 // El backend pide el celular como +5491145678901 (sin espacios ni guiones)

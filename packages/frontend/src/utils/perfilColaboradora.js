@@ -1,6 +1,6 @@
 export const CAMPOS_REQUERIDOS_COLABORADORA = [
-  { clave: 'nombreFantasia', etiqueta: 'Nombre de fantasía' },
-  { clave: 'habilidades', etiqueta: 'Al menos una habilidad' },
+  { clave: 'nombreFantasia', etiquetaKey: 'inicio.campoNombreFantasia' },
+  { clave: 'habilidades', etiquetaKey: 'inicio.campoHabilidad' },
 ];
 
 export const camposFaltantesPerfilColaboradora = (datos = {}) =>

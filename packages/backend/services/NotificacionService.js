@@ -37,6 +37,7 @@ export class NotificacionService {
       ...(notificacion.idPostulacion && {
         idPostulacion: String(notificacion.idPostulacion),
       }),
+      ...(notificacion.estadoInvitacion && { estadoInvitacion: notificacion.estadoInvitacion }),
       ...(nombres.nombreColectivo && {
         nombreColectivo: nombres.nombreColectivo,
       }),
@@ -182,6 +183,13 @@ export class NotificacionService {
     return this.toDTO(guardada);
   }
 
+  existeNotificacionDeRechazo(idPostulacion, idColaborador) {
+    return this.notificacionRepository.existeNotificacionDeRechazo(
+      idPostulacion,
+      idColaborador,
+    );
+  }
+
   notificarResolucionPostulacion(proyecto, postulacion, estado, perfil) {
     const aceptada = estado === EstadoPostulacion.ACEPTADA;
     const detallePerfil = perfil?.descripcion
@@ -222,6 +230,8 @@ export class NotificacionService {
                 $in: [
                   TipoNotificacion.MENSAJE,
                   TipoNotificacion.INVITACION_POSTULACION,
+                  TipoNotificacion.POSTULACION_RECIBIDA,
+                  TipoNotificacion.INVITACION_PROYECTO,
                 ],
               },
             },
@@ -244,7 +254,7 @@ export class NotificacionService {
         );
       }
       return {
-        filtro: { idColaborador: colaborador._id },
+        filtro: { idColaborador: colaborador._id, tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA } },
         idPropiedad: "idColaborador",
         idPerfil: colaborador._id,
       };
@@ -288,7 +298,7 @@ export class NotificacionService {
     }
 
     const resultado = await this.notificacionRepository.obtenerTodosPaginado(
-      { idColaborador: colaboradora._id },
+      { idColaborador: colaboradora._id, tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA } },
       pag,
       limite,
     );
@@ -303,7 +313,12 @@ export class NotificacionService {
     const notificacion = await this.notificacionRepository.buscarPorId(id);
     if (
       !notificacion ||
-      String(notificacion[idPropiedad]) !== String(idPerfil)
+      String(notificacion[idPropiedad]) !== String(idPerfil) ||
+      (usuario.rol === Rol.COLABORADOR && notificacion.tipo === TipoNotificacion.POSTULACION_RECIBIDA) ||
+      (usuario.rol === Rol.COLECTIVO && [
+        TipoNotificacion.POSTULACION_ACEPTADA,
+        TipoNotificacion.POSTULACION_RECHAZADA,
+      ].includes(notificacion.tipo))
     ) {
       throw new NotFoundError(
         "No se encontró la notificación",

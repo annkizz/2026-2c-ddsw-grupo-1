@@ -1,8 +1,9 @@
 import { createTheme } from '@mui/material';
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 import { createElement } from 'react';
+import { t } from '../i18n/t';
 
-// Arma el tema MUI desde los tokens del modo activo.
+// Arma el tema MUI desde los tokens (designTokens.js).
 // La paleta usa los hex (MUI los necesita para calcular estados);
 // los overrides usan var(--token) para compartir la misma fuente que el CSS propio.
 const v = (nombre) => `var(--${nombre})`;
@@ -70,9 +71,10 @@ export const crearTema = (tokens) => {
     typography: {
       fontFamily: token('font-family-body'),
       fontWeightRegular: 400,
-      fontWeightMedium: 500,
+      fontWeightMedium: 600,
       fontWeightBold: 700,
       h1: {
+        fontFamily: v('font-family-heading'),
         fontSize: v('font-size-h1'),
         fontWeight: v('font-weight-bold'),
         lineHeight: v('line-height-heading'),
@@ -313,6 +315,13 @@ export const crearTema = (tokens) => {
         }
       },
       MuiAutocomplete: {
+        defaultProps: {
+          openText: t('componentesMui.abrir'),
+          closeText: t('componentesMui.cerrar'),
+          clearText: t('componentesMui.borrar'),
+          noOptionsText: t('componentesMui.sinOpciones'),
+          loadingText: t('componentesMui.cargando')
+        },
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
@@ -397,6 +406,7 @@ export const crearTema = (tokens) => {
       MuiAlert: {
         defaultProps: {
           variant: 'standard',
+          closeText: t('componentesMui.cerrar'),
           iconMapping: {
             success: icono(FiCheckCircle),
             error: icono(FiAlertCircle),
@@ -535,19 +545,86 @@ export const crearTema = (tokens) => {
         }
       },
       MuiCircularProgress: { defaultProps: { color: 'inherit', size: v('icon-size-md') } },
+      // Pestañas: la seleccionada se marca con barra gruesa + peso + color (no solo color).
       MuiTabs: {
-        styleOverrides: { indicator: { height: v('border-width-strong'), backgroundColor: v('color-primary') } }
+        defaultProps: { variant: 'scrollable', scrollButtons: 'auto', allowScrollButtonsMobile: true },
+        styleOverrides: {
+          root: { minHeight: v('field-min-height'), borderBottom: `${v('border-width')} solid ${v('color-border-subtle')}` },
+          indicator: { height: v('indicator-height'), borderRadius: `${v('radius-sm')} ${v('radius-sm')} 0 0`, backgroundColor: v('color-secondary') }
+        }
       },
       MuiTab: {
         styleOverrides: {
           root: {
-            minHeight: v('control-min-height'),
+            minHeight: v('field-min-height'),
+            minWidth: 0,
+            paddingInline: v('space-2'),
+            gap: v('space-1'),
             textTransform: 'none',
             fontSize: v('font-size-body'),
             fontWeight: v('font-weight-medium'),
             color: v('color-muted'),
-            '&.Mui-selected': { color: v('color-primary') }
+            '&:hover': { color: v('color-text'), backgroundColor: v('color-primary-tint') },
+            '&.Mui-selected': { color: v('color-text'), fontWeight: v('font-weight-bold') },
+            '& > .MuiTab-icon': { margin: 0, fontSize: v('icon-size-md') }
           }
+        }
+      },
+      MuiBadge: {
+        styleOverrides: {
+          badge: {
+            minWidth: v('icon-size-md'),
+            height: v('icon-size-md'),
+            paddingInline: '5px',
+            borderRadius: v('radius-pill'),
+            fontSize: v('font-size-caption'),
+            fontWeight: v('font-weight-bold'),
+            border: `${v('border-width-strong')} solid ${v('color-brand')}`
+          },
+          colorSecondary: { backgroundColor: v('color-accent'), color: v('color-on-accent') }
+        }
+      },
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            minWidth: 'calc(var(--card-min-width) - var(--space-4))',
+            marginTop: v('space-1'),
+            borderRadius: v('radius-md'),
+            border: `${v('border-width')} solid ${v('color-border-subtle')}`,
+            boxShadow: v('shadow-lg')
+          },
+          list: { paddingBlock: v('space-1') }
+        }
+      },
+      MuiListItemIcon: {
+        styleOverrides: { root: { minWidth: 0, marginRight: v('space-2'), color: 'inherit', fontSize: v('icon-size-md') } }
+      },
+      MuiDivider: {
+        styleOverrides: { root: { borderColor: v('color-border-subtle') } }
+      },
+      MuiStepper: {
+        styleOverrides: { root: { gap: v('space-1') } }
+      },
+      MuiStepLabel: {
+        styleOverrides: {
+          label: {
+            fontSize: v('font-size-secundario'),
+            fontWeight: v('font-weight-medium'),
+            color: v('color-muted'),
+            '&.Mui-active': { color: v('color-text'), fontWeight: v('font-weight-bold') },
+            '&.Mui-completed': { color: v('color-text') }
+          }
+        }
+      },
+      MuiStepIcon: {
+        styleOverrides: {
+          root: {
+            color: v('color-border-subtle'),
+            '&.Mui-active': { color: v('color-secondary') },
+            '&.Mui-active .MuiStepIcon-text': { fill: v('color-on-secondary') },
+            '&.Mui-completed': { color: v('color-primary') }
+          },
+          text: { fill: v('color-text'), fontWeight: v('font-weight-bold') }
         }
       },
       MuiBreadcrumbs: {

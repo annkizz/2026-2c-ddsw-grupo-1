@@ -77,6 +77,100 @@ describe("MatchingService", () => {
 });
 
 describe("MatchingService con al menos una habilidad requerida", () => {
+  it("recalcula todas las recomendaciones con una sola lectura compartida de proyectos y perfiles", async () => {
+    const colaboradoras = [
+      { _id: "c1", habilidades: ["React"] },
+      { _id: "c2", habilidades: ["SQL"] },
+    ];
+    const perfilRepository = {
+      obtenerPorProyectos: jest.fn().mockResolvedValue([]),
+    };
+    const matchingCacheRepository = { guardar: jest.fn() };
+    const proyectoRepository = {
+      obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([]),
+    };
+    const colaboradorRepository = {
+      obtenerTodos: jest.fn().mockResolvedValue(colaboradoras),
+    };
+    const service = new MatchingService(
+      colaboradorRepository,
+      proyectoRepository,
+      perfilRepository,
+      {},
+      matchingCacheRepository,
+    );
+
+    await service.recalcularTodas();
+
+    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(perfilRepository.obtenerPorProyectos).not.toHaveBeenCalled();
+    expect(matchingCacheRepository.guardar).toHaveBeenCalledTimes(2);
+  });
+
+  it("persiste el resultado calculado y reutiliza el snapshot en búsquedas siguientes", async () => {
+    const colaboradora = { _id: "c1", habilidades: ["React"] };
+    const proyecto = {
+      _id: "p1",
+      titulo: "Proyecto React",
+      descripcion: "Descripción actual",
+    };
+    const perfil = {
+      _id: "f1",
+      idProyecto: "p1",
+      descripcion: "Frontend",
+      habilidadesRequeridas: ["React"],
+      habilidadesOpcionales: [],
+      compromiso: { horas: 5 },
+    };
+    const cache = {
+      proyectos: [
+        {
+          id: "p1",
+          titulo: "Título viejo",
+          descripcion: "Descripción vieja",
+          puntaje: 2,
+          puntajeMaximo: 2,
+          porcentajeCobertura: 100,
+          porcentajeRequeridas: 100,
+          perfilesCompatibles: [],
+        },
+      ],
+    };
+    const cacheRepository = {
+      buscarPorColaborador: jest
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(cache),
+      guardar: jest.fn().mockResolvedValue(cache),
+    };
+    const proyectoRepository = {
+      obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([proyecto]),
+    };
+    const perfilRepository = {
+      obtenerPorProyectos: jest.fn().mockResolvedValue([perfil]),
+    };
+    const service = new MatchingService(
+      { buscarPorId: jest.fn().mockResolvedValue(colaboradora) },
+      proyectoRepository,
+      perfilRepository,
+      { obtenerIdsProyectosDeColaborador: jest.fn().mockResolvedValue([]) },
+      cacheRepository,
+    );
+
+    await service.buscarProyectosParaColaboradora("c1");
+    const resultado = await service.buscarProyectosParaColaboradora("c1");
+
+    expect(perfilRepository.obtenerPorProyectos).toHaveBeenCalledTimes(1);
+    expect(cacheRepository.guardar).toHaveBeenCalledTimes(1);
+    expect(resultado[0]).toMatchObject({
+      id: "p1",
+      titulo: "Proyecto React",
+      descripcion: "Descripción actual",
+    });
+  });
+
   it("pasa las exclusiones a Mongo y conserva los proyectos con un perfil compatible", async () => {
     const colaboradorRepository = {
       buscarPorId: jest

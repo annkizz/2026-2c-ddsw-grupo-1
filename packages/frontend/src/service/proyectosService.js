@@ -64,10 +64,20 @@ export const invitarAColaborar = async (
   idProyecto,
   idPerfil,
   idColaborador,
+  mensaje = '',
 ) => {
   const response = await api.post(
     `/proyectos/${idProyecto}/perfiles/${idPerfil}/invitaciones`,
-    { idColaborador },
+    { idColaborador, mensaje },
+    conToken(token),
+  );
+  return response.data;
+};
+
+export const resolverInvitacion = async (token, idProyecto, idInvitacion, decision, esAnonima) => {
+  const response = await api.patch(
+    `/proyectos/${idProyecto}/invitaciones/${idInvitacion}`,
+    { decision, esAnonima },
     conToken(token),
   );
   return response.data;
@@ -138,6 +148,12 @@ export const actualizarProyecto = async (token, idProyecto, proyecto) => {
   const response = await api.put(`/proyectos/${idProyecto}`, proyecto, conToken(token));
   return response.data;
 };
+
+export const configurarDestacado = async (token, idProyecto, datos) => {
+  const response = await api.patch(`/proyectos/${idProyecto}/destacado`, datos, conToken(token));
+  return response.data;
+};
+
 export const configurarBusqueda = async (token, idProyecto, datos) => {
   const response = await api.put(`/proyectos/${idProyecto}/busqueda`, datos, conToken(token));
   return response.data;

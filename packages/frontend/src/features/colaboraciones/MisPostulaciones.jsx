@@ -8,6 +8,7 @@ import { mensajeDeError } from '../../service/api';
 import { formatearFecha } from '../../utils/fechas';
 import { t } from '../../i18n/t';
 import './MisColaboraciones.css';
+import { markdownATextoPlano } from '../../utils/markdown';
 
 const estados = {
   PENDIENTE: 'misPostulaciones.pendiente',
@@ -44,7 +45,6 @@ const MisPostulaciones = () => {
       <header className="mis-colaboraciones-intro">
         <div>
           <h1>{t('misPostulaciones.titulo')}</h1>
-          <p>{t('misPostulaciones.subtitulo')}</p>
         </div>
       </header>
       {cargando ? (
@@ -76,7 +76,7 @@ const MisPostulaciones = () => {
                 {estados[postulacion.estado] ? t(estados[postulacion.estado]) : postulacion.estado}
               </span>
               <h2>{postulacion.proyecto.titulo}</h2>
-              <p className="mis-colaboraciones-descripcion">{postulacion.proyecto.descripcion}</p>
+              <p className="mis-colaboraciones-descripcion">{markdownATextoPlano(postulacion.proyecto.descripcion)}</p>
               <p className="mis-colaboraciones-fecha">
                 {formatearFecha(postulacion.fechaPostulacion)
                   ? t('misPostulaciones.fecha', { fecha: formatearFecha(postulacion.fechaPostulacion) })

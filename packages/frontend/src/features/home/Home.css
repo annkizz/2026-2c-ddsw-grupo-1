@@ -22,20 +22,25 @@
 
 .home-pares {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-1);
   max-width: var(--reading-max-width);
-  margin-bottom: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: var(--border-width) solid var(--color-border-subtle);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-on-brand);
+  font-weight: var(--font-weight-medium);
 }
 
-.home-pares span {
+.home-pares li {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.home-pares svg {
+  flex: 0 0 auto;
+  color: var(--color-accent);
 }
 
 .home-login {
@@ -66,6 +71,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+.home-destacados {
+  margin-top: var(--space-5);
+}
+
+.home-destacados > p {
+  color: var(--color-muted);
 }
 
 .home-ayuda:focus {
@@ -290,5 +303,101 @@
   .estado-vacio--compacto .MuiButton-root,
   .dashboard-recomendaciones > .MuiButton-root {
     width: 100%;
+  }
+}
+
+/* Portada con superficie de marca (azul noche + acento naranja) */
+.home-portada {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 92% 8%, rgba(245, 158, 11, 0.28) 0, rgba(245, 158, 11, 0) 38%),
+    linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
+  color: var(--color-on-brand);
+}
+
+.home-portada :where(a, button, [role='button'], [tabindex]):focus-visible {
+  outline-color: var(--color-focus-on-dark);
+}
+
+.home-hero .encabezado-pagina__titulo {
+  color: var(--color-on-brand);
+  font-size: clamp(var(--font-size-2xl-movil), 4vw, 48px);
+}
+
+.home-hero .encabezado-pagina__subtitulo {
+  color: var(--color-on-brand-muted);
+  font-size: var(--font-size-h3);
+}
+
+.home-hero .encabezado-pagina__antetitulo {
+  color: var(--color-accent);
+}
+
+.home-login {
+  color: var(--color-text);
+}
+
+.home-ayuda__paso {
+  border-top: var(--indicator-height) solid var(--color-accent);
+}
+
+.home-ayuda__numero {
+  color: var(--color-secondary);
+}
+
+/* Tarjeta destacada del panel: superficie de marca */
+.dashboard-card--destacada.MuiCard-root {
+  border-color: var(--color-brand);
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
+  color: var(--color-on-brand);
+}
+
+.dashboard-card--destacada.MuiCard-root :where(h2, h3) {
+  color: var(--color-on-brand);
+}
+
+.dashboard-card--destacada.MuiCard-root p {
+  color: var(--color-on-brand-muted);
+}
+
+.dashboard-card--destacada .dashboard-icono {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.dashboard-card--destacada.MuiCard-root :where(a, button):focus-visible {
+  outline-color: var(--color-focus-on-dark);
+}
+
+/* En la tarjeta oscura, la acción principal usa el naranja complementario */
+.dashboard-card--destacada .MuiButton-contained {
+  background-color: var(--color-secondary);
+  color: var(--color-on-secondary);
+}
+
+.dashboard-card--destacada .MuiButton-contained:hover {
+  background-color: var(--color-secondary-hover);
+}
+
+.dashboard-card--destacada .estado-vacio {
+  border-color: var(--color-on-brand-muted);
+  background: transparent;
+}
+
+.dashboard-card--destacada .estado-vacio__titulo {
+  color: var(--color-on-brand);
+}
+
+.dashboard-card--destacada .estado-vacio__icono {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+@media (max-width: 599.95px) {
+  .home-portada {
+    padding: var(--space-3);
   }
 }

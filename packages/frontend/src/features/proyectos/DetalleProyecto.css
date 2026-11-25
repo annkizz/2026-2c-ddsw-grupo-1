@@ -2,7 +2,68 @@
 .detalle {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-2);
+}
+
+.detalle-columna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.detalle-descripcion {
+  max-width: var(--reading-max-width);
+}
+
+.detalle-datos dd svg {
+  vertical-align: -2px;
+}
+
+.pestana-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pestana-contador {
+  color: var(--color-muted);
+  font-weight: var(--font-weight-regular);
+}
+
+.detalle-perfiles--lista {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.postulacion__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+/* Barra de "pendiente": naranja oscuro (5.4:1 sobre blanco, cumple 1.4.11). El estado igual se lee en el chip. */
+.postulacion--pendiente {
+  border-left: var(--indicator-height) solid var(--color-secondary) !important;
+}
+
+.postulacion__contacto {
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-success-tint);
+}
+
+.postulacion__contacto ul {
+  margin: 0;
+  padding-left: var(--space-3);
+}
+
+.dialogo-postulacion__coincidencia {
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
 }
 
 .detalle .encabezado-pagina {
@@ -47,7 +108,7 @@
 
 .detalle-datos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(calc(var(--space-10) * 2), 100%), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   margin: 0;
 }
@@ -114,7 +175,8 @@
 
 .detalle-perfiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(var(--sidebar-width), 100%), 1fr));
+  /* auto-fit: las tarjetas se estiran y no quedan columnas vacías a la derecha */
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: var(--space-3);
   margin: 0;
   padding: 0;
@@ -250,4 +312,8 @@
   .detalle-form-logro .MuiButton-root {
     width: 100%;
   }
+}
+
+.detalle-perfiles > li {
+  max-width: 720px;
 }

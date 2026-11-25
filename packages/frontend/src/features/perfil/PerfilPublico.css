@@ -25,7 +25,24 @@
 }
 
 .perfil-publico__descripcion {
+  max-width: var(--reading-max-width);
   color: var(--color-text);
+}
+
+.perfil-publico__meta {
+  color: var(--color-muted);
+  font-size: var(--font-size-h3);
+}
+
+.perfil-publico__principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.perfil-publico__proyectos h2 {
+  font-size: var(--font-size-h3);
 }
 
 .perfil-publico__privacidad {
@@ -38,4 +55,8 @@
   .perfil-publico__tarjeta {
     padding: var(--space-2);
   }
+}
+
+.perfil-publico__proyectos .tarjetas {
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 }
