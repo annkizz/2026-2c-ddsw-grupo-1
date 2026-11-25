@@ -7,16 +7,19 @@ import {
   describe,
   expect,
   it,
+  jest,
 } from "@jest/globals";
 import { MatchingService } from "../../services/MatchingService.js";
 import { ColaboradorRepository } from "../../repositories/ColaboradorRepository.js";
 import { ProyectoRepository } from "../../repositories/ProyectoRepository.js";
 import { PerfilRepository } from "../../repositories/PerfilRepository.js";
 import { ColaboracionRepository } from "../../repositories/ColaboracionRepository.js";
+import { MatchingCacheRepository } from "../../repositories/MatchingCacheRepository.js";
 import { ProyectoModel } from "../../schemas/proyectoSchema.js";
 import { ColaboradorModel } from "../../schemas/colaboradorSchema.js";
 import { PerfilModel } from "../../schemas/perfilSchema.js";
 import { ColaboracionModel } from "../../schemas/colaboracionSchema.js";
+import { MatchingCacheModel } from "../../schemas/matchingCacheSchema.js";
 import { TipoAceptacion } from "../../domain/TipoAceptacion.js";
 import { crearAppDeMatching } from "./utils/buildApp.js";
 import {
@@ -68,6 +71,7 @@ beforeAll(async () => {
     ColaboradorModel.init(),
     PerfilModel.init(),
     ColaboracionModel.init(),
+    MatchingCacheModel.init(),
   ]);
 
   // misma mini app que usa MatchingHttp.js, pero con los repos REALES
@@ -205,6 +209,29 @@ describe("MatchingService.buscarColaboradorasParaPerfil (integración sobre la s
 });
 
 describe("MatchingService.buscarProyectosParaColaboradora (integración sobre la seed)", () => {
+  it("guarda los resultados y no vuelve a calcularlos en la siguiente consulta", async () => {
+    const perfilRepository = new PerfilRepository();
+    const matchingService = new MatchingService(
+      new ColaboradorRepository(),
+      new ProyectoRepository(),
+      perfilRepository,
+      new ColaboracionRepository(),
+      new MatchingCacheRepository(),
+    );
+    const obtenerPerfiles = jest.spyOn(perfilRepository, "obtenerPorProyectos");
+
+    const primera = await matchingService.buscarProyectosParaColaboradora(LUNA);
+    const segunda = await matchingService.buscarProyectosParaColaboradora(LUNA);
+    const cache = await MatchingCacheModel.findOne({
+      idColaborador: LUNA,
+    }).lean();
+
+    expect(segunda).toEqual(primera);
+    expect(obtenerPerfiles).toHaveBeenCalledTimes(1);
+    expect(cache.proyectos).toHaveLength(1);
+    expect(cache.proyectos[0].id).toBe(PROYECTO_TURNOS);
+  });
+
   it("encuentra el proyecto donde Luna encaja en el perfil Tester", async () => {
     const resultado =
       await crearServicio().buscarProyectosParaColaboradora(LUNA);

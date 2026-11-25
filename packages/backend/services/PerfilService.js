@@ -14,11 +14,13 @@ export class PerfilService {
     proyectoRepository = new ProyectoRepository(),
     habilidadRepository = new HabilidadRepository(),
     colectivoRepository = new ColectivoRepository(),
+    matchingService = null,
   ) {
     this.perfilRepository = perfilRepository;
     this.proyectoRepository = proyectoRepository;
     this.habilidadRepository = habilidadRepository;
     this.colectivoRepository = colectivoRepository;
+    this.matchingService = matchingService;
   }
 
   toDTO(perfil) {
@@ -73,6 +75,9 @@ export class PerfilService {
       idProyecto,
       String(guardado.id),
     );
+    if (this.matchingService) {
+      await this.matchingService.recalcularTodas();
+    }
     return this.toDTO(guardado);
   }
 
@@ -113,6 +118,9 @@ export class PerfilService {
     if (!actualizado) {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
     }
+    if (this.matchingService) {
+      await this.matchingService.recalcularTodas();
+    }
     return this.toDTO(actualizado);
   }
 
@@ -121,6 +129,9 @@ export class PerfilService {
     await this.obtenerPerfilDelProyecto(idProyecto, id, proyecto);
     await this.perfilRepository.eliminar(id);
     await this.proyectoRepository.quitarPerfil(idProyecto, id);
+    if (this.matchingService) {
+      await this.matchingService.recalcularTodas();
+    }
   }
 
   async validarPropietario(idProyecto, usuario) {

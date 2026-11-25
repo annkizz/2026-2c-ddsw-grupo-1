@@ -19,6 +19,7 @@ export class ColaboradorService {
     colaboracionRepository = new ColaboracionRepository(),
     proyectoRepository = new ProyectoRepository(),
     postulacionRepository = new PostulacionRepository(),
+    matchingService = null,
   ) {
     this.colaboradorRepository = colaboradorRepository;
     this.habilidadRepository = habilidadRepository;
@@ -26,6 +27,7 @@ export class ColaboradorService {
     this.colaboracionRepository = colaboracionRepository;
     this.proyectoRepository = proyectoRepository;
     this.postulacionRepository = postulacionRepository;
+    this.matchingService = matchingService;
   }
 
   // valida contra el catalogo y devuelve los titulos tal cual estan en el catalogo
@@ -72,18 +74,23 @@ export class ColaboradorService {
       datosColaborador.habilidades,
     );
     const colaborador = this.armarColaborador(datosColaborador, habilidades);
+    let guardado;
     if (!usuario) {
-      return await this.colaboradorRepository.save(colaborador);
+      guardado = await this.colaboradorRepository.save(colaborador);
+    } else {
+      guardado = await this.usuarioService.registrarPerfil(
+        usuario,
+        Rol.COLABORADOR,
+        async () => {
+          colaborador.usuario = usuario._id;
+          return await this.colaboradorRepository.save(colaborador);
+        },
+      );
     }
-
-    return await this.usuarioService.registrarPerfil(
-      usuario,
-      Rol.COLABORADOR,
-      async () => {
-        colaborador.usuario = usuario._id;
-        return await this.colaboradorRepository.save(colaborador);
-      },
-    );
+    if (this.matchingService && guardado?._id) {
+      await this.matchingService.recalcularColaboradora(guardado._id);
+    }
+    return guardado;
   };
 
   actualizar = async (idColaborador, datosColaborador, usuario) => {
@@ -100,7 +107,14 @@ export class ColaboradorService {
     );
     const colaborador = this.armarColaborador(datosColaborador, habilidades);
     colaborador.usuario = existente.usuario;
-    return await this.colaboradorRepository.save(colaborador, existente._id);
+    const guardado = await this.colaboradorRepository.save(
+      colaborador,
+      existente._id,
+    );
+    if (this.matchingService) {
+      await this.matchingService.recalcularColaboradora(guardado._id);
+    }
+    return guardado;
   };
 
   async obtenerTodos(pag = null, limite = null) {

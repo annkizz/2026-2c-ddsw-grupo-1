@@ -231,7 +231,7 @@ describe('DetalleProyecto - postulaciones', () => {
 
     expect(
       await screen.findByText(
-        'La identidad, los datos de contacto y qué habilidades cumple la persona se ven al aceptar.',
+        'Los datos de contacto se habilitan al aceptar.',
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText('Ana Gómez')).not.toBeInTheDocument();
@@ -246,6 +246,7 @@ describe('DetalleProyecto - postulaciones', () => {
       );
     });
     expect(await screen.findByText(/Colaboradora aceptada: Ana Gómez/)).toBeInTheDocument();
+    expect(screen.queryByText('Medios de contacto')).not.toBeInTheDocument();
     expect(screen.getByText('EMAIL: ana@example.com')).toBeInTheDocument();
   });
 

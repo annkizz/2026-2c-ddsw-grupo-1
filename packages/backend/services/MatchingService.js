@@ -16,11 +16,13 @@ export class MatchingService {
     proyectoRepository,
     perfilRepository,
     colaboracionRepository,
+    matchingCacheRepository = null,
   ) {
     this.colaboradorRepository = colaboradorRepository;
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
     this.colaboracionRepository = colaboracionRepository;
+    this.matchingCacheRepository = matchingCacheRepository;
   }
 
   // busqueda de potenciales colaboradoras segun perfil del proyecto
@@ -108,19 +110,113 @@ export class MatchingService {
         "COLABORADORA_NO_ENCONTRADA",
       );
     }
-
     if (colaboradora.habilidades.length === 0) return [];
+
+    if (this.matchingCacheRepository) {
+      let cache =
+        await this.matchingCacheRepository.buscarPorColaborador(idColaborador);
+      if (!cache) {
+        const proyectos = await this.calcularProyectosParaColaboradora(
+          colaboradora,
+          [],
+        );
+        cache = await this.matchingCacheRepository.guardar(
+          idColaborador,
+          proyectos,
+        );
+      }
+
+      const yaAnotadas =
+        await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
+          idColaborador,
+        );
+      const abiertos =
+        await this.proyectoRepository.obtenerAbiertosParaMatching(yaAnotadas);
+      const proyectosAbiertos = new Map(
+        abiertos.map((proyecto) => [String(proyecto._id), proyecto]),
+      );
+      const proyectosActuales = cache.proyectos
+        .filter((proyecto) => proyectosAbiertos.has(String(proyecto.id)))
+        .map((proyecto) => {
+          const actual = proyectosAbiertos.get(String(proyecto.id));
+          return {
+            ...proyecto,
+            titulo: actual.titulo,
+            descripcion: actual.descripcion,
+          };
+        });
+      return this.paginarProyectos(proyectosActuales, pag, limite);
+    }
+
     const yaAnotadas =
       await this.colaboracionRepository.obtenerIdsProyectosDeColaborador(
         idColaborador,
       );
+    const resultados = await this.calcularProyectosParaColaboradora(
+      colaboradora,
+      yaAnotadas,
+    );
+    return this.paginarProyectos(resultados, pag, limite);
+  }
+
+  async recalcularColaboradora(idColaborador) {
+    if (!this.matchingCacheRepository) return;
+    const colaboradora =
+      await this.colaboradorRepository.buscarPorId(idColaborador);
+    if (!colaboradora) {
+      throw new NotFoundError(
+        "La colaboradora no existe",
+        "COLABORADORA_NO_ENCONTRADA",
+      );
+    }
+    const proyectos = await this.calcularProyectosParaColaboradora(
+      colaboradora,
+      [],
+    );
+    await this.matchingCacheRepository.guardar(idColaborador, proyectos);
+  }
+
+  async recalcularTodas() {
+    if (!this.matchingCacheRepository) return;
+    const colaboradoras = await this.colaboradorRepository.obtenerTodos();
     const abiertos =
-      await this.proyectoRepository.obtenerAbiertosParaMatching(yaAnotadas);
+      await this.proyectoRepository.obtenerAbiertosParaMatching([]);
+    const perfiles = abiertos.length
+      ? await this.perfilRepository.obtenerPorProyectos(
+          abiertos.map((proyecto) => proyecto._id),
+        )
+      : [];
+    const datosPrecargados = { abiertos, perfiles };
+
+    for (const colaboradora of colaboradoras) {
+      const proyectos = await this.calcularProyectosParaColaboradora(
+        colaboradora,
+        [],
+        datosPrecargados,
+      );
+      await this.matchingCacheRepository.guardar(
+        idDe(colaboradora),
+        proyectos,
+      );
+    }
+  }
+
+  async calcularProyectosParaColaboradora(
+    colaboradora,
+    idsExcluidos,
+    datosPrecargados = null,
+  ) {
+    if (colaboradora.habilidades.length === 0) return [];
+    const abiertos =
+      datosPrecargados?.abiertos ??
+      (await this.proyectoRepository.obtenerAbiertosParaMatching(idsExcluidos));
     if (abiertos.length === 0) return [];
 
-    const perfiles = await this.perfilRepository.obtenerPorProyectos(
-      abiertos.map((p) => p._id),
-    );
+    const perfiles =
+      datosPrecargados?.perfiles ??
+      (await this.perfilRepository.obtenerPorProyectos(
+        abiertos.map((p) => p._id),
+      ));
     const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
     const perfilesPorProyecto = new Map();
     for (const perfil of perfiles) {
@@ -190,7 +286,7 @@ export class MatchingService {
       }
     }
 
-    const ordenados = resultados.sort((uno, otro) => {
+    return resultados.sort((uno, otro) => {
       // 1) habilidades req
       // 2) cuanto cubre del proyecto en total
       // 3) + puntos brutos
@@ -203,15 +299,17 @@ export class MatchingService {
 
       return otro.puntaje - uno.puntaje;
     });
+  }
 
-    if (pag === undefined || limite === undefined) return ordenados;
+  paginarProyectos(proyectos, pag, limite) {
+    if (pag === undefined || limite === undefined) return proyectos;
     const inicio = (pag - 1) * limite;
-    const pagina = ordenados.slice(inicio, inicio + limite);
+    const pagina = proyectos.slice(inicio, inicio + limite);
     return {
       proyectos: pagina,
-      total: ordenados.length,
+      total: proyectos.length,
       pag,
-      totalPags: Math.ceil(ordenados.length / limite),
+      totalPags: Math.ceil(proyectos.length / limite),
     };
   }
 }

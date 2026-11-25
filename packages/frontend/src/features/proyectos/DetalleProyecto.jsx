@@ -1122,9 +1122,6 @@ const DetalleProyecto = () => {
                             <p>
                               <strong>{t('detalleProyecto.colaboradoraAceptada')}: {nombreColaboradora}</strong>
                             </p>
-                            <p className="perfil-buscado__etiqueta">
-                              {t('detalleProyecto.contactoColaboradora')}
-                            </p>
                             {colaboradora?.mediosDeContacto?.length ? (
                               <ul>
                                 {colaboradora.mediosDeContacto.map((medio, indice) => (
