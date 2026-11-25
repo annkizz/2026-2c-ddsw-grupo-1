@@ -43,8 +43,9 @@
   gap: var(--space-1);
 }
 
+/* Barra de "pendiente": naranja oscuro (5.4:1 sobre blanco, cumple 1.4.11). El estado igual se lee en el chip. */
 .postulacion--pendiente {
-  border-left: var(--indicator-height) solid var(--color-accent) !important;
+  border-left: var(--indicator-height) solid var(--color-secondary) !important;
 }
 
 .postulacion__contacto {

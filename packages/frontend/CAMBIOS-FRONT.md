@@ -57,6 +57,25 @@ Las descripciones aceptan Markdown y se muestran con formato. El backend ya guar
 - **Habilidades:** el back ya tiene el campo `descripcion`, pero hoy ninguna pantalla lo muestra. Cuando se agregue, alcanza con usar `<Markdown texto={habilidad.descripcion} />`.
 - **Tests:** `Markdown.test.jsx` (formatos, enlaces e intentos de XSS) y `CampoMarkdown.test.jsx` (botones y vista previa).
 
+## Daltonismo: revisión de todas las páginas
+
+Se revisó cada pantalla contra WCAG 1.4.1 (no usar solo color), 1.4.3 (contraste de texto, 4,5:1) y 1.4.11 (contraste de componentes, 3:1). La paleta ya cumplía; se corrigieron los lugares donde un estado dependía solo del color o no tenía marca visible.
+
+| Dónde | Problema | Qué se hizo |
+| --- | --- | --- |
+| Botones de acciones peligrosas (Dar de baja, Salir sin guardar) | Con deuteranopía, el rojo de error y el naranja de las acciones principales casi no se distinguen (ΔE ≈ 8). Cinco botones rojos no tenían ícono. | Ícono en todos: `FiUserMinus` para dar de baja y `FiTrash2` para salir sin guardar. Ahora todos los botones `color="error"` tienen ícono. |
+| Header: botón Notificaciones | Era un `Link`, así que nunca recibía `aria-current` y no marcaba que estabas en esa página. | Pasó a `NavLink`. La sección actual se marca con negrita y la misma barra que el resto del menú, además del borde. |
+| Buscar en el mapa | La provincia elegida no tenía ninguna marca en el mapa. | Contorno grueso y oscuro dibujado encima de las vecinas. Se distingue del foco, que es punteado. |
+| Postulación pendiente | La barra lateral naranja claro tenía 2,15:1 sobre blanco. | Usa el naranja oscuro (5,4:1). |
+| Restos del modo daltónico | `BotonModoDaltonico` y `ModoColorContext` seguían en el código sin usarse y su test fallaba. | Se borraron junto con sus textos en `es.json`. |
+| `accesibilidad.test.jsx` | No corría (Jest no puede importar `@logto/react`). | Se mockea `useAuth`, como en los otros tests. Los 8 chequeos de axe pasan. |
+
+**Test nuevo: `src/designTokens.test.js`.** Corre con `npm test` y verifica:
+
+- El contraste de todos los pares de la paleta: texto contra su fondo (4,5:1) y bordes, foco, indicadores y barra de progreso (3:1).
+- La simulación de protanopía, deuteranopía y tritanopía (matrices de Machado et al., 2009). Mide la diferencia con ΔE en CIELab, la misma medida que usa Sajek et al. (2025). Azul y naranja dan ΔE ≥ 92 en los tres tipos, y los niveles del mapa se distinguen entre sí en todos.
+- Que todo botón `color="error"` tenga ícono y que cada estado de `ChipEstado` tenga ícono.
+
 ## Pendiente: necesita cambios en el backend
 
 - **Editar la ubicación de un proyecto.** `proyectoEdicionSchema` es `.strict()` y solo acepta título, descripción y etiquetas.
@@ -67,6 +86,9 @@ Las descripciones aceptan Markdown y se muestran con formato. El backend ya guar
 
 ## Fuentes sobre daltonismo
 
+- Sajek, Korotenko & Kyrychok (2025), Research on the Accessibility of Different Colour Schemes for Web Resources for People with Colour Blindness, J. Imaging 11(8):268: https://pmc.ncbi.nlm.nih.gov/articles/PMC12387176/
+- W3C, Understanding WCAG 1.4.3 Contrast (Minimum): https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum
+- W3C, Understanding WCAG 1.4.11 Non-text Contrast: https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast
 - W3C, Understanding WCAG 1.4.1 Use of Color: https://www.w3.org/WAI/WCAG21/Understanding/use-of-color
 - MDN, Use of color: https://developer.mozilla.org/docs/Web/Accessibility/Understanding_WCAG/Perceivable/Use_of_color
 - Okabe & Ito, Color Universal Design: https://jfly.uni-koeln.de/color/

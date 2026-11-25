@@ -39,6 +39,15 @@
   opacity: 0.85;
 }
 
+/* Provincia elegida: contorno grueso continuo (el foco usa uno punteado, así no se confunden) */
+.provincia-seleccionada {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: calc(var(--border-width-strong) * 2);
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 /* Foco distinto de la selección (2.4.7): trazo punteado oscuro, legible sobre cualquier relleno
    y en los dos modos de color; no depende del tono. */
 .provincia:focus-visible {

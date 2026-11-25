@@ -16,7 +16,7 @@ import {
   Switch,
   TextField,
 } from '@mui/material';
-import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiMapPin, FiSave, FiTag } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiMapPin, FiSave, FiTag, FiTrash2 } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
@@ -682,7 +682,7 @@ const FormularioProyecto = () => {
           <Button variant="outlined" onClick={() => setConfirmandoSalida(false)}>
             {t('formularioProyecto.seguirEditando')}
           </Button>
-          <Button variant="contained" color="error" onClick={() => navigate('/proyectos')}>
+          <Button variant="contained" color="error" onClick={() => navigate('/proyectos')} startIcon={<FiTrash2 aria-hidden="true" />}>
             {t('formularioProyecto.salirSinGuardar')}
           </Button>
         </DialogActions>

@@ -108,8 +108,9 @@ const Header = () => {
     ));
 
   // Notificaciones como botón visible (borde + texto en desktop), con el número de no vistas.
+  // NavLink agrega aria-current="page" cuando estás en Notificaciones: así se marca la sección actual.
   const campana = (
-    <Link
+    <NavLink
       to="/notificaciones"
       className="header-campana"
       aria-label={textoPendientes(pendientes)}
@@ -124,7 +125,7 @@ const Header = () => {
           {insignia}
         </span>
       )}
-    </Link>
+    </NavLink>
   );
 
   return (

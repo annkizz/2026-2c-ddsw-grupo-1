@@ -175,6 +175,16 @@ export default function Mapa() {
                     </path>
                   );
                 })}
+                {/* Provincia elegida: contorno grueso y oscuro dibujado encima de las vecinas.
+                    Se reconoce por la forma del borde, no por un cambio de color del relleno. */}
+                {regionSeleccionada && (
+                  <path
+                    d={regionSeleccionada.path}
+                    fillRule="evenodd"
+                    className="provincia-seleccionada"
+                    aria-hidden="true"
+                  />
+                )}
                 {REGIONES.map((region) => {
                   const grupo = grupoPorCodigo[region.codigo];
                   const cantidad = grupo ? grupo.cantidad : 0;

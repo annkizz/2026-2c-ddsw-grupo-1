@@ -37,6 +37,7 @@ import {
   FiUserCheck,
   FiUsers,
   FiX,
+  FiUserMinus,
 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import {
@@ -858,7 +859,7 @@ const DetalleProyecto = () => {
                   {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
                   {yaColaboraEnProyecto && (
                     <div>
-                      <Button color="error" variant="outlined" disabled={!sesion?.idColaborador} onClick={() => {
+                      <Button color="error" variant="outlined" startIcon={<FiUserMinus aria-hidden="true" />} disabled={!sesion?.idColaborador} onClick={() => {
                         setAvisoBaja('');
                         setBajaSeleccionada({
                           idProyecto: id,
@@ -1208,7 +1209,7 @@ const DetalleProyecto = () => {
                         {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
                       </div>
                       <div className="tarjeta__acciones">
-                        <Button color="error" variant="outlined" onClick={() => {
+                        <Button color="error" variant="outlined" startIcon={<FiUserMinus aria-hidden="true" />} onClick={() => {
                           setAvisoBaja('');
                           setBajaSeleccionada({ idProyecto: id, idColaborador: colaboracion.idColaborador, nombre });
                         }}>

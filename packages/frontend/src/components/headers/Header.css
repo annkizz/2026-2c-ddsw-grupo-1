@@ -123,6 +123,7 @@
 }
 
 .header-campana {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -148,6 +149,22 @@
   border-color: var(--color-accent);
   background: var(--color-brand-2);
   text-decoration: none;
+}
+
+/* Sección actual: además del borde, negrita y la misma barra que el resto del menú (no solo color) */
+.header-campana[aria-current='page'] {
+  font-weight: var(--font-weight-bold);
+}
+
+.header-campana[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  right: var(--space-2);
+  bottom: calc(-1 * (var(--space-1) + var(--border-width-strong)));
+  left: var(--space-2);
+  height: var(--indicator-height);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
 }
 
 .header-usuario__boton {

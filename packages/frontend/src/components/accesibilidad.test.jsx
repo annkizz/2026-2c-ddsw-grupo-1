@@ -20,6 +20,13 @@ import Footer from './footer/Footer.jsx';
 import { EsqueletoGrilla, EsqueletoPagina } from './Esqueletos/Esqueletos.jsx';
 import PaginaNoEncontrada from '../features/errores/PaginaNoEncontrada.jsx';
 
+// CardColaboradora usa useAuth, que importa @logto/react (ESM que Jest 27 no transforma).
+// Igual que en CardColaboradora.test.jsx, se reemplaza por un mock.
+jest.mock('../hooks/useAuth.jsx', () => ({
+  useAuth: () => ({ getAccessToken: jest.fn() }),
+  useAuthOpcional: () => null
+}));
+
 // Igual que el resto de los tests del proyecto: Jest 27 no resuelve los subpaths de react-router 7.
 jest.mock('react-router-dom', () => {
   const React = require('react');
@@ -34,7 +41,7 @@ MemoryRouter.propTypes = { children: PropTypes.node };
 
 expect.extend(toHaveNoViolations);
 
-// jsdom no calcula estilos reales: el contraste se valida con scripts/validar_paletas.py y axe en Chrome.
+// jsdom no calcula estilos reales: el contraste y el daltonismo se validan en designTokens.test.js.
 const opcionesAxe = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 
 const renderizar = (ui) =>

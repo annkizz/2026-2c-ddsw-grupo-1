@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, CircularProgress, LinearProgress } from '@mui/material';
-import { FiArrowRight, FiInfo } from 'react-icons/fi';
+import { FiArrowRight, FiInfo, FiUserMinus } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerMisColaboraciones } from '../../service/colaboradorasService';
 import { mensajeDeError } from '../../service/api';
@@ -131,6 +131,7 @@ const MisColaboraciones = () => {
                     </Button>
                     <Button
                       color="error"
+                      startIcon={<FiUserMinus aria-hidden="true" />}
                       disabled={!sesion?.idColaborador}
                       onClick={() => {
                         setAvisoBaja('');

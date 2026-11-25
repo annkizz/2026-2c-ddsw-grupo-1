@@ -54,12 +54,6 @@
     "ver": "Ver proyecto: {titulo}",
     "editar": "Editar proyecto"
   },
-  "modoColor": {
-    "boton": "Activar modo daltónico",
-    "botonActivado": "Desactivar modo daltónico",
-    "anuncioActivado": "Modo daltónico activado.",
-    "anuncioDesactivado": "Modo daltónico desactivado."
-  },
   "ejemplosMarkdown": {
     "negritaCodigo": "**negrita**",
     "negrita": "negrita",
