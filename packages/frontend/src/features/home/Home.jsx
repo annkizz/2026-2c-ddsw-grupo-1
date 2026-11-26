@@ -40,7 +40,6 @@ const Home = () => {
   ];
   const navigate = useNavigate();
   const {
-    cargando,
     sesion,
     errorLogto,
     iniciarSesion,
@@ -305,10 +304,9 @@ const Home = () => {
             fullWidth
             size="large"
             onClick={iniciarSesion}
-            loading={cargando && !errorLogto}
-            endIcon={cargando && !errorLogto ? null : <FiArrowRight aria-hidden="true" />}
+            endIcon={<FiArrowRight aria-hidden="true" />}
           >
-            {cargando && !errorLogto ? t('inicio.ingresando') : t('inicio.ingresar')}
+            {t('inicio.ingresar')}
           </Button>
           {errorLogto && (
             <AlertaError

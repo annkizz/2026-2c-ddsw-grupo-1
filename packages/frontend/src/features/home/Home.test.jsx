@@ -75,6 +75,22 @@ describe('acceso a inicio de sesión desde Home', () => {
     expect(iniciarSesion).toHaveBeenCalledTimes(1);
   });
 
+  it('no muestra un estado de ingreso mientras Logto restaura una sesión no autenticada', () => {
+    useNavigate.mockReturnValue(jest.fn());
+    useAuth.mockReturnValue({
+      cargando: true,
+      isAuthenticated: false,
+      sesion: null,
+      errorLogto: undefined,
+      iniciarSesion: jest.fn(),
+      registrarse: jest.fn(),
+    });
+
+    render(<Home />);
+
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeEnabled();
+  });
+
   it('muestra destacados en la portada pública', () => {
     useNavigate.mockReturnValue(jest.fn());
     useAuth.mockReturnValue({ cargando: false, sesion: null });
