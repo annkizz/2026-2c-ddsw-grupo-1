@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useAuth, useAuthOpcional } from '../../hooks/useAuth.jsx';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
 import { cambiarIdioma } from '../../i18n/t';
@@ -38,12 +38,15 @@ jest.mock('react-router-dom', () => {
 
 const sesionBase = { tienePerfil: true, usuarioId: 'u-1', nombreUsuario: 'Ana Gómez' };
 
-const configurar = (sesion, isAuthenticated = true) => {
+const configurar = (sesion, isAuthenticated = true, extras = {}) => {
   const valor = {
     isAuthenticated,
     sesion,
+    iniciarSesion: jest.fn(),
+    registrarse: jest.fn(),
     cerrarSesion: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue('token'),
+    ...extras,
   };
   useAuth.mockReturnValue(valor);
   useAuthOpcional.mockReturnValue(valor);
@@ -117,12 +120,37 @@ describe('Header', () => {
     await waitFor(() => expect(document.getElementById('header-navegacion-movil')).toBeNull());
   });
 
-  it('sin sesión no muestra menú de usuario ni menú móvil vacío', () => {
-    configurar(null, false);
+  it('sin sesión muestra accesos para iniciar sesión y registrarse', () => {
+    const auth = configurar(null, false);
     renderHeader('/');
 
     expect(screen.queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Abrir menú' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crear una cuenta' }));
+    expect(auth.iniciarSesion).toHaveBeenCalledTimes(1);
+    expect(auth.registrarse).toHaveBeenCalledTimes(1);
+  });
+
+  it('mantiene visibles los accesos mientras Logto todavía está cargando', () => {
+    configurar(null, false, { cargando: true });
+    renderHeader('/');
+
+    expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Crear una cuenta' })).toBeInTheDocument();
+  });
+
+  it('muestra los nombres de acceso traducidos en portugués y guaraní', () => {
+    configurar(null, false);
+    renderHeader('/');
+
+    act(() => cambiarIdioma('pt'));
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Criar uma Conta' })).toBeInTheDocument();
+
+    act(() => cambiarIdioma('gr'));
+    expect(screen.getByRole('button', { name: 'Eike' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ojapo peteĩ cuenta' })).toBeInTheDocument();
   });
 
   it('permite elegir portugués sin iniciar sesión y recuerda la elección', async () => {

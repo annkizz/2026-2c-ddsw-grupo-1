@@ -142,6 +142,40 @@
   background: var(--color-brand-2);
 }
 
+.header-auth {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.header-auth__button {
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-on-brand);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.header-auth__button--login:hover {
+  background: var(--color-brand-2);
+}
+
+.header-auth__button--signup {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.header-auth__button--signup:hover {
+  background: var(--color-secondary-tint-strong);
+}
+
 .header-idioma svg {
   font-size: var(--icon-size-md);
 }
@@ -367,9 +401,14 @@
     margin-left: 0;
   }
 
-  .header-idioma {
+  .header-auth {
     margin-left: auto;
   }
+
+  .header-idioma {
+    margin-left: 0;
+  }
+
   .header-menu-toggle.MuiIconButton-root {
     display: inline-flex;
   }
@@ -392,6 +431,23 @@
 
   .header-logo-texto {
     font-size: var(--font-size-body);
+  }
+
+  .header-auth {
+    gap: 4px;
+  }
+
+  .header-auth__button {
+    min-height: 40px;
+    padding: 0 var(--space-1);
+    font-size: var(--font-size-caption);
+  }
+}
+
+@media (max-width: 520px) {
+  .header-logo-texto,
+  .header-idioma span {
+    display: none;
   }
 }
 
