@@ -23,7 +23,10 @@ const parametros = (conWebhook) => [
 ];
 
 const respuestasDeError = {
-  400: { description: "Datos inválidos o URL no permitida (WEBHOOK_URL_NO_PERMITIDA)" },
+  400: {
+    description:
+      "Datos inválidos o URL no permitida (WEBHOOK_URL_NO_PERMITIDA)",
+  },
   401: { description: "Falta el token o es inválido" },
   403: {
     description:
@@ -32,7 +35,11 @@ const respuestasDeError = {
   404: { description: "El webhook no existe (WEBHOOK_NO_ENCONTRADO)" },
 };
 
-const EVENTOS = ["POSTULACION_CREADA", "COLABORACION_ACEPTADA", "PROYECTO_CERRADO"];
+const EVENTOS = [
+  "POSTULACION_CREADA",
+  "COLABORACION_ACEPTADA",
+  "PROYECTO_CERRADO",
+];
 
 const webhookDTO = {
   type: "object",
@@ -101,7 +108,10 @@ export function agregarDocumentacionDeWebhooks(spec) {
               type: "object",
               required: ["url", "eventos"],
               properties: {
-                url: { type: "string", example: "https://discord.com/api/webhooks/123/abc" },
+                url: {
+                  type: "string",
+                  example: "https://discord.com/api/webhooks/123/abc",
+                },
                 eventos: {
                   type: "array",
                   minItems: 1,
@@ -120,13 +130,17 @@ export function agregarDocumentacionDeWebhooks(spec) {
       },
       responses: {
         201: {
-          description: "Webhook creado. Incluye el secreto: es la única vez que se muestra.",
+          description:
+            "Webhook creado. Incluye el secreto: es la única vez que se muestra.",
           content: { "application/json": { schema: webhookDTO } },
         },
         400: respuestasDeError[400],
         401: respuestasDeError[401],
         403: respuestasDeError[403],
-        409: { description: "Se alcanzó el máximo de webhooks (LIMITE_WEBHOOKS_ALCANZADO)" },
+        409: {
+          description:
+            "Se alcanzó el máximo de webhooks (LIMITE_WEBHOOKS_ALCANZADO)",
+        },
       },
     },
   };
@@ -145,8 +159,14 @@ export function agregarDocumentacionDeWebhooks(spec) {
               type: "object",
               properties: {
                 url: { type: "string" },
-                eventos: { type: "array", items: { type: "string", enum: EVENTOS } },
-                formato: { type: "string", enum: ["GENERICO", "SLACK", "DISCORD"] },
+                eventos: {
+                  type: "array",
+                  items: { type: "string", enum: EVENTOS },
+                },
+                formato: {
+                  type: "string",
+                  enum: ["GENERICO", "SLACK", "DISCORD"],
+                },
                 activo: { type: "boolean" },
               },
             },
@@ -205,7 +225,8 @@ export function agregarDocumentacionDeWebhooks(spec) {
       parameters: parametros(true),
       responses: {
         200: {
-          description: "Webhook con el secreto nuevo (única vez que se muestra)",
+          description:
+            "Webhook con el secreto nuevo (única vez que se muestra)",
           content: { "application/json": { schema: webhookDTO } },
         },
         ...respuestasDeError,

@@ -6,7 +6,10 @@
 
 .esqueleto-grilla .esqueleto__contenido {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(var(--card-min-width), 100%), 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(var(--card-min-width), 100%), 1fr)
+  );
   gap: var(--space-3);
 }
 
@@ -49,7 +52,10 @@
 
 .esqueleto-detalle__bloques {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--card-min-width), 100%), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--card-min-width), 100%), 1fr)
+  );
   gap: var(--space-2);
 }
 

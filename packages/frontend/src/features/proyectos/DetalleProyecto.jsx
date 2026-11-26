@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Alert,
   AlertTitle,
@@ -16,7 +16,7 @@ import {
   Tab,
   Tabs,
   TextField,
-} from '@mui/material';
+} from "@mui/material";
 import {
   FiAlertCircle,
   FiAward,
@@ -38,8 +38,8 @@ import {
   FiUsers,
   FiX,
   FiUserMinus,
-} from 'react-icons/fi';
-import { useAuth } from '../../hooks/useAuth.jsx';
+} from "react-icons/fi";
+import { useAuth } from "../../hooks/useAuth.jsx";
 import {
   obtenerProyectoPorId,
   obtenerPerfiles,
@@ -52,42 +52,53 @@ import {
   crearLogro,
   configurarBusqueda,
   actualizarAvance,
-} from '../../service/proyectosService';
-import { t } from '../../i18n/t';
-import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
-import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
-import { mensajeDeError } from '../../utils/mensajeDeError';
-import { useLinkedin } from '../../hooks/useLinkedin.js';
-import { codigoDeError } from '../../service/api';
-import { publicarLogroEnLinkedin } from '../../service/proyectosService.js';
+} from "../../service/proyectosService";
+import { t } from "../../i18n/t";
+import {
+  formatearFecha,
+  aInputFecha,
+  aIso,
+  esFechaFutura,
+} from "../../utils/fechas";
+import {
+  resumenCompromiso,
+  etiquetaModalidad,
+  textoCupo,
+} from "../../utils/perfiles";
+import { mensajeDeError } from "../../utils/mensajeDeError";
+import { useLinkedin } from "../../hooks/useLinkedin.js";
+import { codigoDeError } from "../../service/api";
+import { publicarLogroEnLinkedin } from "../../service/proyectosService.js";
 import {
   obtenerColaboradoraPorId,
   obtenerMiPerfilColaboradora,
   obtenerMisColaboraciones,
-} from '../../service/colaboradorasService';
-import CoincidenciaHabilidades from '../../components/CoincidenciaHabilidades/CoincidenciaHabilidades.jsx';
-import PaginaError from '../../components/PaginaError/PaginaError.jsx';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import AlertaError from '../../components/AlertaError/AlertaError.jsx';
-import ChipEstado from '../../components/ChipEstado/ChipEstado.jsx';
-import Dialogo from '../../components/Dialogo/Dialogo.jsx';
-import DialogoBajaColaboracion from '../../components/DialogoBajaColaboracion/DialogoBajaColaboracion.jsx';
-import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
-import { EsqueletoDetalle } from '../../components/Esqueletos/Esqueletos.jsx';
-import { useNotificar } from '../../components/Notificador/Notificador.jsx';
-import './DetalleProyecto.css';
-import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
-import Markdown, { MarkdownEnLinea } from '../../components/Markdown/Markdown.jsx';
+} from "../../service/colaboradorasService";
+import CoincidenciaHabilidades from "../../components/CoincidenciaHabilidades/CoincidenciaHabilidades.jsx";
+import PaginaError from "../../components/PaginaError/PaginaError.jsx";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import ChipEstado from "../../components/ChipEstado/ChipEstado.jsx";
+import Dialogo from "../../components/Dialogo/Dialogo.jsx";
+import DialogoBajaColaboracion from "../../components/DialogoBajaColaboracion/DialogoBajaColaboracion.jsx";
+import EstadoVacio from "../../components/EstadoVacio/EstadoVacio.jsx";
+import { EsqueletoDetalle } from "../../components/Esqueletos/Esqueletos.jsx";
+import { useNotificar } from "../../components/Notificador/Notificador.jsx";
+import "./DetalleProyecto.css";
+import CampoMarkdown from "../../components/CampoMarkdown/CampoMarkdown.jsx";
+import Markdown, {
+  MarkdownEnLinea,
+} from "../../components/Markdown/Markdown.jsx";
 
 const ES_ENLACE = /^https?:\/\/\S+$/i;
 
 // El detalle técnico del proveedor no se muestra: solo el resultado en lenguaje claro.
 const avisoDePublicacion = (publicacion) =>
-  publicacion.estado === 'ENVIADO'
-    ? { severity: 'success', texto: t('linkedin.okPublicado') }
-    : { severity: 'warning', texto: t('linkedin.falloPublicacion') };
+  publicacion.estado === "ENVIADO"
+    ? { severity: "success", texto: t("linkedin.okPublicado") }
+    : { severity: "warning", texto: t("linkedin.falloPublicacion") };
 
 const mensajeCampo = (error, ayuda) =>
   error ? (
@@ -103,8 +114,14 @@ const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const notificar = useNotificar();
-  const { sesion, getAccessToken, isAuthenticated, cargando: authCargando, iniciarSesion } = useAuth();
-  const linkedin = useLinkedin(sesion?.rol === 'COLECTIVO');
+  const {
+    sesion,
+    getAccessToken,
+    isAuthenticated,
+    cargando: authCargando,
+    iniciarSesion,
+  } = useAuth();
+  const linkedin = useLinkedin(sesion?.rol === "COLECTIVO");
 
   const [proyecto, setProyecto] = useState(null);
   const [perfiles, setPerfiles] = useState([]);
@@ -120,22 +137,25 @@ const DetalleProyecto = () => {
   const [cargandoGestion, setCargandoGestion] = useState(false);
   const [errorGestion, setErrorGestion] = useState(null);
   const [bajaSeleccionada, setBajaSeleccionada] = useState(null);
-  const [avisoBaja, setAvisoBaja] = useState('');
+  const [avisoBaja, setAvisoBaja] = useState("");
 
   const [modalPostulacionAbierto, setModalPostulacionAbierto] = useState(false);
   const [perfilPostulando, setPerfilPostulando] = useState(null);
   const [esAnonima, setEsAnonima] = useState(false);
   const [guardandoPostulacion, setGuardandoPostulacion] = useState(false);
-  const [errorPostulacion, setErrorPostulacion] = useState('');
+  const [errorPostulacion, setErrorPostulacion] = useState("");
   const [postulacionesEnviadas, setPostulacionesEnviadas] = useState({});
   const [postulacionesPendientes, setPostulacionesPendientes] = useState({});
   const [misColaboraciones, setMisColaboraciones] = useState(null);
-  const [errorVerificarParticipacion, setErrorVerificarParticipacion] = useState(null);
+  const [errorVerificarParticipacion, setErrorVerificarParticipacion] =
+    useState(null);
   const [intentoVerificacion, setIntentoVerificacion] = useState(0);
   const [postulacionesProyecto, setPostulacionesProyecto] = useState([]);
   const [cargandoPostulaciones, setCargandoPostulaciones] = useState(false);
-  const [errorCargarPostulaciones, setErrorCargarPostulaciones] = useState(null);
-  const [resolviendoPostulacionId, setResolviendoPostulacionId] = useState(null);
+  const [errorCargarPostulaciones, setErrorCargarPostulaciones] =
+    useState(null);
+  const [resolviendoPostulacionId, setResolviendoPostulacionId] =
+    useState(null);
   const [erroresResolucion, setErroresResolucion] = useState({});
 
   // Pantalla segmentada en pestañas (antes era una sola página muy larga).
@@ -144,23 +164,33 @@ const DetalleProyecto = () => {
   const [anclaAdmin, setAnclaAdmin] = useState(null);
   // Habilidades propias (colaboradora) y de las personas aceptadas (colectivo), para mostrar qué cumple cada una.
   const [misHabilidades, setMisHabilidades] = useState(null);
-  const [habilidadesPorColaboradora, setHabilidadesPorColaboradora] = useState({});
+  const [habilidadesPorColaboradora, setHabilidadesPorColaboradora] = useState(
+    {},
+  );
 
   const [modalEditarAvance, setModalEditarAvance] = useState(false);
-  const [formAvance, setFormAvance] = useState({ porcentaje: '', enlaceSistema: '', enlaceCodigoFuente: '' });
+  const [formAvance, setFormAvance] = useState({
+    porcentaje: "",
+    enlaceSistema: "",
+    enlaceCodigoFuente: "",
+  });
   const [erroresAvance, setErroresAvance] = useState({});
   const [guardandoAvance, setGuardandoAvance] = useState(false);
-  const [avisoAvance, setAvisoAvance] = useState('');
+  const [avisoAvance, setAvisoAvance] = useState("");
   const [errorAvance, setErrorAvance] = useState(null);
 
   const [modalBusquedaAbierto, setModalBusquedaAbierto] = useState(false);
   const [busquedaSwitch, setBusquedaSwitch] = useState(false);
-  const [fechaBusqueda, setFechaBusqueda] = useState('');
-  const [errorFechaBusqueda, setErrorFechaBusqueda] = useState('');
+  const [fechaBusqueda, setFechaBusqueda] = useState("");
+  const [errorFechaBusqueda, setErrorFechaBusqueda] = useState("");
   const [guardandoBusqueda, setGuardandoBusqueda] = useState(false);
   const [errorBusqueda, setErrorBusqueda] = useState(null);
 
-  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarLogroEnLinkedin: false });
+  const [nuevoLogro, setNuevoLogro] = useState({
+    titulo: "",
+    descripcion: "",
+    publicarLogroEnLinkedin: false,
+  });
   const [erroresLogro, setErroresLogro] = useState({});
   const [errorLogro, setErrorLogro] = useState(null);
   const [guardandoLogro, setGuardandoLogro] = useState(false);
@@ -169,8 +199,8 @@ const DetalleProyecto = () => {
   const [publicandoId, setPublicandoId] = useState(null);
   const esDueño = Boolean(
     sesion?.idColectivo &&
-    proyecto?.idColectivo &&
-    String(proyecto.idColectivo) === String(sesion.idColectivo)
+      proyecto?.idColectivo &&
+      String(proyecto.idColectivo) === String(sesion.idColectivo),
   );
 
   const cargarPerfiles = useCallback(async () => {
@@ -215,7 +245,7 @@ const DetalleProyecto = () => {
       ]);
       setProyecto(dataProyecto);
     } catch (error) {
-      setErrorCarga(error.response?.status === 404 ? 'NO_ENCONTRADO' : error);
+      setErrorCarga(error.response?.status === 404 ? "NO_ENCONTRADO" : error);
     } finally {
       setCargando(false);
     }
@@ -236,7 +266,7 @@ const DetalleProyecto = () => {
   }, [esDueño, getAccessToken, id]);
 
   const verificarParticipacion = useCallback(async () => {
-    if (sesion?.rol !== 'COLABORADOR') {
+    if (sesion?.rol !== "COLABORADOR") {
       setMisColaboraciones([]);
       setErrorVerificarParticipacion(null);
       return;
@@ -258,7 +288,9 @@ const DetalleProyecto = () => {
     setErrorGestion(null);
     try {
       const token = await getAccessToken();
-      setColaboracionesGestion(await obtenerColaboracionesParaGestion(token, id));
+      setColaboracionesGestion(
+        await obtenerColaboracionesParaGestion(token, id),
+      );
     } catch (error) {
       setErrorGestion(error);
     } finally {
@@ -283,13 +315,16 @@ const DetalleProyecto = () => {
   }, [esDueño, cargarColaboracionesGestion]);
 
   useEffect(() => {
-    if (sesion?.rol !== 'COLABORADOR') return undefined;
+    if (sesion?.rol !== "COLABORADOR") return undefined;
     let vigente = true;
     (async () => {
       try {
         const token = await getAccessToken();
         const perfil = await obtenerMiPerfilColaboradora(token);
-        if (vigente) setMisHabilidades(Array.isArray(perfil?.habilidades) ? perfil.habilidades : []);
+        if (vigente)
+          setMisHabilidades(
+            Array.isArray(perfil?.habilidades) ? perfil.habilidades : [],
+          );
       } catch {
         // Si no se pueden leer, se listan las habilidades del perfil sin la comparación.
         if (vigente) setMisHabilidades(null);
@@ -303,43 +338,57 @@ const DetalleProyecto = () => {
   useEffect(() => {
     const faltantes = postulacionesProyecto
       .map((postulacion) => postulacion.colaborador?.id)
-      .filter((idColaboradora) => idColaboradora && !(idColaboradora in habilidadesPorColaboradora));
+      .filter(
+        (idColaboradora) =>
+          idColaboradora && !(idColaboradora in habilidadesPorColaboradora),
+      );
     if (faltantes.length === 0) return undefined;
     let vigente = true;
     Promise.all(
       faltantes.map((idColaboradora) =>
         obtenerColaboradoraPorId(idColaboradora)
-          .then((colaboradora) => [idColaboradora, Array.isArray(colaboradora?.habilidades) ? colaboradora.habilidades : undefined])
+          .then((colaboradora) => [
+            idColaboradora,
+            Array.isArray(colaboradora?.habilidades)
+              ? colaboradora.habilidades
+              : undefined,
+          ])
           .catch(() => [idColaboradora, undefined]),
       ),
     ).then((pares) => {
-      if (vigente) setHabilidadesPorColaboradora((actual) => ({ ...actual, ...Object.fromEntries(pares) }));
+      if (vigente)
+        setHabilidadesPorColaboradora((actual) => ({
+          ...actual,
+          ...Object.fromEntries(pares),
+        }));
     });
     return () => {
       vigente = false;
     };
   }, [postulacionesProyecto, habilidadesPorColaboradora]);
 
-  const migasBase = [{ texto: t('detalleProyecto.proyectosMigas'), to: '/proyectos' }];
+  const migasBase = [
+    { texto: t("detalleProyecto.proyectosMigas"), to: "/proyectos" },
+  ];
 
   if (cargando) {
     return (
       <div className="contenedor-pagina">
-        <EsqueletoDetalle etiqueta={t('detalleProyecto.cargando')} />
+        <EsqueletoDetalle etiqueta={t("detalleProyecto.cargando")} />
       </div>
     );
   }
 
-  if (errorCarga === 'NO_ENCONTRADO') {
+  if (errorCarga === "NO_ENCONTRADO") {
     return (
       <div className="contenedor-pagina">
         <PaginaError
           codigo={404}
-          titulo={t('detalleProyecto.noEncontradoTitulo')}
-          descripcion={t('detalleProyecto.noEncontradoSub')}
+          titulo={t("detalleProyecto.noEncontradoTitulo")}
+          descripcion={t("detalleProyecto.noEncontradoSub")}
           accion={
             <Button component={Link} to="/proyectos" variant="contained">
-              {t('detalleProyecto.volverALista')}
+              {t("detalleProyecto.volverALista")}
             </Button>
           }
         />
@@ -351,26 +400,36 @@ const DetalleProyecto = () => {
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina
-          titulo={t('detalleProyecto.errorCargaTitulo')}
-          migas={[...migasBase, { texto: t('detalleProyecto.errorCargaTitulo') }]}
+          titulo={t("detalleProyecto.errorCargaTitulo")}
+          migas={[
+            ...migasBase,
+            { texto: t("detalleProyecto.errorCargaTitulo") },
+          ]}
         />
-        <AlertaError error={errorCarga} titulo={t('detalleProyecto.errorCargaTitulo')} onReintentar={cargar} />
+        <AlertaError
+          error={errorCarga}
+          titulo={t("detalleProyecto.errorCargaTitulo")}
+          onReintentar={cargar}
+        />
       </div>
     );
   }
 
-  const esFinalizado = proyecto.estado === 'FINALIZADO';
+  const esFinalizado = proyecto.estado === "FINALIZADO";
   const yaColaboraEnProyecto = Boolean(
-    sesion?.rol === 'COLABORADOR' &&
-    misColaboraciones?.some(
-      (colaboracion) => String(colaboracion.idProyecto) === String(id),
-    ),
+    sesion?.rol === "COLABORADOR" &&
+      misColaboraciones?.some(
+        (colaboracion) => String(colaboracion.idProyecto) === String(id),
+      ),
   );
   const verificandoParticipacion =
-    sesion?.rol === 'COLABORADOR' &&
+    sesion?.rol === "COLABORADOR" &&
     misColaboraciones === null &&
     !errorVerificarParticipacion;
-  const avance = Math.min(100, Math.max(0, Number(proyecto.porcentajeConcrecion) || 0));
+  const avance = Math.min(
+    100,
+    Math.max(0, Number(proyecto.porcentajeConcrecion) || 0),
+  );
   const busquedaVigente = Boolean(proyecto.busquedaVigente);
   const fechaLimiteBusqueda = formatearFecha(proyecto.fechaLimiteBusqueda);
 
@@ -379,21 +438,21 @@ const DetalleProyecto = () => {
       iniciarSesion();
       return;
     }
-    if (sesion?.rol !== 'COLABORADOR') return;
+    if (sesion?.rol !== "COLABORADOR") return;
     setPerfilPostulando(perfil);
     setEsAnonima(false);
-    setErrorPostulacion('');
+    setErrorPostulacion("");
     setModalPostulacionAbierto(true);
   };
 
   const enviarPostulacion = async () => {
     if (!perfilPostulando) return;
     setGuardandoPostulacion(true);
-    setErrorPostulacion('');
+    setErrorPostulacion("");
     try {
       const token = await getAccessToken();
       if (!token) {
-        setErrorPostulacion(t('detalleProyecto.errorSesionPostulacion'));
+        setErrorPostulacion(t("detalleProyecto.errorSesionPostulacion"));
         return;
       }
       await crearPostulacion(token, id, perfilPostulando.id, { esAnonima });
@@ -401,23 +460,26 @@ const DetalleProyecto = () => {
         ...actuales,
         [perfilPostulando.id]: true,
       }));
-      notificar({ mensaje: t('detalleProyecto.exitoPostulacion') });
+      notificar({ mensaje: t("detalleProyecto.exitoPostulacion") });
     } catch (error) {
       const codigo = error.response?.data?.codigo;
       const traducciones = {
-        BUSQUEDA_CERRADA: 'errorBusquedaCerradaPostulacion',
-        PROYECTO_FINALIZADO: 'errorProyectoFinalizadoPostulacion',
-        POSTULACION_YA_EXISTENTE: 'errorPostulacionExistente',
-        COLABORACION_YA_EXISTENTE: 'errorColaboracionExistente',
-        LIMITE_COLABORACIONES_ALCANZADO: 'errorVacantesCompletas',
-        ACCESO_POSTULACION_DENEGADO: 'errorSoloColaboradoras',
+        BUSQUEDA_CERRADA: "errorBusquedaCerradaPostulacion",
+        PROYECTO_FINALIZADO: "errorProyectoFinalizadoPostulacion",
+        POSTULACION_YA_EXISTENTE: "errorPostulacionExistente",
+        COLABORACION_YA_EXISTENTE: "errorColaboracionExistente",
+        LIMITE_COLABORACIONES_ALCANZADO: "errorVacantesCompletas",
+        ACCESO_POSTULACION_DENEGADO: "errorSoloColaboradoras",
       };
       setErrorPostulacion(
         codigo && traducciones[codigo]
           ? t(`detalleProyecto.${traducciones[codigo]}`)
-          : mensajeDeError(error, t('detalleProyecto.errorPostulacionContexto'))
+          : mensajeDeError(
+              error,
+              t("detalleProyecto.errorPostulacionContexto"),
+            ),
       );
-      if (codigo === 'POSTULACION_YA_EXISTENTE') {
+      if (codigo === "POSTULACION_YA_EXISTENTE") {
         setPostulacionesPendientes((actuales) => ({
           ...actuales,
           [perfilPostulando.id]: true,
@@ -432,7 +494,7 @@ const DetalleProyecto = () => {
     setResolviendoPostulacionId(postulacion.id);
     setErroresResolucion((actuales) => ({
       ...actuales,
-      [postulacion.id]: '',
+      [postulacion.id]: "",
     }));
     try {
       const token = await getAccessToken();
@@ -447,7 +509,7 @@ const DetalleProyecto = () => {
           actual.id === resuelta.id ? resuelta : actual,
         ),
       );
-      if (decision === 'ACEPTADA') {
+      if (decision === "ACEPTADA") {
         setColaboraciones((actuales) =>
           actuales === null
             ? actuales
@@ -457,9 +519,12 @@ const DetalleProyecto = () => {
       await cargarPostulaciones();
     } catch (error) {
       const mensaje =
-        codigoDeError(error) === 'LIMITE_COLABORACIONES_ALCANZADO'
-          ? t('detalleProyecto.errorLimitePostulacion')
-          : mensajeDeError(error, t('detalleProyecto.errorResolverPostulacion'));
+        codigoDeError(error) === "LIMITE_COLABORACIONES_ALCANZADO"
+          ? t("detalleProyecto.errorLimitePostulacion")
+          : mensajeDeError(
+              error,
+              t("detalleProyecto.errorResolverPostulacion"),
+            );
       setErroresResolucion((actuales) => ({
         ...actuales,
         [postulacion.id]: mensaje,
@@ -473,31 +538,39 @@ const DetalleProyecto = () => {
   const abrirConfigurarBusqueda = () => {
     setBusquedaSwitch(Boolean(proyecto.busquedaAbierta));
     setFechaBusqueda(aInputFecha(proyecto.fechaLimiteBusqueda));
-    setErrorFechaBusqueda('');
+    setErrorFechaBusqueda("");
     setErrorBusqueda(null);
     setModalBusquedaAbierto(true);
   };
 
   const guardarConfigBusqueda = async () => {
-    const fechaCambio = fechaBusqueda !== aInputFecha(proyecto.fechaLimiteBusqueda);
-    if (busquedaSwitch && fechaBusqueda && fechaCambio && !esFechaFutura(fechaBusqueda)) {
-      setErrorFechaBusqueda(t('formularioProyecto.errFechaPasada'));
-      document.getElementById('busqueda-fecha-limite')?.focus();
+    const fechaCambio =
+      fechaBusqueda !== aInputFecha(proyecto.fechaLimiteBusqueda);
+    if (
+      busquedaSwitch &&
+      fechaBusqueda &&
+      fechaCambio &&
+      !esFechaFutura(fechaBusqueda)
+    ) {
+      setErrorFechaBusqueda(t("formularioProyecto.errFechaPasada"));
+      document.getElementById("busqueda-fecha-limite")?.focus();
       return;
     }
 
     setGuardandoBusqueda(true);
     setErrorBusqueda(null);
-    setErrorFechaBusqueda('');
+    setErrorFechaBusqueda("");
     try {
       const token = await getAccessToken();
       const actualizado = await configurarBusqueda(token, id, {
         busquedaAbierta: busquedaSwitch,
-        ...(busquedaSwitch && fechaBusqueda ? { fechaLimiteBusqueda: aIso(fechaBusqueda) } : {}),
+        ...(busquedaSwitch && fechaBusqueda
+          ? { fechaLimiteBusqueda: aIso(fechaBusqueda) }
+          : {}),
       });
       setProyecto(actualizado);
       setModalBusquedaAbierto(false);
-      notificar({ mensaje: t('detalleProyecto.exitoBusqueda') });
+      notificar({ mensaje: t("detalleProyecto.exitoBusqueda") });
     } catch (err) {
       setErrorBusqueda(err);
     } finally {
@@ -509,11 +582,11 @@ const DetalleProyecto = () => {
   const abrirEditarAvance = () => {
     setFormAvance({
       porcentaje: String(proyecto.porcentajeConcrecion ?? 0),
-      enlaceSistema: proyecto.enlaceSistema || '',
-      enlaceCodigoFuente: proyecto.enlaceCodigoFuente || '',
+      enlaceSistema: proyecto.enlaceSistema || "",
+      enlaceCodigoFuente: proyecto.enlaceCodigoFuente || "",
     });
     setErroresAvance({});
-    setAvisoAvance('');
+    setAvisoAvance("");
     setErrorAvance(null);
     setModalEditarAvance(true);
   };
@@ -525,37 +598,41 @@ const DetalleProyecto = () => {
     const enlaceCodigoFuente = formAvance.enlaceCodigoFuente.trim();
 
     const errores = {};
-    if (porcentaje !== '') {
+    if (porcentaje !== "") {
       const valor = Number(porcentaje);
       if (!Number.isFinite(valor) || valor < 0 || valor > 100) {
-        errores.porcentaje = t('detalleProyecto.errPorcentaje');
+        errores.porcentaje = t("detalleProyecto.errPorcentaje");
       }
     }
     if (enlaceSistema && !ES_ENLACE.test(enlaceSistema)) {
-      errores.enlaceSistema = t('detalleProyecto.errEnlace');
+      errores.enlaceSistema = t("detalleProyecto.errEnlace");
     }
     if (enlaceCodigoFuente && !ES_ENLACE.test(enlaceCodigoFuente)) {
-      errores.enlaceCodigoFuente = t('detalleProyecto.errEnlace');
+      errores.enlaceCodigoFuente = t("detalleProyecto.errEnlace");
     }
     setErroresAvance(errores);
     if (Object.keys(errores).length > 0) {
-      const primero = { porcentaje: 'avance-porcentaje', enlaceSistema: 'avance-enlace-sistema', enlaceCodigoFuente: 'avance-enlace-repo' }[Object.keys(errores)[0]];
+      const primero = {
+        porcentaje: "avance-porcentaje",
+        enlaceSistema: "avance-enlace-sistema",
+        enlaceCodigoFuente: "avance-enlace-repo",
+      }[Object.keys(errores)[0]];
       document.getElementById(primero)?.focus();
       return;
     }
 
     // Solo se mandan los datos cargados: un campo vacío no se envía
     const cambios = {};
-    if (porcentaje !== '') cambios.porcentajeConcrecion = Number(porcentaje);
+    if (porcentaje !== "") cambios.porcentajeConcrecion = Number(porcentaje);
     if (enlaceSistema) cambios.enlaceSistema = enlaceSistema;
     if (enlaceCodigoFuente) cambios.enlaceCodigoFuente = enlaceCodigoFuente;
     if (Object.keys(cambios).length === 0) {
-      setAvisoAvance(t('detalleProyecto.errAvanceVacio'));
+      setAvisoAvance(t("detalleProyecto.errAvanceVacio"));
       return;
     }
 
     setGuardandoAvance(true);
-    setAvisoAvance('');
+    setAvisoAvance("");
     setErrorAvance(null);
     try {
       const token = await getAccessToken();
@@ -567,7 +644,7 @@ const DetalleProyecto = () => {
         enlaceCodigoFuente: actualizado.enlaceCodigoFuente,
       }));
       setModalEditarAvance(false);
-      notificar({ mensaje: t('detalleProyecto.exitoAvance') });
+      notificar({ mensaje: t("detalleProyecto.exitoAvance") });
     } catch (err) {
       setErrorAvance(err);
     } finally {
@@ -581,11 +658,14 @@ const DetalleProyecto = () => {
     const titulo = nuevoLogro.titulo.trim();
     const descripcion = nuevoLogro.descripcion.trim();
     const errores = {};
-    if (!titulo) errores.titulo = t('detalleProyecto.errLogroTitulo');
-    if (!descripcion) errores.descripcion = t('detalleProyecto.errLogroDescripcion');
+    if (!titulo) errores.titulo = t("detalleProyecto.errLogroTitulo");
+    if (!descripcion)
+      errores.descripcion = t("detalleProyecto.errLogroDescripcion");
     setErroresLogro(errores);
     if (Object.keys(errores).length > 0) {
-      document.getElementById(errores.titulo ? 'logro-titulo' : 'logro-descripcion')?.focus();
+      document
+        .getElementById(errores.titulo ? "logro-titulo" : "logro-descripcion")
+        ?.focus();
       return;
     }
 
@@ -601,12 +681,16 @@ const DetalleProyecto = () => {
         ...(nuevoLogro.publicarEnLinkedin && { publicarEnLinkedin: true }),
       });
       setLogros((actuales) => [...actuales, creado]);
-      setNuevoLogro({ titulo: '', descripcion: '', publicarEnLinkedin: false });
-      notificar({ mensaje: t('detalleProyecto.exitoLogro') });
-      if (creado.publicacionLinkedin) setAvisoLinkedin(avisoDePublicacion(creado.publicacionLinkedin));
+      setNuevoLogro({ titulo: "", descripcion: "", publicarEnLinkedin: false });
+      notificar({ mensaje: t("detalleProyecto.exitoLogro") });
+      if (creado.publicacionLinkedin)
+        setAvisoLinkedin(avisoDePublicacion(creado.publicacionLinkedin));
     } catch (err) {
       const codigo = codigoDeError(err);
-      if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
+      if (
+        codigo === "LINKEDIN_NO_CONECTADO" ||
+        codigo === "LINKEDIN_CONEXION_VENCIDA"
+      ) {
         linkedin.recargar(); // el estado local estaba desactualizado
       }
       setErrorLogro(err);
@@ -625,14 +709,22 @@ const DetalleProyecto = () => {
     try {
       const token = await getAccessToken();
       const actualizado = await publicarLogroEnLinkedin(token, id, logro.id);
-      setLogros((actuales) => actuales.map((l) => (l.id === actualizado.id ? actualizado : l)));
+      setLogros((actuales) =>
+        actuales.map((l) => (l.id === actualizado.id ? actualizado : l)),
+      );
       setAvisoLinkedin(avisoDePublicacion(actualizado.publicacionLinkedin));
     } catch (err) {
       const codigo = codigoDeError(err);
-      if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
+      if (
+        codigo === "LINKEDIN_NO_CONECTADO" ||
+        codigo === "LINKEDIN_CONEXION_VENCIDA"
+      ) {
         linkedin.recargar();
       }
-      setAvisoLinkedin({ severity: 'error', texto: mensajeDeError(err, t('linkedin.errorPublicarContexto')) });
+      setAvisoLinkedin({
+        severity: "error",
+        texto: mensajeDeError(err, t("linkedin.errorPublicarContexto")),
+      });
     } finally {
       setPublicandoId(null);
     }
@@ -640,50 +732,73 @@ const DetalleProyecto = () => {
 
   const textoBotonPostular = (perfil) =>
     yaColaboraEnProyecto
-      ? t('detalleProyecto.yaColaboraEnProyecto')
+      ? t("detalleProyecto.yaColaboraEnProyecto")
       : verificandoParticipacion
-        ? t('detalleProyecto.verificandoParticipacion')
+        ? t("detalleProyecto.verificandoParticipacion")
         : errorVerificarParticipacion
-          ? t('detalleProyecto.errorVerificarParticipacionCorto')
+          ? t("detalleProyecto.errorVerificarParticipacionCorto")
           : postulacionesEnviadas[perfil.id]
-      ? t('detalleProyecto.postulacionEnviada')
-      : postulacionesPendientes[perfil.id]
-        ? t('detalleProyecto.postulacionPendiente')
-        : !busquedaVigente
-          ? t('detalleProyecto.busquedaCerradaBtn')
-          : sesion?.rol === 'COLECTIVO'
-            ? t('detalleProyecto.soloColaboradoras')
-            : !isAuthenticated
-              ? t('detalleProyecto.iniciarSesionPostulacion')
-              : t('detalleProyecto.postularme');
+            ? t("detalleProyecto.postulacionEnviada")
+            : postulacionesPendientes[perfil.id]
+              ? t("detalleProyecto.postulacionPendiente")
+              : !busquedaVigente
+                ? t("detalleProyecto.busquedaCerradaBtn")
+                : sesion?.rol === "COLECTIVO"
+                  ? t("detalleProyecto.soloColaboradoras")
+                  : !isAuthenticated
+                    ? t("detalleProyecto.iniciarSesionPostulacion")
+                    : t("detalleProyecto.postularme");
 
-  const pendientes = postulacionesProyecto.filter((postulacion) => postulacion.estado === 'PENDIENTE').length;
-  const pestanaResumen = { valor: 'resumen', texto: t('detalleProyecto.pestanaResumen'), icono: <FiInfo aria-hidden="true" /> };
-  const pestanaPerfiles = { valor: 'perfiles', texto: t('detalleProyecto.pestanaPerfiles'), icono: <FiUsers aria-hidden="true" />, cantidad: perfiles.length };
+  const pendientes = postulacionesProyecto.filter(
+    (postulacion) => postulacion.estado === "PENDIENTE",
+  ).length;
+  const pestanaResumen = {
+    valor: "resumen",
+    texto: t("detalleProyecto.pestanaResumen"),
+    icono: <FiInfo aria-hidden="true" />,
+  };
+  const pestanaPerfiles = {
+    valor: "perfiles",
+    texto: t("detalleProyecto.pestanaPerfiles"),
+    icono: <FiUsers aria-hidden="true" />,
+    cantidad: perfiles.length,
+  };
   const pestanas = [
-    ...(esDueño ? [pestanaResumen, pestanaPerfiles] : [pestanaPerfiles, pestanaResumen]),
+    ...(esDueño
+      ? [pestanaResumen, pestanaPerfiles]
+      : [pestanaPerfiles, pestanaResumen]),
     ...(esDueño
       ? [
           {
-            valor: 'postulaciones',
-            texto: t('detalleProyecto.pestanaPostulaciones'),
+            valor: "postulaciones",
+            texto: t("detalleProyecto.pestanaPostulaciones"),
             icono: <FiInbox aria-hidden="true" />,
             destacado: pendientes,
-            textoDestacado: pendientes === 1
-              ? t('detalleProyecto.pendientesUna')
-              : t('detalleProyecto.pendientesVarias', { cantidad: pendientes }),
+            textoDestacado:
+              pendientes === 1
+                ? t("detalleProyecto.pendientesUna")
+                : t("detalleProyecto.pendientesVarias", {
+                    cantidad: pendientes,
+                  }),
           },
           {
-            valor: 'equipo',
-            texto: t('detalleProyecto.pestanaEquipo'),
+            valor: "equipo",
+            texto: t("detalleProyecto.pestanaEquipo"),
             icono: <FiUserCheck aria-hidden="true" />,
             cantidad: colaboracionesGestion.length,
           },
         ]
       : []),
-    { valor: 'logros', texto: t('detalleProyecto.pestanaLogros'), icono: <FiAward aria-hidden="true" />, cantidad: logros.length },
+    {
+      valor: "logros",
+      texto: t("detalleProyecto.pestanaLogros"),
+      icono: <FiAward aria-hidden="true" />,
+      cantidad: logros.length,
+    },
   ];
-  const pestanaVisible = pestanas.some((p) => p.valor === pestana) ? pestana : pestanas[0].valor;
+  const pestanaVisible = pestanas.some((p) => p.valor === pestana)
+    ? pestana
+    : pestanas[0].valor;
   const abrirAdmin = (accion) => {
     setAnclaAdmin(null);
     accion();
@@ -691,9 +806,9 @@ const DetalleProyecto = () => {
 
   const nombreDe = (colaboradora) =>
     colaboradora?.nombreFantasia ||
-    [colaboradora?.nombre, colaboradora?.apellido].filter(Boolean).join(' ') ||
+    [colaboradora?.nombre, colaboradora?.apellido].filter(Boolean).join(" ") ||
     colaboradora?.usuarioGitHub ||
-    t('detalleProyecto.nombreNoDisponible');
+    t("detalleProyecto.nombreNoDisponible");
 
   // Un solo punto de entrada para quien administra: datos, perfiles, búsqueda y avance.
   const accionesDueño = esDueño ? (
@@ -705,34 +820,48 @@ const DetalleProyecto = () => {
         endIcon={<FiChevronDown aria-hidden="true" />}
         aria-haspopup="menu"
         aria-expanded={Boolean(anclaAdmin)}
-        aria-controls={anclaAdmin ? 'menu-admin-proyecto' : undefined}
+        aria-controls={anclaAdmin ? "menu-admin-proyecto" : undefined}
         onClick={(evento) => setAnclaAdmin(evento.currentTarget)}
       >
-        {t('detalleProyecto.btnAdministrar')}
+        {t("detalleProyecto.btnAdministrar")}
       </Button>
       <Menu
         id="menu-admin-proyecto"
         anchorEl={anclaAdmin}
         open={Boolean(anclaAdmin)}
         onClose={() => setAnclaAdmin(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <MenuItem onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/editar`))}>
-          <ListItemIcon><FiEdit2 aria-hidden="true" /></ListItemIcon>
-          {t('detalleProyecto.btnEditarDatos')}
+        <MenuItem
+          onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/editar`))}
+        >
+          <ListItemIcon>
+            <FiEdit2 aria-hidden="true" />
+          </ListItemIcon>
+          {t("detalleProyecto.btnEditarDatos")}
         </MenuItem>
-        <MenuItem onClick={() => abrirAdmin(() => navigate(`/proyectos/${id}/perfiles`))}>
-          <ListItemIcon><FiUsers aria-hidden="true" /></ListItemIcon>
-          {t('detalleProyecto.btnGestionarPerfiles')}
+        <MenuItem
+          onClick={() =>
+            abrirAdmin(() => navigate(`/proyectos/${id}/perfiles`))
+          }
+        >
+          <ListItemIcon>
+            <FiUsers aria-hidden="true" />
+          </ListItemIcon>
+          {t("detalleProyecto.btnGestionarPerfiles")}
         </MenuItem>
         <MenuItem onClick={() => abrirAdmin(abrirConfigurarBusqueda)}>
-          <ListItemIcon><FiSearch aria-hidden="true" /></ListItemIcon>
-          {t('detalleProyecto.btnConfigurarBusqueda')}
+          <ListItemIcon>
+            <FiSearch aria-hidden="true" />
+          </ListItemIcon>
+          {t("detalleProyecto.btnConfigurarBusqueda")}
         </MenuItem>
         <MenuItem onClick={() => abrirAdmin(abrirEditarAvance)}>
-          <ListItemIcon><FiBarChart2 aria-hidden="true" /></ListItemIcon>
-          {t('detalleProyecto.btnActualizarAvance')}
+          <ListItemIcon>
+            <FiBarChart2 aria-hidden="true" />
+          </ListItemIcon>
+          {t("detalleProyecto.btnActualizarAvance")}
         </MenuItem>
       </Menu>
     </>
@@ -746,14 +875,21 @@ const DetalleProyecto = () => {
         accion={accionesDueño}
       >
         <div className="detalle-meta">
-          <ChipEstado estado={esFinalizado ? 'FINALIZADO' : 'ACTIVO'} />
+          <ChipEstado estado={esFinalizado ? "FINALIZADO" : "ACTIVO"} />
           <ChipEstado
-            estado={busquedaVigente ? 'ABIERTA' : 'CERRADA'}
-            texto={busquedaVigente ? t('detalleProyecto.busquedaAbiertaChip') : t('detalleProyecto.busquedaCerradaChip')}
+            estado={busquedaVigente ? "ABIERTA" : "CERRADA"}
+            texto={
+              busquedaVigente
+                ? t("detalleProyecto.busquedaAbiertaChip")
+                : t("detalleProyecto.busquedaCerradaChip")
+            }
           />
-          <Link className="detalle-meta__colectivo" to={`/colectivos/${proyecto.idColectivo}`}>
+          <Link
+            className="detalle-meta__colectivo"
+            to={`/colectivos/${proyecto.idColectivo}`}
+          >
             <FiUsers aria-hidden="true" />
-            {t('detalleProyecto.verColectivo')}
+            {t("detalleProyecto.verColectivo")}
           </Link>
         </div>
       </EncabezadoPagina>
@@ -761,31 +897,38 @@ const DetalleProyecto = () => {
       <Tabs
         value={pestanaVisible}
         onChange={(_, valor) => setPestana(valor)}
-        aria-label={t('detalleProyecto.pestanas')}
+        aria-label={t("detalleProyecto.pestanas")}
         className="pestanas"
       >
-        {pestanas.map(({ valor, texto, icono, cantidad, destacado, textoDestacado }) => (
-          <Tab
-            key={valor}
-            value={valor}
-            id={`pestana-${valor}`}
-            aria-controls={`panel-${valor}`}
-            icon={icono}
-            iconPosition="start"
-            label={
-              <span className="pestana-etiqueta">
-                {texto}
-                {cantidad > 0 && <span className="pestana-contador"> ({cantidad})</span>}
-                {destacado > 0 && (
-                  <span className="insignia insignia--acento">
-                    {destacado}
-                    <span className="visualmente-oculto"> {textoDestacado}</span>
-                  </span>
-                )}
-              </span>
-            }
-          />
-        ))}
+        {pestanas.map(
+          ({ valor, texto, icono, cantidad, destacado, textoDestacado }) => (
+            <Tab
+              key={valor}
+              value={valor}
+              id={`pestana-${valor}`}
+              aria-controls={`panel-${valor}`}
+              icon={icono}
+              iconPosition="start"
+              label={
+                <span className="pestana-etiqueta">
+                  {texto}
+                  {cantidad > 0 && (
+                    <span className="pestana-contador"> ({cantidad})</span>
+                  )}
+                  {destacado > 0 && (
+                    <span className="insignia insignia--acento">
+                      {destacado}
+                      <span className="visualmente-oculto">
+                        {" "}
+                        {textoDestacado}
+                      </span>
+                    </span>
+                  )}
+                </span>
+              }
+            />
+          ),
+        )}
       </Tabs>
 
       <div
@@ -794,7 +937,7 @@ const DetalleProyecto = () => {
         aria-labelledby={`pestana-${pestanaVisible}`}
         className="panel-pestana"
       >
-        {pestanaVisible === 'resumen' && (
+        {pestanaVisible === "resumen" && (
           <div className="con-lateral con-lateral--derecha">
             <div className="detalle-columna">
               {esDueño && !errorPerfiles && perfiles.length === 0 && (
@@ -805,23 +948,40 @@ const DetalleProyecto = () => {
                       color="inherit"
                       variant="outlined"
                       startIcon={<FiPlus aria-hidden="true" />}
-                      onClick={() => navigate(`/proyectos/${id}/perfiles`, { state: { crearPerfil: true } })}
+                      onClick={() =>
+                        navigate(`/proyectos/${id}/perfiles`, {
+                          state: { crearPerfil: true },
+                        })
+                      }
                     >
-                      {t('detalleProyecto.btnCargarPerfiles')}
+                      {t("detalleProyecto.btnCargarPerfiles")}
                     </Button>
                   }
                 >
-                  <AlertTitle>{t('detalleProyecto.sinPerfiles')}</AlertTitle>
-                  {t('detalleProyecto.sinPerfilesDueño')}
+                  <AlertTitle>{t("detalleProyecto.sinPerfiles")}</AlertTitle>
+                  {t("detalleProyecto.sinPerfilesDueño")}
                 </Alert>
               )}
-              <section className="panel" aria-labelledby="detalle-descripcion-titulo">
-                <h2 id="detalle-descripcion-titulo">{t('detalleProyecto.descripcion')}</h2>
-                <Markdown texto={proyecto.descripcion} className="detalle-descripcion" />
+              <section
+                className="panel"
+                aria-labelledby="detalle-descripcion-titulo"
+              >
+                <h2 id="detalle-descripcion-titulo">
+                  {t("detalleProyecto.descripcion")}
+                </h2>
+                <Markdown
+                  texto={proyecto.descripcion}
+                  className="detalle-descripcion"
+                />
               </section>
 
-              <section className="panel" aria-labelledby="detalle-enlaces-titulo">
-                <h2 id="detalle-enlaces-titulo">{t('detalleProyecto.seccionEnlaces')}</h2>
+              <section
+                className="panel"
+                aria-labelledby="detalle-enlaces-titulo"
+              >
+                <h2 id="detalle-enlaces-titulo">
+                  {t("detalleProyecto.seccionEnlaces")}
+                </h2>
                 {proyecto.enlaceSistema || proyecto.enlaceCodigoFuente ? (
                   <div className="detalle-enlaces">
                     {proyecto.enlaceSistema && (
@@ -832,8 +992,11 @@ const DetalleProyecto = () => {
                         rel="noopener noreferrer"
                         endIcon={<FiExternalLink aria-hidden="true" />}
                       >
-                        {t('detalleProyecto.enlaceSistemaBtn')}
-                        <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                        {t("detalleProyecto.enlaceSistemaBtn")}
+                        <span className="visualmente-oculto">
+                          {" "}
+                          {t("detalleProyecto.nuevaPestana")}
+                        </span>
                       </Button>
                     )}
                     {proyecto.enlaceCodigoFuente && (
@@ -844,30 +1007,48 @@ const DetalleProyecto = () => {
                         rel="noopener noreferrer"
                         endIcon={<FiExternalLink aria-hidden="true" />}
                       >
-                        {t('detalleProyecto.enlaceRepoBtn')}
-                        <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                        {t("detalleProyecto.enlaceRepoBtn")}
+                        <span className="visualmente-oculto">
+                          {" "}
+                          {t("detalleProyecto.nuevaPestana")}
+                        </span>
                       </Button>
                     )}
                   </div>
                 ) : (
-                  <p className="texto-secundario">{t('detalleProyecto.sinEnlaces')}</p>
+                  <p className="texto-secundario">
+                    {t("detalleProyecto.sinEnlaces")}
+                  </p>
                 )}
               </section>
 
               {!esDueño && (yaColaboraEnProyecto || avisoBaja) && (
-                <section className="panel" aria-label={t('misColaboraciones.titulo')}>
-                  {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+                <section
+                  className="panel"
+                  aria-label={t("misColaboraciones.titulo")}
+                >
+                  {avisoBaja && (
+                    <Alert severity="success" role="status">
+                      {avisoBaja}
+                    </Alert>
+                  )}
                   {yaColaboraEnProyecto && (
                     <div>
-                      <Button color="error" variant="outlined" startIcon={<FiUserMinus aria-hidden="true" />} disabled={!sesion?.idColaborador} onClick={() => {
-                        setAvisoBaja('');
-                        setBajaSeleccionada({
-                          idProyecto: id,
-                          idColaborador: sesion.idColaborador,
-                          nombre: proyecto.titulo,
-                        });
-                      }}>
-                        {t('bajaColaboracion.confirmarPropia')}
+                      <Button
+                        color="error"
+                        variant="outlined"
+                        startIcon={<FiUserMinus aria-hidden="true" />}
+                        disabled={!sesion?.idColaborador}
+                        onClick={() => {
+                          setAvisoBaja("");
+                          setBajaSeleccionada({
+                            idProyecto: id,
+                            idColaborador: sesion.idColaborador,
+                            nombre: proyecto.titulo,
+                          });
+                        }}
+                      >
+                        {t("bajaColaboracion.confirmarPropia")}
                       </Button>
                     </div>
                   )}
@@ -875,34 +1056,67 @@ const DetalleProyecto = () => {
               )}
             </div>
 
-            <aside className="lateral" aria-label={t('detalleProyecto.datosProyecto')}>
-              <section className="panel detalle-avance" aria-labelledby="detalle-avance-titulo">
-                <h2 id="detalle-avance-titulo">{t('detalleProyecto.seccionAvance')}</h2>
-                <p className="detalle-avance__valor">{t('detalleProyecto.porcentajeCompletado', { porcentaje: avance })}</p>
-                <LinearProgress variant="determinate" value={avance} aria-label={t('detalleProyecto.seccionAvance')} />
+            <aside
+              className="lateral"
+              aria-label={t("detalleProyecto.datosProyecto")}
+            >
+              <section
+                className="panel detalle-avance"
+                aria-labelledby="detalle-avance-titulo"
+              >
+                <h2 id="detalle-avance-titulo">
+                  {t("detalleProyecto.seccionAvance")}
+                </h2>
+                <p className="detalle-avance__valor">
+                  {t("detalleProyecto.porcentajeCompletado", {
+                    porcentaje: avance,
+                  })}
+                </p>
+                <LinearProgress
+                  variant="determinate"
+                  value={avance}
+                  aria-label={t("detalleProyecto.seccionAvance")}
+                />
               </section>
 
               <section className="panel" aria-labelledby="detalle-datos-titulo">
-                <h2 id="detalle-datos-titulo">{t('detalleProyecto.datosProyecto')}</h2>
+                <h2 id="detalle-datos-titulo">
+                  {t("detalleProyecto.datosProyecto")}
+                </h2>
                 <dl className="detalle-datos">
                   <div>
-                    <dt>{t('detalleProyecto.fechaInicio')}</dt>
-                    <dd>{formatearFecha(proyecto.fechaInicio) ?? t('detalleProyecto.sinFecha')}</dd>
+                    <dt>{t("detalleProyecto.fechaInicio")}</dt>
+                    <dd>
+                      {formatearFecha(proyecto.fechaInicio) ??
+                        t("detalleProyecto.sinFecha")}
+                    </dd>
                   </div>
                   <div>
-                    <dt>{esFinalizado ? t('detalleProyecto.cierrePrevisto') : t('detalleProyecto.cierreProgramado')}</dt>
-                    <dd>{formatearFecha(proyecto.fechaLimiteCierre) ?? t('detalleProyecto.sinFecha')}</dd>
+                    <dt>
+                      {esFinalizado
+                        ? t("detalleProyecto.cierrePrevisto")
+                        : t("detalleProyecto.cierreProgramado")}
+                    </dt>
+                    <dd>
+                      {formatearFecha(proyecto.fechaLimiteCierre) ??
+                        t("detalleProyecto.sinFecha")}
+                    </dd>
                   </div>
                   <div>
-                    <dt>{t('detalleProyecto.estadoBusqueda')}</dt>
+                    <dt>{t("detalleProyecto.estadoBusqueda")}</dt>
                     <dd>
                       {busquedaVigente ? (
-                        fechaLimiteBusqueda
-                          ? t('detalleProyecto.abiertaHasta', { fecha: fechaLimiteBusqueda })
-                          : t('detalleProyecto.abiertaSinFecha')
+                        fechaLimiteBusqueda ? (
+                          t("detalleProyecto.abiertaHasta", {
+                            fecha: fechaLimiteBusqueda,
+                          })
+                        ) : (
+                          t("detalleProyecto.abiertaSinFecha")
+                        )
                       ) : (
                         <>
-                          <FiLock aria-hidden="true" /> {t('detalleProyecto.mensajeBusquedaCerrada')}
+                          <FiLock aria-hidden="true" />{" "}
+                          {t("detalleProyecto.mensajeBusquedaCerrada")}
                         </>
                       )}
                     </dd>
@@ -913,32 +1127,48 @@ const DetalleProyecto = () => {
           </div>
         )}
 
-        {pestanaVisible === 'perfiles' && (
-          <section className="detalle-seccion" aria-labelledby="detalle-perfiles-titulo">
-            <h2 id="detalle-perfiles-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionPerfiles')}</h2>
-            {sesion?.rol === 'COLABORADOR' && errorVerificarParticipacion && (
+        {pestanaVisible === "perfiles" && (
+          <section
+            className="detalle-seccion"
+            aria-labelledby="detalle-perfiles-titulo"
+          >
+            <h2 id="detalle-perfiles-titulo" className="visualmente-oculto">
+              {t("detalleProyecto.seccionPerfiles")}
+            </h2>
+            {sesion?.rol === "COLABORADOR" && errorVerificarParticipacion && (
               <AlertaError
                 error={errorVerificarParticipacion}
-                titulo={t('detalleProyecto.errorVerificarParticipacion')}
-                onReintentar={() => setIntentoVerificacion((intento) => intento + 1)}
+                titulo={t("detalleProyecto.errorVerificarParticipacion")}
+                onReintentar={() =>
+                  setIntentoVerificacion((intento) => intento + 1)
+                }
               />
             )}
             {errorPerfiles && (
-              <AlertaError error={errorPerfiles} titulo={t('detalleProyecto.errorPerfilesTitulo')} onReintentar={cargarPerfiles} />
-            )}
-            {errorColaboraciones && perfiles.some((perfil) => perfil.limiteColaboraciones != null) && (
               <AlertaError
-                error={errorColaboraciones}
-                titulo={t('detalleProyecto.errorVacantesTitulo')}
-                onReintentar={cargarColaboraciones}
+                error={errorPerfiles}
+                titulo={t("detalleProyecto.errorPerfilesTitulo")}
+                onReintentar={cargarPerfiles}
               />
             )}
+            {errorColaboraciones &&
+              perfiles.some(
+                (perfil) => perfil.limiteColaboraciones != null,
+              ) && (
+                <AlertaError
+                  error={errorColaboraciones}
+                  titulo={t("detalleProyecto.errorVacantesTitulo")}
+                  onReintentar={cargarColaboraciones}
+                />
+              )}
             {!errorPerfiles && perfiles.length === 0 ? (
               <EstadoVacio
                 icono={FiUsers}
                 nivelTitulo="h3"
-                titulo={t('detalleProyecto.sinPerfiles')}
-                descripcion={esDueño ? t('detalleProyecto.sinPerfilesDueño') : undefined}
+                titulo={t("detalleProyecto.sinPerfiles")}
+                descripcion={
+                  esDueño ? t("detalleProyecto.sinPerfilesDueño") : undefined
+                }
                 accion={
                   esDueño ? (
                     <Button
@@ -947,7 +1177,7 @@ const DetalleProyecto = () => {
                       startIcon={<FiPlus aria-hidden="true" />}
                       onClick={() => navigate(`/proyectos/${id}/perfiles`)}
                     >
-                      {t('detalleProyecto.btnCargarPerfiles')}
+                      {t("detalleProyecto.btnCargarPerfiles")}
                     </Button>
                   ) : undefined
                 }
@@ -956,7 +1186,8 @@ const DetalleProyecto = () => {
               <ul className="detalle-perfiles">
                 {perfiles.map((perfil) => {
                   const ocupadas = (colaboraciones ?? []).filter(
-                    (colaboracion) => String(colaboracion.idPerfil) === String(perfil.id)
+                    (colaboracion) =>
+                      String(colaboracion.idPerfil) === String(perfil.id),
                   ).length;
                   const sinLimite = perfil.limiteColaboraciones == null;
                   const vacantesDisponibles =
@@ -966,27 +1197,41 @@ const DetalleProyecto = () => {
                   const idPerfil = `perfil-${perfil.id}`;
 
                   return (
-                    <li key={perfil.id} className="tarjeta perfil-buscado" aria-labelledby={idPerfil}>
+                    <li
+                      key={perfil.id}
+                      className="tarjeta perfil-buscado"
+                      aria-labelledby={idPerfil}
+                    >
                       <div className="tarjeta__cuerpo">
-                        <h3 id={idPerfil}><MarkdownEnLinea texto={perfil.descripcion} /></h3>
+                        <h3 id={idPerfil}>
+                          <MarkdownEnLinea texto={perfil.descripcion} />
+                        </h3>
 
                         <CoincidenciaHabilidades
                           perfil={perfil}
-                          habilidadesPersona={sesion?.rol === 'COLABORADOR' ? misHabilidades ?? undefined : undefined}
+                          habilidadesPersona={
+                            sesion?.rol === "COLABORADOR"
+                              ? (misHabilidades ?? undefined)
+                              : undefined
+                          }
                           sujeto="vos"
                         />
 
                         <dl className="perfil-buscado__datos">
                           <div>
-                            <dt>{t('detalleProyecto.compromiso')}</dt>
+                            <dt>{t("detalleProyecto.compromiso")}</dt>
                             <dd>{resumenCompromiso(perfil.compromiso)}</dd>
                           </div>
                           <div>
-                            <dt>{t('detalleProyecto.modalidad')}</dt>
-                            <dd>{etiquetaModalidad(perfil.compromiso.tipoColaboracion)}</dd>
+                            <dt>{t("detalleProyecto.modalidad")}</dt>
+                            <dd>
+                              {etiquetaModalidad(
+                                perfil.compromiso.tipoColaboracion,
+                              )}
+                            </dd>
                           </div>
                           <div>
-                            <dt>{t('detalleProyecto.cupo')}</dt>
+                            <dt>{t("detalleProyecto.cupo")}</dt>
                             <dd>{textoCupo(perfil.limiteColaboraciones)}</dd>
                           </div>
                         </dl>
@@ -995,18 +1240,28 @@ const DetalleProyecto = () => {
                         {sinLimite && (
                           <p className="perfil-buscado__vacantes">
                             <FiCheckCircle aria-hidden="true" />
-                            <span>{t('detalleProyecto.vacantesSinLimite')}</span>
+                            <span>
+                              {t("detalleProyecto.vacantesSinLimite")}
+                            </span>
                           </p>
                         )}
                         {vacantesDisponibles != null && (
-                          <p className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? ' perfil-buscado__vacantes--agotadas' : ''}`}>
-                            {vacantesDisponibles === 0 ? <FiLock aria-hidden="true" /> : <FiCheckCircle aria-hidden="true" />}
+                          <p
+                            className={`perfil-buscado__vacantes${vacantesDisponibles === 0 ? " perfil-buscado__vacantes--agotadas" : ""}`}
+                          >
+                            {vacantesDisponibles === 0 ? (
+                              <FiLock aria-hidden="true" />
+                            ) : (
+                              <FiCheckCircle aria-hidden="true" />
+                            )}
                             <span>
                               {vacantesDisponibles === 0
-                                ? t('detalleProyecto.vacantesCompletas')
+                                ? t("detalleProyecto.vacantesCompletas")
                                 : vacantesDisponibles === 1
-                                  ? t('detalleProyecto.unaVacanteDisponible')
-                                  : t('detalleProyecto.vacantesDisponibles', { cantidad: vacantesDisponibles })}
+                                  ? t("detalleProyecto.unaVacanteDisponible")
+                                  : t("detalleProyecto.vacantesDisponibles", {
+                                      cantidad: vacantesDisponibles,
+                                    })}
                             </span>
                           </p>
                         )}
@@ -1025,7 +1280,8 @@ const DetalleProyecto = () => {
                               yaColaboraEnProyecto ||
                               verificandoParticipacion ||
                               Boolean(errorVerificarParticipacion) ||
-                              (isAuthenticated && sesion?.rol !== 'COLABORADOR') ||
+                              (isAuthenticated &&
+                                sesion?.rol !== "COLABORADOR") ||
                               Boolean(postulacionesEnviadas[perfil.id]) ||
                               Boolean(postulacionesPendientes[perfil.id]) ||
                               vacantesDisponibles === 0
@@ -1044,21 +1300,36 @@ const DetalleProyecto = () => {
           </section>
         )}
 
-        {pestanaVisible === 'postulaciones' && esDueño && (
-          <section className="detalle-seccion" aria-labelledby="detalle-postulaciones-titulo">
-            <h2 id="detalle-postulaciones-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionPostulaciones')}</h2>
-            <p className="texto-secundario">{t('detalleProyecto.ayudaPostulaciones')}</p>
+        {pestanaVisible === "postulaciones" && esDueño && (
+          <section
+            className="detalle-seccion"
+            aria-labelledby="detalle-postulaciones-titulo"
+          >
+            <h2
+              id="detalle-postulaciones-titulo"
+              className="visualmente-oculto"
+            >
+              {t("detalleProyecto.seccionPostulaciones")}
+            </h2>
+            <p className="texto-secundario">
+              {t("detalleProyecto.ayudaPostulaciones")}
+            </p>
             {errorCargarPostulaciones && (
               <AlertaError
                 error={errorCargarPostulaciones}
-                titulo={t('detalleProyecto.errorCargarPostulaciones')}
+                titulo={t("detalleProyecto.errorCargarPostulaciones")}
                 onReintentar={cargarPostulaciones}
               />
             )}
             {cargandoPostulaciones ? (
-              <p role="status">{t('detalleProyecto.cargandoPostulaciones')}</p>
-            ) : !errorCargarPostulaciones && postulacionesProyecto.length === 0 ? (
-              <EstadoVacio icono={FiInbox} nivelTitulo="p" titulo={t('detalleProyecto.sinPostulaciones')} />
+              <p role="status">{t("detalleProyecto.cargandoPostulaciones")}</p>
+            ) : !errorCargarPostulaciones &&
+              postulacionesProyecto.length === 0 ? (
+              <EstadoVacio
+                icono={FiInbox}
+                nivelTitulo="p"
+                titulo={t("detalleProyecto.sinPostulaciones")}
+              />
             ) : (
               <ul className="detalle-perfiles detalle-perfiles--lista">
                 {postulacionesProyecto.map((postulacion) => {
@@ -1066,35 +1337,53 @@ const DetalleProyecto = () => {
                     (item) => String(item.id) === String(postulacion.idPerfil),
                   );
                   const ocupadas = (colaboraciones ?? []).filter(
-                    (item) => String(item.idPerfil) === String(postulacion.idPerfil),
+                    (item) =>
+                      String(item.idPerfil) === String(postulacion.idPerfil),
                   ).length;
                   const sinVacantes =
                     perfil?.limiteColaboraciones != null &&
                     ocupadas >= perfil.limiteColaboraciones;
                   const colaboradora = postulacion.colaborador;
                   const nombreColaboradora = nombreDe(colaboradora);
-                  const pendiente = postulacion.estado === 'PENDIENTE';
-                  const habilidadesPersona = postulacion.perfilPublico?.habilidades ?? (colaboradora?.id ? habilidadesPorColaboradora[colaboradora.id] : undefined);
+                  const pendiente = postulacion.estado === "PENDIENTE";
+                  const habilidadesPersona =
+                    postulacion.perfilPublico?.habilidades ??
+                    (colaboradora?.id
+                      ? habilidadesPorColaboradora[colaboradora.id]
+                      : undefined);
 
                   return (
-                    <li key={postulacion.id} className={`tarjeta perfil-buscado postulacion postulacion--${postulacion.estado?.toLowerCase()}`}>
+                    <li
+                      key={postulacion.id}
+                      className={`tarjeta perfil-buscado postulacion postulacion--${postulacion.estado?.toLowerCase()}`}
+                    >
                       <div className="tarjeta__cuerpo">
                         <div className="postulacion__cabecera">
-                          <h3>{perfil ? <MarkdownEnLinea texto={perfil.descripcion} /> : t('detalleProyecto.nombreNoDisponible')}</h3>
+                          <h3>
+                            {perfil ? (
+                              <MarkdownEnLinea texto={perfil.descripcion} />
+                            ) : (
+                              t("detalleProyecto.nombreNoDisponible")
+                            )}
+                          </h3>
                           <ChipEstado
                             estado={postulacion.estado}
-                            texto={t(`detalleProyecto.estado${postulacion.estado === 'ACEPTADA' ? 'Aceptada' : postulacion.estado === 'RECHAZADA' ? 'Rechazada' : 'Pendiente'}`)}
+                            texto={t(
+                              `detalleProyecto.estado${postulacion.estado === "ACEPTADA" ? "Aceptada" : postulacion.estado === "RECHAZADA" ? "Rechazada" : "Pendiente"}`,
+                            )}
                           />
                         </div>
                         {postulacion.fechaPostulacion && (
                           <p className="texto-secundario">
-                            {t('detalleProyecto.fechaPostulacion', {
-                              fecha: formatearFecha(postulacion.fechaPostulacion),
+                            {t("detalleProyecto.fechaPostulacion", {
+                              fecha: formatearFecha(
+                                postulacion.fechaPostulacion,
+                              ),
                             })}
                           </p>
                         )}
                         {postulacion.esAnonima && (
-                          <p>{t('detalleProyecto.postulacionAnonima')}</p>
+                          <p>{t("detalleProyecto.postulacionAnonima")}</p>
                         )}
 
                         {perfil && (
@@ -1108,34 +1397,95 @@ const DetalleProyecto = () => {
                           <>
                             {postulacion.perfilPublico && (
                               <div>
-                                <p><strong>{t('postulacionPublica.perfil')}</strong> {nombreDe(postulacion.perfilPublico)}</p>
-                                {postulacion.perfilPublico.pronombres?.length > 0 && <p>{t('postulacionPublica.pronombres', { pronombres: postulacion.perfilPublico.pronombres.join(', ') })}</p>}
-                                {postulacion.perfilPublico.presentacion && <Markdown texto={postulacion.perfilPublico.presentacion} nivelTitulo={4} />}
-                                {postulacion.perfilPublico.usuarioGitHub && <p>{t('postulacionPublica.github', { usuario: postulacion.perfilPublico.usuarioGitHub })}</p>}
-                                <p><strong>{t('postulacionPublica.habilidades')}</strong> {postulacion.perfilPublico.habilidades?.join(', ') || t('postulacionPublica.sinHabilidades')}</p>
-                                {postulacion.perfilPublico.id && <Link to={`/colaboradoras/${postulacion.perfilPublico.id}`}>{t('postulacionPublica.verPerfil')}</Link>}
+                                <p>
+                                  <strong>
+                                    {t("postulacionPublica.perfil")}
+                                  </strong>{" "}
+                                  {nombreDe(postulacion.perfilPublico)}
+                                </p>
+                                {postulacion.perfilPublico.pronombres?.length >
+                                  0 && (
+                                  <p>
+                                    {t("postulacionPublica.pronombres", {
+                                      pronombres:
+                                        postulacion.perfilPublico.pronombres.join(
+                                          ", ",
+                                        ),
+                                    })}
+                                  </p>
+                                )}
+                                {postulacion.perfilPublico.presentacion && (
+                                  <Markdown
+                                    texto={
+                                      postulacion.perfilPublico.presentacion
+                                    }
+                                    nivelTitulo={4}
+                                  />
+                                )}
+                                {postulacion.perfilPublico.usuarioGitHub && (
+                                  <p>
+                                    {t("postulacionPublica.github", {
+                                      usuario:
+                                        postulacion.perfilPublico.usuarioGitHub,
+                                    })}
+                                  </p>
+                                )}
+                                <p>
+                                  <strong>
+                                    {t("postulacionPublica.habilidades")}
+                                  </strong>{" "}
+                                  {postulacion.perfilPublico.habilidades?.join(
+                                    ", ",
+                                  ) || t("postulacionPublica.sinHabilidades")}
+                                </p>
+                                {postulacion.perfilPublico.id && (
+                                  <Link
+                                    to={`/colaboradoras/${postulacion.perfilPublico.id}`}
+                                  >
+                                    {t("postulacionPublica.verPerfil")}
+                                  </Link>
+                                )}
                               </div>
                             )}
-                            <p className="texto-secundario">{t('postulacionPublica.contactoAlAceptar')}</p>
+                            <p className="texto-secundario">
+                              {t("postulacionPublica.contactoAlAceptar")}
+                            </p>
                           </>
-                        ) : postulacion.estado === 'ACEPTADA' ? (
+                        ) : postulacion.estado === "ACEPTADA" ? (
                           <div className="postulacion__contacto">
                             <p>
-                              <strong>{t('detalleProyecto.colaboradoraAceptada')}: {nombreColaboradora}</strong>
+                              <strong>
+                                {t("detalleProyecto.colaboradoraAceptada")}:{" "}
+                                {nombreColaboradora}
+                              </strong>
                             </p>
                             {colaboradora?.mediosDeContacto?.length ? (
                               <ul>
-                                {colaboradora.mediosDeContacto.map((medio, indice) => (
-                                  <li key={`${medio.tipoDeContacto}-${indice}`}>
-                                    {t('formatoTipoValor', {
-                                      tipo: ['EMAIL', 'WHATSAPP', 'SMS'].includes(medio.tipoDeContacto) ? t(`enviosNotificacion.${medio.tipoDeContacto}`) : medio.tipoDeContacto,
-                                      valor: medio.contacto,
-                                    })}
-                                  </li>
-                                ))}
+                                {colaboradora.mediosDeContacto.map(
+                                  (medio, indice) => (
+                                    <li
+                                      key={`${medio.tipoDeContacto}-${indice}`}
+                                    >
+                                      {t("formatoTipoValor", {
+                                        tipo: [
+                                          "EMAIL",
+                                          "WHATSAPP",
+                                          "SMS",
+                                        ].includes(medio.tipoDeContacto)
+                                          ? t(
+                                              `enviosNotificacion.${medio.tipoDeContacto}`,
+                                            )
+                                          : medio.tipoDeContacto,
+                                        valor: medio.contacto,
+                                      })}
+                                    </li>
+                                  ),
+                                )}
                               </ul>
                             ) : (
-                              <p>{t('detalleProyecto.sinContactoColaboradora')}</p>
+                              <p>
+                                {t("detalleProyecto.sinContactoColaboradora")}
+                              </p>
                             )}
                           </div>
                         ) : null}
@@ -1146,7 +1496,7 @@ const DetalleProyecto = () => {
                         )}
                         {pendiente && sinVacantes && (
                           <Alert severity="warning">
-                            {t('detalleProyecto.sinVacantesParaAceptar')}
+                            {t("detalleProyecto.sinVacantesParaAceptar")}
                           </Alert>
                         )}
                       </div>
@@ -1159,21 +1509,31 @@ const DetalleProyecto = () => {
                               sinVacantes ||
                               resolviendoPostulacionId === postulacion.id
                             }
-                            loading={resolviendoPostulacionId === postulacion.id}
-                            onClick={() => resolverSolicitud(postulacion, 'ACEPTADA')}
+                            loading={
+                              resolviendoPostulacionId === postulacion.id
+                            }
+                            onClick={() =>
+                              resolverSolicitud(postulacion, "ACEPTADA")
+                            }
                           >
                             {resolviendoPostulacionId === postulacion.id
-                              ? t('detalleProyecto.resolviendoPostulacion')
-                              : t('detalleProyecto.aceptarPostulacion')}
+                              ? t("detalleProyecto.resolviendoPostulacion")
+                              : t("detalleProyecto.aceptarPostulacion")}
                           </Button>
                           <Button
                             variant="outlined"
                             startIcon={<FiX aria-hidden="true" />}
-                            disabled={resolviendoPostulacionId === postulacion.id}
-                            loading={resolviendoPostulacionId === postulacion.id}
-                            onClick={() => resolverSolicitud(postulacion, 'RECHAZADA')}
+                            disabled={
+                              resolviendoPostulacionId === postulacion.id
+                            }
+                            loading={
+                              resolviendoPostulacionId === postulacion.id
+                            }
+                            onClick={() =>
+                              resolverSolicitud(postulacion, "RECHAZADA")
+                            }
                           >
-                            {t('detalleProyecto.rechazarPostulacion')}
+                            {t("detalleProyecto.rechazarPostulacion")}
                           </Button>
                         </div>
                       )}
@@ -1185,78 +1545,142 @@ const DetalleProyecto = () => {
           </section>
         )}
 
-        {pestanaVisible === 'equipo' && esDueño && (
-          <section className="detalle-seccion" aria-labelledby="detalle-colaboraciones-titulo">
-            <h2 id="detalle-colaboraciones-titulo" className="visualmente-oculto">{t('bajaColaboracion.tituloGestion')}</h2>
-            {avisoBaja && <Alert severity="success" role="status">{avisoBaja}</Alert>}
+        {pestanaVisible === "equipo" && esDueño && (
+          <section
+            className="detalle-seccion"
+            aria-labelledby="detalle-colaboraciones-titulo"
+          >
+            <h2
+              id="detalle-colaboraciones-titulo"
+              className="visualmente-oculto"
+            >
+              {t("bajaColaboracion.tituloGestion")}
+            </h2>
+            {avisoBaja && (
+              <Alert severity="success" role="status">
+                {avisoBaja}
+              </Alert>
+            )}
             {errorGestion && (
-              <AlertaError error={errorGestion} titulo={t('bajaColaboracion.errorCarga')} onReintentar={cargarColaboracionesGestion} />
+              <AlertaError
+                error={errorGestion}
+                titulo={t("bajaColaboracion.errorCarga")}
+                onReintentar={cargarColaboracionesGestion}
+              />
             )}
             {cargandoGestion ? (
-              <p role="status">{t('misColaboraciones.cargando')}</p>
+              <p role="status">{t("misColaboraciones.cargando")}</p>
             ) : !errorGestion && colaboracionesGestion.length === 0 ? (
-              <EstadoVacio icono={FiUserCheck} nivelTitulo="p" titulo={t('bajaColaboracion.vacio')} />
-            ) : !errorGestion && (
-              <ul className="detalle-perfiles">
-                {colaboracionesGestion.map((colaboracion) => {
-                  const nombre = nombreDe(colaboracion);
-                  const perfil = perfiles.find((item) => String(item.id) === String(colaboracion.idPerfil));
-                  return (
-                    <li key={colaboracion.idColaborador} className="tarjeta perfil-buscado">
-                      <div className="tarjeta__cuerpo">
-                        <h3>{nombre}</h3>
-                        {perfil && <p><MarkdownEnLinea texto={perfil.descripcion} /></p>}
-                        {colaboracion.esAnonima && <p>{t('bajaColaboracion.anonima')}</p>}
-                      </div>
-                      <div className="tarjeta__acciones">
-                        <Button color="error" variant="outlined" startIcon={<FiUserMinus aria-hidden="true" />} onClick={() => {
-                          setAvisoBaja('');
-                          setBajaSeleccionada({ idProyecto: id, idColaborador: colaboracion.idColaborador, nombre });
-                        }}>
-                          {t('bajaColaboracion.confirmarColectivo')}
-                        </Button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+              <EstadoVacio
+                icono={FiUserCheck}
+                nivelTitulo="p"
+                titulo={t("bajaColaboracion.vacio")}
+              />
+            ) : (
+              !errorGestion && (
+                <ul className="detalle-perfiles">
+                  {colaboracionesGestion.map((colaboracion) => {
+                    const nombre = nombreDe(colaboracion);
+                    const perfil = perfiles.find(
+                      (item) =>
+                        String(item.id) === String(colaboracion.idPerfil),
+                    );
+                    return (
+                      <li
+                        key={colaboracion.idColaborador}
+                        className="tarjeta perfil-buscado"
+                      >
+                        <div className="tarjeta__cuerpo">
+                          <h3>{nombre}</h3>
+                          {perfil && (
+                            <p>
+                              <MarkdownEnLinea texto={perfil.descripcion} />
+                            </p>
+                          )}
+                          {colaboracion.esAnonima && (
+                            <p>{t("bajaColaboracion.anonima")}</p>
+                          )}
+                        </div>
+                        <div className="tarjeta__acciones">
+                          <Button
+                            color="error"
+                            variant="outlined"
+                            startIcon={<FiUserMinus aria-hidden="true" />}
+                            onClick={() => {
+                              setAvisoBaja("");
+                              setBajaSeleccionada({
+                                idProyecto: id,
+                                idColaborador: colaboracion.idColaborador,
+                                nombre,
+                              });
+                            }}
+                          >
+                            {t("bajaColaboracion.confirmarColectivo")}
+                          </Button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )
             )}
           </section>
         )}
 
-        {pestanaVisible === 'logros' && (
-          <section className="detalle-seccion" aria-labelledby="detalle-logros-titulo">
-            <h2 id="detalle-logros-titulo" className="visualmente-oculto">{t('detalleProyecto.seccionLogros')}</h2>
-            <div className={esDueño ? 'con-lateral con-lateral--derecha' : ''}>
+        {pestanaVisible === "logros" && (
+          <section
+            className="detalle-seccion"
+            aria-labelledby="detalle-logros-titulo"
+          >
+            <h2 id="detalle-logros-titulo" className="visualmente-oculto">
+              {t("detalleProyecto.seccionLogros")}
+            </h2>
+            <div className={esDueño ? "con-lateral con-lateral--derecha" : ""}>
               <div>
                 {errorLogros ? (
-                  <AlertaError error={errorLogros} titulo={t('detalleProyecto.errorLogrosTitulo')} onReintentar={cargarLogros} />
+                  <AlertaError
+                    error={errorLogros}
+                    titulo={t("detalleProyecto.errorLogrosTitulo")}
+                    onReintentar={cargarLogros}
+                  />
                 ) : logros.length === 0 ? (
-                  <EstadoVacio icono={FiAward} nivelTitulo="p" titulo={t('detalleProyecto.sinLogros')} />
+                  <EstadoVacio
+                    icono={FiAward}
+                    nivelTitulo="p"
+                    titulo={t("detalleProyecto.sinLogros")}
+                  />
                 ) : (
                   <ol className="detalle-logros">
                     {logros.map((logro) => (
                       <li key={logro.id} className="detalle-logro">
                         <div className="detalle-logro__cabecera">
                           <h3>{logro.titulo}</h3>
-                          {formatearFecha(logro.fecha) && <span className="texto-caption">{formatearFecha(logro.fecha)}</span>}
+                          {formatearFecha(logro.fecha) && (
+                            <span className="texto-caption">
+                              {formatearFecha(logro.fecha)}
+                            </span>
+                          )}
                         </div>
                         <Markdown texto={logro.descripcion} nivelTitulo={4} />
                         {esDueño && (
                           <div className="detalle-logro__linkedin">
-                            {logro.publicacionLinkedin?.estado === 'ENVIADO' ? (
+                            {logro.publicacionLinkedin?.estado === "ENVIADO" ? (
                               <p className="texto-secundario detalle-logro__publicado">
-                                <FiCheckCircle aria-hidden="true" /> {t('linkedin.publicado')}
+                                <FiCheckCircle aria-hidden="true" />{" "}
+                                {t("linkedin.publicado")}
                                 {logro.publicacionLinkedin.urnPost && (
                                   <>
-                                    {' · '}
+                                    {" · "}
                                     <a
                                       href={`https://www.linkedin.com/feed/update/${logro.publicacionLinkedin.urnPost}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                     >
-                                      {t('linkedin.verPublicacion')}
-                                      <span className="visualmente-oculto"> {t('detalleProyecto.nuevaPestana')}</span>
+                                      {t("linkedin.verPublicacion")}
+                                      <span className="visualmente-oculto">
+                                        {" "}
+                                        {t("detalleProyecto.nuevaPestana")}
+                                      </span>
                                     </a>
                                   </>
                                 )}
@@ -1268,11 +1692,11 @@ const DetalleProyecto = () => {
                                 loading={publicandoId === logro.id}
                                 onClick={() => handlePublicarLogro(logro)}
                               >
-                                {logro.publicacionLinkedin?.estado === 'FALLIDO'
-                                  ? t('linkedin.reintentar')
+                                {logro.publicacionLinkedin?.estado === "FALLIDO"
+                                  ? t("linkedin.reintentar")
                                   : linkedin.estado?.conectado
-                                    ? t('linkedin.compartir')
-                                    : t('linkedin.conectar')}
+                                    ? t("linkedin.compartir")
+                                    : t("linkedin.conectar")}
                               </Button>
                             )}
                           </div>
@@ -1284,16 +1708,30 @@ const DetalleProyecto = () => {
               </div>
 
               {esDueño && (
-                <form onSubmit={handleCrearLogro} noValidate className="panel detalle-form-logro" aria-labelledby="nuevo-logro-titulo">
-                  <h3 id="nuevo-logro-titulo">{t('detalleProyecto.nuevoLogroTitulo')}</h3>
+                <form
+                  onSubmit={handleCrearLogro}
+                  noValidate
+                  className="panel detalle-form-logro"
+                  aria-labelledby="nuevo-logro-titulo"
+                >
+                  <h3 id="nuevo-logro-titulo">
+                    {t("detalleProyecto.nuevoLogroTitulo")}
+                  </h3>
                   <TextField
                     id="logro-titulo"
-                    label={t('detalleProyecto.labelLogroTitulo')}
-                    placeholder={t('detalleProyecto.placeholderLogroTitulo')}
+                    label={t("detalleProyecto.labelLogroTitulo")}
+                    placeholder={t("detalleProyecto.placeholderLogroTitulo")}
                     value={nuevoLogro.titulo}
-                    onChange={(e) => setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })}
+                    onChange={(e) =>
+                      setNuevoLogro({ ...nuevoLogro, titulo: e.target.value })
+                    }
                     onBlur={() =>
-                      setErroresLogro((actual) => ({ ...actual, titulo: nuevoLogro.titulo.trim() ? undefined : actual.titulo }))
+                      setErroresLogro((actual) => ({
+                        ...actual,
+                        titulo: nuevoLogro.titulo.trim()
+                          ? undefined
+                          : actual.titulo,
+                      }))
                     }
                     error={Boolean(erroresLogro.titulo)}
                     helperText={mensajeCampo(erroresLogro.titulo)}
@@ -1303,12 +1741,24 @@ const DetalleProyecto = () => {
                   />
                   <CampoMarkdown
                     id="logro-descripcion"
-                    label={t('detalleProyecto.labelLogroDescripcion')}
-                    placeholder={t('detalleProyecto.placeholderLogroDescripcion')}
+                    label={t("detalleProyecto.labelLogroDescripcion")}
+                    placeholder={t(
+                      "detalleProyecto.placeholderLogroDescripcion",
+                    )}
                     value={nuevoLogro.descripcion}
-                    onChange={(e) => setNuevoLogro({ ...nuevoLogro, descripcion: e.target.value })}
+                    onChange={(e) =>
+                      setNuevoLogro({
+                        ...nuevoLogro,
+                        descripcion: e.target.value,
+                      })
+                    }
                     onBlur={() =>
-                      setErroresLogro((actual) => ({ ...actual, descripcion: nuevoLogro.descripcion.trim() ? undefined : actual.descripcion }))
+                      setErroresLogro((actual) => ({
+                        ...actual,
+                        descripcion: nuevoLogro.descripcion.trim()
+                          ? undefined
+                          : actual.descripcion,
+                      }))
                     }
                     error={Boolean(erroresLogro.descripcion)}
                     helperText={mensajeCampo(erroresLogro.descripcion)}
@@ -1326,22 +1776,35 @@ const DetalleProyecto = () => {
                           control={
                             <Checkbox
                               checked={nuevoLogro.publicarEnLinkedin}
-                              onChange={(e) => setNuevoLogro({ ...nuevoLogro, publicarEnLinkedin: e.target.checked })}
+                              onChange={(e) =>
+                                setNuevoLogro({
+                                  ...nuevoLogro,
+                                  publicarEnLinkedin: e.target.checked,
+                                })
+                              }
                               disabled={guardandoLogro}
                             />
                           }
-                          label={t('linkedin.publicarAlCrear')}
+                          label={t("linkedin.publicarAlCrear")}
                         />
                         <p className="texto-secundario">
-                          {t('linkedin.conectadoComo')} {linkedin.estado.nombre}
+                          {t("linkedin.conectadoComo")} {linkedin.estado.nombre}
                         </p>
                       </div>
                     ) : (
                       <Alert severity="info">
-                        {linkedin.estado.vencida ? t('linkedin.avisoVencida') : t('linkedin.avisoNoConectado')}
+                        {linkedin.estado.vencida
+                          ? t("linkedin.avisoVencida")
+                          : t("linkedin.avisoNoConectado")}
                         <div className="alerta-acciones">
-                          <Button variant="outlined" startIcon={<FiLinkedin aria-hidden="true" />} onClick={linkedin.conectar}>
-                            {linkedin.estado.vencida ? t('linkedin.reconectar') : t('linkedin.conectar')}
+                          <Button
+                            variant="outlined"
+                            startIcon={<FiLinkedin aria-hidden="true" />}
+                            onClick={linkedin.conectar}
+                          >
+                            {linkedin.estado.vencida
+                              ? t("linkedin.reconectar")
+                              : t("linkedin.conectar")}
                           </Button>
                         </div>
                       </Alert>
@@ -1354,17 +1817,29 @@ const DetalleProyecto = () => {
                   {avisoLinkedin && (
                     <Alert
                       severity={avisoLinkedin.severity}
-                      role={avisoLinkedin.severity === 'error' ? 'alert' : 'status'}
+                      role={
+                        avisoLinkedin.severity === "error" ? "alert" : "status"
+                      }
                       onClose={() => setAvisoLinkedin(null)}
                     >
                       {avisoLinkedin.texto}
                     </Alert>
                   )}
 
-                  {errorLogro && <AlertaError error={errorLogro} titulo={t('detalleProyecto.errorLogroTitulo')} />}
+                  {errorLogro && (
+                    <AlertaError
+                      error={errorLogro}
+                      titulo={t("detalleProyecto.errorLogroTitulo")}
+                    />
+                  )}
                   <div>
-                    <Button type="submit" variant="contained" loading={guardandoLogro} startIcon={<FiPlus aria-hidden="true" />}>
-                      {t('detalleProyecto.btnAgregarLogro')}
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      loading={guardandoLogro}
+                      startIcon={<FiPlus aria-hidden="true" />}
+                    >
+                      {t("detalleProyecto.btnAgregarLogro")}
                     </Button>
                   </div>
                 </form>
@@ -1380,11 +1855,15 @@ const DetalleProyecto = () => {
         onCerrar={() => setBajaSeleccionada(null)}
         onConfirmada={({ idColaborador }) => {
           if (esDueño) {
-            setColaboracionesGestion((actuales) => actuales.filter((item) => item.idColaborador !== idColaborador));
-            setAvisoBaja(t('bajaColaboracion.exitoColectivo'));
+            setColaboracionesGestion((actuales) =>
+              actuales.filter((item) => item.idColaborador !== idColaborador),
+            );
+            setAvisoBaja(t("bajaColaboracion.exitoColectivo"));
           } else {
-            setMisColaboraciones((actuales) => actuales.filter((item) => String(item.idProyecto) !== String(id)));
-            setAvisoBaja(t('bajaColaboracion.exitoPropia'));
+            setMisColaboraciones((actuales) =>
+              actuales.filter((item) => String(item.idProyecto) !== String(id)),
+            );
+            setAvisoBaja(t("bajaColaboracion.exitoPropia"));
           }
           cargarColaboraciones();
         }}
@@ -1392,34 +1871,50 @@ const DetalleProyecto = () => {
 
       <Dialogo
         open={modalPostulacionAbierto}
-        onClose={() => !guardandoPostulacion && setModalPostulacionAbierto(false)}
+        onClose={() =>
+          !guardandoPostulacion && setModalPostulacionAbierto(false)
+        }
         aria-labelledby="dialogo-postulacion-titulo"
       >
-        <DialogTitle id="dialogo-postulacion-titulo">{t('detalleProyecto.modalPostulacionTitulo')}</DialogTitle>
+        <DialogTitle id="dialogo-postulacion-titulo">
+          {t("detalleProyecto.modalPostulacionTitulo")}
+        </DialogTitle>
         <DialogContent className="dialogo-postulacion">
           <div className="dialogo-postulacion__resumen">
             <strong>{proyecto.titulo}</strong>
-            <span><MarkdownEnLinea texto={perfilPostulando?.descripcion} /></span>
+            <span>
+              <MarkdownEnLinea texto={perfilPostulando?.descripcion} />
+            </span>
           </div>
           {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
             <Alert severity="success" role="status">
-              <AlertTitle>{t('detalleProyecto.postulacionEnviadaTitulo')}</AlertTitle>
-              {t('detalleProyecto.postulacionEnviadaDescripcion')}
+              <AlertTitle>
+                {t("detalleProyecto.postulacionEnviadaTitulo")}
+              </AlertTitle>
+              {t("detalleProyecto.postulacionEnviadaDescripcion")}
             </Alert>
           ) : (
             <>
-              <p>{t('detalleProyecto.postulacionInstruccion')}</p>
+              <p>{t("detalleProyecto.postulacionInstruccion")}</p>
               {perfilPostulando && (
                 <div className="dialogo-postulacion__coincidencia">
-                  <p className="perfil-buscado__etiqueta">{t('detalleProyecto.tuCoincidencia')}</p>
-                  <CoincidenciaHabilidades perfil={perfilPostulando} habilidadesPersona={misHabilidades ?? undefined} sujeto="vos" />
+                  <p className="perfil-buscado__etiqueta">
+                    {t("detalleProyecto.tuCoincidencia")}
+                  </p>
+                  <CoincidenciaHabilidades
+                    perfil={perfilPostulando}
+                    habilidadesPersona={misHabilidades ?? undefined}
+                    sujeto="vos"
+                  />
                 </div>
               )}
               <div className="dialogo-postulacion__anonimato">
                 <div>
-                  <strong id="anonimato-label">{t('detalleProyecto.anonimatoLabel')}</strong>
+                  <strong id="anonimato-label">
+                    {t("detalleProyecto.anonimatoLabel")}
+                  </strong>
                   <p className="texto-secundario" id="anonimato-ayuda">
-                    {t('detalleProyecto.anonimatoAyuda')}
+                    {t("detalleProyecto.anonimatoAyuda")}
                   </p>
                 </div>
                 <Switch
@@ -1427,7 +1922,10 @@ const DetalleProyecto = () => {
                   onChange={(event) => setEsAnonima(event.target.checked)}
                   disabled={guardandoPostulacion}
                   slotProps={{
-                    input: { 'aria-label': t('detalleProyecto.anonimatoLabel'), 'aria-describedby': 'anonimato-ayuda' },
+                    input: {
+                      "aria-label": t("detalleProyecto.anonimatoLabel"),
+                      "aria-describedby": "anonimato-ayuda",
+                    },
                   }}
                 />
               </div>
@@ -1441,22 +1939,33 @@ const DetalleProyecto = () => {
         </DialogContent>
         <DialogActions>
           {perfilPostulando && postulacionesEnviadas[perfilPostulando.id] ? (
-            <Button variant="outlined" onClick={() => setModalPostulacionAbierto(false)}>
-              {t('detalleProyecto.cerrar')}
+            <Button
+              variant="outlined"
+              onClick={() => setModalPostulacionAbierto(false)}
+            >
+              {t("detalleProyecto.cerrar")}
             </Button>
           ) : (
             <>
-              <Button variant="outlined" onClick={() => setModalPostulacionAbierto(false)} disabled={guardandoPostulacion}>
-                {t('detalleProyecto.cancelar')}
+              <Button
+                variant="outlined"
+                onClick={() => setModalPostulacionAbierto(false)}
+                disabled={guardandoPostulacion}
+              >
+                {t("detalleProyecto.cancelar")}
               </Button>
               <Button
                 variant="contained"
                 onClick={enviarPostulacion}
-                disabled={Boolean(postulacionesPendientes[perfilPostulando?.id])}
+                disabled={Boolean(
+                  postulacionesPendientes[perfilPostulando?.id],
+                )}
                 loading={guardandoPostulacion}
                 startIcon={<FiSend aria-hidden="true" />}
               >
-                {guardandoPostulacion ? t('detalleProyecto.enviandoPostulacion') : t('detalleProyecto.enviarPostulacion')}
+                {guardandoPostulacion
+                  ? t("detalleProyecto.enviandoPostulacion")
+                  : t("detalleProyecto.enviarPostulacion")}
               </Button>
             </>
           )}
@@ -1470,15 +1979,19 @@ const DetalleProyecto = () => {
         aria-labelledby="dialogo-editar-avance-titulo"
       >
         <form onSubmit={guardarAvance} noValidate>
-          <DialogTitle id="dialogo-editar-avance-titulo">{t('detalleProyecto.modalEditarAvanceTitulo')}</DialogTitle>
+          <DialogTitle id="dialogo-editar-avance-titulo">
+            {t("detalleProyecto.modalEditarAvanceTitulo")}
+          </DialogTitle>
           <DialogContent className="dialogo-formulario">
             <TextField
               id="avance-porcentaje"
               type="number"
-              label={t('detalleProyecto.labelPorcentaje')}
-              placeholder={t('detalleProyecto.placeholderPorcentaje')}
+              label={t("detalleProyecto.labelPorcentaje")}
+              placeholder={t("detalleProyecto.placeholderPorcentaje")}
               value={formAvance.porcentaje}
-              onChange={(e) => setFormAvance({ ...formAvance, porcentaje: e.target.value })}
+              onChange={(e) =>
+                setFormAvance({ ...formAvance, porcentaje: e.target.value })
+              }
               error={Boolean(erroresAvance.porcentaje)}
               helperText={mensajeCampo(erroresAvance.porcentaje)}
               disabled={guardandoAvance}
@@ -1487,23 +2000,36 @@ const DetalleProyecto = () => {
             />
             <TextField
               id="avance-enlace-sistema"
-              label={t('detalleProyecto.labelEnlaceSistema')}
-              placeholder={t('detalleProyecto.placeholderEnlaceSistema')}
+              label={t("detalleProyecto.labelEnlaceSistema")}
+              placeholder={t("detalleProyecto.placeholderEnlaceSistema")}
               value={formAvance.enlaceSistema}
-              onChange={(e) => setFormAvance({ ...formAvance, enlaceSistema: e.target.value })}
+              onChange={(e) =>
+                setFormAvance({ ...formAvance, enlaceSistema: e.target.value })
+              }
               error={Boolean(erroresAvance.enlaceSistema)}
-              helperText={mensajeCampo(erroresAvance.enlaceSistema, t('detalleProyecto.ayudaEnlace'))}
+              helperText={mensajeCampo(
+                erroresAvance.enlaceSistema,
+                t("detalleProyecto.ayudaEnlace"),
+              )}
               disabled={guardandoAvance}
               fullWidth
             />
             <TextField
               id="avance-enlace-repo"
-              label={t('detalleProyecto.labelEnlaceRepo')}
-              placeholder={t('detalleProyecto.placeholderEnlaceRepo')}
+              label={t("detalleProyecto.labelEnlaceRepo")}
+              placeholder={t("detalleProyecto.placeholderEnlaceRepo")}
               value={formAvance.enlaceCodigoFuente}
-              onChange={(e) => setFormAvance({ ...formAvance, enlaceCodigoFuente: e.target.value })}
+              onChange={(e) =>
+                setFormAvance({
+                  ...formAvance,
+                  enlaceCodigoFuente: e.target.value,
+                })
+              }
               error={Boolean(erroresAvance.enlaceCodigoFuente)}
-              helperText={mensajeCampo(erroresAvance.enlaceCodigoFuente, t('detalleProyecto.ayudaEnlace'))}
+              helperText={mensajeCampo(
+                erroresAvance.enlaceCodigoFuente,
+                t("detalleProyecto.ayudaEnlace"),
+              )}
               disabled={guardandoAvance}
               fullWidth
             />
@@ -1512,14 +2038,25 @@ const DetalleProyecto = () => {
                 {avisoAvance}
               </Alert>
             )}
-            {errorAvance && <AlertaError error={errorAvance} titulo={t('detalleProyecto.errorAvanceTitulo')} />}
+            {errorAvance && (
+              <AlertaError
+                error={errorAvance}
+                titulo={t("detalleProyecto.errorAvanceTitulo")}
+              />
+            )}
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={() => setModalEditarAvance(false)} disabled={guardandoAvance}>
-              {t('detalleProyecto.cancelar')}
+            <Button
+              variant="outlined"
+              onClick={() => setModalEditarAvance(false)}
+              disabled={guardandoAvance}
+            >
+              {t("detalleProyecto.cancelar")}
             </Button>
             <Button type="submit" variant="contained" loading={guardandoAvance}>
-              {guardandoAvance ? t('detalleProyecto.guardando') : t('detalleProyecto.btnActualizarAvance')}
+              {guardandoAvance
+                ? t("detalleProyecto.guardando")
+                : t("detalleProyecto.btnActualizarAvance")}
             </Button>
           </DialogActions>
         </form>
@@ -1531,52 +2068,82 @@ const DetalleProyecto = () => {
         onClose={() => !guardandoBusqueda && setModalBusquedaAbierto(false)}
         aria-labelledby="dialogo-busqueda-titulo"
       >
-        <DialogTitle id="dialogo-busqueda-titulo">{t('detalleProyecto.modalBusquedaTitulo')}</DialogTitle>
+        <DialogTitle id="dialogo-busqueda-titulo">
+          {t("detalleProyecto.modalBusquedaTitulo")}
+        </DialogTitle>
         <DialogContent className="dialogo-formulario">
           <DialogContentText>
-            <strong>{proyecto.titulo}.</strong>{' '}
-            {busquedaSwitch ? t('detalleProyecto.modalBusquedaSubActiva') : t('detalleProyecto.modalBusquedaSubInactiva')}
+            <strong>{proyecto.titulo}.</strong>{" "}
+            {busquedaSwitch
+              ? t("detalleProyecto.modalBusquedaSubActiva")
+              : t("detalleProyecto.modalBusquedaSubInactiva")}
           </DialogContentText>
 
           <div className="interruptor-fila">
             <div>
-              <strong id="busqueda-switch-label">{t('formularioProyecto.labelBusquedaAbierta')}</strong>
+              <strong id="busqueda-switch-label">
+                {t("formularioProyecto.labelBusquedaAbierta")}
+              </strong>
               <p className="texto-secundario">
-                {busquedaSwitch ? t('formularioProyecto.estadoActivada') : t('formularioProyecto.estadoDesactivada')}
+                {busquedaSwitch
+                  ? t("formularioProyecto.estadoActivada")
+                  : t("formularioProyecto.estadoDesactivada")}
               </p>
             </div>
             <Switch
               checked={busquedaSwitch}
               onChange={(e) => setBusquedaSwitch(e.target.checked)}
               disabled={guardandoBusqueda || esFinalizado}
-              slotProps={{ input: { 'aria-label': t('formularioProyecto.labelBusquedaAbierta') } }}
+              slotProps={{
+                input: {
+                  "aria-label": t("formularioProyecto.labelBusquedaAbierta"),
+                },
+              }}
             />
           </div>
 
           <TextField
             id="busqueda-fecha-limite"
             type="date"
-            label={t('formularioProyecto.labelFechaLimite')}
+            label={t("formularioProyecto.labelFechaLimite")}
             value={fechaBusqueda}
             onChange={(e) => setFechaBusqueda(e.target.value)}
             error={Boolean(errorFechaBusqueda)}
             helperText={mensajeCampo(
               errorFechaBusqueda,
-              busquedaSwitch ? t('formularioProyecto.ayudaFechaLimiteActiva') : t('formularioProyecto.ayudaFechaLimiteInactiva')
+              busquedaSwitch
+                ? t("formularioProyecto.ayudaFechaLimiteActiva")
+                : t("formularioProyecto.ayudaFechaLimiteInactiva"),
             )}
             disabled={guardandoBusqueda || esFinalizado || !busquedaSwitch}
             slotProps={{ inputLabel: { shrink: true } }}
             fullWidth
           />
 
-          {errorBusqueda && <AlertaError error={errorBusqueda} titulo={t('detalleProyecto.errorBusquedaTitulo')} />}
+          {errorBusqueda && (
+            <AlertaError
+              error={errorBusqueda}
+              titulo={t("detalleProyecto.errorBusquedaTitulo")}
+            />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setModalBusquedaAbierto(false)} disabled={guardandoBusqueda}>
-            {t('detalleProyecto.cancelar')}
+          <Button
+            variant="outlined"
+            onClick={() => setModalBusquedaAbierto(false)}
+            disabled={guardandoBusqueda}
+          >
+            {t("detalleProyecto.cancelar")}
           </Button>
-          <Button variant="contained" onClick={guardarConfigBusqueda} disabled={esFinalizado} loading={guardandoBusqueda}>
-            {guardandoBusqueda ? t('detalleProyecto.guardando') : t('detalleProyecto.guardar')}
+          <Button
+            variant="contained"
+            onClick={guardarConfigBusqueda}
+            disabled={esFinalizado}
+            loading={guardandoBusqueda}
+          >
+            {guardandoBusqueda
+              ? t("detalleProyecto.guardando")
+              : t("detalleProyecto.guardar")}
           </Button>
         </DialogActions>
       </Dialogo>

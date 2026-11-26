@@ -7,13 +7,13 @@ cuando se necesita cargar datos de prueba.
 Los `Dockerfile` construyen las imágenes de API y frontend; Caddy obtiene y renueva automáticamente un certificado TLS
 para el dominio configurado.
 
-| Servicio   | Qué es                  | Notas                                                                                    |
-| ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
-| `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                                   |
-| `seed`     | Datos iniciales         | Tarea opcional y manual; carga la seed una sola vez por versión y base de datos.         |
-| `api`      | Backend Express         | Espera a que Mongo esté listo; solo expone su puerto local en `127.0.0.1:3001`.           |
-| `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                                  |
-| `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.         |
+| Servicio   | Qué es                  | Notas                                                                            |
+| ---------- | ----------------------- | -------------------------------------------------------------------------------- |
+| `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                            |
+| `seed`     | Datos iniciales         | Tarea opcional y manual; carga la seed una sola vez por versión y base de datos. |
+| `api`      | Backend Express         | Espera a que Mongo esté listo; solo expone su puerto local en `127.0.0.1:3001`.  |
+| `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                          |
+| `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.  |
 
 ### Requisitos en la VM
 
@@ -58,21 +58,21 @@ Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant
 `REACT_APP_LOGTO_RESOURCES` debe coincidir con `LOGTO_AUDIENCE`. En la VM, reemplazá también `ALLOWED_ORIGINS` por
 `https://<subdominio>`, y `APP_DOMAIN` por el subdominio sin `https://` ni rutas (por ejemplo, `miapp.duckdns.org`).
 
-| Variable                        | Para qué sirve                                                                                                                                                                      |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen.                                                                                                                  |
-| `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                                                                                                         |
-| `API_PORT`                      | Puerto local de la API (3001); queda ligado a `127.0.0.1`, no se expone a la red.                                                                                                    |
-| `FRONTEND_PORT`                 | Puerto de loopback para pruebas locales (3000 por defecto); no se expone a la red.                                                                                                   |
-| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. En la VM: `https://<subdominio>`.                                                                           |
-| `LOGTO_ISSUER`                  | Emisor OIDC de Logto, por ejemplo `https://tenant.logto.app/oidc`.                                                                                                                   |
-| `LOGTO_JWKS_URL`                | URL de claves públicas de Logto, normalmente `https://tenant.logto.app/oidc/jwks`.                                                                                                   |
-| `LOGTO_AUDIENCE`                | Identificador del recurso de API; debe coincidir con `REACT_APP_LOGTO_RESOURCES`.                                                                                                   |
-| `LOGTO_ADMIN_IDS`               | IDs de usuario (`sub`) de Logto para asignar el rol de administrador, separados por comas.                                                                                         |
-| `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                                                                                                        |
-| `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                                                                                                  |
-| `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                                                                                                     |
-| `APP_DOMAIN`                    | Hostname del frontend. En la VM, Caddy lo usa para solicitar y renovar el certificado HTTPS.                                                                                        |
+| Variable                        | Para qué sirve                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `MONGO_USER` / `MONGO_PASSWORD` | Usuario administrador de Mongo. Se crea al inicializar el volumen.                                        |
+| `MONGODB_DB_NAME`               | Nombre de la base de datos.                                                                               |
+| `API_PORT`                      | Puerto local de la API (3001); queda ligado a `127.0.0.1`, no se expone a la red.                         |
+| `FRONTEND_PORT`                 | Puerto de loopback para pruebas locales (3000 por defecto); no se expone a la red.                        |
+| `ALLOWED_ORIGINS`               | Orígenes permitidos por CORS, separados por coma y **sin barra final**. En la VM: `https://<subdominio>`. |
+| `LOGTO_ISSUER`                  | Emisor OIDC de Logto, por ejemplo `https://tenant.logto.app/oidc`.                                        |
+| `LOGTO_JWKS_URL`                | URL de claves públicas de Logto, normalmente `https://tenant.logto.app/oidc/jwks`.                        |
+| `LOGTO_AUDIENCE`                | Identificador del recurso de API; debe coincidir con `REACT_APP_LOGTO_RESOURCES`.                         |
+| `LOGTO_ADMIN_IDS`               | IDs de usuario (`sub`) de Logto para asignar el rol de administrador, separados por comas.                |
+| `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                             |
+| `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                        |
+| `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                           |
+| `APP_DOMAIN`                    | Hostname del frontend. En la VM, Caddy lo usa para solicitar y renovar el certificado HTTPS.              |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
@@ -311,7 +311,7 @@ No uses `docker compose down -v` para reiniciar: elimina la base de Mongo y los 
 | `port is already allocated` al levantar                                       | Un contenedor viejo (por ejemplo de la entrega anterior) ocupa el puerto 3000                      | `docker ps`, y luego `docker stop NOMBRE` y `docker rm NOMBRE`. O cambiar `API_PORT` en el `.env` |
 | `Error conectando a MongoDB: getaddrinfo EAI_AGAIN mongo`                     | La API no resuelve el nombre `mongo` en la red de Docker, típico tras un primer arranque fallido   | `docker compose down` y `docker compose up -d`                                                    |
 | La API queda en `health: starting` y se reinicia                              | El proceso se cierra al fallar                                                                     | `docker compose logs --tail 30 api` y actuar según el error                                       |
-| `Authentication failed`                                                       | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | Revisar las credenciales originales o recuperar una copia de seguridad; no borrar los volúmenes.   |
+| `Authentication failed`                                                       | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | Revisar las credenciales originales o recuperar una copia de seguridad; no borrar los volúmenes.  |
 | `Falta MONGO_PASSWORD en .env`                                                | No existe el `.env` en la raíz del proyecto                                                        | Crearlo al lado de `docker-compose.yml`                                                           |
 | El seed falla con un error de validación (por ejemplo `proyecto is required`) | La imagen tiene una versión vieja del código                                                       | `git pull`, `docker compose build` y volver a correr el seed                                      |
 | `mongo` se reinicia con `Illegal instruction`                                 | La CPU de la VM no expone instrucciones AVX, que MongoDB 5+ necesita                               | Habilitar el modo de CPU «host passthrough» o usar `image: mongo:4.4`                             |

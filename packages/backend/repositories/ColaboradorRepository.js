@@ -32,7 +32,9 @@ export class ColaboradorRepository {
     if (ids.length === 0) return Promise.resolve([]);
     return this.model
       .find({ _id: { $in: ids } })
-      .select("_id nombreFantasia usuarioGitHub pronombres presentacion habilidades aceptaMensajeria")
+      .select(
+        "_id nombreFantasia usuarioGitHub pronombres presentacion habilidades aceptaMensajeria",
+      )
       .exec();
   }
 

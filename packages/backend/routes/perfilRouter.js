@@ -19,10 +19,8 @@ export function crearPerfilRouter(perfilController, autenticar) {
 
   router
     .route("/:id")
-    .delete(
-      autenticar,
-      requerirRol(Rol.COLECTIVO),
-      (req, res) => perfilController.eliminar(req, res),
+    .delete(autenticar, requerirRol(Rol.COLECTIVO), (req, res) =>
+      perfilController.eliminar(req, res),
     )
     .put(
       autenticar,

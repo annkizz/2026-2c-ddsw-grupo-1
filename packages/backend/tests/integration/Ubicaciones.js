@@ -222,12 +222,14 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
   });
 
   it("normaliza la ubicacion al crear el proyecto", async () => {
-    const { status, body } = await request(app).post("/proyectos").send({
-      idColectivo: COLECTIVO_CORDOBA,
-      titulo: "Nuevo",
-      descripcion: "Desc",
-      ubicacion: { provincia: "  mendoza ", ciudad: "Godoy Cruz" },
-    });
+    const { status, body } = await request(app)
+      .post("/proyectos")
+      .send({
+        idColectivo: COLECTIVO_CORDOBA,
+        titulo: "Nuevo",
+        descripcion: "Desc",
+        ubicacion: { provincia: "  mendoza ", ciudad: "Godoy Cruz" },
+      });
 
     expect(status).toBe(201);
     expect(body.ubicacion).toEqual({
@@ -268,12 +270,14 @@ describe("req 15: mapa de proyectos por provincia (integracion sobre la seed)", 
   });
 
   it("responde 400 al crear con una provincia invalida", async () => {
-    const { status, body } = await request(app).post("/proyectos").send({
-      idColectivo: COLECTIVO_CORDOBA,
-      titulo: "Nuevo",
-      descripcion: "Desc",
-      ubicacion: { provincia: "Narnia" },
-    });
+    const { status, body } = await request(app)
+      .post("/proyectos")
+      .send({
+        idColectivo: COLECTIVO_CORDOBA,
+        titulo: "Nuevo",
+        descripcion: "Desc",
+        ubicacion: { provincia: "Narnia" },
+      });
 
     expect(status).toBe(400);
     expect(body.codigo).toBe("PROVINCIA_INVALIDA");

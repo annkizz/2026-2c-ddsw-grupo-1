@@ -113,12 +113,24 @@
   border-radius: var(--radius-sm);
 }
 
-.leyenda__color--0 { background: var(--color-map-empty); }
-.leyenda__color--1 { background: var(--color-map-1); }
-.leyenda__color--2 { background: var(--color-map-2); }
-.leyenda__color--3 { background: var(--color-map-3); }
-.leyenda__color--4 { background: var(--color-map-4); }
-.leyenda__color--5 { background: var(--color-map-5); }
+.leyenda__color--0 {
+  background: var(--color-map-empty);
+}
+.leyenda__color--1 {
+  background: var(--color-map-1);
+}
+.leyenda__color--2 {
+  background: var(--color-map-2);
+}
+.leyenda__color--3 {
+  background: var(--color-map-3);
+}
+.leyenda__color--4 {
+  background: var(--color-map-4);
+}
+.leyenda__color--5 {
+  background: var(--color-map-5);
+}
 
 .tabla {
   width: 100%;

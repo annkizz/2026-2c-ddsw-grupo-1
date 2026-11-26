@@ -31,8 +31,8 @@ export function usePaginacion(url, claveDatos) {
       .then((respuesta) => {
         if (cancelado) return;
         const cuerpo = respuesta.data;
-        setDatos(Array.isArray(cuerpo) ? cuerpo : cuerpo[claveDatos] ?? []);
-        setTotalPags(Array.isArray(cuerpo) ? 1 : cuerpo.totalPags ?? 0);
+        setDatos(Array.isArray(cuerpo) ? cuerpo : (cuerpo[claveDatos] ?? []));
+        setTotalPags(Array.isArray(cuerpo) ? 1 : (cuerpo.totalPags ?? 0));
       })
       .catch((fallo) => {
         if (!cancelado) {
@@ -61,11 +61,11 @@ export function usePaginacion(url, claveDatos) {
       const cuerpo = respuesta.data;
       setDatos((actual) => [
         ...actual,
-        ...(Array.isArray(cuerpo) ? cuerpo : cuerpo[claveDatos] ?? []),
+        ...(Array.isArray(cuerpo) ? cuerpo : (cuerpo[claveDatos] ?? [])),
       ]);
       setPag(siguiente);
       setTotalPags(
-        Array.isArray(cuerpo) ? totalPags : cuerpo.totalPags ?? totalPags,
+        Array.isArray(cuerpo) ? totalPags : (cuerpo.totalPags ?? totalPags),
       );
     } catch (fallo) {
       setError(fallo);

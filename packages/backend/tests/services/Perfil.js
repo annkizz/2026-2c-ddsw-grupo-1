@@ -126,12 +126,14 @@ describe("PerfilService", () => {
       expect(resultado.habilidadesOpcionales).toEqual([]);
     });
 
-        it("guarda el límite de colaboraciones cuando se indica", async () => {
+    it("guarda el límite de colaboraciones cuando se indica", async () => {
       const datos = { ...datosPerfil(), limiteColaboraciones: 2 };
 
       const resultado = await service.crear(ID_PROYECTO, datos);
 
-      expect(perfilRepository.save.mock.calls[0][0].limiteColaboraciones).toBe(2);
+      expect(perfilRepository.save.mock.calls[0][0].limiteColaboraciones).toBe(
+        2,
+      );
       expect(resultado.limiteColaboraciones).toBe(2);
     });
 
@@ -318,10 +320,10 @@ describe("PerfilService", () => {
         nuevosDatos(),
       );
 
-      expect(perfilRepository.actualizar).toHaveBeenCalledWith(
-        "perfil-1",
-        { ...nuevosDatos(), limiteColaboraciones: null },
-      );
+      expect(perfilRepository.actualizar).toHaveBeenCalledWith("perfil-1", {
+        ...nuevosDatos(),
+        limiteColaboraciones: null,
+      });
       expect(resultado).toEqual({
         id: "perfil-1",
         idProyecto: ID_PROYECTO,
@@ -336,7 +338,9 @@ describe("PerfilService", () => {
         limiteColaboraciones: 4,
       });
 
-      expect(perfilRepository.actualizar.mock.calls[0][1].limiteColaboraciones).toBe(4);
+      expect(
+        perfilRepository.actualizar.mock.calls[0][1].limiteColaboraciones,
+      ).toBe(4);
       expect(resultado.limiteColaboraciones).toBe(4);
     });
 

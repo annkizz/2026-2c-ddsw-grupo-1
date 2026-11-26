@@ -5,7 +5,7 @@ import {
   webhookCrearSchema,
 } from "../controllers/WebhookController.js";
 
-// /colectivos/:idColectivo/webhooks 
+// /colectivos/:idColectivo/webhooks
 export function crearWebhookRouter(webhookController) {
   const router = express.Router({ mergeParams: true });
 

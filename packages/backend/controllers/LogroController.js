@@ -19,16 +19,22 @@ export class LogroController {
   }
 
   crear = async (req, res) => {
-    const nuevo = await this.logroService.crear(req.params.idProyecto, req.body, req.usuario);
+    const nuevo = await this.logroService.crear(
+      req.params.idProyecto,
+      req.body,
+      req.usuario,
+    );
     res.status(201).json(nuevo);
   };
 
   publicarEnLinkedin = async (req, res) => {
-      const logro = await this.logroService.publicarEnLinkedin(
-        req.params.idProyecto, req.params.id, req.usuario,
-      );
-      res.status(200).json(logro);
-    };
+    const logro = await this.logroService.publicarEnLinkedin(
+      req.params.idProyecto,
+      req.params.id,
+      req.usuario,
+    );
+    res.status(200).json(logro);
+  };
 
   obtenerPorProyecto = async (req, res) => {
     const logros = await this.logroService.obtenerPorProyecto(

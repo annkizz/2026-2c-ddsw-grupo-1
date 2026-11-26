@@ -1,8 +1,14 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Card, CardContent } from '@mui/material';
+import React from "react";
+import PropTypes from "prop-types";
+import { Card, CardContent } from "@mui/material";
 
-const DashboardCard = ({ className = '', icon, title, description, children }) => (
+const DashboardCard = ({
+  className = "",
+  icon,
+  title,
+  description,
+  children,
+}) => (
   <Card className={`dashboard-card ${className}`.trim()}>
     <CardContent>
       {icon && (

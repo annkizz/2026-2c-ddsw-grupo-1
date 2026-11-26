@@ -102,9 +102,9 @@ describe("MatchingService con al menos una habilidad requerida", () => {
 
     await service.recalcularTodas();
 
-    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(
+      proyectoRepository.obtenerAbiertosParaMatching,
+    ).toHaveBeenCalledTimes(1);
     expect(perfilRepository.obtenerPorProyectos).not.toHaveBeenCalled();
     expect(matchingCacheRepository.guardar).toHaveBeenCalledTimes(2);
   });

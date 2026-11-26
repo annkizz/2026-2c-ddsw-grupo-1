@@ -3,7 +3,7 @@ import { BlockList, isIP } from "node:net";
 import { BadRequestError } from "../../errors/AppError.js";
 
 // Protección contra SSRF: el servidor hace requests a una URL que elige un usuario,
-// así que no puede dejarlo apuntar a la red interna 
+// así que no puede dejarlo apuntar a la red interna
 const CODIGO = "WEBHOOK_URL_NO_PERMITIDA";
 
 const bloqueadas = new BlockList();
@@ -53,7 +53,10 @@ export function validarFormatoDeUrl(texto, env = process.env) {
   }
 
   const permitirHttp = env.WEBHOOKS_PERMITIR_HTTP === "true";
-  if (url.protocol !== "https:" && !(permitirHttp && url.protocol === "http:")) {
+  if (
+    url.protocol !== "https:" &&
+    !(permitirHttp && url.protocol === "http:")
+  ) {
     rechazar("la URL del webhook debe usar https");
   }
   if (url.username || url.password) {
@@ -71,7 +74,6 @@ export function validarFormatoDeUrl(texto, env = process.env) {
   }
   return url;
 }
-
 
 export async function validarDestinoSeguro(texto, env = process.env) {
   const url = validarFormatoDeUrl(texto, env);
@@ -96,7 +98,6 @@ export async function validarDestinoSeguro(texto, env = process.env) {
   }
   return url;
 }
-
 
 export function enmascararUrl(texto) {
   try {

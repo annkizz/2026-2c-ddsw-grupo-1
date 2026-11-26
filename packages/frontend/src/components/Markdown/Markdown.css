@@ -71,7 +71,7 @@
   padding: 1px 6px;
   border-radius: var(--radius-sm);
   background: var(--color-surface-alt);
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 0.9em;
 }
 

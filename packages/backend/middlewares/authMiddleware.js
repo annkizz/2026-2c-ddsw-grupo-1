@@ -43,7 +43,8 @@ export function crearVerificadorLogto(env = process.env, crearJwks) {
         mensaje = "la firma del token no coincide con las claves de Logto";
       } else if (error.code === "ERR_JWKS_NO_MATCHING_KEY") {
         codigo = "CLAVE_LOGTO_NO_ENCONTRADA";
-        mensaje = "no se encontro la clave de firma del token en el JWKS de Logto";
+        mensaje =
+          "no se encontro la clave de firma del token en el JWKS de Logto";
       } else if (
         error.code === "ERR_JWT_INVALID" ||
         error.code === "ERR_JWS_INVALID"
@@ -52,10 +53,7 @@ export function crearVerificadorLogto(env = process.env, crearJwks) {
         mensaje = "el token recibido no tiene un formato JWT valido";
       }
 
-      throw new UnauthorizedError(
-        mensaje,
-        codigo,
-      );
+      throw new UnauthorizedError(mensaje, codigo);
     }
   };
 }
@@ -78,9 +76,16 @@ function extraerToken(authorization) {
 }
 
 // Deja en req.usuario al usuario local (lo crea la primera vez que lo ve).
-export function crearAutenticar(usuarioRepository, verificarToken, env = process.env) {
+export function crearAutenticar(
+  usuarioRepository,
+  verificarToken,
+  env = process.env,
+) {
   const idsAdministradores = new Set(
-    (env.LOGTO_ADMIN_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean),
+    (env.LOGTO_ADMIN_IDS ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean),
   );
 
   return async (req, res, next) => {
@@ -94,7 +99,10 @@ export function crearAutenticar(usuarioRepository, verificarToken, env = process
     if (idsAdministradores.has(payload.sub) && !usuario.rol) {
       usuario =
         (await usuarioRepository.asignarRol(usuario._id, Rol.ADMINISTRADOR)) ??
-        (await usuarioRepository.buscarOCrearPorLogtoId(payload.sub, payload.username));
+        (await usuarioRepository.buscarOCrearPorLogtoId(
+          payload.sub,
+          payload.username,
+        ));
     }
 
     req.usuario = usuario;

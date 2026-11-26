@@ -10,7 +10,10 @@ export class CambioMatchingRepository {
     return this.model
       .updateOne(
         { tipo, idEntidad },
-        { $set: { idProyecto, actualizadoEn: ahora }, $setOnInsert: { registradoEn: ahora } },
+        {
+          $set: { idProyecto, actualizadoEn: ahora },
+          $setOnInsert: { registradoEn: ahora },
+        },
         { upsert: true },
       )
       .exec();
@@ -24,6 +27,8 @@ export class CambioMatchingRepository {
   // queda en la cola para el próximo lote.
   eliminarProcesados(ids, hasta) {
     if (ids.length === 0) return Promise.resolve();
-    return this.model.deleteMany({ _id: { $in: ids }, actualizadoEn: { $lte: hasta } }).exec();
+    return this.model
+      .deleteMany({ _id: { $in: ids }, actualizadoEn: { $lte: hasta } })
+      .exec();
   }
 }

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Logro } from "../domain/Logro.js";
-import { publicacionSchema } from "./publicacionSchema.js"
+import { publicacionSchema } from "./publicacionSchema.js";
 
 const logroSchema = new mongoose.Schema(
   {
@@ -13,9 +13,9 @@ const logroSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    publicacionLinkedin: { 
-      type: publicacionSchema, 
-      default: undefined 
+    publicacionLinkedin: {
+      type: publicacionSchema,
+      default: undefined,
     },
   },
   { timestamps: true, collection: "logros" },

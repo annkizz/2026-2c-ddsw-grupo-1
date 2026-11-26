@@ -53,7 +53,10 @@ describe("verificador de tokens de Logto", () => {
     for (const [token, codigo] of [
       [await firmar({ exp: "-1m" }), "TOKEN_VENCIDO"],
       [await firmar({ issuer: "https://otro/oidc" }), "TOKEN_EMISOR_INVALIDO"],
-      [await firmar({ audience: "https://otra-api" }), "TOKEN_AUDIENCIA_INVALIDA"],
+      [
+        await firmar({ audience: "https://otra-api" }),
+        "TOKEN_AUDIENCIA_INVALIDA",
+      ],
       [await firmar({ key: otraClave }), "TOKEN_FIRMA_INVALIDA"],
       [await firmar({ kid: "unknown" }), "CLAVE_LOGTO_NO_ENCONTRADA"],
       ["esto.no.es-un-jwt", "TOKEN_FORMATO_INVALIDO"],

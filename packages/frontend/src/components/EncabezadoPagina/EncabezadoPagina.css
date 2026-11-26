@@ -10,7 +10,7 @@
   text-underline-offset: var(--underline-offset);
 }
 
-.encabezado-pagina__migas [aria-current='page'] {
+.encabezado-pagina__migas [aria-current="page"] {
   color: var(--color-muted);
 }
 
@@ -46,7 +46,7 @@
 }
 
 .encabezado-pagina__antetitulo::before {
-  content: '';
+  content: "";
   width: var(--space-3);
   height: var(--indicator-height);
   border-radius: var(--radius-pill);

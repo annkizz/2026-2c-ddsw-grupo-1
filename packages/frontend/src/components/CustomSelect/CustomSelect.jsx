@@ -2,7 +2,11 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { IconButton, InputBase } from "@mui/material";
 import { FiAlertCircle, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
-import { ETIQUETA_MAX, etiquetaLegible, normalizarEtiqueta } from "../../utils/etiquetas";
+import {
+  ETIQUETA_MAX,
+  etiquetaLegible,
+  normalizarEtiqueta,
+} from "../../utils/etiquetas";
 import { t } from "../../i18n/t";
 import "./CustomSelect.css";
 
@@ -28,11 +32,11 @@ export default function CustomSelect({
   multiple = false,
   onSeleccionar,
   onQuitar,
-  placeholder = t('selector.buscar'),
-  textoVacio = t('selector.sinOpciones'),
+  placeholder = t("selector.buscar"),
+  textoVacio = t("selector.sinOpciones"),
   permiteCrear = false,
   maxSeleccion = Infinity,
-  textoCrear = t('selector.crearEtiqueta'),
+  textoCrear = t("selector.crearEtiqueta"),
   className = "",
   ayuda,
   error,
@@ -52,13 +56,15 @@ export default function CustomSelect({
 
   const seleccionadas = useMemo(
     () =>
-      seleccion.filter((valor) => valor !== "" && valor != null).map(
-        (valor) =>
-          opcionesNormalizadas.find((opcion) => opcion.valor === valor) ?? {
-            valor,
-            etiqueta: creadas[valor] ?? etiquetaLegible(valor),
-          },
-      ),
+      seleccion
+        .filter((valor) => valor !== "" && valor != null)
+        .map(
+          (valor) =>
+            opcionesNormalizadas.find((opcion) => opcion.valor === valor) ?? {
+              valor,
+              etiqueta: creadas[valor] ?? etiquetaLegible(valor),
+            },
+        ),
     [creadas, opcionesNormalizadas, seleccion],
   );
 
@@ -77,7 +83,7 @@ export default function CustomSelect({
     () => (permiteCrear ? normalizarEtiqueta(consulta) : ""),
     [consulta, permiteCrear],
   );
-  //x si no existe 
+  //x si no existe
   const opcionNueva = useMemo(() => {
     const texto = consulta.trim();
     if (!permiteCrear || texto === "" || codigoNuevo === "") return null;
@@ -103,7 +109,6 @@ export default function CustomSelect({
     permiteCrear,
     seleccion,
   ]);
-
 
   const opcionCoincidente = useMemo(() => {
     if (consulta.trim() === "" || codigoNuevo === "") return null;
@@ -185,18 +190,23 @@ export default function CustomSelect({
 
   const idAyuda = ayuda ? `${id}-ayuda` : undefined;
   const idError = error ? `${id}-error` : undefined;
-  const describidoPor = [idError, idAyuda].filter(Boolean).join(" ") || undefined;
+  const describidoPor =
+    [idError, idAyuda].filter(Boolean).join(" ") || undefined;
 
   return (
     <div
-      className={["selector", error ? "selector--error" : "", className].filter(Boolean).join(" ")}
+      className={["selector", error ? "selector--error" : "", className]
+        .filter(Boolean)
+        .join(" ")}
       onBlur={alPerderFoco}
     >
       <label className="selector__label" htmlFor={id}>
         {etiqueta}
       </label>
 
-      <div className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}>
+      <div
+        className={`selector__caja${abierto ? " selector__caja--abierto" : ""}`}
+      >
         <InputBase
           className="selector__input"
           value={consulta}
@@ -213,7 +223,9 @@ export default function CustomSelect({
             "aria-expanded": abierto,
             "aria-controls": `${id}-lista`,
             "aria-activedescendant":
-              abierto && visibles[indiceActivo] ? `${id}-opcion-${indiceActivo}` : undefined,
+              abierto && visibles[indiceActivo]
+                ? `${id}-opcion-${indiceActivo}`
+                : undefined,
             "aria-invalid": error ? true : undefined,
             "aria-describedby": describidoPor,
             autoComplete: "off",
@@ -235,7 +247,14 @@ export default function CustomSelect({
       )}
 
       {seleccionadas.length > 0 && (
-        <ul className="selector__seleccion" aria-live="polite" aria-label={t('selector.elegidasEn', { campo: typeof etiqueta === "string" ? etiqueta : t('selector.esteCampo') })}>
+        <ul
+          className="selector__seleccion"
+          aria-live="polite"
+          aria-label={t("selector.elegidasEn", {
+            campo:
+              typeof etiqueta === "string" ? etiqueta : t("selector.esteCampo"),
+          })}
+        >
           {seleccionadas.map((opcion) => (
             <li key={opcion.valor} className="selector__seleccionada">
               <span>{opcion.etiqueta}</span>
@@ -243,7 +262,7 @@ export default function CustomSelect({
                 <IconButton
                   type="button"
                   className="selector__quitar"
-                  aria-label={t('selector.quitar', { opcion: opcion.etiqueta })}
+                  aria-label={t("selector.quitar", { opcion: opcion.etiqueta })}
                   onClick={() => (onQuitar ?? onSeleccionar)?.(opcion.valor)}
                 >
                   <FiX aria-hidden="true" />
@@ -263,7 +282,9 @@ export default function CustomSelect({
         >
           {visibles.length === 0 ? (
             <li className="selector__vacio">
-              {alcanzoMaximo && permiteCrear ? t('selector.maximo', { cantidad: maxSeleccion }) : textoVacio}
+              {alcanzoMaximo && permiteCrear
+                ? t("selector.maximo", { cantidad: maxSeleccion })
+                : textoVacio}
             </li>
           ) : (
             visibles.map((opcion, indice) => {
@@ -287,10 +308,16 @@ export default function CustomSelect({
                   ) : (
                     <>
                       <span>{opcion.etiqueta}</span>
-                      {opcion.secundario && <span className="selector__secundario">{opcion.secundario}</span>}
+                      {opcion.secundario && (
+                        <span className="selector__secundario">
+                          {opcion.secundario}
+                        </span>
+                      )}
                     </>
                   )}
-                  {activa && <FiCheck className="selector__tilde" aria-hidden="true" />}
+                  {activa && (
+                    <FiCheck className="selector__tilde" aria-hidden="true" />
+                  )}
                 </li>
               );
             })

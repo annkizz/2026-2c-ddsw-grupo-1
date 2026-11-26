@@ -23,7 +23,7 @@ export function crearNotificacionRouter(notificacionController) {
     .get(requerirRol(Rol.COLECTIVO, Rol.COLABORADOR), (req, res) =>
       notificacionController.obtenerPorId(req, res),
     );
-  
+
   router
     .route("/colaboradora/:id")
     .get(requerirRol(Rol.COLABORADOR), (req, res) =>

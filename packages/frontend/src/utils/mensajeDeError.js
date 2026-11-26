@@ -1,19 +1,20 @@
-import { t } from '../i18n/t';
+import { t } from "../i18n/t";
 
 // Clasifica un error (de axios u otro) sin mostrar nunca el texto del backend,
 // error.message ni códigos internos. Cada tipo tiene su texto en es.json (errores.*).
 export const TIPOS_ERROR = {
-  sinConexion: 'sinConexion',
-  sesionVencida: 'sesionVencida',
-  sinPermisos: 'sinPermisos',
-  noEncontrado: 'noEncontrado',
-  validacion: 'validacion',
-  conflicto: 'conflicto',
-  servidor: 'servidor',
-  inesperado: 'inesperado'
+  sinConexion: "sinConexion",
+  sesionVencida: "sesionVencida",
+  sinPermisos: "sinPermisos",
+  noEncontrado: "noEncontrado",
+  validacion: "validacion",
+  conflicto: "conflicto",
+  servidor: "servidor",
+  inesperado: "inesperado",
 };
 
-const estaOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+const estaOffline = () =>
+  typeof navigator !== "undefined" && navigator.onLine === false;
 
 export const clasificarError = (error) => {
   if (!error) return TIPOS_ERROR.inesperado;
@@ -22,9 +23,9 @@ export const clasificarError = (error) => {
   const status = error.response?.status;
   if (!status) {
     const esDeRed =
-      error.code === 'ERR_NETWORK' ||
-      error.code === 'ECONNABORTED' ||
-      error.message === 'Network Error' ||
+      error.code === "ERR_NETWORK" ||
+      error.code === "ECONNABORTED" ||
+      error.message === "Network Error" ||
       Boolean(error.request);
     return esDeRed ? TIPOS_ERROR.sinConexion : TIPOS_ERROR.inesperado;
   }
@@ -41,7 +42,9 @@ export const clasificarError = (error) => {
 // "no autorizado" genérico. Nunca se muestra el texto ni el código interno del backend.
 export const codigoHttp = (error) => {
   const status = error?.response?.status;
-  return Number.isInteger(status) && status >= 400 && status <= 599 ? status : null;
+  return Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : null;
 };
 
 // { tipo, mensaje, accion, codigo } donde accion es 'iniciarSesion', 'reintentar' o null.
@@ -50,9 +53,14 @@ export const describirError = (error) => {
   const codigo = codigoHttp(error);
   const accion =
     tipo === TIPOS_ERROR.sesionVencida
-      ? 'iniciarSesion'
-      : [TIPOS_ERROR.sinConexion, TIPOS_ERROR.servidor, TIPOS_ERROR.inesperado, TIPOS_ERROR.conflicto].includes(tipo)
-        ? 'reintentar'
+      ? "iniciarSesion"
+      : [
+            TIPOS_ERROR.sinConexion,
+            TIPOS_ERROR.servidor,
+            TIPOS_ERROR.inesperado,
+            TIPOS_ERROR.conflicto,
+          ].includes(tipo)
+        ? "reintentar"
         : null;
   return { tipo, mensaje: t(`errores.${tipo}`), accion, codigo };
 };
@@ -61,7 +69,9 @@ export const describirError = (error) => {
 // se antepone a la explicación del tipo de error.
 export const mensajeDeError = (error, contexto) => {
   const { mensaje, codigo } = describirError(error);
-  const conCodigo = codigo ? `${mensaje} (${t('errores.etiquetaCodigo', { codigo })})` : mensaje;
+  const conCodigo = codigo
+    ? `${mensaje} (${t("errores.etiquetaCodigo", { codigo })})`
+    : mensaje;
   return contexto ? `${contexto} ${conCodigo}` : conCodigo;
 };
 

@@ -63,7 +63,13 @@ const notificacionSchema = new mongoose.Schema(
 
 notificacionSchema.index(
   { idProyecto: 1, idPerfil: 1, idColaborador: 1 },
-  { unique: true, partialFilterExpression: { tipo: "INVITACION_PROYECTO", estadoInvitacion: "PENDIENTE" } },
+  {
+    unique: true,
+    partialFilterExpression: {
+      tipo: "INVITACION_PROYECTO",
+      estadoInvitacion: "PENDIENTE",
+    },
+  },
 );
 
 notificacionSchema.index(

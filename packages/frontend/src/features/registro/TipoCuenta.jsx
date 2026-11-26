@@ -1,27 +1,34 @@
-import { t } from '../../i18n/t';
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
-import { Alert, Card, CardActionArea, DialogContent, DialogTitle, IconButton } from '@mui/material';
-import { FiArrowRight, FiCode, FiUsers, FiX } from 'react-icons/fi';
-import Dialogo from '../../components/Dialogo/Dialogo.jsx';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import { guardarTipo, rutaDeRegistro } from './tipoElegido';
-import './TipoCuenta.css';
+import { t } from "../../i18n/t";
+import React from "react";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
+import {
+  Alert,
+  Card,
+  CardActionArea,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
+import { FiArrowRight, FiCode, FiUsers, FiX } from "react-icons/fi";
+import Dialogo from "../../components/Dialogo/Dialogo.jsx";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import { guardarTipo, rutaDeRegistro } from "./tipoElegido";
+import "./TipoCuenta.css";
 
 const OPCIONES = [
   {
-    tipo: 'colaboradora',
+    tipo: "colaboradora",
     Icono: FiCode,
-    titulo: 'registro.personaColaboradora',
-    detalle: 'registro.detalleColaboradora'
+    titulo: "registro.personaColaboradora",
+    detalle: "registro.detalleColaboradora",
   },
   {
-    tipo: 'colectivo',
+    tipo: "colectivo",
     Icono: FiUsers,
-    titulo: 'registro.representoColectivo',
-    detalle: 'registro.detalleColectivo'
-  }
+    titulo: "registro.representoColectivo",
+    detalle: "registro.detalleColectivo",
+  },
 ];
 
 // Pantalla "Tipo de cuenta".
@@ -34,7 +41,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
     if (onCerrar) {
       onCerrar();
     } else {
-      navigate('/');
+      navigate("/");
     }
   };
 
@@ -49,7 +56,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
 
   const opciones = (
     <div className="tipo-cuenta">
-      <p className="texto-secundario">{t('registro.comoSumarte')}</p>
+      <p className="texto-secundario">{t("registro.comoSumarte")}</p>
       {OPCIONES.map(({ tipo, Icono, titulo, detalle }) => (
         <Card key={tipo} className="tipo-cuenta-opcion">
           <CardActionArea onClick={() => elegir(tipo)}>
@@ -64,7 +71,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
           </CardActionArea>
         </Card>
       ))}
-      <Alert severity="info">{t('registro.elegiLaOpcionQueMejor')}</Alert>
+      <Alert severity="info">{t("registro.elegiLaOpcionQueMejor")}</Alert>
     </div>
   );
 
@@ -72,9 +79,12 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
     return (
       <div className="contenedor-pagina contenedor-pagina--lectura">
         <EncabezadoPagina
-          titulo={t('inicio.crearCuenta')}
-          subtitulo={t('registro.paso1ElegiElTipo')}
-          migas={[{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('inicio.crearCuenta') }]}
+          titulo={t("inicio.crearCuenta")}
+          subtitulo={t("registro.paso1ElegiElTipo")}
+          migas={[
+            { texto: t("navegacion.inicio"), to: "/" },
+            { texto: t("inicio.crearCuenta") },
+          ]}
         />
         {opciones}
       </div>
@@ -83,9 +93,12 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
 
   return (
     <Dialogo open onClose={cerrar} aria-labelledby="tipo-cuenta-titulo">
-      <DialogTitle id="tipo-cuenta-titulo" className="dialogo-titulo-con-cierre">
-        <span>{t('inicio.crearCuenta')}</span>
-        <IconButton aria-label={t('proyectos.cerrar')} onClick={cerrar}>
+      <DialogTitle
+        id="tipo-cuenta-titulo"
+        className="dialogo-titulo-con-cierre"
+      >
+        <span>{t("inicio.crearCuenta")}</span>
+        <IconButton aria-label={t("proyectos.cerrar")} onClick={cerrar}>
           <FiX aria-hidden="true" />
         </IconButton>
       </DialogTitle>
@@ -96,7 +109,7 @@ const TipoCuenta = ({ onElegir, onCerrar }) => {
 
 TipoCuenta.propTypes = {
   onElegir: PropTypes.func,
-  onCerrar: PropTypes.func
+  onCerrar: PropTypes.func,
 };
 
 export default TipoCuenta;

@@ -45,18 +45,29 @@ export class NotificacionRepository {
   }
 
   cambiarEstadoInvitacion(id, idColaborador, estadoActual, estadoNuevo) {
-    return this.model.findOneAndUpdate(
-      { _id: id, idColaborador, tipo: "INVITACION_PROYECTO", estadoInvitacion: estadoActual },
-      { $set: { estadoInvitacion: estadoNuevo } },
-      { returnDocument: "after", runValidators: true },
-    ).exec();
+    return this.model
+      .findOneAndUpdate(
+        {
+          _id: id,
+          idColaborador,
+          tipo: "INVITACION_PROYECTO",
+          estadoInvitacion: estadoActual,
+        },
+        { $set: { estadoInvitacion: estadoNuevo } },
+        { returnDocument: "after", runValidators: true },
+      )
+      .exec();
   }
 
   // Solo agrega el resultado de los envíos externos: no pisa otros campos que hayan cambiado
   // mientras se mandaba el mail (por ejemplo, el estado de una invitación ya respondida).
   registrarEnvios(id, envios) {
     return this.model
-      .findByIdAndUpdate(id, { $set: { envios } }, { returnDocument: "after", runValidators: true })
+      .findByIdAndUpdate(
+        id,
+        { $set: { envios } },
+        { returnDocument: "after", runValidators: true },
+      )
       .exec();
   }
 

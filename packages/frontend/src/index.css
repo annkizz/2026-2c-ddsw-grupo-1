@@ -89,17 +89,27 @@ a:hover {
 }
 
 /* Foco visible y consistente: anillo de 3px (forma, no solo color) */
-:where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
+:where(
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role="button"],
+  [tabindex]
+):focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-offset);
 }
 
 /* Sobre superficies oscuras el anillo pasa a naranja claro */
-.superficie-primaria :where(a, button, [role='button'], [tabindex]):focus-visible {
+.superficie-primaria
+  :where(a, button, [role="button"], [tabindex]):focus-visible {
   outline-color: var(--color-focus-on-dark);
 }
 
-[tabindex='-1']:focus {
+[tabindex="-1"]:focus {
   outline: none;
 }
 
@@ -255,7 +265,9 @@ a:hover {
 
 .medios-fila {
   display: grid;
-  grid-template-columns: calc(var(--space-10) * 2.4) minmax(0, 1fr) var(--control-min-height);
+  grid-template-columns: calc(var(--space-10) * 2.4) minmax(0, 1fr) var(
+      --control-min-height
+    );
   align-items: start;
   gap: var(--space-2);
 }
@@ -433,10 +445,10 @@ a:hover {
   background: var(--color-primary-tint);
 }
 
-.lateral-nav__item[aria-current='true'],
-.lateral-nav__item[aria-current='page'],
-.lateral-nav__item[aria-current='location'],
-.lateral-nav__item[aria-selected='true'] {
+.lateral-nav__item[aria-current="true"],
+.lateral-nav__item[aria-current="page"],
+.lateral-nav__item[aria-current="location"],
+.lateral-nav__item[aria-selected="true"] {
   background: var(--color-secondary-tint);
   box-shadow: inset var(--indicator-height) 0 0 var(--color-secondary);
   font-weight: var(--font-weight-bold);
@@ -536,7 +548,6 @@ a:hover {
   background: var(--color-accent);
   color: var(--color-on-accent);
 }
-
 
 .insignia--error {
   gap: 4px;

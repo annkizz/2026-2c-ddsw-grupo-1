@@ -66,7 +66,6 @@ export class PerfilService {
       datos.compromiso,
       datos.limiteColaboraciones ?? null,
       datos.tipoAceptacion,
-
     );
 
     const guardado = await this.perfilRepository.save(perfilNuevo, idProyecto);
@@ -77,7 +76,10 @@ export class PerfilService {
     );
     // No se recalcula en el momento: se anota y lo procesa la tarea programada en lote.
     if (this.matchingService) {
-      await this.matchingService.registrarCambioPerfil(String(guardado.id), idProyecto);
+      await this.matchingService.registrarCambioPerfil(
+        String(guardado.id),
+        idProyecto,
+      );
     }
     return this.toDTO(guardado);
   }
@@ -145,7 +147,9 @@ export class PerfilService {
     }
 
     const colectivo = usuario
-      ? await this.colectivoRepository.buscarPorUsuario(usuario._id ?? usuario.id)
+      ? await this.colectivoRepository.buscarPorUsuario(
+          usuario._id ?? usuario.id,
+        )
       : null;
     if (
       !colectivo ||
@@ -190,5 +194,4 @@ export class PerfilService {
       return habilidad;
     });
   }
-
 }

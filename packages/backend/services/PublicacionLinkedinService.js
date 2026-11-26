@@ -10,7 +10,11 @@ const RESERVADOS = /[\\|{}@[\]()<>#*_~]/g;
 const escapar = (texto, max) => texto.slice(0, max).replace(RESERVADOS, "\\$&");
 
 export class PublicacionLinkedinService {
-  constructor(conexionService, cliente = new LinkedinClient(), config = process.env) {
+  constructor(
+    conexionService,
+    cliente = new LinkedinClient(),
+    config = process.env,
+  ) {
     this.conexionService = conexionService;
     this.cliente = cliente;
     this.config = config;
@@ -48,7 +52,9 @@ export class PublicacionLinkedinService {
       );
       return { estado: EstadoEnvio.ENVIADO, fecha, urnPost };
     } catch (error) {
-      console.error(`[linkedin] falló la publicación (${error.status ?? error.name})`);
+      console.error(
+        `[linkedin] falló la publicación (${error.status ?? error.name})`,
+      );
       return {
         estado: EstadoEnvio.FALLIDO,
         fecha,

@@ -57,13 +57,23 @@ describe("Dominio - Proyecto", () => {
 
     it("se cierra cuando pasó la fecha límite", () => {
       expect(
-        crear(null, "ACTIVO", true, haceUnaHora()).busquedaDeColaboracionesAbierta(),
+        crear(
+          null,
+          "ACTIVO",
+          true,
+          haceUnaHora(),
+        ).busquedaDeColaboracionesAbierta(),
       ).toBe(false);
     });
 
     it("sigue abierta antes de la fecha límite", () => {
       expect(
-        crear(null, "ACTIVO", true, enUnaHora()).busquedaDeColaboracionesAbierta(),
+        crear(
+          null,
+          "ACTIVO",
+          true,
+          enUnaHora(),
+        ).busquedaDeColaboracionesAbierta(),
       ).toBe(true);
     });
   });
@@ -143,7 +153,7 @@ describe("Dominio - Proyecto", () => {
     });
   });
 
-    describe("búsqueda de colaboraciones", () => {
+  describe("búsqueda de colaboraciones", () => {
     const conBusqueda = (
       busquedaAbierta,
       fechaLimiteBusqueda = null,
@@ -218,7 +228,10 @@ describe("Dominio - Proyecto", () => {
     it("editarDatos cambia título y descripción y deja lo demás igual", () => {
       const proyecto = crear();
 
-      proyecto.editarDatos({ titulo: "Nuevo", descripcion: "Nueva descripción" });
+      proyecto.editarDatos({
+        titulo: "Nuevo",
+        descripcion: "Nueva descripción",
+      });
 
       expect(proyecto.titulo).toBe("Nuevo");
       expect(proyecto.descripcion).toBe("Nueva descripción");
@@ -242,7 +255,10 @@ describe("Dominio - Proyecto", () => {
       const proyecto = crear();
       proyecto.etiquetas = ["salud"];
 
-      proyecto.editarDatos({ titulo: "Nuevo", descripcion: "Nueva descripción" });
+      proyecto.editarDatos({
+        titulo: "Nuevo",
+        descripcion: "Nueva descripción",
+      });
 
       expect(proyecto.etiquetas).toEqual(["salud"]);
     });

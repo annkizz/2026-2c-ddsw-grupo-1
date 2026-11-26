@@ -26,8 +26,7 @@ export class Perfil {
 
   tieneVacantes(colaboracionesActivas) {
     return (
-      !this.tieneLimite() ||
-      colaboracionesActivas < this.limiteColaboraciones
+      !this.tieneLimite() || colaboracionesActivas < this.limiteColaboraciones
     );
   }
 }

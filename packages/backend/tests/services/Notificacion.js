@@ -13,7 +13,10 @@ const ID_OTRA_COLABORADORA = "b00000000000000000000002";
 
 // El servicio decide los permisos por el rol del usuario autenticado.
 const USUARIO_COLECTIVO = { _id: ID_USUARIO_COLECTIVO, rol: "COLECTIVO" };
-const USUARIO_COLABORADORA = { _id: ID_USUARIO_COLABORADORA, rol: "COLABORADOR" };
+const USUARIO_COLABORADORA = {
+  _id: ID_USUARIO_COLABORADORA,
+  rol: "COLABORADOR",
+};
 
 describe("NotificacionService", () => {
   let notificacionRepository;

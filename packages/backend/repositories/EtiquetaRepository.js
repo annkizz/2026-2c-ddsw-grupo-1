@@ -2,10 +2,7 @@ import { ProyectoModel } from "../schemas/proyectoSchema.js";
 import { ColectivoModel } from "../schemas/colectivoSchema.js";
 
 export class EtiquetaRepository {
-  constructor(
-    proyectoModel = ProyectoModel,
-    colectivoModel = ColectivoModel,
-  ) {
+  constructor(proyectoModel = ProyectoModel, colectivoModel = ColectivoModel) {
     this.proyectoModel = proyectoModel;
     this.colectivoModel = colectivoModel;
   }

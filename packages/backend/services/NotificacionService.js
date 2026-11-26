@@ -14,8 +14,10 @@ import { NotificadorExterno } from "./notificadores/NotificadorExterno.js";
 const ASUNTOS_EVENTOS = {
   [TipoNotificacion.INVITACION_PROYECTO]: (colectivo) =>
     `${colectivo?.nombre ?? "Un colectivo"} te invita a colaborar en Código a Voluntad`,
-  [TipoNotificacion.POSTULACION_ACEPTADA]: () => "Aceptaron tu postulación en Código a Voluntad",
-  [TipoNotificacion.POSTULACION_RECHAZADA]: () => "Novedades sobre tu postulación en Código a Voluntad",
+  [TipoNotificacion.POSTULACION_ACEPTADA]: () =>
+    "Aceptaron tu postulación en Código a Voluntad",
+  [TipoNotificacion.POSTULACION_RECHAZADA]: () =>
+    "Novedades sobre tu postulación en Código a Voluntad",
 };
 
 export class NotificacionService {
@@ -48,7 +50,9 @@ export class NotificacionService {
       ...(notificacion.idPostulacion && {
         idPostulacion: String(notificacion.idPostulacion),
       }),
-      ...(notificacion.estadoInvitacion && { estadoInvitacion: notificacion.estadoInvitacion }),
+      ...(notificacion.estadoInvitacion && {
+        estadoInvitacion: notificacion.estadoInvitacion,
+      }),
       ...(nombres.nombreColectivo && {
         nombreColectivo: nombres.nombreColectivo,
       }),
@@ -127,7 +131,10 @@ export class NotificacionService {
     return Promise.all(
       (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
         try {
-          const resultado = await this.notificadorExterno.enviar(medio, mensaje);
+          const resultado = await this.notificadorExterno.enviar(
+            medio,
+            mensaje,
+          );
           const detalle =
             resultado.estado === EstadoEnvio.FALLIDO
               ? "No se pudo completar el envío por este medio."
@@ -192,7 +199,8 @@ export class NotificacionService {
       idColaborador: colaboradora._id,
     });
 
-    const guardadaInicial = await this.notificacionRepository.save(notificacion);
+    const guardadaInicial =
+      await this.notificacionRepository.save(notificacion);
     notificacion.id = guardadaInicial.id ?? guardadaInicial._id;
 
     const mensaje = this.construirMensaje(colectivo, notificacion.contenido);
@@ -221,17 +229,32 @@ export class NotificacionService {
   async replicarEvento(guardada) {
     if (!ASUNTOS_EVENTOS[guardada.tipo] || !guardada.idColaborador) return null;
     try {
-      const colaboradora = await this.colaboradorRepository.buscarPorId(guardada.idColaborador);
-      if (!colaboradora?.aceptaMensajeria || !(colaboradora.mediosDeContacto ?? []).length) return null;
+      const colaboradora = await this.colaboradorRepository.buscarPorId(
+        guardada.idColaborador,
+      );
+      if (
+        !colaboradora?.aceptaMensajeria ||
+        !(colaboradora.mediosDeContacto ?? []).length
+      )
+        return null;
 
       const colectivo = guardada.idColectivo
         ? await this.colectivoRepository.buscarPorId(guardada.idColectivo)
         : null;
-      const mensaje = this.construirMensajeEvento(guardada.tipo, colectivo, guardada.contenido);
+      const mensaje = this.construirMensajeEvento(
+        guardada.tipo,
+        colectivo,
+        guardada.contenido,
+      );
       const envios = await this.enviarPorMediosExternos(colaboradora, mensaje);
-      return await this.notificacionRepository.registrarEnvios(guardada._id ?? guardada.id, envios);
+      return await this.notificacionRepository.registrarEnvios(
+        guardada._id ?? guardada.id,
+        envios,
+      );
     } catch (error) {
-      console.error(`[notificaciones] No se pudo replicar el aviso ${guardada.tipo} (${error.name}).`);
+      console.error(
+        `[notificaciones] No se pudo replicar el aviso ${guardada.tipo} (${error.name}).`,
+      );
       return null;
     }
   }
@@ -306,7 +329,10 @@ export class NotificacionService {
         );
       }
       return {
-        filtro: { idColaborador: colaborador._id, tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA } },
+        filtro: {
+          idColaborador: colaborador._id,
+          tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA },
+        },
         idPropiedad: "idColaborador",
         idPerfil: colaborador._id,
       };
@@ -339,9 +365,8 @@ export class NotificacionService {
         "ROL_NO_PERMITIDO",
       );
     }
-    const colaboradora = await this.colaboradorRepository.buscarPorId(
-      idColaboradora,
-    );
+    const colaboradora =
+      await this.colaboradorRepository.buscarPorId(idColaboradora);
     if (!colaboradora || String(colaboradora.usuario) !== String(usuario._id)) {
       throw new NotFoundError(
         "No se encontró la persona colaboradora",
@@ -350,7 +375,10 @@ export class NotificacionService {
     }
 
     const resultado = await this.notificacionRepository.obtenerTodosPaginado(
-      { idColaborador: colaboradora._id, tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA } },
+      {
+        idColaborador: colaboradora._id,
+        tipo: { $ne: TipoNotificacion.POSTULACION_RECIBIDA },
+      },
       pag,
       limite,
     );
@@ -366,12 +394,14 @@ export class NotificacionService {
     if (
       !notificacion ||
       String(notificacion[idPropiedad]) !== String(idPerfil) ||
-      (usuario.rol === Rol.COLABORADOR && notificacion.tipo === TipoNotificacion.POSTULACION_RECIBIDA) ||
-      (usuario.rol === Rol.COLECTIVO && [
-        TipoNotificacion.POSTULACION_ACEPTADA,
-        TipoNotificacion.POSTULACION_RECHAZADA,
-        TipoNotificacion.INVITACION_PROYECTO,
-      ].includes(notificacion.tipo))
+      (usuario.rol === Rol.COLABORADOR &&
+        notificacion.tipo === TipoNotificacion.POSTULACION_RECIBIDA) ||
+      (usuario.rol === Rol.COLECTIVO &&
+        [
+          TipoNotificacion.POSTULACION_ACEPTADA,
+          TipoNotificacion.POSTULACION_RECHAZADA,
+          TipoNotificacion.INVITACION_PROYECTO,
+        ].includes(notificacion.tipo))
     ) {
       throw new NotFoundError(
         "No se encontró la notificación",

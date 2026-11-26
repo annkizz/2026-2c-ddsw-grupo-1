@@ -75,7 +75,10 @@ describe("Proyectos destacados con MongoDB", () => {
     const pasado = new Date(Date.now() - 60 * 60 * 1000);
     const vigente = crearProyecto({ destacado: true, destacadoHasta: futuro });
     const vencido = crearProyecto({ destacado: true, destacadoHasta: pasado });
-    const finalizado = crearProyecto({ destacado: true, destacadoHasta: futuro });
+    const finalizado = crearProyecto({
+      destacado: true,
+      destacadoHasta: futuro,
+    });
     finalizado.cerrar();
 
     await Promise.all([

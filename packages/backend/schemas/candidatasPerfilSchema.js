@@ -4,12 +4,23 @@ import mongoose from "mongoose";
 // los datos públicos (nombre, presentación…) se leen frescos al responder.
 const candidatasPerfilSchema = new mongoose.Schema(
   {
-    idPerfil: { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
-    idProyecto: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    idPerfil: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      unique: true,
+    },
+    idProyecto: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      index: true,
+    },
     candidatas: { type: [mongoose.Schema.Types.Mixed], default: [] },
     calculadoEn: { type: Date, required: true },
   },
   { collection: "candidatasPorPerfil" },
 );
 
-export const CandidatasPerfilModel = mongoose.model("CandidatasPerfil", candidatasPerfilSchema);
+export const CandidatasPerfilModel = mongoose.model(
+  "CandidatasPerfil",
+  candidatasPerfilSchema,
+);

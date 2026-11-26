@@ -51,15 +51,16 @@ export class UnprocessableEntityError extends AppError {
 }
 
 export class BadGatewayError extends AppError {
-  constructor(message, codigo) { 
-    super(message, codigo); 
-    this.status = 502; }
+  constructor(message, codigo) {
+    super(message, codigo);
+    this.status = 502;
+  }
 }
 export class ServiceUnavailableError extends AppError {
-  constructor(message, codigo) { 
-    super(message, codigo); 
-    this.status = 503; }
+  constructor(message, codigo) {
+    super(message, codigo);
+    this.status = 503;
+  }
 }
-
 
 // agrego el codigo para poder identificar mas facil el error!!

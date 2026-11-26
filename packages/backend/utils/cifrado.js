@@ -14,17 +14,25 @@ function clave(env) {
 export function cifrar(texto, env = process.env) {
   const iv = crypto.randomBytes(12);
   const cifrador = crypto.createCipheriv(ALGORITMO, clave(env), iv);
-  const cifrado = Buffer.concat([cifrador.update(texto, "utf8"), cifrador.final()]);
+  const cifrado = Buffer.concat([
+    cifrador.update(texto, "utf8"),
+    cifrador.final(),
+  ]);
   return [iv, cifrador.getAuthTag(), cifrado]
     .map((parte) => parte.toString("base64"))
     .join(".");
 }
 
 export function descifrar(valor, env = process.env) {
-  const [iv, tag, cifrado] = valor.split(".").map((p) => Buffer.from(p, "base64"));
+  const [iv, tag, cifrado] = valor
+    .split(".")
+    .map((p) => Buffer.from(p, "base64"));
   const descifrador = crypto.createDecipheriv(ALGORITMO, clave(env), iv);
   descifrador.setAuthTag(tag);
-  return Buffer.concat([descifrador.update(cifrado), descifrador.final()]).toString("utf8");
+  return Buffer.concat([
+    descifrador.update(cifrado),
+    descifrador.final(),
+  ]).toString("utf8");
 }
 
 // para generar la clave: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"

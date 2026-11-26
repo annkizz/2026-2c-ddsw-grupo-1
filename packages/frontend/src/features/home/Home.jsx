@@ -1,7 +1,7 @@
-import { t } from '../../i18n/t';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Skeleton } from '@mui/material';
+import { t } from "../../i18n/t";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Skeleton } from "@mui/material";
 import {
   FiArrowRight,
   FiCheck,
@@ -13,38 +13,45 @@ import {
   FiUserPlus,
   FiUsers,
   FiEdit3,
-} from 'react-icons/fi';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import { obtenerMiPerfilColectivo } from '../../service/colectivosService';
-import { obtenerProyectos } from '../../service/proyectosService';
+} from "react-icons/fi";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { obtenerMiPerfilColectivo } from "../../service/colectivosService";
+import { obtenerProyectos } from "../../service/proyectosService";
 import {
   CAMPOS_REQUERIDOS_COLECTIVO,
   camposFaltantesPerfilColectivo,
-} from '../../utils/perfilColectivo';
-import { ID_AYUDA } from '../../utils/rutasUI';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import AlertaError from '../../components/AlertaError/AlertaError.jsx';
-import DashboardCard from './components/DashboardCard.jsx';
-import DashboardEmptyState from './components/DashboardEmptyState.jsx';
-import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
-import DashboardColaboradora from './DashboardColaboradora.jsx';
-import DestacadosPortada from './components/DestacadosPortada.jsx';
-import './Home.css';
+} from "../../utils/perfilColectivo";
+import { ID_AYUDA } from "../../utils/rutasUI";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import DashboardCard from "./components/DashboardCard.jsx";
+import DashboardEmptyState from "./components/DashboardEmptyState.jsx";
+import IndicadorProgresoPerfil from "./components/IndicadorProgresoPerfil.jsx";
+import DashboardColaboradora from "./DashboardColaboradora.jsx";
+import DestacadosPortada from "./components/DestacadosPortada.jsx";
+import "./Home.css";
 
 const Home = () => {
   const pasosAyuda = [
-    { icono: FiUserPlus, titulo: t('inicio.creaTuCuenta'), texto: t('inicio.elegiSiTeSumasComo') },
-    { icono: FiEdit3, titulo: t('inicio.completaTuPerfil'), texto: t('inicio.contaQueHaceTuColectivo') },
-    { icono: FiRepeat, titulo: t('inicio.conectaConProyectos'), texto: t('inicio.losColectivosPublicanProyectosY') },
+    {
+      icono: FiUserPlus,
+      titulo: t("inicio.creaTuCuenta"),
+      texto: t("inicio.elegiSiTeSumasComo"),
+    },
+    {
+      icono: FiEdit3,
+      titulo: t("inicio.completaTuPerfil"),
+      texto: t("inicio.contaQueHaceTuColectivo"),
+    },
+    {
+      icono: FiRepeat,
+      titulo: t("inicio.conectaConProyectos"),
+      texto: t("inicio.losColectivosPublicanProyectosY"),
+    },
   ];
   const navigate = useNavigate();
-  const {
-    sesion,
-    errorLogto,
-    iniciarSesion,
-    registrarse,
-    getAccessToken,
-  } = useAuth();
+  const { sesion, errorLogto, iniciarSesion, registrarse, getAccessToken } =
+    useAuth();
   const [proyectos, setProyectos] = useState([]);
   const [cargandoProyectos, setCargandoProyectos] = useState(true);
   const [errorProyectos, setErrorProyectos] = useState(null);
@@ -53,22 +60,28 @@ const Home = () => {
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
   const [errorPerfil, setErrorPerfil] = useState(null);
   const [intentoPerfil, setIntentoPerfil] = useState(0);
-  const esDashboardColectivo = sesion?.rol === 'COLECTIVO' && sesion?.tienePerfil;
-  const esDashboardColaboradora = sesion?.rol === 'COLABORADOR' && sesion?.tienePerfil;
+  const esDashboardColectivo =
+    sesion?.rol === "COLECTIVO" && sesion?.tienePerfil;
+  const esDashboardColaboradora =
+    sesion?.rol === "COLABORADOR" && sesion?.tienePerfil;
 
   // Cuentas con perfil pero sin panel propio (por ejemplo, administración) van al listado público.
   useEffect(() => {
-    if (sesion?.rol === 'ADMINISTRADOR') {
-      navigate('/administrador/destacados', { replace: true });
-    } else if (sesion?.tienePerfil && !esDashboardColectivo && !esDashboardColaboradora) {
-      navigate('/proyectos', { replace: true });
+    if (sesion?.rol === "ADMINISTRADOR") {
+      navigate("/administrador/destacados", { replace: true });
+    } else if (
+      sesion?.tienePerfil &&
+      !esDashboardColectivo &&
+      !esDashboardColaboradora
+    ) {
+      navigate("/proyectos", { replace: true });
     }
   }, [sesion, esDashboardColectivo, esDashboardColaboradora, navigate]);
 
   // Un enlace a /#como-funciona se desplaza a esa sección al llegar.
   useEffect(() => {
     if (window.location.hash === `#${ID_AYUDA}`) {
-      document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: 'start' });
+      document.getElementById(ID_AYUDA)?.scrollIntoView?.({ block: "start" });
     }
   }, []);
 
@@ -81,16 +94,20 @@ const Home = () => {
       setErrorProyectos(null);
       try {
         if (!sesion.idColectivo) {
-          throw new Error(t('erroresInternos.colectivoNoIdentificado'));
+          throw new Error(t("erroresInternos.colectivoNoIdentificado"));
         }
 
         const resultado = await obtenerProyectos();
         if (!Array.isArray(resultado)) {
-          throw new Error(t('erroresInternos.listaProyectos'));
+          throw new Error(t("erroresInternos.listaProyectos"));
         }
 
         if (vigente) {
-          setProyectos(resultado.filter((proyecto) => proyecto.idColectivo === sesion.idColectivo));
+          setProyectos(
+            resultado.filter(
+              (proyecto) => proyecto.idColectivo === sesion.idColectivo,
+            ),
+          );
         }
       } catch (error) {
         if (vigente) setErrorProyectos(error);
@@ -118,9 +135,9 @@ const Home = () => {
         if (vigente) {
           setCamposPerfilFaltantes(
             camposFaltantesPerfilColectivo({
-              nombreColectivo: perfil?.nombre ?? '',
-              tipoDeColectivo: perfil?.tipoDeColectivo ?? '',
-              descripcion: perfil?.descripcion ?? '',
+              nombreColectivo: perfil?.nombre ?? "",
+              tipoDeColectivo: perfil?.tipoDeColectivo ?? "",
+              descripcion: perfil?.descripcion ?? "",
             }),
           );
         }
@@ -140,55 +157,74 @@ const Home = () => {
   if (esDashboardColaboradora) return <DashboardColaboradora />;
 
   if (esDashboardColectivo) {
-    const sinProyectos = !cargandoProyectos && !errorProyectos && proyectos.length === 0;
-    const activos = proyectos.filter((proyecto) => proyecto.estado !== 'FINALIZADO').length;
-    const finalizados = proyectos.filter((proyecto) => proyecto.estado === 'FINALIZADO').length;
+    const sinProyectos =
+      !cargandoProyectos && !errorProyectos && proyectos.length === 0;
+    const activos = proyectos.filter(
+      (proyecto) => proyecto.estado !== "FINALIZADO",
+    ).length;
+    const finalizados = proyectos.filter(
+      (proyecto) => proyecto.estado === "FINALIZADO",
+    ).length;
 
     return (
       <div className="contenedor-pagina home--dashboard">
         <section className="dashboard" aria-labelledby="dashboard-titulo">
           <EncabezadoPagina
             id="dashboard-titulo"
-            antetitulo={t('inicio.espacioDeTuColectivo')}
-            titulo={t('inicio.impulsarHoy')}
+            antetitulo={t("inicio.espacioDeTuColectivo")}
+            titulo={t("inicio.impulsarHoy")}
           />
 
           <div className="dashboard-grid">
             <DashboardCard
               className="dashboard-card--destacada"
               icon={sinProyectos ? null : <FiCode />}
-              title={sinProyectos ? null : t('inicio.publicarUnProyecto')}
-              description={sinProyectos ? null : t('inicio.sumarColaboradoras')}
+              title={sinProyectos ? null : t("inicio.publicarUnProyecto")}
+              description={sinProyectos ? null : t("inicio.sumarColaboradoras")}
             >
               {sinProyectos ? (
                 <DashboardEmptyState
                   icon={FiPlus}
-                  title={t('inicio.primerProyectoTitulo')}
-                  description={t('inicio.primerProyectoDescripcion')}
-                  actionLabel={t('inicio.crearPrimerProyecto')}
+                  title={t("inicio.primerProyectoTitulo")}
+                  description={t("inicio.primerProyectoDescripcion")}
+                  actionLabel={t("inicio.crearPrimerProyecto")}
                   actionVariant="contained"
-                  onAction={() => navigate('/proyectos/nuevo')}
+                  onAction={() => navigate("/proyectos/nuevo")}
                   nivelTitulo="h2"
                 />
               ) : (
                 <Button
                   variant="contained"
                   color="secondary"
-                  onClick={() => navigate('/proyectos/nuevo')}
+                  onClick={() => navigate("/proyectos/nuevo")}
                   startIcon={<FiPlus aria-hidden="true" />}
                 >
-                  {t('inicio.publicarProyecto')}
+                  {t("inicio.publicarProyecto")}
                 </Button>
               )}
             </DashboardCard>
 
-            <DashboardCard className="dashboard-card--proyectos" icon={<FiFolder />} title={t('inicio.estadoProyectos')}>
+            <DashboardCard
+              className="dashboard-card--proyectos"
+              icon={<FiFolder />}
+              title={t("inicio.estadoProyectos")}
+            >
               {cargandoProyectos ? (
-                <div className="dashboard-contadores" aria-busy="true" role="status">
-                  <span className="visualmente-oculto">{t('inicio.cargandoProyectos')}</span>
+                <div
+                  className="dashboard-contadores"
+                  aria-busy="true"
+                  role="status"
+                >
+                  <span className="visualmente-oculto">
+                    {t("inicio.cargandoProyectos")}
+                  </span>
                   {[0, 1].map((i) => (
                     <div key={i} aria-hidden="true">
-                      <Skeleton variant="text" width="var(--space-6)" height="var(--space-6)" />
+                      <Skeleton
+                        variant="text"
+                        width="var(--space-6)"
+                        height="var(--space-6)"
+                      />
                       <Skeleton variant="text" width="var(--space-10)" />
                     </div>
                   ))}
@@ -196,13 +232,15 @@ const Home = () => {
               ) : errorProyectos ? (
                 <AlertaError
                   error={errorProyectos}
-                  titulo={t('buscadorColaboradoras.noPudimosCargarTusProyectos')}
+                  titulo={t(
+                    "buscadorColaboradoras.noPudimosCargarTusProyectos",
+                  )}
                   onReintentar={() => setIntentoCarga((intento) => intento + 1)}
                 />
               ) : sinProyectos ? (
                 <DashboardEmptyState
-                  title={t('inicio.sinProyectosPublicados')}
-                  description={t('inicio.sinProyectosDescripcion')}
+                  title={t("inicio.sinProyectosPublicados")}
+                  description={t("inicio.sinProyectosDescripcion")}
                 />
               ) : (
                 <>
@@ -210,18 +248,24 @@ const Home = () => {
                     <div>
                       <strong>{activos}</strong>
                       <span>
-                        <FiArrowRight aria-hidden="true" /> {t('proyectos.activos')}
+                        <FiArrowRight aria-hidden="true" />{" "}
+                        {t("proyectos.activos")}
                       </span>
                     </div>
                     <div>
                       <strong>{finalizados}</strong>
                       <span>
-                        <FiCheck aria-hidden="true" /> {t('proyectos.finalizados')}
+                        <FiCheck aria-hidden="true" />{" "}
+                        {t("proyectos.finalizados")}
                       </span>
                     </div>
                   </div>
-                  <Button variant="outlined" onClick={() => navigate('/proyectos')} endIcon={<FiArrowRight aria-hidden="true" />}>
-                    {t('inicio.verMisProyectos')}
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate("/proyectos")}
+                    endIcon={<FiArrowRight aria-hidden="true" />}
+                  >
+                    {t("inicio.verMisProyectos")}
                   </Button>
                 </>
               )}
@@ -230,15 +274,15 @@ const Home = () => {
             <DashboardCard
               className="dashboard-card--buscar"
               icon={<FiUsers />}
-              title={t('inicio.encontrarColaboradoras')}
-              description={t('inicio.explorarPerfiles')}
+              title={t("inicio.encontrarColaboradoras")}
+              description={t("inicio.explorarPerfiles")}
             >
               <Button
                 variant="outlined"
-                onClick={() => navigate('/buscar-colaboradores')}
+                onClick={() => navigate("/buscar-colaboradores")}
                 startIcon={<FiSearch aria-hidden="true" />}
               >
-                {t('navegacion.buscarColaboradoras')}
+                {t("navegacion.buscarColaboradoras")}
               </Button>
             </DashboardCard>
           </div>
@@ -246,25 +290,38 @@ const Home = () => {
           <DestacadosPortada />
 
           {cargandoPerfil ? (
-            <div className="dashboard-perfil-cargando" aria-busy="true" role="status">
-              <span className="visualmente-oculto">{t('inicio.comprobandoPerfil')}</span>
-              <Skeleton variant="rounded" height="var(--space-10)" aria-hidden="true" />
+            <div
+              className="dashboard-perfil-cargando"
+              aria-busy="true"
+              role="status"
+            >
+              <span className="visualmente-oculto">
+                {t("inicio.comprobandoPerfil")}
+              </span>
+              <Skeleton
+                variant="rounded"
+                height="var(--space-10)"
+                aria-hidden="true"
+              />
             </div>
           ) : errorPerfil ? (
             <AlertaError
               className="dashboard-alerta-perfil"
               error={errorPerfil}
-              titulo={t('inicio.noPudimosComprobarSiTu')}
+              titulo={t("inicio.noPudimosComprobarSiTu")}
               onReintentar={() => setIntentoPerfil((intento) => intento + 1)}
             />
           ) : camposPerfilFaltantes.length > 0 ? (
             <IndicadorProgresoPerfil
-              completados={CAMPOS_REQUERIDOS_COLECTIVO.length - camposPerfilFaltantes.length}
+              completados={
+                CAMPOS_REQUERIDOS_COLECTIVO.length -
+                camposPerfilFaltantes.length
+              }
               total={CAMPOS_REQUERIDOS_COLECTIVO.length}
               faltantes={camposPerfilFaltantes}
-              titulo={t('inicio.completarPerfilColectivo')}
-              accion={t('inicio.completarMiPerfil')}
-              onCompletar={() => navigate('/perfil')}
+              titulo={t("inicio.completarPerfilColectivo")}
+              accion={t("inicio.completarMiPerfil")}
+              onCompletar={() => navigate("/perfil")}
             />
           ) : null}
         </section>
@@ -279,22 +336,22 @@ const Home = () => {
           <EncabezadoPagina
             id="home-titulo"
             className="encabezado-pagina--hero"
-            antetitulo={t('inicio.tecnologiaConProposito')}
-            titulo={t('inicio.lema')}
-            subtitulo={t('inicio.unimosAColectivosQueNecesitan')}
+            antetitulo={t("inicio.tecnologiaConProposito")}
+            titulo={t("inicio.lema")}
+            subtitulo={t("inicio.unimosAColectivosQueNecesitan")}
           />
           <ul className="home-pares">
             <li>
-              <FiUsers aria-hidden="true" /> {t('inicio.colectivosPublican')}
+              <FiUsers aria-hidden="true" /> {t("inicio.colectivosPublican")}
             </li>
             <li>
-              <FiCode aria-hidden="true" /> {t('inicio.colaboradorasSuman')}
+              <FiCode aria-hidden="true" /> {t("inicio.colaboradorasSuman")}
             </li>
           </ul>
         </section>
 
         <section className="home-login" aria-labelledby="home-login-titulo">
-          <h2 id="home-login-titulo">{t('comun.iniciarSesion')}</h2>
+          <h2 id="home-login-titulo">{t("comun.iniciarSesion")}</h2>
           {/* El email y la contraseña se piden en la pantalla de Logto */}
           <Button
             variant="contained"
@@ -304,19 +361,19 @@ const Home = () => {
             onClick={iniciarSesion}
             endIcon={<FiArrowRight aria-hidden="true" />}
           >
-            {t('inicio.ingresar')}
+            {t("inicio.ingresar")}
           </Button>
           {errorLogto && (
             <AlertaError
               className="home-login__error"
               error={errorLogto}
-              titulo={t('inicio.noPudimosAbrirElInicio')}
+              titulo={t("inicio.noPudimosAbrirElInicio")}
             />
           )}
           <p className="home-cambio">
-            {t('inicio.primeraVez')}
+            {t("inicio.primeraVez")}
             <Button variant="text" onClick={registrarse}>
-              {t('inicio.crearCuenta')}
+              {t("inicio.crearCuenta")}
             </Button>
           </p>
         </section>
@@ -324,9 +381,14 @@ const Home = () => {
 
       <DestacadosPortada />
 
-      <section id={ID_AYUDA} className="home-ayuda" aria-labelledby="home-ayuda-titulo" tabIndex={-1}>
-        <h2 id="home-ayuda-titulo">{t('navegacion.comoFunciona')}</h2>
-        <p className="home-ayuda__intro">{t('inicio.tresPasosParaEmpezarA')}</p>
+      <section
+        id={ID_AYUDA}
+        className="home-ayuda"
+        aria-labelledby="home-ayuda-titulo"
+        tabIndex={-1}
+      >
+        <h2 id="home-ayuda-titulo">{t("navegacion.comoFunciona")}</h2>
+        <p className="home-ayuda__intro">{t("inicio.tresPasosParaEmpezarA")}</p>
         <ol className="home-ayuda__pasos">
           {pasosAyuda.map(({ icono: Icono, titulo, texto }, indice) => (
             <li key={titulo} className="home-ayuda__paso">
@@ -334,14 +396,16 @@ const Home = () => {
                 <Icono />
               </span>
               <h3>
-                <span className="home-ayuda__numero">{t('inicio.paso', { numero: indice + 1 })}</span> {titulo}
+                <span className="home-ayuda__numero">
+                  {t("inicio.paso", { numero: indice + 1 })}
+                </span>{" "}
+                {titulo}
               </h3>
               <p>{texto}</p>
             </li>
           ))}
         </ol>
       </section>
-
     </div>
   );
 };

@@ -20,7 +20,12 @@ export class ConexionLinkedinRepository {
     return await this.model.findOneAndUpdate(
       { idColectivo: conexion.idColectivo },
       { ...conexion },
-      { upsert: true, returnDocument: "after", runValidators: true, setDefaultsOnInsert: true },
+      {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
   }
 

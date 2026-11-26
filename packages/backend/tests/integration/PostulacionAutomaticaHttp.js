@@ -172,8 +172,7 @@ function crearAppDePostulaciones(tipoAceptacion, limiteColaboraciones = null) {
   return { app, perfil, postulaciones, colaboraciones };
 }
 
-const urlDePostulacion =
-  `/proyectos/${ID_PROYECTO}/perfiles/${ID_PERFIL}/postulaciones`;
+const urlDePostulacion = `/proyectos/${ID_PROYECTO}/perfiles/${ID_PERFIL}/postulaciones`;
 
 describe("Postulaciones y modos de aceptación - integración HTTP", () => {
   it("acepta automáticamente todas las postulaciones en modo SIN_LIMITE", async () => {
@@ -196,10 +195,8 @@ describe("Postulaciones y modos de aceptación - integración HTTP", () => {
   });
 
   it("deja la aceptación manual y cierra el perfil al alcanzar el límite", async () => {
-    const { app, perfil, postulaciones, colaboraciones } = crearAppDePostulaciones(
-      TipoAceptacion.LLENAR_VACANTES,
-      1,
-    );
+    const { app, perfil, postulaciones, colaboraciones } =
+      crearAppDePostulaciones(TipoAceptacion.LLENAR_VACANTES, 1);
     postulaciones.set("postulacion-previa", {
       _id: "postulacion-previa",
       idProyecto: ID_PROYECTO,

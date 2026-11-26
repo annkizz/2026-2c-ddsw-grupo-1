@@ -8,7 +8,9 @@ export function iniciarRecalculoMatching(
 
   const tick = async () => {
     if (ejecutando) {
-      logger.log("Recalculo de matching: la corrida anterior sigue en curso, se omite esta");
+      logger.log(
+        "Recalculo de matching: la corrida anterior sigue en curso, se omite esta",
+      );
       return;
     }
 

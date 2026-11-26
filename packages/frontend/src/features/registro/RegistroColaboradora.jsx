@@ -1,27 +1,27 @@
-import { t } from '../../i18n/t';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import { crearColaboradora } from '../../service/colaboradorasService';
-import { mensajeDeError } from '../../utils/mensajeDeError';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import PasosRegistro from '../../components/PasosRegistro/PasosRegistro.jsx';
-import { borrarTipo } from './tipoElegido';
-import DatosColaboradora from './DatosColaboradora.jsx';
-import Habilidades from './Habilidades.jsx';
-import MediosDeContacto from './MediosDeContacto.jsx';
-import './Registro.css';
+import { t } from "../../i18n/t";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { crearColaboradora } from "../../service/colaboradorasService";
+import { mensajeDeError } from "../../utils/mensajeDeError";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import PasosRegistro from "../../components/PasosRegistro/PasosRegistro.jsx";
+import { borrarTipo } from "./tipoElegido";
+import DatosColaboradora from "./DatosColaboradora.jsx";
+import Habilidades from "./Habilidades.jsx";
+import MediosDeContacto from "./MediosDeContacto.jsx";
+import "./Registro.css";
 
 const DATOS_INICIALES = {
-  nombreFantasia: '',
-  usuarioGitHub: '',
-  nombre: '',
-  apellido: '',
-  pronombres: '',
-  presentacion: '',
+  nombreFantasia: "",
+  usuarioGitHub: "",
+  nombre: "",
+  apellido: "",
+  pronombres: "",
+  presentacion: "",
   habilidades: [],
   medios: [],
-  aceptaMensajeria: false
+  aceptaMensajeria: false,
 };
 
 // Los 3 pasos comparten los datos: acá viven, y cada paso los recibe por props.
@@ -47,16 +47,14 @@ const RegistroColaboradora = () => {
 
       const nuevaSesion = await recargarSesion();
       if (!nuevaSesion?.tienePerfil) {
-        setError(
-          t('registro.verificarPerfil')
-        );
+        setError(t("registro.verificarPerfil"));
         return;
       }
 
       borrarTipo();
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     } catch (e) {
-      setError(mensajeDeError(e, t('registro.noPudimosCrearTuPerfil')));
+      setError(mensajeDeError(e, t("registro.noPudimosCrearTuPerfil")));
     } finally {
       setGuardando(false);
     }
@@ -65,10 +63,17 @@ const RegistroColaboradora = () => {
   return (
     <div className="contenedor-pagina contenedor-pagina--formulario registro">
       <EncabezadoPagina
-        titulo={t('registro.crearTuPerfilDeColaboradora')}
-        subtitulo={t('registro.conEstosDatosLosColectivos')}
+        titulo={t("registro.crearTuPerfilDeColaboradora")}
+        subtitulo={t("registro.conEstosDatosLosColectivos")}
       >
-        <PasosRegistro pasos={[t('registro.tusDatos'), t('registro.habilidades'), t('registro.contacto')]} actual={paso} />
+        <PasosRegistro
+          pasos={[
+            t("registro.tusDatos"),
+            t("registro.habilidades"),
+            t("registro.contacto"),
+          ]}
+          actual={paso}
+        />
       </EncabezadoPagina>
       {paso === 1 && (
         <DatosColaboradora
@@ -76,7 +81,7 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => {
             borrarTipo();
-            navigate('/');
+            navigate("/");
           }}
           onSiguiente={() => setPaso(2)}
         />
@@ -95,7 +100,11 @@ const RegistroColaboradora = () => {
           setDatos={setDatos}
           onVolver={() => setPaso(2)}
           onSiguiente={guardar}
-          siguiente={registroCreado ? t('registro.verificarRegistro') : t('registro.crearMiPerfil')}
+          siguiente={
+            registroCreado
+              ? t("registro.verificarRegistro")
+              : t("registro.crearMiPerfil")
+          }
           guardando={guardando}
           error={error}
         />

@@ -1,11 +1,16 @@
-import React, { useEffect, useRef } from 'react';
-import { Alert, AlertTitle } from '@mui/material';
-import { t } from '../../i18n/t';
+import React, { useEffect, useRef } from "react";
+import { Alert, AlertTitle } from "@mui/material";
+import { t } from "../../i18n/t";
 
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 // Resumen de errores al enviar un formulario (patrón GOV.UK / WCAG 3.3.1).
 // errores: [{ campoId, mensaje }]. Recibe el foco cuando aparece y cada enlace lleva al campo.
-const ResumenErrores = ({ errores = [], titulo, id = 'resumen-errores', intento = 0 }) => {
+const ResumenErrores = ({
+  errores = [],
+  titulo,
+  id = "resumen-errores",
+  intento = 0,
+}) => {
   const ref = useRef(null);
   const cantidad = errores.length;
 
@@ -23,7 +28,7 @@ const ResumenErrores = ({ errores = [], titulo, id = 'resumen-errores', intento 
     const campo = document.getElementById(campoId);
     if (!campo) return;
     evento.preventDefault();
-    campo.scrollIntoView?.({ block: 'center' });
+    campo.scrollIntoView?.({ block: "center" });
     campo.focus();
   };
 
@@ -37,12 +42,18 @@ const ResumenErrores = ({ errores = [], titulo, id = 'resumen-errores', intento 
       className="resumen-errores"
     >
       <AlertTitle id={`${id}-titulo`} component="h2">
-        {titulo ?? (cantidad === 1 ? t('formulario.resumenUno') : t('formulario.resumenVarios', { cantidad }))}
+        {titulo ??
+          (cantidad === 1
+            ? t("formulario.resumenUno")
+            : t("formulario.resumenVarios", { cantidad }))}
       </AlertTitle>
       <ul className="resumen-errores__lista">
         {errores.map(({ campoId, mensaje }) => (
           <li key={`${campoId}-${mensaje}`}>
-            <a href={`#${campoId}`} onClick={(evento) => irAlCampo(evento, campoId)}>
+            <a
+              href={`#${campoId}`}
+              onClick={(evento) => irAlCampo(evento, campoId)}
+            >
               {mensaje}
             </a>
           </li>
@@ -53,10 +64,15 @@ const ResumenErrores = ({ errores = [], titulo, id = 'resumen-errores', intento 
 };
 
 ResumenErrores.propTypes = {
-  errores: PropTypes.arrayOf(PropTypes.shape({ campoId: PropTypes.string.isRequired, mensaje: PropTypes.node.isRequired })),
+  errores: PropTypes.arrayOf(
+    PropTypes.shape({
+      campoId: PropTypes.string.isRequired,
+      mensaje: PropTypes.node.isRequired,
+    }),
+  ),
   titulo: PropTypes.node,
   id: PropTypes.string,
-  intento: PropTypes.number
+  intento: PropTypes.number,
 };
 
 export default ResumenErrores;

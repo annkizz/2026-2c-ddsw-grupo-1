@@ -8,7 +8,7 @@
   border-bottom: var(--indicator-height) solid var(--color-accent);
 }
 
-.header :where(a, button, [role='button'], [tabindex]):focus-visible {
+.header :where(a, button, [role="button"], [tabindex]):focus-visible {
   outline-color: var(--color-focus-on-dark);
 }
 
@@ -86,7 +86,9 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: color var(--transition-fast) var(--transition-easing), background-color var(--transition-fast) var(--transition-easing);
+  transition:
+    color var(--transition-fast) var(--transition-easing),
+    background-color var(--transition-fast) var(--transition-easing);
 }
 
 .header-nav-link:hover,
@@ -98,14 +100,14 @@
 }
 
 /* Sección actual: barra naranja + blanco + negrita (no depende solo del color) */
-.header-nav--desktop .header-nav-link[aria-current='page'] {
+.header-nav--desktop .header-nav-link[aria-current="page"] {
   background: var(--color-brand-2);
   color: var(--color-on-brand);
   font-weight: var(--font-weight-bold);
 }
 
-.header-nav--desktop .header-nav-link[aria-current='page']::after {
-  content: '';
+.header-nav--desktop .header-nav-link[aria-current="page"]::after {
+  content: "";
   position: absolute;
   right: var(--space-2);
   bottom: 0;
@@ -203,19 +205,19 @@
 }
 
 .header-campana:hover,
-.header-campana[aria-current='page'] {
+.header-campana[aria-current="page"] {
   border-color: var(--color-accent);
   background: var(--color-brand-2);
   text-decoration: none;
 }
 
 /* Sección actual: además del borde, negrita y la misma barra que el resto del menú (no solo color) */
-.header-campana[aria-current='page'] {
+.header-campana[aria-current="page"] {
   font-weight: var(--font-weight-bold);
 }
 
-.header-campana[aria-current='page']::after {
-  content: '';
+.header-campana[aria-current="page"]::after {
+  content: "";
   position: absolute;
   right: var(--space-2);
   bottom: calc(-1 * (var(--space-1) + var(--border-width-strong)));
@@ -240,7 +242,7 @@
 }
 
 .header-usuario__boton:hover,
-.header-usuario__boton[aria-expanded='true'] {
+.header-usuario__boton[aria-expanded="true"] {
   border-color: var(--color-accent);
 }
 
@@ -368,7 +370,7 @@
   color: var(--color-text);
 }
 
-.header-nav--mobile .header-nav-link[aria-current='page'] {
+.header-nav--mobile .header-nav-link[aria-current="page"] {
   background: var(--color-secondary-tint);
   box-shadow: inset var(--indicator-height) 0 0 var(--color-secondary);
   font-weight: var(--font-weight-bold);
@@ -450,4 +452,3 @@
     display: none;
   }
 }
-

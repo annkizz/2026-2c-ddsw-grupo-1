@@ -19,20 +19,35 @@ export function crearTareasProgramadas(
   { config = process.env, ...opcionesPlanificador } = {},
 ) {
   return new Planificador(opcionesPlanificador)
-    .agregar("cierre automático de proyectos", horario(config, "CRON_CIERRE_AUTOMATICO"), async () => {
-      const { cerrados, fallidos } = await proyectoService.cerrarProyectosVencidos();
-      for (const { idProyecto, error } of fallidos) {
-        console.error(`[tareas] Error cerrando el proyecto ${idProyecto}: ${error}`);
-      }
-      return cerrados.length > 0 ? `cerrados ${cerrados.join(", ")}` : null;
-    })
-    .agregar("matching: procesar cambios", horario(config, "CRON_MATCHING"), async () => {
-      const resultado = await matchingService.procesarCambiosPendientes();
-      if (!resultado.procesado) return null;
-      return `${resultado.perfiles} perfiles y ${resultado.colaboradoras} colaboradoras recalculados`;
-    })
-    .agregar("matching: reconstrucción semanal", horario(config, "CRON_MATCHING_COMPLETO"), async () => {
-      await matchingService.reconstruirTodo();
-      return "completa";
-    });
+    .agregar(
+      "cierre automático de proyectos",
+      horario(config, "CRON_CIERRE_AUTOMATICO"),
+      async () => {
+        const { cerrados, fallidos } =
+          await proyectoService.cerrarProyectosVencidos();
+        for (const { idProyecto, error } of fallidos) {
+          console.error(
+            `[tareas] Error cerrando el proyecto ${idProyecto}: ${error}`,
+          );
+        }
+        return cerrados.length > 0 ? `cerrados ${cerrados.join(", ")}` : null;
+      },
+    )
+    .agregar(
+      "matching: procesar cambios",
+      horario(config, "CRON_MATCHING"),
+      async () => {
+        const resultado = await matchingService.procesarCambiosPendientes();
+        if (!resultado.procesado) return null;
+        return `${resultado.perfiles} perfiles y ${resultado.colaboradoras} colaboradoras recalculados`;
+      },
+    )
+    .agregar(
+      "matching: reconstrucción semanal",
+      horario(config, "CRON_MATCHING_COMPLETO"),
+      async () => {
+        await matchingService.reconstruirTodo();
+        return "completa";
+      },
+    );
 }

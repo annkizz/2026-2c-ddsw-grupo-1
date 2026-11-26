@@ -1,23 +1,23 @@
-import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { useHandleSignInCallback } from '@logto/react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.jsx';
-import Callback from './Callback.jsx';
+import "@testing-library/jest-dom";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { useHandleSignInCallback } from "@logto/react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.jsx";
+import Callback from "./Callback.jsx";
 
-jest.mock('@logto/react', () => ({
+jest.mock("@logto/react", () => ({
   useHandleSignInCallback: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
 }));
 
-jest.mock('../hooks/useAuth.jsx', () => ({
+jest.mock("../hooks/useAuth.jsx", () => ({
   useAuth: jest.fn(),
 }));
 
-describe('destino del callback de Logto', () => {
+describe("destino del callback de Logto", () => {
   const navigate = jest.fn();
 
   beforeEach(() => {
@@ -35,13 +35,13 @@ describe('destino del callback de Logto', () => {
     });
   });
 
-  it('lleva a elegir tipo si Logto autentica una cuenta sin perfil ni tipo pendiente', () => {
+  it("lleva a elegir tipo si Logto autentica una cuenta sin perfil ni tipo pendiente", () => {
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/registro/tipo', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/registro/tipo", { replace: true });
   });
 
-  it('lleva al inicio (no al perfil) si la cuenta ya tiene uno', () => {
+  it("lleva al inicio (no al perfil) si la cuenta ya tiene uno", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       sesion: { tienePerfil: true },
@@ -53,24 +53,26 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
-  it('lleva al panel administrativo sin pedir un perfil de colectivo o colaboradora', () => {
+  it("lleva al panel administrativo sin pedir un perfil de colectivo o colaboradora", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
-      sesion: { rol: 'ADMINISTRADOR', tienePerfil: false },
+      sesion: { rol: "ADMINISTRADOR", tienePerfil: false },
       cargando: false,
     });
 
     render(<Callback />);
-    expect(navigate).toHaveBeenCalledWith('/administrador/destacados', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/administrador/destacados", {
+      replace: true,
+    });
   });
 
-  it('lleva al inicio del colectivo cuando la cuenta ya tiene perfil', () => {
+  it("lleva al inicio del colectivo cuando la cuenta ya tiene perfil", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
-      sesion: { rol: 'COLECTIVO', tienePerfil: true },
+      sesion: { rol: "COLECTIVO", tienePerfil: true },
       errorSesion: null,
       cargando: false,
       recargarSesion: jest.fn(),
@@ -79,13 +81,13 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
-  it('lleva al inicio de la colaboradora cuando la cuenta ya tiene perfil', () => {
+  it("lleva al inicio de la colaboradora cuando la cuenta ya tiene perfil", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
-      sesion: { rol: 'COLABORADOR', tienePerfil: true },
+      sesion: { rol: "COLABORADOR", tienePerfil: true },
       errorSesion: null,
       cargando: false,
       recargarSesion: jest.fn(),
@@ -94,22 +96,24 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
-  it('continúa el formulario elegido antes de registrarse en Logto', () => {
-    sessionStorage.setItem('tipoDeCuenta', 'colectivo');
+  it("continúa el formulario elegido antes de registrarse en Logto", () => {
+    sessionStorage.setItem("tipoDeCuenta", "colectivo");
     render(<Callback />);
 
-    expect(navigate).toHaveBeenCalledWith('/registro/colectivo', { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/registro/colectivo", {
+      replace: true,
+    });
   });
 
-  it('muestra el error de verificación del backend y permite reintentar', () => {
+  it("muestra el error de verificación del backend y permite reintentar", () => {
     const recargarSesion = jest.fn();
     useAuth.mockReturnValue({
       isAuthenticated: true,
       sesion: null,
-      errorSesion: 'No pudimos conectarnos con el servidor',
+      errorSesion: "No pudimos conectarnos con el servidor",
       cargando: false,
       recargarSesion,
       cerrarSesion: jest.fn(),
@@ -117,12 +121,14 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(screen.getByText('No pudimos conectarnos con el servidor')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(
+      screen.getByText("No pudimos conectarnos con el servidor"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(recargarSesion).toHaveBeenCalledTimes(1);
   });
 
-  it('muestra el estado de carga mientras Logto verifica la sesión', () => {
+  it("muestra el estado de carga mientras Logto verifica la sesión", () => {
     useAuth.mockReturnValue({
       isAuthenticated: false,
       sesion: null,
@@ -134,6 +140,8 @@ describe('destino del callback de Logto', () => {
 
     render(<Callback />);
 
-    expect(screen.getByText('Estamos verificando tus datos. Esperá un momento.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Estamos verificando tus datos. Esperá un momento."),
+    ).toBeInTheDocument();
   });
 });

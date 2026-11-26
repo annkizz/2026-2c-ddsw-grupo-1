@@ -1,4 +1,4 @@
-//para que lo que se crea desde el formulario llegue tal cual y no falle 
+//para que lo que se crea desde el formulario llegue tal cual y no falle
 export const ETIQUETA_MAX = 30;
 export const ETIQUETAS_MAX = 10;
 

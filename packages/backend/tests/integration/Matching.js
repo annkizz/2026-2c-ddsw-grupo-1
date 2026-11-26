@@ -92,7 +92,7 @@ beforeEach(async () => {
   await limpiarLaBase();
   await sembrarDatosIniciales();
 });
-// con repo real 
+// con repo real
 // sin supertest: service + repos reales + mongo real (embebido) + seed
 //llama al service directo, no pasa por HTTP: muestra q las queries funcionan
 
@@ -455,7 +455,9 @@ describe("Matching API - fusión HTTP sobre la seed", () => {
   });
 
   it("recomienda a Sofía el perfil frontend del mapa de comedores", async () => {
-    const response = await request(app).get(`/colaboradoras/${SOFIA}/proyectos`);
+    const response = await request(app).get(
+      `/colaboradoras/${SOFIA}/proyectos`,
+    );
 
     expect(response.status).toBe(200);
     const mapa = response.body.find((p) => p.id === PROYECTO_MAPA);

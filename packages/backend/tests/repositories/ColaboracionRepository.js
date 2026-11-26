@@ -16,9 +16,7 @@ describe("ColaboracionRepository", () => {
     ).resolves.toBe(colaboraciones);
 
     expect(model.find).toHaveBeenCalledWith({ idColaborador: "c1" });
-    expect(select).toHaveBeenCalledWith(
-      "idProyecto idPerfil fecha esAnonima",
-    );
+    expect(select).toHaveBeenCalledWith("idProyecto idPerfil fecha esAnonima");
     expect(sort).toHaveBeenCalledWith({ fecha: -1 });
     expect(exec).toHaveBeenCalledTimes(1);
   });

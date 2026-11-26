@@ -7,7 +7,15 @@ const haceUnaHora = () => new Date(Date.now() - 60 * 60 * 1000);
 
 const crearProyecto = (extra = {}) =>
   Object.assign(
-    new Proyecto("Proyecto", "Descripción", [], "ACTIVO", new Date(), null, "colectivo-1"),
+    new Proyecto(
+      "Proyecto",
+      "Descripción",
+      [],
+      "ACTIVO",
+      new Date(),
+      null,
+      "colectivo-1",
+    ),
     { _id: "proyecto-1" },
     extra,
   );
@@ -24,14 +32,7 @@ describe("Proyectos destacados", () => {
       obtenerDestacados: jest.fn(async () => [proyecto]),
       save: jest.fn(async (unProyecto) => unProyecto),
     };
-    service = new ProyectoService(
-      proyectoRepository,
-      {},
-      {},
-      {},
-      {},
-      {},
-    );
+    service = new ProyectoService(proyectoRepository, {}, {}, {}, {}, {});
   });
 
   it("activa un destacado con vencimiento futuro y lo incluye en el DTO", async () => {

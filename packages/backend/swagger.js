@@ -296,7 +296,8 @@ const swaggerSpec = {
         security: [{ bearerAuth: [] }],
         responses: {
           200: {
-            description: "Postulaciones propias con el resumen de cada proyecto",
+            description:
+              "Postulaciones propias con el resumen de cada proyecto",
             content: {
               "application/json": {
                 schema: {
@@ -307,7 +308,10 @@ const swaggerSpec = {
                       id: { type: "string" },
                       idProyecto: { type: "string" },
                       idPerfil: { type: "string" },
-                      estado: { type: "string", enum: ["PENDIENTE", "ACEPTADA", "RECHAZADA"] },
+                      estado: {
+                        type: "string",
+                        enum: ["PENDIENTE", "ACEPTADA", "RECHAZADA"],
+                      },
                       fechaPostulacion: { type: "string", format: "date-time" },
                       esAnonima: { type: "boolean" },
                       proyecto: {
@@ -934,12 +938,7 @@ const swaggerSpec = {
                   type: "array",
                   items: {
                     type: "object",
-                    required: [
-                      "idProyecto",
-                      "idPerfil",
-                      "fecha",
-                      "esAnonima",
-                    ],
+                    required: ["idProyecto", "idPerfil", "fecha", "esAnonima"],
                     properties: {
                       idProyecto: { type: "string" },
                       idPerfil: { type: "string", nullable: true },
@@ -974,7 +973,12 @@ const swaggerSpec = {
           "Incluye la identidad de las colaboraciones anónimas y solo está disponible para el colectivo propietario.",
         security: [{ bearerAuth: [] }],
         parameters: [
-          { in: "path", name: "idProyecto", required: true, schema: { type: "string" } },
+          {
+            in: "path",
+            name: "idProyecto",
+            required: true,
+            schema: { type: "string" },
+          },
         ],
         responses: {
           200: {
@@ -1043,7 +1047,8 @@ const swaggerSpec = {
           400: { description: "Datos inválidos" },
           401: { description: "Sesión no autenticada" },
           403: {
-            description: "El usuario no tiene un perfil de colaboradora registrado",
+            description:
+              "El usuario no tiene un perfil de colaboradora registrado",
           },
           404: { description: "Proyecto, perfil o colaboradora no encontrada" },
           409: {
@@ -1276,7 +1281,9 @@ const swaggerSpec = {
           200: { description: "Destacado actualizado" },
           400: { description: "Fecha inválida o vencimiento no futuro" },
           401: { description: "Sesión no autenticada" },
-          403: { description: "La cuenta no pertenece al equipo administrativo" },
+          403: {
+            description: "La cuenta no pertenece al equipo administrativo",
+          },
           404: { description: "Proyecto no encontrado" },
           409: { description: "No se puede destacar un proyecto finalizado" },
         },
@@ -1557,7 +1564,7 @@ const swaggerSpec = {
         },
       },
     },
-        "/proyectos/{idProyecto}": {
+    "/proyectos/{idProyecto}": {
       get: {
         summary: "Obtiene el detalle de un proyecto",
         parameters: [
@@ -1570,12 +1577,16 @@ const swaggerSpec = {
           },
         ],
         responses: {
-          200: { description: "Detalle del proyecto, con su avance y el estado de la búsqueda" },
+          200: {
+            description:
+              "Detalle del proyecto, con su avance y el estado de la búsqueda",
+          },
           404: { description: "Proyecto no encontrado" },
         },
       },
       put: {
-        summary: "Edita el título, la descripción y las etiquetas de un proyecto",
+        summary:
+          "Edita el título, la descripción y las etiquetas de un proyecto",
         parameters: [
           {
             in: "path",
@@ -1593,10 +1604,14 @@ const swaggerSpec = {
                 type: "object",
                 required: ["titulo", "descripcion"],
                 properties: {
-                  titulo: { type: "string", example: "Portal de turnos solidarios" },
+                  titulo: {
+                    type: "string",
+                    example: "Portal de turnos solidarios",
+                  },
                   descripcion: {
                     type: "string",
-                    example: "Sitio para que voluntarias y voluntarios reserven turnos.",
+                    example:
+                      "Sitio para que voluntarias y voluntarios reserven turnos.",
                   },
                   etiquetas: {
                     type: "array",
@@ -1656,7 +1671,10 @@ const swaggerSpec = {
           },
         },
         responses: {
-          200: { description: "Búsqueda configurada; devuelve el proyecto actualizado" },
+          200: {
+            description:
+              "Búsqueda configurada; devuelve el proyecto actualizado",
+          },
           400: {
             description:
               "Datos inválidos, fecha no futura, o fecha indicada con la búsqueda cerrada",
@@ -1843,7 +1861,12 @@ const swaggerSpec = {
                   in: "query",
                   name: "limite",
                   required: false,
-                  schema: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+                  schema: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 50,
+                    default: 10,
+                  },
                 },
               ],
               responses: {
@@ -1856,7 +1879,9 @@ const swaggerSpec = {
                         properties: {
                           notificaciones: {
                             type: "array",
-                            items: { $ref: "#/components/schemas/Notificacion" },
+                            items: {
+                              $ref: "#/components/schemas/Notificacion",
+                            },
                           },
                           total: { type: "integer" },
                           pag: { type: "integer" },
@@ -1867,7 +1892,8 @@ const swaggerSpec = {
                   },
                 },
                 404: {
-                  description: "Perfil no encontrado o no pertenece a la sesión",
+                  description:
+                    "Perfil no encontrado o no pertenece a la sesión",
                   content: {
                     "application/json": {
                       schema: { $ref: "#/components/schemas/Error" },

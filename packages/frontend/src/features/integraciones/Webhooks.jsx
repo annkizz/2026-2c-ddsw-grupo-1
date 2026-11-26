@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -18,7 +18,7 @@ import {
   MenuItem,
   Select,
   TextField,
-} from '@mui/material';
+} from "@mui/material";
 import {
   FiActivity,
   FiEdit2,
@@ -29,14 +29,14 @@ import {
   FiSend,
   FiTrash2,
   FiX,
-} from 'react-icons/fi';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import { useNotificar } from '../../components/Notificador/Notificador.jsx';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import AlertaError from '../../components/AlertaError/AlertaError.jsx';
-import Dialogo from '../../components/Dialogo/Dialogo.jsx';
-import { obtenerLocale, t } from '../../i18n/t';
-import { mensajeDeError } from '../../service/api';
+} from "react-icons/fi";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { useNotificar } from "../../components/Notificador/Notificador.jsx";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import Dialogo from "../../components/Dialogo/Dialogo.jsx";
+import { obtenerLocale, t } from "../../i18n/t";
+import { mensajeDeError } from "../../service/api";
 import {
   actualizarWebhook,
   crearWebhook,
@@ -44,21 +44,21 @@ import {
   listarWebhooks,
   probarWebhook,
   regenerarSecretoWebhook,
-} from '../../service/webhooksService';
-import './Webhooks.css';
+} from "../../service/webhooksService";
+import "./Webhooks.css";
 
 const EVENTOS = [
-  'POSTULACION_CREADA',
-  'COLABORACION_ACEPTADA',
-  'PROYECTO_CERRADO',
+  "POSTULACION_CREADA",
+  "COLABORACION_ACEPTADA",
+  "PROYECTO_CERRADO",
 ];
-const FORMATOS = ['GENERICO', 'SLACK', 'DISCORD'];
+const FORMATOS = ["GENERICO", "SLACK", "DISCORD"];
 const LIMITE_WEBHOOKS = 5;
 
 const FORMULARIO_VACIO = {
-  url: '',
+  url: "",
   eventos: [],
-  formato: 'GENERICO',
+  formato: "GENERICO",
   activo: true,
 };
 
@@ -66,7 +66,10 @@ const fechaVisible = (fecha) => {
   if (!fecha) return null;
   const date = new Date(fecha);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString(obtenerLocale(), { dateStyle: 'medium', timeStyle: 'short' });
+  return date.toLocaleString(obtenerLocale(), {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 };
 
 const Webhooks = () => {
@@ -93,7 +96,7 @@ const Webhooks = () => {
       setErrorCarga(null);
       try {
         if (!idColectivo) {
-          throw new Error(t('webhooks.errorPerfil'));
+          throw new Error(t("webhooks.errorPerfil"));
         }
         const token = await getAccessToken();
         const resultado = await listarWebhooks(token, idColectivo);
@@ -128,11 +131,11 @@ const Webhooks = () => {
   const guardar = async (evento) => {
     evento.preventDefault();
     if (!formulario || formulario.eventos.length === 0) {
-      setErrorAccion(new Error(t('webhooks.errorEventos')));
+      setErrorAccion(new Error(t("webhooks.errorEventos")));
       return;
     }
     if (!formulario.id && !formulario.url.trim()) {
-      setErrorAccion(new Error(t('webhooks.errorUrl')));
+      setErrorAccion(new Error(t("webhooks.errorUrl")));
       return;
     }
 
@@ -159,7 +162,7 @@ const Webhooks = () => {
             webhook.id === actualizado.id ? actualizado : webhook,
           ),
         );
-        notificar({ mensaje: t('webhooks.exitoActualizacion') });
+        notificar({ mensaje: t("webhooks.exitoActualizacion") });
       } else {
         const creado = await crearWebhook(token, idColectivo, datos);
         setWebhooks((actuales) => [...actuales, creado]);
@@ -167,7 +170,7 @@ const Webhooks = () => {
           nombre: creado.url,
           secreto: creado.secreto,
         });
-        notificar({ mensaje: t('webhooks.exitoCreacion') });
+        notificar({ mensaje: t("webhooks.exitoCreacion") });
       }
       setFormulario(null);
     } catch (error) {
@@ -181,7 +184,7 @@ const Webhooks = () => {
     setErrorAccion(null);
     setFormulario({
       id: webhook.id,
-      url: '',
+      url: "",
       eventos: [...webhook.eventos],
       formato: webhook.formato,
       activo: webhook.activo,
@@ -200,10 +203,12 @@ const Webhooks = () => {
         { activo },
       );
       setWebhooks((actuales) =>
-        actuales.map((actual) => actual.id === actualizado.id ? actualizado : actual),
+        actuales.map((actual) =>
+          actual.id === actualizado.id ? actualizado : actual,
+        ),
       );
       notificar({
-        mensaje: t(activo ? 'webhooks.activado' : 'webhooks.desactivado'),
+        mensaje: t(activo ? "webhooks.activado" : "webhooks.desactivado"),
       });
     } catch (error) {
       setErrorAccion(error);
@@ -252,7 +257,7 @@ const Webhooks = () => {
     setErrorAccion(null);
     try {
       const token = await getAccessToken();
-      if (tipo === 'eliminar') {
+      if (tipo === "eliminar") {
         await eliminarWebhook(token, idColectivo, webhook.id);
         setWebhooks((actuales) =>
           actuales.filter((actual) => actual.id !== webhook.id),
@@ -262,7 +267,7 @@ const Webhooks = () => {
           delete siguientes[webhook.id];
           return siguientes;
         });
-        notificar({ mensaje: t('webhooks.exitoEliminacion') });
+        notificar({ mensaje: t("webhooks.exitoEliminacion") });
       } else {
         const actualizado = await regenerarSecretoWebhook(
           token,
@@ -278,7 +283,7 @@ const Webhooks = () => {
           nombre: actualizado.url,
           secreto: actualizado.secreto,
         });
-        notificar({ mensaje: t('webhooks.exitoSecreto') });
+        notificar({ mensaje: t("webhooks.exitoSecreto") });
       }
       setConfirmacion(null);
     } catch (error) {
@@ -299,14 +304,14 @@ const Webhooks = () => {
   return (
     <section className="webhooks-pagina">
       <EncabezadoPagina
-        titulo={t('webhooks.titulo')}
-        subtitulo={t('webhooks.subtitulo')}
+        titulo={t("webhooks.titulo")}
+        subtitulo={t("webhooks.subtitulo")}
         className="webhooks-encabezado"
       />
 
       <Alert severity="info" className="webhooks-ayuda">
-        <AlertTitle>{t('webhooks.comoFuncionanTitulo')}</AlertTitle>
-        {t('webhooks.comoFuncionan')}
+        <AlertTitle>{t("webhooks.comoFuncionanTitulo")}</AlertTitle>
+        {t("webhooks.comoFuncionan")}
       </Alert>
 
       {secretoVisible && (
@@ -315,8 +320,8 @@ const Webhooks = () => {
           onClose={() => setSecretoVisible(null)}
           className="webhooks-secreto"
         >
-          <AlertTitle>{t('webhooks.secretoTitulo')}</AlertTitle>
-          <p>{t('webhooks.secretoAyuda', { nombre: secretoVisible.nombre })}</p>
+          <AlertTitle>{t("webhooks.secretoTitulo")}</AlertTitle>
+          <p>{t("webhooks.secretoAyuda", { nombre: secretoVisible.nombre })}</p>
           <code>{secretoVisible.secreto}</code>
         </Alert>
       )}
@@ -328,50 +333,67 @@ const Webhooks = () => {
       )}
 
       {!idColectivo ? (
-        <Alert severity="error">{t('webhooks.errorPerfil')}</Alert>
+        <Alert severity="error">{t("webhooks.errorPerfil")}</Alert>
       ) : cargando ? (
-        <p role="status">{t('webhooks.cargando')}</p>
+        <p role="status">{t("webhooks.cargando")}</p>
       ) : errorCarga ? (
         <AlertaError
           error={errorCarga}
-          titulo={t('webhooks.errorCarga')}
+          titulo={t("webhooks.errorCarga")}
           onReintentar={recargar}
         />
       ) : (
         <>
           <div className="webhooks-lista-encabezado">
-            <h2>{t('webhooks.listaTitulo', { cantidad: webhooks.length, maximo: LIMITE_WEBHOOKS })}</h2>
+            <h2>
+              {t("webhooks.listaTitulo", {
+                cantidad: webhooks.length,
+                maximo: LIMITE_WEBHOOKS,
+              })}
+            </h2>
             {!formulario && webhooks.length < LIMITE_WEBHOOKS && (
               <Button
                 variant="contained"
                 startIcon={<FiPlus aria-hidden="true" />}
                 onClick={abrirFormulario}
               >
-                {t('webhooks.agregar')}
+                {t("webhooks.agregar")}
               </Button>
             )}
           </div>
 
           {formulario && (
-            <Card component="form" onSubmit={guardar} className="webhooks-formulario">
+            <Card
+              component="form"
+              onSubmit={guardar}
+              className="webhooks-formulario"
+            >
               <CardContent>
-                <h2>{t(formulario.id ? 'webhooks.editarTitulo' : 'webhooks.nuevoTitulo')}</h2>
+                <h2>
+                  {t(
+                    formulario.id
+                      ? "webhooks.editarTitulo"
+                      : "webhooks.nuevoTitulo",
+                  )}
+                </h2>
                 <TextField
-                  label={t('webhooks.url')}
+                  label={t("webhooks.url")}
                   type="url"
                   value={formulario.url}
-                  onChange={(evento) => cambiarFormulario('url', evento.target.value)}
+                  onChange={(evento) =>
+                    cambiarFormulario("url", evento.target.value)
+                  }
                   required={!formulario.id}
                   fullWidth
                   helperText={
                     formulario.id
-                      ? t('webhooks.urlEditarAyuda')
-                      : t('webhooks.urlAyuda')
+                      ? t("webhooks.urlEditarAyuda")
+                      : t("webhooks.urlAyuda")
                   }
                   autoComplete="url"
                 />
                 <fieldset className="webhooks-eventos">
-                  <legend>{t('webhooks.eventosTitulo')}</legend>
+                  <legend>{t("webhooks.eventosTitulo")}</legend>
                   <FormGroup>
                     {EVENTOS.map((evento) => (
                       <FormControlLabel
@@ -389,12 +411,16 @@ const Webhooks = () => {
                 </fieldset>
                 <div className="webhooks-formulario__fila">
                   <FormControl fullWidth>
-                    <InputLabel id="webhooks-formato-label">{t('webhooks.formato')}</InputLabel>
+                    <InputLabel id="webhooks-formato-label">
+                      {t("webhooks.formato")}
+                    </InputLabel>
                     <Select
                       labelId="webhooks-formato-label"
                       value={formulario.formato}
-                      label={t('webhooks.formato')}
-                      onChange={(evento) => cambiarFormulario('formato', evento.target.value)}
+                      label={t("webhooks.formato")}
+                      onChange={(evento) =>
+                        cambiarFormulario("formato", evento.target.value)
+                      }
                     >
                       {FORMATOS.map((formato) => (
                         <MenuItem key={formato} value={formato}>
@@ -407,10 +433,12 @@ const Webhooks = () => {
                     control={
                       <Checkbox
                         checked={formulario.activo}
-                        onChange={(evento) => cambiarFormulario('activo', evento.target.checked)}
+                        onChange={(evento) =>
+                          cambiarFormulario("activo", evento.target.checked)
+                        }
                       />
                     }
-                    label={t('webhooks.activo')}
+                    label={t("webhooks.activo")}
                   />
                 </div>
               </CardContent>
@@ -422,7 +450,7 @@ const Webhooks = () => {
                   onClick={() => setFormulario(null)}
                   disabled={guardando}
                 >
-                  {t('comun.cancelar')}
+                  {t("comun.cancelar")}
                 </Button>
                 <Button
                   type="submit"
@@ -430,14 +458,14 @@ const Webhooks = () => {
                   startIcon={<FiLink aria-hidden="true" />}
                   loading={guardando}
                 >
-                  {t(formulario.id ? 'webhooks.guardar' : 'webhooks.crear')}
+                  {t(formulario.id ? "webhooks.guardar" : "webhooks.crear")}
                 </Button>
               </CardActions>
             </Card>
           )}
 
           {webhooks.length === 0 && !formulario ? (
-            <Alert severity="info">{t('webhooks.sinWebhooks')}</Alert>
+            <Alert severity="info">{t("webhooks.sinWebhooks")}</Alert>
           ) : webhooks.length > 0 ? (
             <div className="webhooks-lista">
               {webhooks.map((webhook) => {
@@ -451,7 +479,7 @@ const Webhooks = () => {
                         <div>
                           <h3>{webhook.url}</h3>
                           <p>
-                            {t('webhooks.formato')}:{' '}
+                            {t("webhooks.formato")}:{" "}
                             {t(`webhooks.formatos.${webhook.formato}`)}
                           </p>
                         </div>
@@ -465,53 +493,61 @@ const Webhooks = () => {
                               }
                               slotProps={{
                                 input: {
-                                  'aria-label': t(
+                                  "aria-label": t(
                                     webhook.activo
-                                      ? 'webhooks.desactivar'
-                                      : 'webhooks.activar',
+                                      ? "webhooks.desactivar"
+                                      : "webhooks.activar",
                                     { url: webhook.url },
                                   ),
                                 },
                               }}
                             />
                           }
-                          label={t(webhook.activo ? 'webhooks.activo' : 'webhooks.inactivo')}
+                          label={t(
+                            webhook.activo
+                              ? "webhooks.activo"
+                              : "webhooks.inactivo",
+                          )}
                         />
                       </div>
 
                       <p className="webhooks-tarjeta__eventos">
-                        <strong>{t('webhooks.eventosTitulo')}:</strong>{' '}
+                        <strong>{t("webhooks.eventosTitulo")}:</strong>{" "}
                         {webhook.eventos
                           .map((evento) => t(`webhooks.eventos.${evento}`))
-                          .join(', ')}
+                          .join(", ")}
                       </p>
 
                       <p className="webhooks-tarjeta__entrega">
                         <FiActivity aria-hidden="true" />
                         {entrega
-                          ? t('webhooks.ultimaEntrega', {
-                              fecha: fechaVisible(entrega.fecha) ?? '',
+                          ? t("webhooks.ultimaEntrega", {
+                              fecha: fechaVisible(entrega.fecha) ?? "",
                               estado: t(`webhooks.estados.${entrega.estado}`),
                               status: entrega.httpStatus
                                 ? ` · HTTP ${entrega.httpStatus}`
-                                : '',
+                                : "",
                             })
-                          : t('webhooks.sinEntregas')}
+                          : t("webhooks.sinEntregas")}
                       </p>
 
                       {resultado && (
                         <Alert
                           severity={
-                            resultado.estado === 'ENVIADO' ||
-                            resultado.estado === 'SIMULADO'
-                              ? 'success'
-                              : 'error'
+                            resultado.estado === "ENVIADO" ||
+                            resultado.estado === "SIMULADO"
+                              ? "success"
+                              : "error"
                           }
                           className="webhooks-resultado"
                         >
-                          <strong>{t(`webhooks.estados.${resultado.estado}`)}</strong>
-                          {resultado.httpStatus ? ` · HTTP ${resultado.httpStatus}` : ''}
-                          {resultado.detalle ? ` · ${resultado.detalle}` : ''}
+                          <strong>
+                            {t(`webhooks.estados.${resultado.estado}`)}
+                          </strong>
+                          {resultado.httpStatus
+                            ? ` · HTTP ${resultado.httpStatus}`
+                            : ""}
+                          {resultado.detalle ? ` · ${resultado.detalle}` : ""}
                         </Alert>
                       )}
                     </CardContent>
@@ -521,29 +557,35 @@ const Webhooks = () => {
                         onClick={() => ejecutarPrueba(webhook)}
                         disabled={bloquearAcciones || Boolean(formulario)}
                       >
-                        {probando ? t('webhooks.probando') : t('webhooks.probar')}
+                        {probando
+                          ? t("webhooks.probando")
+                          : t("webhooks.probar")}
                       </Button>
                       <Button
                         startIcon={<FiEdit2 aria-hidden="true" />}
                         onClick={() => iniciarEdicion(webhook)}
                         disabled={Boolean(formulario) || bloquearAcciones}
                       >
-                        {t('webhooks.editar')}
+                        {t("webhooks.editar")}
                       </Button>
                       <Button
                         startIcon={<FiRotateCcw aria-hidden="true" />}
-                        onClick={() => setConfirmacion({ tipo: 'secreto', webhook })}
+                        onClick={() =>
+                          setConfirmacion({ tipo: "secreto", webhook })
+                        }
                         disabled={Boolean(formulario) || bloquearAcciones}
                       >
-                        {t('webhooks.regenerarSecreto')}
+                        {t("webhooks.regenerarSecreto")}
                       </Button>
                       <Button
                         color="error"
                         startIcon={<FiTrash2 aria-hidden="true" />}
-                        onClick={() => setConfirmacion({ tipo: 'eliminar', webhook })}
+                        onClick={() =>
+                          setConfirmacion({ tipo: "eliminar", webhook })
+                        }
                         disabled={Boolean(formulario) || bloquearAcciones}
                       >
-                        {t('webhooks.eliminar')}
+                        {t("webhooks.eliminar")}
                       </Button>
                     </CardActions>
                   </Card>
@@ -554,7 +596,7 @@ const Webhooks = () => {
 
           {webhooks.length >= LIMITE_WEBHOOKS && (
             <Alert severity="info" className="webhooks-limite">
-              {t('webhooks.limite', { maximo: LIMITE_WEBHOOKS })}
+              {t("webhooks.limite", { maximo: LIMITE_WEBHOOKS })}
             </Alert>
           )}
         </>
@@ -566,11 +608,19 @@ const Webhooks = () => {
         aria-labelledby="webhooks-confirmacion-titulo"
       >
         <DialogTitle id="webhooks-confirmacion-titulo">
-          {t(confirmacion?.tipo === 'eliminar' ? 'webhooks.confirmarEliminar' : 'webhooks.confirmarSecreto')}
+          {t(
+            confirmacion?.tipo === "eliminar"
+              ? "webhooks.confirmarEliminar"
+              : "webhooks.confirmarSecreto",
+          )}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {t(confirmacion?.tipo === 'eliminar' ? 'webhooks.confirmarEliminarAyuda' : 'webhooks.confirmarSecretoAyuda')}
+            {t(
+              confirmacion?.tipo === "eliminar"
+                ? "webhooks.confirmarEliminarAyuda"
+                : "webhooks.confirmarSecretoAyuda",
+            )}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -578,19 +628,25 @@ const Webhooks = () => {
             onClick={() => setConfirmacion(null)}
             disabled={Boolean(procesandoId)}
           >
-            {t('comun.cancelar')}
+            {t("comun.cancelar")}
           </Button>
           <Button
-            color={confirmacion?.tipo === 'eliminar' ? 'error' : 'primary'}
+            color={confirmacion?.tipo === "eliminar" ? "error" : "primary"}
             startIcon={
-              confirmacion?.tipo === 'eliminar'
-                ? <FiTrash2 aria-hidden="true" />
-                : <FiRefreshCw aria-hidden="true" />
+              confirmacion?.tipo === "eliminar" ? (
+                <FiTrash2 aria-hidden="true" />
+              ) : (
+                <FiRefreshCw aria-hidden="true" />
+              )
             }
             onClick={ejecutarConfirmacion}
             loading={Boolean(procesandoId)}
           >
-            {t(confirmacion?.tipo === 'eliminar' ? 'webhooks.eliminar' : 'webhooks.regenerar')}
+            {t(
+              confirmacion?.tipo === "eliminar"
+                ? "webhooks.eliminar"
+                : "webhooks.regenerar",
+            )}
           </Button>
         </DialogActions>
       </Dialogo>

@@ -47,11 +47,7 @@ describe("normalizarEtiquetas", () => {
 
   it("normaliza cada una y elimina repeticiones", () => {
     expect(
-      normalizarEtiquetas([
-        "Accesibilidad Web",
-        "accesibilidad_web",
-        "React",
-      ]),
+      normalizarEtiquetas(["Accesibilidad Web", "accesibilidad_web", "React"]),
     ).toEqual(["accesibilidad_web", "react"]);
   });
 

@@ -58,12 +58,14 @@ export class ColectivoController {
   }
 
   async obtenerPropio(req, res) {
-    const colectivo = await this.colectivoService.obtenerPorUsuario(req.usuario);
+    const colectivo = await this.colectivoService.obtenerPorUsuario(
+      req.usuario,
+    );
     res.status(200).json(colectivo);
   }
 
   async obtenerTodos(req, res) {
-const valores = req.query.etiqueta;
+    const valores = req.query.etiqueta;
     let lista = [];
     if (valores !== undefined) {
       lista = Array.isArray(valores) ? valores : [valores];

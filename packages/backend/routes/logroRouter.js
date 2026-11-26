@@ -1,6 +1,9 @@
 import express from "express";
 import { validate } from "../middlewares/validate.js";
-import { logroSchema, logroCreacionSchema } from "../controllers/LogroController.js";
+import {
+  logroSchema,
+  logroCreacionSchema,
+} from "../controllers/LogroController.js";
 
 export function crearLogroRouter(logroController) {
   const router = express.Router();
@@ -8,7 +11,9 @@ export function crearLogroRouter(logroController) {
   router
     .route("/:idProyecto/logros")
     .get((req, res) => logroController.obtenerPorProyecto(req, res))
-    .post(validate(logroCreacionSchema), (req, res) => logroController.crear(req, res));
+    .post(validate(logroCreacionSchema), (req, res) =>
+      logroController.crear(req, res),
+    );
 
   router
     .route("/:idProyecto/logros/:id")

@@ -69,24 +69,41 @@ describe("middleware de autenticacion", () => {
   });
 
   it("asigna administrador a un usuario configurado que aún no tiene rol", async () => {
-    usuarioRepository.asignarRol = jest.fn().mockResolvedValue({ _id: "u1", rol: "ADMINISTRADOR" });
-    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "otro, logto-1 " });
+    usuarioRepository.asignarRol = jest
+      .fn()
+      .mockResolvedValue({ _id: "u1", rol: "ADMINISTRADOR" });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "otro, logto-1 ",
+    });
     const { req, resultado } = ejecutar({ authorization: "Bearer bueno" });
 
     await resultado;
 
-    expect(usuarioRepository.asignarRol).toHaveBeenCalledWith("u1", "ADMINISTRADOR");
+    expect(usuarioRepository.asignarRol).toHaveBeenCalledWith(
+      "u1",
+      "ADMINISTRADOR",
+    );
     expect(req.usuario.rol).toBe("ADMINISTRADOR");
   });
 
   it("no cambia un rol existente ni asigna administrador a otra cuenta", async () => {
     usuarioRepository.asignarRol = jest.fn();
-    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({ _id: "u1", rol: "COLECTIVO" });
-    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "logto-1" });
+    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({
+      _id: "u1",
+      rol: "COLECTIVO",
+    });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "logto-1",
+    });
     await ejecutar({ authorization: "Bearer bueno" }).resultado;
 
-    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({ _id: "u1", rol: null });
-    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "otro" });
+    usuarioRepository.buscarOCrearPorLogtoId.mockResolvedValue({
+      _id: "u1",
+      rol: null,
+    });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "otro",
+    });
     await ejecutar({ authorization: "Bearer bueno" }).resultado;
 
     expect(usuarioRepository.asignarRol).not.toHaveBeenCalled();
@@ -97,7 +114,9 @@ describe("middleware de autenticacion", () => {
       .mockResolvedValueOnce({ _id: "u1", rol: null })
       .mockResolvedValueOnce({ _id: "u1", rol: "ADMINISTRADOR" });
     usuarioRepository.asignarRol = jest.fn().mockResolvedValue(null);
-    autenticar = crearAutenticar(usuarioRepository, verificarToken, { LOGTO_ADMIN_IDS: "logto-1" });
+    autenticar = crearAutenticar(usuarioRepository, verificarToken, {
+      LOGTO_ADMIN_IDS: "logto-1",
+    });
     const { req, resultado } = ejecutar({ authorization: "Bearer bueno" });
 
     await resultado;

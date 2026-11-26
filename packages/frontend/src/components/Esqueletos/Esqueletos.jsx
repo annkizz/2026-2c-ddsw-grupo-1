@@ -1,18 +1,24 @@
-import React from 'react';
-import { Skeleton } from '@mui/material';
-import { t } from '../../i18n/t';
-import './Esqueletos.css';
-import PropTypes from 'prop-types';
+import React from "react";
+import { Skeleton } from "@mui/material";
+import { t } from "../../i18n/t";
+import "./Esqueletos.css";
+import PropTypes from "prop-types";
 
 const conEtiqueta = { etiqueta: PropTypes.string };
 
 // Esqueletos con la forma del contenido. La región se marca aria-busy y anuncia la carga una vez.
-const Region = ({ etiqueta, mensajeVisible, className = '', children }) => (
-  <div className={`esqueleto ${className}`.trim()} aria-busy="true" role="status">
+const Region = ({ etiqueta, mensajeVisible, className = "", children }) => (
+  <div
+    className={`esqueleto ${className}`.trim()}
+    aria-busy="true"
+    role="status"
+  >
     {mensajeVisible ? (
       <p className="esqueleto__mensaje">{mensajeVisible}</p>
     ) : (
-      <span className="visualmente-oculto">{etiqueta ?? t('comun.cargando')}</span>
+      <span className="visualmente-oculto">
+        {etiqueta ?? t("comun.cargando")}
+      </span>
     )}
     <div aria-hidden="true" className="esqueleto__contenido">
       {children}
@@ -20,7 +26,7 @@ const Region = ({ etiqueta, mensajeVisible, className = '', children }) => (
   </div>
 );
 
-const Linea = ({ ancho = '100%', variante = 'text', alto }) => (
+const Linea = ({ ancho = "100%", variante = "text", alto }) => (
   <Skeleton variant={variante} width={ancho} height={alto} />
 );
 
@@ -55,7 +61,11 @@ export const EsqueletoLista = ({ cantidad = 4, etiqueta }) => (
           <Linea ancho="85%" />
           <Linea ancho="40%" />
         </div>
-        <Linea variante="rounded" ancho="var(--space-10)" alto="var(--control-min-height)" />
+        <Linea
+          variante="rounded"
+          ancho="var(--space-10)"
+          alto="var(--control-min-height)"
+        />
       </div>
     ))}
   </Region>
@@ -79,7 +89,11 @@ export const EsqueletoDetalle = ({ etiqueta }) => (
 export const EsqueletoPerfil = ({ etiqueta }) => (
   <Region etiqueta={etiqueta} className="esqueleto-perfil">
     <div className="esqueleto-fila">
-      <Linea variante="circular" ancho="var(--avatar-size)" alto="var(--avatar-size)" />
+      <Linea
+        variante="circular"
+        ancho="var(--avatar-size)"
+        alto="var(--avatar-size)"
+      />
       <div className="esqueleto-item__texto">
         <Linea ancho="50%" alto="var(--space-4)" />
         <Linea ancho="35%" />
@@ -103,12 +117,20 @@ export const EsqueletoFormulario = ({ campos = 4, etiqueta }) => (
         <Linea variante="rounded" alto="var(--field-min-height)" />
       </div>
     ))}
-    <Linea variante="rounded" ancho="var(--space-10)" alto="var(--control-min-height)" />
+    <Linea
+      variante="rounded"
+      ancho="var(--space-10)"
+      alto="var(--control-min-height)"
+    />
   </Region>
 );
 
 export const EsqueletoPagina = ({ etiqueta, mensaje }) => (
-  <Region etiqueta={etiqueta} mensajeVisible={mensaje} className="esqueleto-pagina">
+  <Region
+    etiqueta={etiqueta}
+    mensajeVisible={mensaje}
+    className="esqueleto-pagina"
+  >
     <Linea ancho="40%" alto="var(--space-5)" />
     <Linea ancho="70%" />
     <div className="esqueleto-detalle__bloques">
@@ -122,12 +144,12 @@ Region.propTypes = {
   etiqueta: PropTypes.string,
   mensajeVisible: PropTypes.node,
   className: PropTypes.string,
-  children: PropTypes.node
+  children: PropTypes.node,
 };
 Linea.propTypes = {
   ancho: PropTypes.string,
   alto: PropTypes.string,
-  variante: PropTypes.oneOf(['text', 'rounded', 'rectangular', 'circular'])
+  variante: PropTypes.oneOf(["text", "rounded", "rectangular", "circular"]),
 };
 EsqueletoGrilla.propTypes = { ...conEtiqueta, cantidad: PropTypes.number };
 EsqueletoLista.propTypes = { ...conEtiqueta, cantidad: PropTypes.number };

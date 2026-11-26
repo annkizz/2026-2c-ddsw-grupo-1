@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
-import { Button } from '@mui/material';
-import { FiAlertTriangle, FiHome, FiRefreshCw } from 'react-icons/fi';
-import { t } from '../../i18n/t';
-import '../../features/errores/PaginaEstado.css';
+import React, { Component } from "react";
+import { Button } from "@mui/material";
+import { FiAlertTriangle, FiHome, FiRefreshCw } from "react-icons/fi";
+import { t } from "../../i18n/t";
+import "../../features/errores/PaginaEstado.css";
 
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 // Red de seguridad global: si una pantalla falla al renderizar, se muestra un mensaje
 // amigable con salidas claras en lugar de una pantalla en blanco.
 class ErrorBoundary extends Component {
@@ -22,7 +22,10 @@ class ErrorBoundary extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.state.conError && prevProps.claveReinicio !== this.props.claveReinicio) {
+    if (
+      this.state.conError &&
+      prevProps.claveReinicio !== this.props.claveReinicio
+    ) {
       this.setState({ conError: false });
     }
   }
@@ -32,21 +35,28 @@ class ErrorBoundary extends Component {
 
     return (
       <main className="pagina-estado" id="contenido-principal" tabIndex={-1}>
-        <span className="pagina-estado__icono pagina-estado__icono--error" aria-hidden="true">
+        <span
+          className="pagina-estado__icono pagina-estado__icono--error"
+          aria-hidden="true"
+        >
           <FiAlertTriangle />
         </span>
-        <h1>{t('errorGlobal.titulo')}</h1>
-        <p className="pagina-estado__texto">{t('errorGlobal.descripcion')}</p>
+        <h1>{t("errorGlobal.titulo")}</h1>
+        <p className="pagina-estado__texto">{t("errorGlobal.descripcion")}</p>
         <div className="pagina-estado__acciones">
           <Button
             variant="contained"
             startIcon={<FiRefreshCw aria-hidden="true" />}
             onClick={() => window.location.reload()}
           >
-            {t('errorGlobal.recargar')}
+            {t("errorGlobal.recargar")}
           </Button>
-          <Button variant="outlined" startIcon={<FiHome aria-hidden="true" />} href="/">
-            {t('comun.volverAlInicio')}
+          <Button
+            variant="outlined"
+            startIcon={<FiHome aria-hidden="true" />}
+            href="/"
+          >
+            {t("comun.volverAlInicio")}
           </Button>
         </div>
       </main>
@@ -57,7 +67,7 @@ class ErrorBoundary extends Component {
 ErrorBoundary.propTypes = {
   children: PropTypes.node,
   onError: PropTypes.func,
-  claveReinicio: PropTypes.string
+  claveReinicio: PropTypes.string,
 };
 
 export default ErrorBoundary;

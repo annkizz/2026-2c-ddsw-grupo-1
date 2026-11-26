@@ -53,13 +53,12 @@ const perfilSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(TipoAceptacion),
       required: true,
-    },    
+    },
 
     busquedaAbierta: {
-      type: Boolean, 
-      default: true
-    }
-
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true, collection: "perfiles" },
 );

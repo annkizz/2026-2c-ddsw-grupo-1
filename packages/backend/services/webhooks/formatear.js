@@ -1,4 +1,8 @@
-import { EVENTO_PRUEBA, EventoWebhook, FormatoWebhook } from "../../domain/EventoWebhook.js";
+import {
+  EVENTO_PRUEBA,
+  EventoWebhook,
+  FormatoWebhook,
+} from "../../domain/EventoWebhook.js";
 
 export function textoDelEvento({ evento, datos = {} }) {
   const proyecto = datos.tituloProyecto ?? datos.titulo ?? "";

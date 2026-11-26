@@ -26,7 +26,9 @@ export class LinkedinConexionService {
   }
 
   async obtenerColectivoDe(usuario) {
-    const colectivo = await this.colectivoRepository.buscarPorUsuario(usuario._id);
+    const colectivo = await this.colectivoRepository.buscarPorUsuario(
+      usuario._id,
+    );
     if (!colectivo) {
       throw new ForbiddenError(
         "Solo un colectivo puede usar la integración con Linkedin",
@@ -62,9 +64,14 @@ export class LinkedinConexionService {
   async validarState(state, colectivo) {
     let payload;
     try {
-      ({ payload } = await jwtVerify(state, this.claveState(), { algorithms: ["HS256"] }));
+      ({ payload } = await jwtVerify(state, this.claveState(), {
+        algorithms: ["HS256"],
+      }));
     } catch {
-      throw new BadRequestError("el state es inválido o venció", "LINKEDIN_STATE_INVALIDO");
+      throw new BadRequestError(
+        "el state es inválido o venció",
+        "LINKEDIN_STATE_INVALIDO",
+      );
     }
     // el flujo lo tiene que completar el mismo colectivo que lo inicio
     if (payload.idColectivo !== String(colectivo._id)) {
@@ -92,7 +99,10 @@ export class LinkedinConexionService {
           "LINKEDIN_CODIGO_INVALIDO",
         );
       }
-      throw new BadGatewayError("No se pudo comunicar con Linkedin", "LINKEDIN_NO_DISPONIBLE");
+      throw new BadGatewayError(
+        "No se pudo comunicar con Linkedin",
+        "LINKEDIN_NO_DISPONIBLE",
+      );
     }
 
     await this.conexionRepository.guardar(
@@ -109,7 +119,9 @@ export class LinkedinConexionService {
 
   async obtenerEstado(usuario) {
     const colectivo = await this.obtenerColectivoDe(usuario);
-    const conexion = await this.conexionRepository.buscarPorColectivo(colectivo._id);
+    const conexion = await this.conexionRepository.buscarPorColectivo(
+      colectivo._id,
+    );
     if (!conexion) return { conectado: false };
     return {
       conectado: conexion.estaVigente(),
@@ -126,7 +138,8 @@ export class LinkedinConexionService {
 
   // lo usa la publicacion: falla ANTES de guardar nada si no se puede publicar
   async obtenerCredenciales(idColectivo) {
-    const conexion = await this.conexionRepository.buscarPorColectivoConToken(idColectivo);
+    const conexion =
+      await this.conexionRepository.buscarPorColectivoConToken(idColectivo);
     if (!conexion) {
       throw new ConflictError(
         "El colectivo todavía no conectó su cuenta de Linkedin",

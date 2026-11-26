@@ -14,7 +14,10 @@
 .filtros__fila,
 .filtros__avanzados {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--sidebar-width), 100%), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--sidebar-width), 100%), 1fr)
+  );
   gap: var(--space-3);
 }
 

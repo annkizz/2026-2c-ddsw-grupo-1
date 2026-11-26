@@ -73,9 +73,7 @@ export class ColectivoRepository {
     return colectivo;
   }
 
-  async buscarPorUsuario(id) { 
-    return this.model.
-    findOne({ usuario: id }).exec(); 
+  async buscarPorUsuario(id) {
+    return this.model.findOne({ usuario: id }).exec();
   }
-
 }

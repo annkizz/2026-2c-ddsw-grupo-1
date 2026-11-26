@@ -1,4 +1,4 @@
-import { obtenerLocale } from '../i18n/t';
+import { obtenerLocale } from "../i18n/t";
 
 const FECHA_RE = /^(\d{4})-(\d{2})-(\d{2})/;
 
@@ -30,10 +30,10 @@ const fechaLocal = (valor) => {
 };
 
 const fechaComoInput = (fecha) => {
-  if (!fecha) return '';
+  if (!fecha) return "";
   const anio = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
   return `${anio}-${mes}-${dia}`;
 };
 
@@ -41,9 +41,9 @@ export const formatearFecha = (valor) => {
   const fecha = fechaLocal(valor);
   if (!fecha) return null;
   return new Intl.DateTimeFormat(obtenerLocale(), {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   }).format(fecha);
 };
 

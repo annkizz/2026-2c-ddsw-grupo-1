@@ -52,7 +52,13 @@ describe("CardColaboradora - mensajería interna", () => {
     );
 
     await waitFor(() => {
-      expect(invitarAColaborar).toHaveBeenCalledWith("token", "proyecto-1", "perfil-1", "colaboradora-1", "Hola, queremos invitarte.");
+      expect(invitarAColaborar).toHaveBeenCalledWith(
+        "token",
+        "proyecto-1",
+        "perfil-1",
+        "colaboradora-1",
+        "Hola, queremos invitarte.",
+      );
     });
     expect(
       await screen.findByText(
@@ -95,10 +101,10 @@ describe("CardColaboradora - mensajería interna", () => {
       </ul>,
     );
 
+    await userEvent.click(screen.getByRole("button", { name: "Contactar" }));
     await userEvent.click(
-      screen.getByRole("button", { name: "Contactar" }),
+      screen.getByRole("button", { name: "Enviar invitación" }),
     );
-    await userEvent.click(screen.getByRole("button", { name: "Enviar invitación" }));
 
     await waitFor(() => {
       expect(invitarAColaborar).toHaveBeenCalledWith(
@@ -119,16 +125,28 @@ describe("CardColaboradora - mensajería interna", () => {
 
   it("mantiene el diálogo abierto durante el envío y muestra un error", async () => {
     let rechazar;
-    invitarAColaborar.mockReturnValue(new Promise((_resolve, reject) => {
-      rechazar = reject;
-    }));
+    invitarAColaborar.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rechazar = reject;
+      }),
+    );
     render(
-      <ul><CardColaboradora idProyecto="p" idPerfil="f" colaboradora={{
-        id: "c", nombreFantasia: "Ada", aceptaMensajeria: true,
-      }} /></ul>,
+      <ul>
+        <CardColaboradora
+          idProyecto="p"
+          idPerfil="f"
+          colaboradora={{
+            id: "c",
+            nombreFantasia: "Ada",
+            aceptaMensajeria: true,
+          }}
+        />
+      </ul>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Contactar" }));
-    await userEvent.click(screen.getByRole("button", { name: "Enviar invitación" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Enviar invitación" }),
+    );
     await waitFor(() => expect(invitarAColaborar).toHaveBeenCalled());
     await userEvent.keyboard("{Escape}");
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -139,21 +157,41 @@ describe("CardColaboradora - mensajería interna", () => {
   });
 
   it("asocia cada tarjeta de la misma persona con sus propios elementos", () => {
-    const colaboradora = { id: "c", nombreFantasia: "Ada", aceptaMensajeria: true };
-    render(<ul>
-      <CardColaboradora colaboradora={colaboradora} idProyecto="p" idPerfil="f1" />
-      <CardColaboradora colaboradora={colaboradora} idProyecto="p" idPerfil="f2" />
-    </ul>);
+    const colaboradora = {
+      id: "c",
+      nombreFantasia: "Ada",
+      aceptaMensajeria: true,
+    };
+    render(
+      <ul>
+        <CardColaboradora
+          colaboradora={colaboradora}
+          idProyecto="p"
+          idPerfil="f1"
+        />
+        <CardColaboradora
+          colaboradora={colaboradora}
+          idProyecto="p"
+          idPerfil="f2"
+        />
+      </ul>,
+    );
     const tarjetas = screen.getAllByRole("listitem", { name: "Ada" });
-    const titulos = tarjetas.map((tarjeta) => within(tarjeta).getByRole("heading", { name: "Ada" }).id);
+    const titulos = tarjetas.map(
+      (tarjeta) => within(tarjeta).getByRole("heading", { name: "Ada" }).id,
+    );
     const descripciones = tarjetas.map((tarjeta) =>
-      within(tarjeta).getByRole("button", { name: "Contactar" }).getAttribute("aria-describedby"),
+      within(tarjeta)
+        .getByRole("button", { name: "Contactar" })
+        .getAttribute("aria-describedby"),
     );
     expect(new Set(titulos).size).toBe(2);
     expect(new Set(descripciones).size).toBe(2);
     tarjetas.forEach((tarjeta, indice) => {
       expect(tarjeta).toHaveAttribute("aria-labelledby", titulos[indice]);
-      expect(tarjeta.querySelector(`[id="${descripciones[indice]}"]`)).not.toBeNull();
+      expect(
+        tarjeta.querySelector(`[id="${descripciones[indice]}"]`),
+      ).not.toBeNull();
     });
   });
 });

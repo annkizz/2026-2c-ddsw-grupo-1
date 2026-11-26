@@ -57,7 +57,11 @@ import { LinkedinConexionService } from "../services/LinkedinConexionService.js"
 import { PublicacionLinkedinService } from "../services/PublicacionLinkedinService.js";
 import { LinkedinController } from "../controllers/LinkedinController.js";
 import { crearLinkedinRouter } from "./linkedinRouter.js";
-import { crearAutenticar, requerirRol, crearVerificadorLogto } from "../middlewares/authMiddleware.js";
+import {
+  crearAutenticar,
+  requerirRol,
+  crearVerificadorLogto,
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -174,23 +178,28 @@ const webhookController = new WebhookController(webhookService, usuarioService);
 const conexionLinkedinRepository = new ConexionLinkedinRepository();
 const linkedinClient = new LinkedinClient();
 const linkedinConexionService = new LinkedinConexionService(
-  conexionLinkedinRepository, colectivoRepository, linkedinClient,
+  conexionLinkedinRepository,
+  colectivoRepository,
+  linkedinClient,
 );
 const publicacionLinkedinService = new PublicacionLinkedinService(
-  linkedinConexionService, linkedinClient,
+  linkedinConexionService,
+  linkedinClient,
 );
 
 const linkedinController = new LinkedinController(linkedinConexionService);
 
-
 const logroRepository = new LogroRepository();
-const logroService = new LogroService(logroRepository, proyectoRepository, publicacionLinkedinService);
+const logroService = new LogroService(
+  logroRepository,
+  proyectoRepository,
+  publicacionLinkedinService,
+);
 const logroController = new LogroController(logroService);
 
 const notificacionController = new NotificacionController(notificacionService);
 
 const matchingController = new MatchingController(matchingService);
-
 
 router.use("/", crearUsuarioRouter(usuarioController, autenticar));
 router.use(

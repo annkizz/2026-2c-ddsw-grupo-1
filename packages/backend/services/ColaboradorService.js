@@ -154,16 +154,12 @@ export class ColaboradorService {
   async obtenerMisColaboraciones(usuario) {
     const colaborador = await this.obtenerPorUsuario(usuario);
     const colaboraciones =
-      await this.colaboracionRepository.obtenerPorColaborador(
-        colaborador._id,
-      );
+      await this.colaboracionRepository.obtenerPorColaborador(colaborador._id);
     if (colaboraciones.length === 0) return [];
 
     const idsProyectos = [
       ...new Set(
-        colaboraciones.map((colaboracion) =>
-          String(colaboracion.idProyecto),
-        ),
+        colaboraciones.map((colaboracion) => String(colaboracion.idProyecto)),
       ),
     ];
     const proyectos = await this.proyectoRepository.obtenerPorIds(idsProyectos);
@@ -183,9 +179,7 @@ export class ColaboradorService {
 
       return {
         idProyecto,
-        idPerfil: colaboracion.idPerfil
-          ? String(colaboracion.idPerfil)
-          : null,
+        idPerfil: colaboracion.idPerfil ? String(colaboracion.idPerfil) : null,
         fecha: colaboracion.fecha,
         esAnonima: colaboracion.esAnonima ?? false,
         proyecto: {
@@ -203,12 +197,13 @@ export class ColaboradorService {
 
   async obtenerMisPostulaciones(usuario) {
     const colaborador = await this.obtenerPorUsuario(usuario);
-    const postulaciones = await this.postulacionRepository.obtenerPorColaborador(
-      colaborador._id,
-    );
+    const postulaciones =
+      await this.postulacionRepository.obtenerPorColaborador(colaborador._id);
     if (postulaciones.length === 0) return [];
 
-    const idsProyectos = [...new Set(postulaciones.map((p) => String(p.idProyecto)))];
+    const idsProyectos = [
+      ...new Set(postulaciones.map((p) => String(p.idProyecto))),
+    ];
     const proyectos = await this.proyectoRepository.obtenerPorIds(idsProyectos);
     const proyectosPorId = new Map(proyectos.map((p) => [String(p._id), p]));
 
@@ -228,7 +223,11 @@ export class ColaboradorService {
         estado: postulacion.estado,
         fechaPostulacion: postulacion.fechaPostulacion,
         esAnonima: postulacion.esAnonima,
-        proyecto: { id: idProyecto, titulo: proyecto.titulo, descripcion: proyecto.descripcion },
+        proyecto: {
+          id: idProyecto,
+          titulo: proyecto.titulo,
+          descripcion: proyecto.descripcion,
+        },
       };
     });
   }

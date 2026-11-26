@@ -1,15 +1,14 @@
-
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Link, Navigate } from 'react-router-dom';
-import { Alert, AlertTitle, Button } from '@mui/material';
-import { FiHome, FiLogIn, FiLogOut, FiRefreshCw } from 'react-icons/fi';
-import { t } from '../i18n/t';
-import './Acceso.css';
-import { useAuth } from '../hooks/useAuth.jsx';
-import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
-import PaginaError from './PaginaError/PaginaError.jsx';
-import { leerTipo } from '../features/registro/tipoElegido';
+import React from "react";
+import PropTypes from "prop-types";
+import { Link, Navigate } from "react-router-dom";
+import { Alert, AlertTitle, Button } from "@mui/material";
+import { FiHome, FiLogIn, FiLogOut, FiRefreshCw } from "react-icons/fi";
+import { t } from "../i18n/t";
+import "./Acceso.css";
+import { useAuth } from "../hooks/useAuth.jsx";
+import LoadingSplash from "./LoadingSplash/LoadingSplash.jsx";
+import PaginaError from "./PaginaError/PaginaError.jsx";
+import { leerTipo } from "../features/registro/tipoElegido";
 
 const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
   const {
@@ -24,7 +23,7 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
   } = useAuth();
 
   if (cargando) {
-    return <LoadingSplash message={t('acceso.verificandoSesion')} />;
+    return <LoadingSplash message={t("acceso.verificandoSesion")} />;
   }
 
   // Sin sesión no se redirige en silencio: se muestra el 401 y cómo seguir.
@@ -35,11 +34,20 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
         id="sesion-requerida-titulo"
         accion={
           <>
-            <Button variant="contained" startIcon={<FiLogIn aria-hidden="true" />} onClick={iniciarSesion}>
-              {t('comun.iniciarSesion')}
+            <Button
+              variant="contained"
+              startIcon={<FiLogIn aria-hidden="true" />}
+              onClick={iniciarSesion}
+            >
+              {t("comun.iniciarSesion")}
             </Button>
-            <Button component={Link} to="/" variant="outlined" startIcon={<FiHome aria-hidden="true" />}>
-              {t('comun.volverAlInicio')}
+            <Button
+              component={Link}
+              to="/"
+              variant="outlined"
+              startIcon={<FiHome aria-hidden="true" />}
+            >
+              {t("comun.volverAlInicio")}
             </Button>
           </>
         }
@@ -52,24 +60,36 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
       <section className="acceso-estado" aria-labelledby="acceso-error-titulo">
         <Alert severity="error" role="alert">
           <AlertTitle id="acceso-error-titulo" component="h1">
-            {t('acceso.errorSesionTitulo')}
+            {t("acceso.errorSesionTitulo")}
           </AlertTitle>
-          {t(`errores.${tipoErrorSesion ?? 'inesperado'}`)}
+          {t(`errores.${tipoErrorSesion ?? "inesperado"}`)}
         </Alert>
         <div className="acceso-estado__acciones">
-          <Button variant="contained" startIcon={<FiRefreshCw aria-hidden="true" />} onClick={recargarSesion}>
-            {t('comun.reintentar')}
+          <Button
+            variant="contained"
+            startIcon={<FiRefreshCw aria-hidden="true" />}
+            onClick={recargarSesion}
+          >
+            {t("comun.reintentar")}
           </Button>
-          <Button variant="outlined" startIcon={<FiLogOut aria-hidden="true" />} onClick={cerrarSesion}>
-            {t('navegacion.salir')}
+          <Button
+            variant="outlined"
+            startIcon={<FiLogOut aria-hidden="true" />}
+            onClick={cerrarSesion}
+          >
+            {t("navegacion.salir")}
           </Button>
         </div>
       </section>
     );
   }
 
-  if (sesion.rol === 'ADMINISTRADOR') {
-    return exigirPerfil ? children : <Navigate to="/administrador/destacados" replace />;
+  if (sesion.rol === "ADMINISTRADOR") {
+    return exigirPerfil ? (
+      children
+    ) : (
+      <Navigate to="/administrador/destacados" replace />
+    );
   }
 
   if (sesion.tienePerfil) {

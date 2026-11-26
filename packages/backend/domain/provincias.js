@@ -77,9 +77,8 @@ export function normalizarProvincia(texto) {
   }
 
   return (
-    PROVINCIAS.find(
-      (una) => normalizarTexto(una.nombreProvincia) === clave,
-    ) ?? null
+    PROVINCIAS.find((una) => normalizarTexto(una.nombreProvincia) === clave) ??
+    null
   );
 }
 

@@ -32,7 +32,7 @@ export class LogroRepository {
     );
   }
 
-    async registrarPublicacion(idLogro, publicacion) {
+  async registrarPublicacion(idLogro, publicacion) {
     return await this.model.findByIdAndUpdate(
       idLogro,
       { publicacionLinkedin: publicacion },

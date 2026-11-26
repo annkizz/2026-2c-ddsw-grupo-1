@@ -24,7 +24,9 @@ export class PostulacionRepository {
   }
 
   eliminarSiPendiente(id) {
-    return this.model.deleteOne({ _id: id, estado: EstadoPostulacion.PENDIENTE }).exec();
+    return this.model
+      .deleteOne({ _id: id, estado: EstadoPostulacion.PENDIENTE })
+      .exec();
   }
 
   obtenerPorProyecto(idProyecto) {
@@ -129,5 +131,4 @@ export class PostulacionRepository {
   rechazarPendientesPorPerfil(idPerfil) {
     return this.rechazarPendientes({ idPerfil }, true);
   }
-
 }

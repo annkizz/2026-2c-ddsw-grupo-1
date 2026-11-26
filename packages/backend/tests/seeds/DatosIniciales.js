@@ -11,20 +11,17 @@ describe("escenarios ampliados de la seed", () => {
 
     expect(
       datos.proyectos.some(
-        (proyecto) =>
-          proyecto.destacado && proyecto.destacadoHasta > ahora,
+        (proyecto) => proyecto.destacado && proyecto.destacadoHasta > ahora,
       ),
     ).toBe(true);
     expect(
       datos.proyectos.some(
-        (proyecto) =>
-          proyecto.destacado && proyecto.destacadoHasta < ahora,
+        (proyecto) => proyecto.destacado && proyecto.destacadoHasta < ahora,
       ),
     ).toBe(true);
     expect(
       datos.proyectos.some(
-        (proyecto) =>
-          proyecto.estado === "ACTIVO" && !proyecto.busquedaAbierta,
+        (proyecto) => proyecto.estado === "ACTIVO" && !proyecto.busquedaAbierta,
       ),
     ).toBe(true);
     expect(
@@ -39,7 +36,8 @@ describe("escenarios ampliados de la seed", () => {
         (proyecto) => proyecto.ubicacion?.provincia === "AR-N",
       ),
     ).toBe(true);
-    expect(datos.colaboraciones.some((colaboracion) => colaboracion.idPerfil))
-      .toBe(true);
+    expect(
+      datos.colaboraciones.some((colaboracion) => colaboracion.idPerfil),
+    ).toBe(true);
   });
 });

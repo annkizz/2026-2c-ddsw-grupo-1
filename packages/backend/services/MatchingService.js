@@ -139,7 +139,9 @@ export class MatchingService {
         evaluacion: evaluarCoincidencia(perfil, colaboradora.habilidades ?? []),
       }))
       .filter(({ evaluacion }) => evaluacion.tieneCoincidencia)
-      .map(({ colaboradora, evaluacion }) => dtoCandidata(colaboradora, evaluacion))
+      .map(({ colaboradora, evaluacion }) =>
+        dtoCandidata(colaboradora, evaluacion),
+      )
       .sort(ordenarCandidatas);
 
     if (!paginar) return resultados;
@@ -153,7 +155,10 @@ export class MatchingService {
 
   // Evalúa una colaboradora contra un perfil. Devuelve lo que se guarda, o null si no coincide.
   evaluarCandidata(perfil, colaboradora) {
-    const evaluacion = evaluarCoincidencia(perfil, colaboradora.habilidades ?? []);
+    const evaluacion = evaluarCoincidencia(
+      perfil,
+      colaboradora.habilidades ?? [],
+    );
     if (!evaluacion.tieneCoincidencia) return null;
     return {
       idColaborador: String(colaboradora._id),
@@ -255,7 +260,11 @@ export class MatchingService {
       await this.candidatasRepository.eliminarPorPerfil(idPerfil);
     }
     if (this.cambiosRepository) {
-      await this.cambiosRepository.registrar({ tipo: "PERFIL", idEntidad: idPerfil, idProyecto });
+      await this.cambiosRepository.registrar({
+        tipo: "PERFIL",
+        idEntidad: idPerfil,
+        idProyecto,
+      });
     } else {
       await this.recalcularTodas(); // sin cola: comportamiento anterior
     }
@@ -267,7 +276,10 @@ export class MatchingService {
   async registrarCambioColaboradora(idColaborador) {
     await this.recalcularColaboradora(idColaborador);
     if (this.cambiosRepository) {
-      await this.cambiosRepository.registrar({ tipo: "COLABORADORA", idEntidad: idColaborador });
+      await this.cambiosRepository.registrar({
+        tipo: "COLABORADORA",
+        idEntidad: idColaborador,
+      });
     }
   }
 
@@ -279,14 +291,23 @@ export class MatchingService {
     const pendientes = await this.cambiosRepository.obtenerPendientes();
     if (pendientes.length === 0) return { procesado: false, pendientes: 0 };
 
-    const umbral = Number(this.config.MATCHING_UMBRAL_CAMBIOS) || UMBRAL_CAMBIOS;
-    const esperaMs = (Number(this.config.MATCHING_ESPERA_MAXIMA_MIN) || ESPERA_MAXIMA_MIN) * 60_000;
-    const masViejo = Math.min(...pendientes.map((cambio) => new Date(cambio.registradoEn).getTime()));
-    const listo = pendientes.length >= umbral || ahora.getTime() - masViejo >= esperaMs;
-    if (!forzar && !listo) return { procesado: false, pendientes: pendientes.length };
+    const umbral =
+      Number(this.config.MATCHING_UMBRAL_CAMBIOS) || UMBRAL_CAMBIOS;
+    const esperaMs =
+      (Number(this.config.MATCHING_ESPERA_MAXIMA_MIN) || ESPERA_MAXIMA_MIN) *
+      60_000;
+    const masViejo = Math.min(
+      ...pendientes.map((cambio) => new Date(cambio.registradoEn).getTime()),
+    );
+    const listo =
+      pendientes.length >= umbral || ahora.getTime() - masViejo >= esperaMs;
+    if (!forzar && !listo)
+      return { procesado: false, pendientes: pendientes.length };
 
     const perfiles = pendientes.filter((cambio) => cambio.tipo === "PERFIL");
-    const colaboradoras = pendientes.filter((cambio) => cambio.tipo === "COLABORADORA");
+    const colaboradoras = pendientes.filter(
+      (cambio) => cambio.tipo === "COLABORADORA",
+    );
 
     if (perfiles.length > 0) {
       await this.actualizarProyectosEnRecomendaciones(
@@ -315,17 +336,22 @@ export class MatchingService {
   // recomendaciones guardadas; el resto de sus recomendaciones no se toca.
   async actualizarProyectosEnRecomendaciones(idsProyectos) {
     if (!this.matchingCacheRepository) return;
-    const abiertos = await this.proyectoRepository.obtenerAbiertosPorIds([...idsProyectos]);
+    const abiertos = await this.proyectoRepository.obtenerAbiertosPorIds([
+      ...idsProyectos,
+    ]);
     const perfiles = abiertos.length
-      ? await this.perfilRepository.obtenerPorProyectos(abiertos.map((proyecto) => proyecto._id))
+      ? await this.perfilRepository.obtenerPorProyectos(
+          abiertos.map((proyecto) => proyecto._id),
+        )
       : [];
     const datosPrecargados = { abiertos, perfiles };
 
     const caches = await this.matchingCacheRepository.obtenerTodos();
     if (caches.length === 0) return;
-    const colaboradoras = await this.colaboradorRepository.obtenerPublicosPorIds(
-      caches.map((cache) => cache.idColaborador),
-    );
+    const colaboradoras =
+      await this.colaboradorRepository.obtenerPublicosPorIds(
+        caches.map((cache) => cache.idColaborador),
+      );
     const colaboradorasPorId = new Map(
       colaboradoras.map((colaboradora) => [idDe(colaboradora), colaboradora]),
     );
@@ -336,7 +362,11 @@ export class MatchingService {
         (proyecto) => !idsProyectos.has(String(proyecto.id)),
       );
       const nuevos = colaboradora
-        ? await this.calcularProyectosParaColaboradora(colaboradora, [], datosPrecargados)
+        ? await this.calcularProyectosParaColaboradora(
+            colaboradora,
+            [],
+            datosPrecargados,
+          )
         : [];
       await this.matchingCacheRepository.guardar(
         String(cache.idColaborador),
@@ -351,12 +381,15 @@ export class MatchingService {
     const caches = await this.candidatasRepository.obtenerTodos();
     if (caches.length === 0) return;
 
-    const cambiadas = await this.colaboradorRepository.obtenerPublicosPorIds(idsColaboradoras);
+    const cambiadas =
+      await this.colaboradorRepository.obtenerPublicosPorIds(idsColaboradoras);
     const ids = new Set(idsColaboradoras.map(String));
     const perfiles = await this.perfilRepository.obtenerPorProyectos([
       ...new Set(caches.map((cache) => String(cache.idProyecto))),
     ]);
-    const perfilesPorId = new Map(perfiles.map((perfil) => [idDe(perfil), perfil]));
+    const perfilesPorId = new Map(
+      perfiles.map((perfil) => [idDe(perfil), perfil]),
+    );
 
     for (const cache of caches) {
       const perfil = perfilesPorId.get(String(cache.idPerfil));
@@ -382,7 +415,8 @@ export class MatchingService {
   // descarta las candidatas guardadas (se recalculan al pedirlas) y vacía la cola.
   async reconstruirTodo(ahora = new Date()) {
     await this.recalcularTodas();
-    if (this.candidatasRepository) await this.candidatasRepository.eliminarTodos();
+    if (this.candidatasRepository)
+      await this.candidatasRepository.eliminarTodos();
     if (this.cambiosRepository) {
       const pendientes = await this.cambiosRepository.obtenerPendientes();
       await this.cambiosRepository.eliminarProcesados(
@@ -412,8 +446,9 @@ export class MatchingService {
   async recalcularTodas() {
     if (!this.matchingCacheRepository) return;
     const colaboradoras = await this.colaboradorRepository.obtenerTodos();
-    const abiertos =
-      await this.proyectoRepository.obtenerAbiertosParaMatching([]);
+    const abiertos = await this.proyectoRepository.obtenerAbiertosParaMatching(
+      [],
+    );
     const perfiles = abiertos.length
       ? await this.perfilRepository.obtenerPorProyectos(
           abiertos.map((proyecto) => proyecto._id),
@@ -427,10 +462,7 @@ export class MatchingService {
         [],
         datosPrecargados,
       );
-      await this.matchingCacheRepository.guardar(
-        idDe(colaboradora),
-        proyectos,
-      );
+      await this.matchingCacheRepository.guardar(idDe(colaboradora), proyectos);
     }
   }
 

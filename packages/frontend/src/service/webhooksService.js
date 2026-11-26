@@ -1,4 +1,4 @@
-import api, { conToken } from './api';
+import api, { conToken } from "./api";
 
 const rutaWebhooks = (idColectivo) =>
   `/colectivos/${encodeURIComponent(idColectivo)}/webhooks`;
@@ -9,11 +9,20 @@ export const listarWebhooks = async (token, idColectivo) => {
 };
 
 export const crearWebhook = async (token, idColectivo, datos) => {
-  const response = await api.post(rutaWebhooks(idColectivo), datos, conToken(token));
+  const response = await api.post(
+    rutaWebhooks(idColectivo),
+    datos,
+    conToken(token),
+  );
   return response.data;
 };
 
-export const actualizarWebhook = async (token, idColectivo, idWebhook, datos) => {
+export const actualizarWebhook = async (
+  token,
+  idColectivo,
+  idWebhook,
+  datos,
+) => {
   const response = await api.put(
     `${rutaWebhooks(idColectivo)}/${encodeURIComponent(idWebhook)}`,
     datos,
@@ -38,7 +47,11 @@ export const probarWebhook = async (token, idColectivo, idWebhook) => {
   return response.data;
 };
 
-export const regenerarSecretoWebhook = async (token, idColectivo, idWebhook) => {
+export const regenerarSecretoWebhook = async (
+  token,
+  idColectivo,
+  idWebhook,
+) => {
   const response = await api.post(
     `${rutaWebhooks(idColectivo)}/${encodeURIComponent(idWebhook)}/secreto`,
     {},

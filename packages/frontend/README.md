@@ -11,16 +11,18 @@ src/
 ```
 
 ## De dónde sale cada cosa
-| Pieza | Referencia |
-|---|---|
-| `service/api.js` (instancia de axios, `mensajeDeError`) y services con conversión de datos | Megasuper |
+
+| Pieza                                                                                           | Referencia                      |
+| ----------------------------------------------------------------------------------------------- | ------------------------------- |
+| `service/api.js` (instancia de axios, `mensajeDeError`) y services con conversión de datos      | Megasuper                       |
 | Formularios con `useState`, `setValorDe`, `try/catch/finally`, `Alert`, `TextField`, `MenuItem` | Megasuper (`NuevoProducto.jsx`) |
-| `Layout` con `Outlet`, `createTheme`/`ThemeProvider` | Megasuper |
-| Datos compartidos entre pasos por props (`datos`, `setDatos`) | Megasuper (el `carrito`) |
-| `AuthProvider`/`useAuth`, `Callback`, `RequiereAuth`, `RequiereRol`, `LoadingSplash` | TP de turnos (g1) |
-| Token pasado a cada llamada de los services (`conToken`) | TP de turnos (g1) |
+| `Layout` con `Outlet`, `createTheme`/`ThemeProvider`                                            | Megasuper                       |
+| Datos compartidos entre pasos por props (`datos`, `setDatos`)                                   | Megasuper (el `carrito`)        |
+| `AuthProvider`/`useAuth`, `Callback`, `RequiereAuth`, `RequiereRol`, `LoadingSplash`            | TP de turnos (g1)               |
+| Token pasado a cada llamada de los services (`conToken`)                                        | TP de turnos (g1)               |
 
 ## Correr
+
 1. `cp .env.example .env` y completar los datos de Logto.
 2. `npm install` en la raíz del monorepo y `npm run start:frontend`.
 3. En la app de Logto: redirect `http://localhost:3000/callback` y post sign-out `http://localhost:3000`.

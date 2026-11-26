@@ -99,10 +99,7 @@ export function crearProyectoRouter(
   if (postulacionController) {
     router.use(
       "/:idProyecto",
-      crearPostulacionRouter(
-        postulacionController,
-        autenticar,
-      ),
+      crearPostulacionRouter(postulacionController, autenticar),
     );
   }
 
@@ -110,6 +107,6 @@ export function crearProyectoRouter(
     "/:idProyecto/perfiles",
     crearPerfilRouter(perfilController, autenticar),
   );
-    
+
   return router;
 }

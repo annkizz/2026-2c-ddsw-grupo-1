@@ -88,9 +88,8 @@ export class ColectivoService {
         filtrosNormalizados.etiquetas,
       );
     }
-    const colectivos = await this.colectivoRepository.obtenerTodos(
-      filtrosNormalizados,
-    );
+    const colectivos =
+      await this.colectivoRepository.obtenerTodos(filtrosNormalizados);
     return colectivos.map((colectivo) => this.toDTO(colectivo));
   }
 

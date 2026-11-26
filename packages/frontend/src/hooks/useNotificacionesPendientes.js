@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useAuthOpcional } from './useAuth.jsx';
-import { obtenerNotificaciones } from '../service/notificacionesService';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAuthOpcional } from "./useAuth.jsx";
+import { obtenerNotificaciones } from "../service/notificacionesService";
 
 // El backend no tiene (todavía) un endpoint para marcar notificaciones como leídas,
 // así que el contador se resuelve en el front: se guarda cuántas notificaciones
 // había la última vez que la persona abrió la bandeja y se compara con el total actual.
-const EVENTO = 'notificaciones-vistas';
+const EVENTO = "notificaciones-vistas";
 // Para no consultar al backend todo el tiempo:
 //  - se pregunta cada 2 minutos, y solo si la pestaña está a la vista;
 //  - al navegar o al volver a la pestaña, solo si pasaron al menos 30 segundos desde la última consulta.
@@ -31,38 +31,57 @@ export const marcarVistas = (usuarioId, total) => {
   } catch {
     // Sin almacenamiento disponible: el contador vale solo para esta visita.
   }
-  window.dispatchEvent(new CustomEvent(EVENTO, { detail: { usuarioId, total } }));
+  window.dispatchEvent(
+    new CustomEvent(EVENTO, { detail: { usuarioId, total } }),
+  );
 };
 
 // Devuelve { pendientes, total }. Se refresca al navegar, cada 2 minutos y al volver a la pestaña (ver arriba).
 export const useNotificacionesPendientes = () => {
   const auth = useAuthOpcional();
   const { pathname } = useLocation();
-  const usuarioId = auth?.sesion?.usuarioId ?? auth?.sesion?.idColectivo ?? auth?.sesion?.idColaborador;
-  const habilitado = Boolean(auth?.isAuthenticated && auth?.sesion?.tienePerfil && usuarioId);
+  const usuarioId =
+    auth?.sesion?.usuarioId ??
+    auth?.sesion?.idColectivo ??
+    auth?.sesion?.idColaborador;
+  const habilitado = Boolean(
+    auth?.isAuthenticated && auth?.sesion?.tienePerfil && usuarioId,
+  );
   const getAccessToken = auth?.getAccessToken;
   const [total, setTotal] = useState(null);
-  const [vistas, setVistas] = useState(() => (usuarioId ? leerVistas(usuarioId) : 0));
+  const [vistas, setVistas] = useState(() =>
+    usuarioId ? leerVistas(usuarioId) : 0,
+  );
   const ultimaConsulta = useRef(0);
 
-  const consultar = useCallback(async ({ siPasoUnRato = false } = {}) => {
-    if (!habilitado || !getAccessToken) return;
-    if (document.visibilityState === 'hidden') return;
-    if (siPasoUnRato && Date.now() - ultimaConsulta.current < MINIMO_ENTRE_CONSULTAS_MS) return;
-    ultimaConsulta.current = Date.now();
-    try {
-      const token = await getAccessToken();
-      const resultado = await obtenerNotificaciones(token, { pag: 1, limite: 1 });
-      if (Number.isFinite(resultado?.total)) {
-        setTotal(resultado.total);
-        if (usuarioId && leerVistas(usuarioId) > resultado.total) {
-          marcarVistas(usuarioId, resultado.total);
+  const consultar = useCallback(
+    async ({ siPasoUnRato = false } = {}) => {
+      if (!habilitado || !getAccessToken) return;
+      if (document.visibilityState === "hidden") return;
+      if (
+        siPasoUnRato &&
+        Date.now() - ultimaConsulta.current < MINIMO_ENTRE_CONSULTAS_MS
+      )
+        return;
+      ultimaConsulta.current = Date.now();
+      try {
+        const token = await getAccessToken();
+        const resultado = await obtenerNotificaciones(token, {
+          pag: 1,
+          limite: 1,
+        });
+        if (Number.isFinite(resultado?.total)) {
+          setTotal(resultado.total);
+          if (usuarioId && leerVistas(usuarioId) > resultado.total) {
+            marcarVistas(usuarioId, resultado.total);
+          }
         }
+      } catch {
+        // El contador es informativo: si falla, no se muestra nada.
       }
-    } catch {
-      // El contador es informativo: si falla, no se muestra nada.
-    }
-  }, [habilitado, getAccessToken, usuarioId]);
+    },
+    [habilitado, getAccessToken, usuarioId],
+  );
 
   useEffect(() => {
     if (usuarioId) setVistas(leerVistas(usuarioId));
@@ -80,11 +99,13 @@ export const useNotificacionesPendientes = () => {
   useEffect(() => {
     if (!habilitado) return undefined;
     const intervalo = window.setInterval(consultar, INTERVALO_MS);
-    const alVolver = () => document.visibilityState === 'visible' && consultar({ siPasoUnRato: true });
-    document.addEventListener('visibilitychange', alVolver);
+    const alVolver = () =>
+      document.visibilityState === "visible" &&
+      consultar({ siPasoUnRato: true });
+    document.addEventListener("visibilitychange", alVolver);
     return () => {
       window.clearInterval(intervalo);
-      document.removeEventListener('visibilitychange', alVolver);
+      document.removeEventListener("visibilitychange", alVolver);
     };
   }, [habilitado, consultar]);
 
@@ -98,7 +119,8 @@ export const useNotificacionesPendientes = () => {
     return () => window.removeEventListener(EVENTO, alMarcar);
   }, [usuarioId]);
 
-  const pendientes = habilitado && total != null ? Math.max(0, total - vistas) : 0;
+  const pendientes =
+    habilitado && total != null ? Math.max(0, total - vistas) : 0;
   return { pendientes, total, usuarioId };
 };
 

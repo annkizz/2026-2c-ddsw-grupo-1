@@ -1,13 +1,19 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useLogto } from '@logto/react';
-import { obtenerSesion } from '../service/usuariosService';
-import { borrarTipo } from '../features/registro/tipoElegido';
-import { clasificarError } from '../utils/mensajeDeError';
-import { AuthContext } from './authContexto';
-import { t } from '../i18n/t';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useLogto } from "@logto/react";
+import { obtenerSesion } from "../service/usuariosService";
+import { borrarTipo } from "../features/registro/tipoElegido";
+import { clasificarError } from "../utils/mensajeDeError";
+import { AuthContext } from "./authContexto";
+import { t } from "../i18n/t";
 
 export const RESOURCE = process.env.REACT_APP_LOGTO_RESOURCES;
-
 
 // Une Logto (quién sos) con el backend (GET /me: rol y si ya registraste tu perfil)
 export const AuthProvider = ({ children }) => {
@@ -18,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut: logtoSignOut,
     getAccessToken: logtoGetAccessToken,
-    fetchUserInfo: logtoFetchUserInfo
+    fetchUserInfo: logtoFetchUserInfo,
   } = useLogto();
   const [sesion, setSesion] = useState(null);
   const [cargandoSesion, setCargandoSesion] = useState(false);
@@ -30,9 +36,7 @@ export const AuthProvider = ({ children }) => {
   const getAccessToken = useCallback(async () => {
     const token = await logtoGetAccessToken(RESOURCE);
     if (!token) {
-      throw new Error(
-        t('erroresInternos.tokenLogto')
-      );
+      throw new Error(t("erroresInternos.tokenLogto"));
     }
     return token;
   }, [logtoGetAccessToken]);
@@ -48,14 +52,16 @@ export const AuthProvider = ({ children }) => {
       return nuevaSesion;
     } catch (error) {
       const esTimeout =
-        error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT';
+        error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT";
       const esErrorDeRed =
-        error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED';
+        error?.code === "ERR_NETWORK" || error?.code === "ECONNREFUSED";
       const mensaje = esTimeout
-        ? t('erroresInternos.sesionTimeout')
+        ? t("erroresInternos.sesionTimeout")
         : esErrorDeRed
-          ? t('erroresInternos.sesionRed')
-          : error?.response?.data?.error ?? error?.message ?? t('erroresInternos.sesion');
+          ? t("erroresInternos.sesionRed")
+          : (error?.response?.data?.error ??
+            error?.message ??
+            t("erroresInternos.sesion"));
       const codigo = error?.response?.data?.codigo;
       setErrorSesion(codigo ? `${mensaje} (${codigo})` : mensaje);
       setTipoErrorSesion(clasificarError(error));
@@ -82,26 +88,28 @@ export const AuthProvider = ({ children }) => {
     borrarTipo();
     return signIn({
       redirectUri: `${window.location.origin}/callback`,
-      firstScreen: 'identifier:sign_in',
-      identifiers: ['email'],
-      prompt: ['login', 'consent']
+      firstScreen: "identifier:sign_in",
+      identifiers: ["email"],
+      prompt: ["login", "consent"],
     });
   }, [signIn]);
-  const registrarse = useCallback(
-    () => {
-      borrarTipo();
-      return signIn({ redirectUri: `${window.location.origin}/callback`, interactionMode: 'signUp' });
-    },
-    [signIn]
+  const registrarse = useCallback(() => {
+    borrarTipo();
+    return signIn({
+      redirectUri: `${window.location.origin}/callback`,
+      interactionMode: "signUp",
+    });
+  }, [signIn]);
+  const cerrarSesion = useCallback(
+    () => logtoSignOut(window.location.origin),
+    [logtoSignOut],
   );
-  const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);
   const obtenerEmailCuenta = useCallback(async () => {
     const userInfo = await logtoFetchUserInfo();
-    const email = typeof userInfo?.email === 'string' ? userInfo.email.trim() : '';
+    const email =
+      typeof userInfo?.email === "string" ? userInfo.email.trim() : "";
     if (!email) {
-      throw new Error(
-        t('erroresInternos.emailLogto')
-      );
+      throw new Error(t("erroresInternos.emailLogto"));
     }
     return email;
   }, [logtoFetchUserInfo]);
@@ -109,13 +117,13 @@ export const AuthProvider = ({ children }) => {
     (email) =>
       signIn({
         redirectUri: `${window.location.origin}/callback`,
-        firstScreen: 'reset_password',
-        identifiers: ['email'],
-        ...(email ? { loginHint: email } : {})
+        firstScreen: "reset_password",
+        identifiers: ["email"],
+        ...(email ? { loginHint: email } : {}),
       }),
-    [signIn]
+    [signIn],
   );
-  
+
   const contextValue = useMemo(
     () => ({
       isAuthenticated,
@@ -134,12 +142,29 @@ export const AuthProvider = ({ children }) => {
       obtenerEmailCuenta,
       cambiarContrasena,
       getAccessToken,
-      recargarSesion
+      recargarSesion,
     }),
-    [isAuthenticated, isLoading, errorLogto, cargandoSesion, errorSesion, tipoErrorSesion, sesion, iniciarSesion, registrarse, cerrarSesion, obtenerEmailCuenta, cambiarContrasena, getAccessToken, recargarSesion]
+    [
+      isAuthenticated,
+      isLoading,
+      errorLogto,
+      cargandoSesion,
+      errorSesion,
+      tipoErrorSesion,
+      sesion,
+      iniciarSesion,
+      registrarse,
+      cerrarSesion,
+      obtenerEmailCuenta,
+      cambiarContrasena,
+      getAccessToken,
+      recargarSesion,
+    ],
   );
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+  );
 };
 
 // Igual que useAuth pero sin exigir provider (para componentes compartidos que también se usan en tests aislados).
@@ -147,6 +172,9 @@ export const useAuthOpcional = () => useContext(AuthContext);
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth tiene que usarse dentro de AuthProvider (que va dentro de LogtoProvider)');
+  if (!ctx)
+    throw new Error(
+      "useAuth tiene que usarse dentro de AuthProvider (que va dentro de LogtoProvider)",
+    );
   return ctx;
 };

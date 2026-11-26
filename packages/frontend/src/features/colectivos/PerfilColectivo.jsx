@@ -1,12 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { obtenerColectivoPorId, TIPOS_COLECTIVO } from '../../service/colectivosService';
-import { obtenerProyectos } from '../../service/proyectosService';
-import CardProyecto from '../../components/CardProyecto/CardProyecto';
-import '../../components/Card.css';
-import { etiquetaLegible } from '../../utils/etiquetas';
-import PerfilPublicoVista from '../perfil/PerfilPublicoVista.jsx';
-import { t } from '../../i18n/t';
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  obtenerColectivoPorId,
+  TIPOS_COLECTIVO,
+} from "../../service/colectivosService";
+import { obtenerProyectos } from "../../service/proyectosService";
+import CardProyecto from "../../components/CardProyecto/CardProyecto";
+import "../../components/Card.css";
+import { etiquetaLegible } from "../../utils/etiquetas";
+import PerfilPublicoVista from "../perfil/PerfilPublicoVista.jsx";
+import { t } from "../../i18n/t";
 
 const PerfilColectivo = () => {
   const { id } = useParams();
@@ -39,10 +42,19 @@ const PerfilColectivo = () => {
   const [proyectos, setProyectos] = useState([]);
   useEffect(() => {
     let vigente = true;
-    obtenerProyectos({ idColectivo: id, estado: 'ACTIVO' })
+    obtenerProyectos({ idColectivo: id, estado: "ACTIVO" })
       .then((datos) => {
-        const lista = Array.isArray(datos) ? datos : datos?.proyectos ?? datos?.items ?? [];
-        if (vigente) setProyectos(lista.filter((proyecto) => String(proyecto.idColectivo ?? id) === String(id) && proyecto.estado !== 'FINALIZADO'));
+        const lista = Array.isArray(datos)
+          ? datos
+          : (datos?.proyectos ?? datos?.items ?? []);
+        if (vigente)
+          setProyectos(
+            lista.filter(
+              (proyecto) =>
+                String(proyecto.idColectivo ?? id) === String(id) &&
+                proyecto.estado !== "FINALIZADO",
+            ),
+          );
       })
       .catch(() => {
         if (vigente) setProyectos([]);
@@ -53,31 +65,52 @@ const PerfilColectivo = () => {
   }, [id]);
 
   const reintentar = useCallback(() => setIntento((n) => n + 1), []);
-  const tipo = TIPOS_COLECTIVO.find((opcion) => opcion.valor === colectivo?.tipoDeColectivo);
-  const ubicacion = [colectivo?.ubicacion?.ciudad, colectivo?.ubicacion?.provincia, colectivo?.ubicacion?.pais]
+  const tipo = TIPOS_COLECTIVO.find(
+    (opcion) => opcion.valor === colectivo?.tipoDeColectivo,
+  );
+  const ubicacion = [
+    colectivo?.ubicacion?.ciudad,
+    colectivo?.ubicacion?.provincia,
+    colectivo?.ubicacion?.pais,
+  ]
     .filter(Boolean)
-    .join(', ');
+    .join(", ");
 
   return (
     <PerfilPublicoVista
-      tipo={t('perfilPublico.colectivo')}
+      tipo={t("perfilPublico.colectivo")}
       esColectivo
       cargando={cargando}
       error={error}
       encontrado={Boolean(colectivo)}
       onReintentar={reintentar}
       titulo={colectivo?.nombre}
-      datos={[tipo ? t(tipo.textoKey) : null, ubicacion || null, colectivo?.descripcion || null]}
-      seccionTitulo={t('miPerfil.habilidadesYAreas')}
+      datos={[
+        tipo ? t(tipo.textoKey) : null,
+        ubicacion || null,
+        colectivo?.descripcion || null,
+      ]}
+      seccionTitulo={t("miPerfil.habilidadesYAreas")}
       chips={(colectivo?.etiquetas ?? []).map(etiquetaLegible)}
-      textoSinChips={t('perfilPublico.sinAreas')}
+      textoSinChips={t("perfilPublico.sinAreas")}
     >
       {proyectos.length > 0 && (
-        <section className="perfil-publico__proyectos" aria-labelledby="perfil-colectivo-proyectos">
-          <h2 id="perfil-colectivo-proyectos">{t('perfilPublico.proyectosActivos', { cantidad: proyectos.length })}</h2>
+        <section
+          className="perfil-publico__proyectos"
+          aria-labelledby="perfil-colectivo-proyectos"
+        >
+          <h2 id="perfil-colectivo-proyectos">
+            {t("perfilPublico.proyectosActivos", {
+              cantidad: proyectos.length,
+            })}
+          </h2>
           <ul className="tarjetas">
             {proyectos.map((proyecto) => (
-              <CardProyecto key={proyecto.id} proyecto={proyecto} nombreColectivo={colectivo?.nombre} />
+              <CardProyecto
+                key={proyecto.id}
+                proyecto={proyecto}
+                nombreColectivo={colectivo?.nombre}
+              />
             ))}
           </ul>
         </section>

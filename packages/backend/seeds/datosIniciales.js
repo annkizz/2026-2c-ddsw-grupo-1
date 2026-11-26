@@ -511,7 +511,8 @@ export function crearDatosIniciales({
           {
             id: "5eed00000000000000000106",
             titulo: "Primera entrega de equipos",
-            descripcion: "Se entregaron equipos reacondicionados a dos escuelas.",
+            descripcion:
+              "Se entregaron equipos reacondicionados a dos escuelas.",
             fecha: enDias(-50),
           },
           {
@@ -600,7 +601,11 @@ export function crearDatosIniciales({
         nombreFantasia: "Rena Accesibilidad",
         presentacion: "Prueba interfaces con distintas tecnologías de apoyo.",
         pronombres: ["ella"],
-        habilidades: ["Accesibilidad web", "Accesibilidad cognitiva", "Diseño UX/UI"],
+        habilidades: [
+          "Accesibilidad web",
+          "Accesibilidad cognitiva",
+          "Diseño UX/UI",
+        ],
       },
       {
         id: "b00000000000000000000009",
@@ -608,7 +613,11 @@ export function crearDatosIniciales({
         apellido: "Paz",
         pronombres: ["elle"],
         presentacion: "Escribe contenidos claros para proyectos comunitarios.",
-        habilidades: ["Lectura fácil", "Comunicación digital", "Documentación técnica"],
+        habilidades: [
+          "Lectura fácil",
+          "Comunicación digital",
+          "Documentación técnica",
+        ],
       },
       {
         id: "b0000000000000000000000a",
@@ -631,7 +640,11 @@ export function crearDatosIniciales({
         nombre: "Luz",
         apellido: "Benítez",
         pronombres: ["ella"],
-        habilidades: ["Educación digital", "Lectura fácil", "Comunicación digital"],
+        habilidades: [
+          "Educación digital",
+          "Lectura fácil",
+          "Comunicación digital",
+        ],
       },
       {
         id: "b0000000000000000000000e",

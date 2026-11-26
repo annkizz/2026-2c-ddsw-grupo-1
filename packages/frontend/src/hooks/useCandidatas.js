@@ -36,11 +36,11 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
         obtenerCandidatas(perfil.idProyecto, perfil.id, pag).then((cuerpo) => {
           const candidatas = Array.isArray(cuerpo)
             ? cuerpo
-            : cuerpo.colaboradoras ?? [];
+            : (cuerpo.colaboradoras ?? []);
           return {
             perfil,
             candidatas,
-            totalPags: Array.isArray(cuerpo) ? 1 : cuerpo.totalPags ?? 0,
+            totalPags: Array.isArray(cuerpo) ? 1 : (cuerpo.totalPags ?? 0),
           };
         }),
       ),
@@ -62,7 +62,9 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
                 ...grupo.candidatas,
                 ...siguiente.candidatas.filter(
                   (candidata) =>
-                    !grupo.candidatas.some((actual) => actual.id === candidata.id),
+                    !grupo.candidatas.some(
+                      (actual) => actual.id === candidata.id,
+                    ),
                 ),
               ],
             };
@@ -78,9 +80,7 @@ export function useCandidatas(perfiles, idPerfil, habilitado) {
       .catch(() => {
         if (cancelado) return;
         setGrupos([]);
-        setError(
-          new Error(t('erroresInternos.buscarCandidatas')),
-        );
+        setError(new Error(t("erroresInternos.buscarCandidatas")));
       })
       .finally(() => {
         if (!cancelado) {

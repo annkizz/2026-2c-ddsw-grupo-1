@@ -9,7 +9,9 @@ export function crearLinkedinRouter(controller) {
   router.use(requerirRol(Rol.COLECTIVO));
 
   router.get("/estado", (req, res) => controller.obtenerEstado(req, res));
-  router.post("/autorizacion", (req, res) => controller.iniciarAutorizacion(req, res));
+  router.post("/autorizacion", (req, res) =>
+    controller.iniciarAutorizacion(req, res),
+  );
   router
     .route("/conexion")
     .post(validate(conexionSchema), (req, res) => controller.conectar(req, res))

@@ -44,7 +44,6 @@ export class DespachadorWebhooks {
     };
   }
 
-
   async emitir(evento, idColectivo, datos) {
     try {
       const webhooks = await this.webhookRepository.obtenerActivos(
@@ -58,12 +57,13 @@ export class DespachadorWebhooks {
         webhooks.map((webhook) => this.entregar(webhook, cuerpo)),
       );
     } catch (error) {
-      this.logger.error(`[webhooks] error emitiendo ${evento}: ${error.message}`);
+      this.logger.error(
+        `[webhooks] error emitiendo ${evento}: ${error.message}`,
+      );
       return [];
     }
   }
 
-  
   async probar(webhook) {
     const cuerpo = this.armarCuerpo(EVENTO_PRUEBA, {
       mensaje: "Este es un evento de prueba",
@@ -129,7 +129,7 @@ export class DespachadorWebhooks {
         body: texto,
       });
       try {
-        await respuesta.body?.cancel(); 
+        await respuesta.body?.cancel();
       } catch {
         /* nada */
       }

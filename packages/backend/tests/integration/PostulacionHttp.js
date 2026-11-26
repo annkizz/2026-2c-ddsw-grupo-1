@@ -19,13 +19,13 @@ describe("Postulacion API - integración HTTP", () => {
       async () => ({ sub: "logto-1" }),
     );
   const crearUsuarioService = (sesion = {}) => ({
-      obtenerSesion: jest.fn(async () => ({
-        rol: "COLABORADOR",
-        idColaborador: "colaboradora-1",
-        idColectivo: null,
-        ...sesion,
-      })),
-    });
+    obtenerSesion: jest.fn(async () => ({
+      rol: "COLABORADOR",
+      idColaborador: "colaboradora-1",
+      idColectivo: null,
+      ...sesion,
+    })),
+  });
 
   it("crea una postulación validada al perfil indicado", async () => {
     const postulacion = {
@@ -57,12 +57,10 @@ describe("Postulacion API - integración HTTP", () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(postulacion);
-    expect(service.crear).toHaveBeenCalledWith(
-      "proyecto-1",
-      "perfil-1",
-      true,
-      { rol: "COLABORADOR", id: "colaboradora-1" },
-    );
+    expect(service.crear).toHaveBeenCalledWith("proyecto-1", "perfil-1", true, {
+      rol: "COLABORADOR",
+      id: "colaboradora-1",
+    });
   });
 
   it("rechaza datos adicionales en el body", async () => {

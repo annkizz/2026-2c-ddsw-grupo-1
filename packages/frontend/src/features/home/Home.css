@@ -313,12 +313,16 @@
   padding: var(--space-6);
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 92% 8%, rgba(245, 158, 11, 0.28) 0, rgba(245, 158, 11, 0) 38%),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(245, 158, 11, 0.28) 0,
+      rgba(245, 158, 11, 0) 38%
+    ),
     linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
   color: var(--color-on-brand);
 }
 
-.home-portada :where(a, button, [role='button'], [tabindex]):focus-visible {
+.home-portada :where(a, button, [role="button"], [tabindex]):focus-visible {
   outline-color: var(--color-focus-on-dark);
 }
 
@@ -351,7 +355,11 @@
 /* Tarjeta destacada del panel: superficie de marca */
 .dashboard-card--destacada.MuiCard-root {
   border-color: var(--color-brand);
-  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand) 0%,
+    var(--color-brand-2) 100%
+  );
   color: var(--color-on-brand);
 }
 

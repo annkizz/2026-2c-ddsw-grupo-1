@@ -1,7 +1,10 @@
-import api, { conToken } from './api';
+import api, { conToken } from "./api";
 
 export const obtenerNotificaciones = async (token, params) => {
-  const response = await api.get('/notificaciones', { ...conToken(token), params });
+  const response = await api.get("/notificaciones", {
+    ...conToken(token),
+    params,
+  });
   return response.data;
 };
 
@@ -11,15 +14,15 @@ export const obtenerNotificacion = async (token, id) => {
 };
 
 export const crearNotificacion = async (token, datos) => {
-  const response = await api.post(
-    '/notificaciones',
-    datos,
-    conToken(token),
-  );
+  const response = await api.post("/notificaciones", datos, conToken(token));
   return response.data;
 };
 
-export const obtenerNotificacionesDeColaboradora = async (token, id, params) => {
+export const obtenerNotificacionesDeColaboradora = async (
+  token,
+  id,
+  params,
+) => {
   const response = await api.get(`/notificaciones/colaboradora/${id}`, {
     ...conToken(token),
     params,

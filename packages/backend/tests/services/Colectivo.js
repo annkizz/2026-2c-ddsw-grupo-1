@@ -48,10 +48,7 @@ describe("ColectivoService", () => {
       etiquetas: ["Accesibilidad Web", "accesibilidad_web", "Niños y Jóvenes"],
     });
 
-    expect(creado.etiquetas).toEqual([
-      "accesibilidad_web",
-      "ninos_y_jovenes",
-    ]);
+    expect(creado.etiquetas).toEqual(["accesibilidad_web", "ninos_y_jovenes"]);
   });
 
   it("rechaza mas de 10 etiquetas", async () => {

@@ -25,7 +25,9 @@ describe("catalogo de provincias (req 15)", () => {
       nombreProvincia: "Córdoba",
     });
     expect(
-      normalizarProvincia("tierra del fuego, antartida e islas del atlantico sur"),
+      normalizarProvincia(
+        "tierra del fuego, antartida e islas del atlantico sur",
+      ),
     ).toMatchObject({ codigoProvincia: "AR-V" });
   });
 

@@ -16,4 +16,7 @@ const cambioMatchingSchema = new mongoose.Schema(
 cambioMatchingSchema.index({ tipo: 1, idEntidad: 1 }, { unique: true });
 cambioMatchingSchema.index({ registradoEn: 1 });
 
-export const CambioMatchingModel = mongoose.model("CambioMatching", cambioMatchingSchema);
+export const CambioMatchingModel = mongoose.model(
+  "CambioMatching",
+  cambioMatchingSchema,
+);

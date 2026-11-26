@@ -19,8 +19,14 @@ export class LinkedinClient {
   }
 
   estaConfigurado() {
-    const { LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, LINKEDIN_REDIRECT_URI } = this.config;
-    return Boolean(LINKEDIN_CLIENT_ID && LINKEDIN_CLIENT_SECRET && LINKEDIN_REDIRECT_URI);
+    const {
+      LINKEDIN_CLIENT_ID,
+      LINKEDIN_CLIENT_SECRET,
+      LINKEDIN_REDIRECT_URI,
+    } = this.config;
+    return Boolean(
+      LINKEDIN_CLIENT_ID && LINKEDIN_CLIENT_SECRET && LINKEDIN_REDIRECT_URI,
+    );
   }
 
   urlAutorizacion(state) {
@@ -95,7 +101,10 @@ export class LinkedinClient {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!respuesta.ok) {
-      throw new LinkedinError("Linkedin rechazó la publicación", respuesta.status);
+      throw new LinkedinError(
+        "Linkedin rechazó la publicación",
+        respuesta.status,
+      );
     }
     return respuesta.headers.get("x-restli-id");
   }

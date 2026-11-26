@@ -1,17 +1,17 @@
-import api, { conToken } from './api';
+import api, { conToken } from "./api";
 
 // Valores de TipoDeContacto del backend
 export const TIPOS_CONTACTO = [
-  { valor: 'EMAIL', textoKey: 'tiposContacto.EMAIL' },
-  { valor: 'WHATSAPP', textoKey: 'tiposContacto.WHATSAPP' },
-  { valor: 'SMS', textoKey: 'tiposContacto.SMS' }
+  { valor: "EMAIL", textoKey: "tiposContacto.EMAIL" },
+  { valor: "WHATSAPP", textoKey: "tiposContacto.WHATSAPP" },
+  { valor: "SMS", textoKey: "tiposContacto.SMS" },
 ];
 
 // El backend pide el celular como +5491145678901 (sin espacios ni guiones)
-const sinSeparadores = (valor) => valor.replace(/[\s-]/g, '');
+const sinSeparadores = (valor) => valor.replace(/[\s-]/g, "");
 
 export const obtenerColaboradoras = async () => {
-  const response = await api.get('/colaboradoras');
+  const response = await api.get("/colaboradoras");
   return response.data;
 };
 
@@ -21,25 +21,32 @@ export const obtenerColaboradoraPorId = async (id) => {
 };
 
 export const obtenerMiPerfilColaboradora = async (token) => {
-  const response = await api.get('/colaboradoras/me', conToken(token));
+  const response = await api.get("/colaboradoras/me", conToken(token));
   return response.data;
 };
 
 export const obtenerMisColaboraciones = async (token) => {
   const response = await api.get(
-    '/colaboradoras/me/colaboraciones',
-    conToken(token)
+    "/colaboradoras/me/colaboraciones",
+    conToken(token),
   );
   return response.data;
 };
 
 export const obtenerMisPostulaciones = async (token) => {
-  const response = await api.get('/colaboradoras/me/postulaciones', conToken(token));
+  const response = await api.get(
+    "/colaboradoras/me/postulaciones",
+    conToken(token),
+  );
   return response.data;
 };
 
 export const actualizarColaboradora = async (token, id, datos) => {
-  const response = await api.put(`/colaboradoras/${id}`, datos, conToken(token));
+  const response = await api.put(
+    `/colaboradoras/${id}`,
+    datos,
+    conToken(token),
+  );
   return response.data;
 };
 
@@ -56,18 +63,23 @@ const armarBodyColaboradora = (formulario) => ({
   apellido: formulario.apellido.trim() || undefined,
   presentacion: formulario.presentacion.trim() || undefined,
   pronombres: formulario.pronombres
-    .split(',')
+    .split(",")
     .map((pronombre) => pronombre.trim())
-    .filter((pronombre) => pronombre !== ''),
+    .filter((pronombre) => pronombre !== ""),
   habilidades: formulario.habilidades,
   aceptaMensajeria: formulario.aceptaMensajeria,
   mediosDeContacto: formulario.medios.map((medio) => ({
     tipoDeContacto: medio.tipo,
-    contacto: medio.tipo === 'EMAIL' ? medio.valor.trim() : sinSeparadores(medio.valor)
-  }))
+    contacto:
+      medio.tipo === "EMAIL" ? medio.valor.trim() : sinSeparadores(medio.valor),
+  })),
 });
 
 export const crearColaboradora = async (token, formulario) => {
-  const response = await api.post('/colaboradoras', armarBodyColaboradora(formulario), conToken(token));
+  const response = await api.post(
+    "/colaboradoras",
+    armarBodyColaboradora(formulario),
+    conToken(token),
+  );
   return response.data;
 };

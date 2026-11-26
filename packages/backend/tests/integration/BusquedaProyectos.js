@@ -115,9 +115,7 @@ beforeEach(async () => {
 
 describe("búsqueda de proyectos activos (GET /proyectos?estado=...)", () => {
   it("solo devuelve activos cuando la búsqueda pide ACTIVO", async () => {
-    const { status, body } = await request(app).get(
-      "/proyectos?estado=ACTIVO",
-    );
+    const { status, body } = await request(app).get("/proyectos?estado=ACTIVO");
 
     expect(status).toBe(200);
     expect(body.map((proyecto) => proyecto.id).sort()).toEqual(
@@ -138,9 +136,7 @@ describe("búsqueda de proyectos activos (GET /proyectos?estado=...)", () => {
   });
 
   it("normaliza el estado en minúsculas", async () => {
-    const { status, body } = await request(app).get(
-      "/proyectos?estado=activo",
-    );
+    const { status, body } = await request(app).get("/proyectos?estado=activo");
 
     expect(status).toBe(200);
     expect(body).toHaveLength(3);
@@ -241,9 +237,7 @@ describe("búsqueda con al menos una coincidencia (GET /proyectos?modo=cualquier
     );
 
     const mapa = body.find((proyecto) => proyecto.id === PROYECTO_MAPA);
-    expect(mapa.coincidencias).toEqual([
-      { tipo: "HABILIDAD", valor: "React" },
-    ]);
+    expect(mapa.coincidencias).toEqual([{ tipo: "HABILIDAD", valor: "React" }]);
 
     const portal = body.find((proyecto) => proyecto.id === PROYECTO_PORTAL);
     expect(portal.coincidencias).toEqual([

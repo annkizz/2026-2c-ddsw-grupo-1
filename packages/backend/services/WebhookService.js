@@ -52,7 +52,10 @@ export class WebhookService {
   }
 
   validarDueno(idColectivo, actor) {
-    if (actor?.rol !== Rol.COLECTIVO || String(actor.id) !== String(idColectivo)) {
+    if (
+      actor?.rol !== Rol.COLECTIVO ||
+      String(actor.id) !== String(idColectivo)
+    ) {
       throw new ForbiddenError(
         "solo podés administrar los webhooks de tu propio colectivo",
         "WEBHOOK_AJENO",
@@ -66,10 +69,7 @@ export class WebhookService {
       opciones,
     );
     if (!webhook || String(webhook.idColectivo) !== String(idColectivo)) {
-      throw new NotFoundError(
-        "el webhook no existe",
-        "WEBHOOK_NO_ENCONTRADO",
-      );
+      throw new NotFoundError("el webhook no existe", "WEBHOOK_NO_ENCONTRADO");
     }
     return webhook;
   }
@@ -81,7 +81,8 @@ export class WebhookService {
   async crear(idColectivo, datos, actor) {
     this.validarDueno(idColectivo, actor);
 
-    const cantidad = await this.webhookRepository.contarPorColectivo(idColectivo);
+    const cantidad =
+      await this.webhookRepository.contarPorColectivo(idColectivo);
     if (cantidad >= MAX_WEBHOOKS_POR_COLECTIVO) {
       throw new ConflictError(
         `un colectivo puede tener como máximo ${MAX_WEBHOOKS_POR_COLECTIVO} webhooks`,
@@ -106,7 +107,8 @@ export class WebhookService {
 
   async listar(idColectivo, actor) {
     this.validarDueno(idColectivo, actor);
-    const webhooks = await this.webhookRepository.obtenerPorColectivo(idColectivo);
+    const webhooks =
+      await this.webhookRepository.obtenerPorColectivo(idColectivo);
     return webhooks.map((webhook) => this.toDTO(webhook));
   }
 
@@ -119,11 +121,15 @@ export class WebhookService {
       await this.validarDestino(datos.url, this.env);
       cambios.url = datos.url;
     }
-    if (datos.eventos !== undefined) cambios.eventos = [...new Set(datos.eventos)];
+    if (datos.eventos !== undefined)
+      cambios.eventos = [...new Set(datos.eventos)];
     if (datos.formato !== undefined) cambios.formato = datos.formato;
     if (datos.activo !== undefined) cambios.activo = datos.activo;
 
-    const actualizado = await this.webhookRepository.actualizar(idWebhook, cambios);
+    const actualizado = await this.webhookRepository.actualizar(
+      idWebhook,
+      cambios,
+    );
     return this.toDTO(actualizado);
   }
 

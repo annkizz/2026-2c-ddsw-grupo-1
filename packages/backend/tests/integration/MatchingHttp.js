@@ -90,9 +90,9 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
           ],
         },
       ]);
-      expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledWith(
-        [],
-      );
+      expect(
+        proyectoRepository.obtenerAbiertosParaMatching,
+      ).toHaveBeenCalledWith([]);
     });
 
     it("responde 404 con el codigo del error si la colaboradora no existe", async () => {
@@ -122,9 +122,7 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
-      expect(
-        perfilRepository.obtenerPorProyectos,
-      ).not.toHaveBeenCalled();
+      expect(perfilRepository.obtenerPorProyectos).not.toHaveBeenCalled();
     });
   });
 
@@ -143,17 +141,19 @@ describe("Matching API - integracion HTTP (estilo clase: repos falsos)", () => {
       colaboracionRepository.obtenerIdsColaboradoresDeProyecto.mockResolvedValue(
         ["c3"],
       );
-      colaboradorRepository.encontrarPorHabilidadesRequeridas.mockResolvedValue([
-        {
-          _id: "c1",
-          habilidades: ["React", "SQL"],
-          nombreFantasia: "Completa",
-          mediosDeContacto: ["privado"],
-          pronombres: ["ella"],
-        },
-        { _id: "c2", habilidades: ["React", "Jest"] },
-        { _id: "c3", habilidades: ["React", "SQL"] }, // ya anotada: se excluye
-      ]);
+      colaboradorRepository.encontrarPorHabilidadesRequeridas.mockResolvedValue(
+        [
+          {
+            _id: "c1",
+            habilidades: ["React", "SQL"],
+            nombreFantasia: "Completa",
+            mediosDeContacto: ["privado"],
+            pronombres: ["ella"],
+          },
+          { _id: "c2", habilidades: ["React", "Jest"] },
+          { _id: "c3", habilidades: ["React", "SQL"] }, // ya anotada: se excluye
+        ],
+      );
 
       const response = await request(app).get(
         `/proyectos/${ID_PROYECTO}/perfiles/${ID_PERFIL}/colaboradoras`,

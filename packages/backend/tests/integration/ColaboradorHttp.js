@@ -45,24 +45,30 @@ describe("Colaborador API - mis colaboraciones", () => {
           obtenerMisPostulaciones: jest.fn().mockResolvedValue(postulaciones),
         };
 
-        const response = await request(crearApp(Rol.COLABORADOR, colaboradorService))
-          .get("/colaboradoras/me/postulaciones");
+        const response = await request(
+          crearApp(Rol.COLABORADOR, colaboradorService),
+        ).get("/colaboradoras/me/postulaciones");
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual(postulaciones);
-        expect(colaboradorService.obtenerMisPostulaciones).toHaveBeenCalledWith({
-          _id: "usuario-1",
-          rol: Rol.COLABORADOR,
-        });
+        expect(colaboradorService.obtenerMisPostulaciones).toHaveBeenCalledWith(
+          {
+            _id: "usuario-1",
+            rol: Rol.COLABORADOR,
+          },
+        );
       });
 
       it("impide consultar postulaciones con el rol de colectivo", async () => {
         const colaboradorService = { obtenerMisPostulaciones: jest.fn() };
-        const response = await request(crearApp(Rol.COLECTIVO, colaboradorService))
-          .get("/colaboradoras/me/postulaciones");
+        const response = await request(
+          crearApp(Rol.COLECTIVO, colaboradorService),
+        ).get("/colaboradoras/me/postulaciones");
 
         expect(response.status).toBe(403);
-        expect(colaboradorService.obtenerMisPostulaciones).not.toHaveBeenCalled();
+        expect(
+          colaboradorService.obtenerMisPostulaciones,
+        ).not.toHaveBeenCalled();
       });
     });
   });

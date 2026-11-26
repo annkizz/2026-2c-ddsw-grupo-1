@@ -1,5 +1,5 @@
-import { t } from '../../i18n/t';
-import React, { useEffect, useMemo, useState } from 'react';
+import { t } from "../../i18n/t";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -13,51 +13,61 @@ import {
   IconButton,
   MenuItem,
   TextField,
-} from '@mui/material';
-import PropTypes from 'prop-types';
-import { FiAlertCircle, FiCheck, FiKey, FiLock, FiMail, FiSave, FiStar, FiTrash2, FiUser } from 'react-icons/fi';
-import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
-import AlertaError from '../../components/AlertaError/AlertaError.jsx';
-import Dialogo from '../../components/Dialogo/Dialogo.jsx';
-import { EsqueletoFormulario } from '../../components/Esqueletos/Esqueletos.jsx';
-import { useNotificar } from '../../components/Notificador/Notificador.jsx';
-import AgregarMedioContactoButton from '../../components/AgregarMedioContactoButton/AgregarMedioContactoButton';
-import CustomSelect from '../../components/CustomSelect/CustomSelect';
-import UbicacionColectivo from '../../components/UbicacionColectivo/UbicacionColectivo';
-import { useAuth } from '../../hooks/useAuth.jsx';
-import { useListado } from '../../hooks/useListado';
+} from "@mui/material";
+import PropTypes from "prop-types";
+import {
+  FiAlertCircle,
+  FiCheck,
+  FiKey,
+  FiLock,
+  FiMail,
+  FiSave,
+  FiStar,
+  FiTrash2,
+  FiUser,
+} from "react-icons/fi";
+import EncabezadoPagina from "../../components/EncabezadoPagina/EncabezadoPagina.jsx";
+import AlertaError from "../../components/AlertaError/AlertaError.jsx";
+import Dialogo from "../../components/Dialogo/Dialogo.jsx";
+import { EsqueletoFormulario } from "../../components/Esqueletos/Esqueletos.jsx";
+import { useNotificar } from "../../components/Notificador/Notificador.jsx";
+import AgregarMedioContactoButton from "../../components/AgregarMedioContactoButton/AgregarMedioContactoButton";
+import CustomSelect from "../../components/CustomSelect/CustomSelect";
+import UbicacionColectivo from "../../components/UbicacionColectivo/UbicacionColectivo";
+import { useAuth } from "../../hooks/useAuth.jsx";
+import { useListado } from "../../hooks/useListado";
 import {
   actualizarColaboradora,
   obtenerMiPerfilColaboradora,
   TIPOS_CONTACTO,
-} from '../../service/colaboradorasService';
+} from "../../service/colaboradorasService";
 import {
   actualizarColectivo,
   obtenerMiPerfilColectivo,
   TIPOS_COLECTIVO,
-} from '../../service/colectivosService';
+} from "../../service/colectivosService";
 // Excepción documentada en CAMBIOS-UI.md: el error al guardar conserva el texto que verifica MiPerfil.test.jsx.
-import { mensajeDeError } from '../../service/api';
-import { camposFaltantesPerfilColaboradora } from '../../utils/perfilColaboradora';
-import { ETIQUETAS_MAX, etiquetaLegible } from '../../utils/etiquetas';
-import { camposFaltantesPerfilColectivo } from '../../utils/perfilColectivo';
-import './MiPerfil.css';
-import CampoMarkdown from '../../components/CampoMarkdown/CampoMarkdown.jsx';
+import { mensajeDeError } from "../../service/api";
+import { camposFaltantesPerfilColaboradora } from "../../utils/perfilColaboradora";
+import { ETIQUETAS_MAX, etiquetaLegible } from "../../utils/etiquetas";
+import { camposFaltantesPerfilColectivo } from "../../utils/perfilColectivo";
+import "./MiPerfil.css";
+import CampoMarkdown from "../../components/CampoMarkdown/CampoMarkdown.jsx";
 
 const PERFIL_VACIO = {
-  nombreFantasia: '',
-  usuarioGitHub: '',
-  nombre: '',
-  apellido: '',
-  pronombres: '',
-  presentacion: '',
+  nombreFantasia: "",
+  usuarioGitHub: "",
+  nombre: "",
+  apellido: "",
+  pronombres: "",
+  presentacion: "",
   habilidades: [],
-  nombreColectivo: '',
-  descripcion: '',
-  tipoDeColectivo: '',
-  pais: '',
-  provincia: '',
-  ciudad: '',
+  nombreColectivo: "",
+  descripcion: "",
+  tipoDeColectivo: "",
+  pais: "",
+  provincia: "",
+  ciudad: "",
   etiquetas: [],
   medios: [],
   aceptaMensajeria: false,
@@ -71,12 +81,12 @@ const normalizarPerfil = (perfil, esColaboradora) => {
   if (esColaboradora) {
     return {
       ...PERFIL_VACIO,
-      nombreFantasia: perfil.nombreFantasia ?? '',
-      usuarioGitHub: perfil.usuarioGitHub ?? '',
-      nombre: perfil.nombre ?? '',
-      apellido: perfil.apellido ?? '',
-      pronombres: (perfil.pronombres ?? []).join(', '),
-      presentacion: perfil.presentacion ?? '',
+      nombreFantasia: perfil.nombreFantasia ?? "",
+      usuarioGitHub: perfil.usuarioGitHub ?? "",
+      nombre: perfil.nombre ?? "",
+      apellido: perfil.apellido ?? "",
+      pronombres: (perfil.pronombres ?? []).join(", "),
+      presentacion: perfil.presentacion ?? "",
       habilidades: perfil.habilidades ?? [],
       medios,
       aceptaMensajeria: Boolean(perfil.aceptaMensajeria),
@@ -84,12 +94,12 @@ const normalizarPerfil = (perfil, esColaboradora) => {
   }
   return {
     ...PERFIL_VACIO,
-    nombreColectivo: perfil.nombre ?? '',
-    descripcion: perfil.descripcion ?? '',
-    tipoDeColectivo: perfil.tipoDeColectivo ?? '',
-    pais: perfil.ubicacion?.pais ?? '',
-    provincia: perfil.ubicacion?.provincia ?? '',
-    ciudad: perfil.ubicacion?.ciudad ?? '',
+    nombreColectivo: perfil.nombre ?? "",
+    descripcion: perfil.descripcion ?? "",
+    tipoDeColectivo: perfil.tipoDeColectivo ?? "",
+    pais: perfil.ubicacion?.pais ?? "",
+    provincia: perfil.ubicacion?.provincia ?? "",
+    ciudad: perfil.ubicacion?.ciudad ?? "",
     etiquetas: perfil.etiquetas ?? [],
     medios,
     aceptaMensajeria: Boolean(perfil.aceptaMensajeria),
@@ -101,8 +111,8 @@ const DURACION_MINIMA_GUARDADO_MS = 600;
 
 const validarMedio = (medio) => {
   const valor = medio.valor.trim();
-  if (medio.tipo === 'EMAIL') return EMAIL_VALIDO.test(valor);
-  return /^\+\d{10,15}$/.test(valor.replace(/[\s-]/g, ''));
+  if (medio.tipo === "EMAIL") return EMAIL_VALIDO.test(valor);
+  return /^\+\d{10,15}$/.test(valor.replace(/[\s-]/g, ""));
 };
 
 const validarPerfil = ({ datos, email, esColaboradora }) => {
@@ -112,51 +122,106 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
   };
 
   if (!email.trim()) {
-    agregar('email', t('miPerfil.email'), t('miPerfil.emailNoVerificado'), 'cuenta', 'email-cuenta');
+    agregar(
+      "email",
+      t("miPerfil.email"),
+      t("miPerfil.emailNoVerificado"),
+      "cuenta",
+      "email-cuenta",
+    );
   } else if (!EMAIL_VALIDO.test(email.trim())) {
-    agregar('email', t('miPerfil.email'), t('miPerfil.emailInvalido'), 'cuenta', 'email-cuenta');
+    agregar(
+      "email",
+      t("miPerfil.email"),
+      t("miPerfil.emailInvalido"),
+      "cuenta",
+      "email-cuenta",
+    );
   }
 
   if (esColaboradora) {
     const camposFaltantes = new Set(
       camposFaltantesPerfilColaboradora(datos).map(({ clave }) => clave),
     );
-    if (camposFaltantes.has('nombreFantasia')) {
-      agregar('nombreFantasia', t('miPerfil.nombreFantasia'), t('miPerfil.errorNombreFantasia'), 'perfil', 'nombre-fantasia');
+    if (camposFaltantes.has("nombreFantasia")) {
+      agregar(
+        "nombreFantasia",
+        t("miPerfil.nombreFantasia"),
+        t("miPerfil.errorNombreFantasia"),
+        "perfil",
+        "nombre-fantasia",
+      );
     }
-    if (camposFaltantes.has('habilidades')) {
-      agregar('habilidades', t('registro.habilidades'), t('miPerfil.errorHabilidad'), 'habilidades', 'mi-perfil-habilidades');
+    if (camposFaltantes.has("habilidades")) {
+      agregar(
+        "habilidades",
+        t("registro.habilidades"),
+        t("miPerfil.errorHabilidad"),
+        "habilidades",
+        "mi-perfil-habilidades",
+      );
     }
   } else {
-    const camposFaltantes = new Set(camposFaltantesPerfilColectivo(datos).map(({ clave }) => clave));
-    if (camposFaltantes.has('nombreColectivo')) {
-      agregar('nombreColectivo', t('inicio.campoNombreColectivo'), t('miPerfil.errorNombreColectivo'), 'perfil', 'nombre-colectivo');
+    const camposFaltantes = new Set(
+      camposFaltantesPerfilColectivo(datos).map(({ clave }) => clave),
+    );
+    if (camposFaltantes.has("nombreColectivo")) {
+      agregar(
+        "nombreColectivo",
+        t("inicio.campoNombreColectivo"),
+        t("miPerfil.errorNombreColectivo"),
+        "perfil",
+        "nombre-colectivo",
+      );
     }
-    if (camposFaltantes.has('tipoDeColectivo')) {
-      agregar('tipoDeColectivo', t('inicio.campoTipoColectivo'), t('miPerfil.errorTipoColectivo'), 'perfil', 'tipo-colectivo');
+    if (camposFaltantes.has("tipoDeColectivo")) {
+      agregar(
+        "tipoDeColectivo",
+        t("inicio.campoTipoColectivo"),
+        t("miPerfil.errorTipoColectivo"),
+        "perfil",
+        "tipo-colectivo",
+      );
     }
-    if (camposFaltantes.has('descripcion')) {
-      agregar('descripcion', t('inicio.campoDescripcion'), t('miPerfil.errorDescripcion'), 'perfil', 'descripcion-colectivo');
+    if (camposFaltantes.has("descripcion")) {
+      agregar(
+        "descripcion",
+        t("inicio.campoDescripcion"),
+        t("miPerfil.errorDescripcion"),
+        "perfil",
+        "descripcion-colectivo",
+      );
     }
     if (datos.etiquetas.length > ETIQUETAS_MAX) {
       agregar(
-        'etiquetas',
-        t('miPerfil.areasTrabajo'),
-        t('miPerfil.maximoAreas', { maximo: ETIQUETAS_MAX }),
-        'areas',
-        'mi-perfil-habilidades',
+        "etiquetas",
+        t("miPerfil.areasTrabajo"),
+        t("miPerfil.maximoAreas", { maximo: ETIQUETAS_MAX }),
+        "areas",
+        "mi-perfil-habilidades",
       );
     }
   }
 
   datos.medios.forEach((medio, indice) => {
     if (!validarMedio(medio)) {
-      const tipoContacto = TIPOS_CONTACTO.find((opcion) => opcion.valor === medio.tipo);
-      const tipo = tipoContacto ? t(tipoContacto.textoKey) : t('registro.contacto');
-      const mensaje = medio.tipo === 'EMAIL'
-        ? t('miPerfil.emailContactoInvalido')
-        : t('miPerfil.numeroContactoInvalido');
-      agregar(`medio-${indice}`, t('miPerfil.contactoNumero', { tipo, numero: indice + 1 }), mensaje, 'contacto', `medio-contacto-${indice}`);
+      const tipoContacto = TIPOS_CONTACTO.find(
+        (opcion) => opcion.valor === medio.tipo,
+      );
+      const tipo = tipoContacto
+        ? t(tipoContacto.textoKey)
+        : t("registro.contacto");
+      const mensaje =
+        medio.tipo === "EMAIL"
+          ? t("miPerfil.emailContactoInvalido")
+          : t("miPerfil.numeroContactoInvalido");
+      agregar(
+        `medio-${indice}`,
+        t("miPerfil.contactoNumero", { tipo, numero: indice + 1 }),
+        mensaje,
+        "contacto",
+        `medio-contacto-${indice}`,
+      );
     }
   });
 
@@ -164,28 +229,24 @@ const validarPerfil = ({ datos, email, esColaboradora }) => {
 };
 
 const MiPerfil = () => {
-  const {
-    sesion,
-    getAccessToken,
-    obtenerEmailCuenta,
-    cambiarContrasena,
-  } = useAuth();
-  const esColaboradora = sesion?.rol === 'COLABORADOR';
-  const listado = useListado(esColaboradora ? '/habilidades' : '/etiquetas');
+  const { sesion, getAccessToken, obtenerEmailCuenta, cambiarContrasena } =
+    useAuth();
+  const esColaboradora = sesion?.rol === "COLABORADOR";
+  const listado = useListado(esColaboradora ? "/habilidades" : "/etiquetas");
   const [datos, setDatos] = useState(PERFIL_VACIO);
   const [datosIniciales, setDatosIniciales] = useState(PERFIL_VACIO);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState({});
-  const [errorServidor, setErrorServidor] = useState('');
+  const [errorServidor, setErrorServidor] = useState("");
   const [errorCarga, setErrorCarga] = useState(null);
   const [intentoCarga, setIntentoCarga] = useState(0);
   const [intentoResumen, setIntentoResumen] = useState(0);
   const notificar = useNotificar();
-  const [avisoEmail, setAvisoEmail] = useState('');
+  const [avisoEmail, setAvisoEmail] = useState("");
   const [exito, setExito] = useState(false);
-  const [seccionActiva, setSeccionActiva] = useState('cuenta');
+  const [seccionActiva, setSeccionActiva] = useState("cuenta");
   const [confirmarDescartar, setConfirmarDescartar] = useState(false);
   const hayCambios = useMemo(
     () => JSON.stringify(datos) !== JSON.stringify(datosIniciales),
@@ -193,17 +254,21 @@ const MiPerfil = () => {
   );
 
   const secciones = [
-    ['cuenta', t('miPerfil.cuenta'), FiKey],
-    ['perfil', t('miPerfil.perfil'), FiUser],
-    [esColaboradora ? 'habilidades' : 'areas', esColaboradora ? t('registro.habilidades') : t('miPerfil.areasTrabajo'), FiStar],
-    ['contacto', t('miPerfil.mediosDeContacto'), FiMail],
+    ["cuenta", t("miPerfil.cuenta"), FiKey],
+    ["perfil", t("miPerfil.perfil"), FiUser],
+    [
+      esColaboradora ? "habilidades" : "areas",
+      esColaboradora ? t("registro.habilidades") : t("miPerfil.areasTrabajo"),
+      FiStar,
+    ],
+    ["contacto", t("miPerfil.mediosDeContacto"), FiMail],
   ];
 
   useEffect(() => {
     let vigente = true;
     const cargar = async () => {
       setCargando(true);
-      setErrorServidor('');
+      setErrorServidor("");
       setErrorCarga(null);
       try {
         const token = await getAccessToken();
@@ -219,9 +284,7 @@ const MiPerfil = () => {
           setEmail(await obtenerEmailCuenta());
         } catch {
           if (vigente) {
-            setAvisoEmail(
-              t('miPerfil.avisoEmail'),
-            );
+            setAvisoEmail(t("miPerfil.avisoEmail"));
           }
         }
       } catch (cargaError) {
@@ -241,27 +304,29 @@ const MiPerfil = () => {
     setErrores((actuales) => {
       const siguientes = { ...actuales };
       delete siguientes[campo];
-      if (campo === 'medios') {
+      if (campo === "medios") {
         Object.keys(siguientes)
-          .filter((clave) => clave.startsWith('medio-'))
+          .filter((clave) => clave.startsWith("medio-"))
           .forEach((clave) => delete siguientes[clave]);
       }
       return siguientes;
     });
-    setErrorServidor('');
+    setErrorServidor("");
     setExito(false);
   };
 
   const cambiarUbicacion = (cambios) => {
     setDatos((actual) => ({ ...actual, ...cambios }));
-    setErrorServidor('');
+    setErrorServidor("");
     setExito(false);
   };
 
   const cambiarMedio = (indice, cambios) => {
     cambiar(
-      'medios',
-      datos.medios.map((medio, i) => (i === indice ? { ...medio, ...cambios } : medio)),
+      "medios",
+      datos.medios.map((medio, i) =>
+        i === indice ? { ...medio, ...cambios } : medio,
+      ),
     );
   };
 
@@ -269,7 +334,7 @@ const MiPerfil = () => {
     evento.preventDefault();
     const nuevosErrores = validarPerfil({ datos, email, esColaboradora });
     setErrores(nuevosErrores);
-    setErrorServidor('');
+    setErrorServidor("");
     if (Object.keys(nuevosErrores).length > 0) {
       const primerError = Object.values(nuevosErrores)[0];
       setSeccionActiva(primerError.seccion);
@@ -285,9 +350,9 @@ const MiPerfil = () => {
       const mediosDeContacto = datos.medios.map((medio) => ({
         tipoDeContacto: medio.tipo,
         contacto:
-          medio.tipo === 'EMAIL'
+          medio.tipo === "EMAIL"
             ? medio.valor.trim()
-            : medio.valor.replace(/[\s-]/g, ''),
+            : medio.valor.replace(/[\s-]/g, ""),
       }));
       if (esColaboradora) {
         await actualizarColaboradora(token, sesion.idColaborador, {
@@ -296,7 +361,7 @@ const MiPerfil = () => {
           nombre: datos.nombre.trim() || undefined,
           apellido: datos.apellido.trim() || undefined,
           pronombres: datos.pronombres
-            .split(',')
+            .split(",")
             .map((pronombre) => pronombre.trim())
             .filter(Boolean),
           presentacion: datos.presentacion.trim() || undefined,
@@ -322,13 +387,14 @@ const MiPerfil = () => {
           mediosDeContacto,
         });
       }
-      const esperaRestante = DURACION_MINIMA_GUARDADO_MS - (Date.now() - inicioGuardado);
+      const esperaRestante =
+        DURACION_MINIMA_GUARDADO_MS - (Date.now() - inicioGuardado);
       if (esperaRestante > 0) {
         await new Promise((resolve) => setTimeout(resolve, esperaRestante));
       }
       setDatosIniciales(datos);
       setExito(true);
-      notificar({ mensaje: t('miPerfil.perfilGuardado') });
+      notificar({ mensaje: t("miPerfil.perfilGuardado") });
     } catch (guardadoError) {
       setErrorServidor(mensajeDeError(guardadoError));
     } finally {
@@ -346,13 +412,21 @@ const MiPerfil = () => {
       ayuda
     );
 
-  const titulo = t(esColaboradora ? 'miPerfil.tituloColaboradora' : 'miPerfil.tituloColectivo');
-  const migas = [{ texto: t('navegacion.inicio'), to: '/' }, { texto: t('navegacion.miPerfil') }];
+  const titulo = t(
+    esColaboradora ? "miPerfil.tituloColaboradora" : "miPerfil.tituloColectivo",
+  );
+  const migas = [
+    { texto: t("navegacion.inicio"), to: "/" },
+    { texto: t("navegacion.miPerfil") },
+  ];
 
   if (cargando) {
     return (
       <div className="contenedor-pagina">
-        <EsqueletoFormulario campos={5} etiqueta={t('miPerfil.cargandoTuPerfil')} />
+        <EsqueletoFormulario
+          campos={5}
+          etiqueta={t("miPerfil.cargandoTuPerfil")}
+        />
       </div>
     );
   }
@@ -363,7 +437,7 @@ const MiPerfil = () => {
         <EncabezadoPagina titulo={titulo} migas={migas} />
         <AlertaError
           error={errorCarga}
-          titulo={t('miPerfil.noPudimosCargarTuPerfil')}
+          titulo={t("miPerfil.noPudimosCargarTuPerfil")}
           onReintentar={() => setIntentoCarga((n) => n + 1)}
         />
       </div>
@@ -380,25 +454,30 @@ const MiPerfil = () => {
   }));
   const etiquetas = esColaboradora ? datos.habilidades : datos.etiquetas;
   const cantidadErrores = Object.keys(errores).length;
-  const errorSeleccion = errores.habilidades?.mensaje ?? errores.etiquetas?.mensaje;
+  const errorSeleccion =
+    errores.habilidades?.mensaje ?? errores.etiquetas?.mensaje;
 
   return (
-    <div className={`contenedor-pagina mi-perfil${esColaboradora ? '' : ' mi-perfil--colectivo'}`}>
+    <div
+      className={`contenedor-pagina mi-perfil${esColaboradora ? "" : " mi-perfil--colectivo"}`}
+    >
       <EncabezadoPagina titulo={titulo} migas={migas} />
 
       {/* Una sección a la vez (panel lateral): el formulario completo era demasiado largo. */}
       <div className="mi-perfil-disposicion">
-        <nav className="mi-perfil-nav" aria-label={t('miPerfil.secciones')}>
+        <nav className="mi-perfil-nav" aria-label={t("miPerfil.secciones")}>
           <ul className="lateral-nav">
             {secciones.map(([id, etiqueta, Icono]) => {
-              const erroresSeccion = Object.values(errores).filter((detalle) => detalle.seccion === id).length;
+              const erroresSeccion = Object.values(errores).filter(
+                (detalle) => detalle.seccion === id,
+              ).length;
               return (
                 <li key={id}>
                   <button
                     type="button"
                     className="lateral-nav__item"
                     onClick={() => setSeccionActiva(id)}
-                    aria-current={seccionActiva === id ? 'location' : undefined}
+                    aria-current={seccionActiva === id ? "location" : undefined}
                   >
                     <Icono aria-hidden="true" />
                     <span>{etiqueta}</span>
@@ -406,7 +485,14 @@ const MiPerfil = () => {
                       <span className="insignia insignia--error">
                         <FiAlertCircle aria-hidden="true" />
                         {erroresSeccion}
-                        <span className="visualmente-oculto"> {t(erroresSeccion === 1 ? 'miPerfil.unCampoRevisar' : 'miPerfil.variosCamposRevisar')}</span>
+                        <span className="visualmente-oculto">
+                          {" "}
+                          {t(
+                            erroresSeccion === 1
+                              ? "miPerfil.unCampoRevisar"
+                              : "miPerfil.variosCamposRevisar",
+                          )}
+                        </span>
                       </span>
                     )}
                   </button>
@@ -427,7 +513,7 @@ const MiPerfil = () => {
                 // La sección se monta en el próximo render: recién ahí existe el campo.
                 window.setTimeout(() => {
                   const campo = document.getElementById(detalle.id);
-                  campo?.scrollIntoView?.({ block: 'center' });
+                  campo?.scrollIntoView?.({ block: "center" });
                   campo?.focus();
                 }, 0);
               }}
@@ -435,273 +521,364 @@ const MiPerfil = () => {
           )}
 
           <form className="mi-perfil-formulario" onSubmit={guardar} noValidate>
-            {seccionActiva === 'cuenta' && (
-            <section className="mi-perfil-tarjeta" id="mi-perfil-cuenta" aria-labelledby="mi-perfil-cuenta-titulo">
-              <h2 id="mi-perfil-cuenta-titulo">{t('miPerfil.cuenta')}</h2>
-              <TextField
-                id="email-cuenta"
-                label={t('miPerfil.emailObligatorio')}
-                value={email}
-                fullWidth
-                disabled
-                error={Boolean(errores.email)}
-                helperText={mensajeCampo(
-                  errores.email?.mensaje,
-                  t('miPerfil.ayudaEmail')
-                )}
-              />
-              {avisoEmail && (
-                <Alert severity="warning" role="alert">
-                  {avisoEmail}
-                </Alert>
-              )}
-              <div>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  startIcon={<FiKey aria-hidden="true" />}
-                  onClick={() => cambiarContrasena(email)}
-                >
-                  {t('miPerfil.cambiarContrasena')}
-                </Button>
-              </div>
-            </section>
-            )}
-
-            {seccionActiva === 'perfil' && (
-            <section className="mi-perfil-tarjeta" id="mi-perfil-perfil" aria-labelledby="mi-perfil-perfil-titulo">
-              <h2 id="mi-perfil-perfil-titulo">{t('miPerfil.perfil')}</h2>
-              {esColaboradora ? (
-                <>
-                  <TextField
-                    id="nombre-fantasia"
-                    label={t('miPerfil.nombreFantasiaObligatorio')}
-                    placeholder={t('miPerfil.ejNombrePublico')}
-                    value={datos.nombreFantasia}
-                    onChange={(e) => cambiar('nombreFantasia', e.target.value)}
-                    error={Boolean(errores.nombreFantasia)}
-                    helperText={mensajeCampo(errores.nombreFantasia?.mensaje)}
-                    required
-                    fullWidth
-                  />
-                  <TextField
-                    id="usuario-github"
-                    label={t('miPerfil.usuarioCodigoOpcional')}
-                    placeholder={t('miPerfil.ejUsuarioGithub')}
-                    value={datos.usuarioGitHub}
-                    onChange={(e) => cambiar('usuarioGitHub', e.target.value)}
-                    helperText={t('miPerfil.ayudaUsuarioCodigo')}
-                    fullWidth
-                  />
-                  <div className="mi-perfil-dos-columnas">
-                    <TextField
-                      id="nombre-persona"
-                      label={t('registro.nombreOpcional')}
-                      placeholder={t('miPerfil.ejLucia')}
-                      value={datos.nombre}
-                      onChange={(e) => cambiar('nombre', e.target.value)}
-                      fullWidth
-                    />
-                    <TextField
-                      id="apellido-persona"
-                      label={t('registro.apellidoOpcional')}
-                      placeholder={t('miPerfil.ejGomez')}
-                      value={datos.apellido}
-                      onChange={(e) => cambiar('apellido', e.target.value)}
-                      fullWidth
-                    />
-                  </div>
-                  <TextField
-                    id="pronombres"
-                    label={t('registro.pronombresOpcional')}
-                    placeholder={t('miPerfil.ejEllaElle')}
-                    value={datos.pronombres}
-                    onChange={(e) => cambiar('pronombres', e.target.value)}
-                    helperText={t('miPerfil.separalosConComas')}
-                    fullWidth
-                  />
-                  <CampoMarkdown
-                    id="presentacion"
-                    label={t('miPerfil.presentacionOpcional')}
-                    placeholder={t('miPerfil.ejPresentacion')}
-                    value={datos.presentacion}
-                    onChange={(e) => cambiar('presentacion', e.target.value)}
-                    multiline
-                    minRows={3}
-                    slotProps={{ htmlInput: { maxLength: 280 } }}
-                    helperText={t('miPerfil.caracteres', { cantidad: datos.presentacion.length })}
-                    fullWidth
-                  />
-                </>
-              ) : (
-                <>
-                  <TextField
-                    id="nombre-colectivo"
-                    label={t('miPerfil.nombreColectivoObligatorio')}
-                    placeholder={t('registro.nombreColectivoEjemplo')}
-                    value={datos.nombreColectivo}
-                    onChange={(e) => cambiar('nombreColectivo', e.target.value)}
-                    error={Boolean(errores.nombreColectivo)}
-                    helperText={mensajeCampo(errores.nombreColectivo?.mensaje)}
-                    required
-                    fullWidth
-                  />
-                  <TextField
-                    id="tipo-colectivo"
-                    label={t('registro.tipoColectivoObligatorio')}
-                    select
-                    value={datos.tipoDeColectivo}
-                    onChange={(e) => cambiar('tipoDeColectivo', e.target.value)}
-                    error={Boolean(errores.tipoDeColectivo)}
-                    helperText={mensajeCampo(errores.tipoDeColectivo?.mensaje)}
-                    required
-                    fullWidth
-                  >
-                    {TIPOS_COLECTIVO.map((tipo) => (
-                      <MenuItem key={tipo.valor} value={tipo.valor}>
-                        {t(tipo.textoKey)}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  <UbicacionColectivo
-                    pais={datos.pais}
-                    provincia={datos.provincia}
-                    ciudad={datos.ciudad}
-                    onChange={cambiarUbicacion}
-                    labelsAbove
-                    idPrefix="mi-perfil-ubicacion"
-                  />
-                  <CampoMarkdown
-                    id="descripcion-colectivo"
-                    label={t('registro.descripcionObligatoria')}
-                    placeholder={t('miPerfil.ejDescripcionColectivo')}
-                    value={datos.descripcion}
-                    onChange={(e) => cambiar('descripcion', e.target.value)}
-                    error={Boolean(errores.descripcion)}
-                    helperText={mensajeCampo(errores.descripcion?.mensaje)}
-                    required
-                    multiline
-                    minRows={4}
-                    fullWidth
-                  />
-                </>
-              )}
-            </section>
-            )}
-
-            {(seccionActiva === 'habilidades' || seccionActiva === 'areas') && (
-            <section
-              className="mi-perfil-tarjeta"
-              id={`mi-perfil-${esColaboradora ? 'habilidades' : 'areas'}`}
-              aria-labelledby="mi-perfil-seleccion-titulo"
-            >
-              <h2 id="mi-perfil-seleccion-titulo">{t(esColaboradora ? 'registro.habilidades' : 'miPerfil.habilidadesYAreas')}</h2>
-              <p className="texto-secundario">
-                {esColaboradora
-                  ? t('miPerfil.elegiHabilidades')
-                  : t('miPerfil.agregaAreas')}
-              </p>
-              {listado.error && (
-                <AlertaError
-                  error={listado.error}
-                  titulo={t('miPerfil.noPudimosCargarLasOpciones')}
-                  onReintentar={listado.recargar}
+            {seccionActiva === "cuenta" && (
+              <section
+                className="mi-perfil-tarjeta"
+                id="mi-perfil-cuenta"
+                aria-labelledby="mi-perfil-cuenta-titulo"
+              >
+                <h2 id="mi-perfil-cuenta-titulo">{t("miPerfil.cuenta")}</h2>
+                <TextField
+                  id="email-cuenta"
+                  label={t("miPerfil.emailObligatorio")}
+                  value={email}
+                  fullWidth
+                  disabled
+                  error={Boolean(errores.email)}
+                  helperText={mensajeCampo(
+                    errores.email?.mensaje,
+                    t("miPerfil.ayudaEmail"),
+                  )}
                 />
-              )}
-              <CustomSelect
-                id="mi-perfil-habilidades"
-                etiqueta={esColaboradora ? t('miPerfil.habilidadesObligatorio') : t('miPerfil.areasYEtiquetasOpcional')}
-                opciones={esColaboradora ? opcionesHabilidades : opcionesAreas}
-                seleccion={etiquetas}
-                multiple
-                maxSeleccion={esColaboradora ? undefined : ETIQUETAS_MAX}
-                permiteCrear={!esColaboradora}
-                error={errorSeleccion}
-                onSeleccionar={(valor) => cambiar(esColaboradora ? 'habilidades' : 'etiquetas', [...etiquetas, valor])}
-                onQuitar={(valor) =>
-                  cambiar(
-                    esColaboradora ? 'habilidades' : 'etiquetas',
-                    etiquetas.filter((actual) => actual !== valor),
-                  )
-                }
-                placeholder={listado.cargando ? t('miPerfil.cargandoOpciones') : t('perfilesProyecto.placeholderHabilidades')}
-                textoVacio={listado.cargando ? t('miPerfil.cargandoOpciones') : t('miPerfil.sinCoincidencias')}
-              />
-            </section>
+                {avisoEmail && (
+                  <Alert severity="warning" role="alert">
+                    {avisoEmail}
+                  </Alert>
+                )}
+                <div>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<FiKey aria-hidden="true" />}
+                    onClick={() => cambiarContrasena(email)}
+                  >
+                    {t("miPerfil.cambiarContrasena")}
+                  </Button>
+                </div>
+              </section>
             )}
 
-            {seccionActiva === 'contacto' && (
-            <section className="mi-perfil-tarjeta medios-contacto" id="mi-perfil-contacto" aria-labelledby="mi-perfil-contacto-titulo">
-              <h2 id="mi-perfil-contacto-titulo">{t('miPerfil.mediosDeContacto')}</h2>
-              <p className="medios-contacto__intro">{t('medios.intro')}</p>
-              <p className="medios-contacto__privado">
-                <FiLock aria-hidden="true" /> {t('medios.privado')}
-              </p>
-              {datos.medios.length === 0 ? (
-                <p className="medios-contacto__vacio">{t('medios.vacio')}</p>
-              ) : (
-                <ol className="medios-lista" aria-label={t('miPerfil.mediosDeContacto')}>
-                  {datos.medios.map((medio, indice) => (
-                    <li className="medios-item" key={`${indice}-${medio.tipo}`}>
-                      <p className="medios-item__titulo">{t('medios.numero', { numero: indice + 1 })}</p>
-                      <div className="medios-fila">
+            {seccionActiva === "perfil" && (
+              <section
+                className="mi-perfil-tarjeta"
+                id="mi-perfil-perfil"
+                aria-labelledby="mi-perfil-perfil-titulo"
+              >
+                <h2 id="mi-perfil-perfil-titulo">{t("miPerfil.perfil")}</h2>
+                {esColaboradora ? (
+                  <>
+                    <TextField
+                      id="nombre-fantasia"
+                      label={t("miPerfil.nombreFantasiaObligatorio")}
+                      placeholder={t("miPerfil.ejNombrePublico")}
+                      value={datos.nombreFantasia}
+                      onChange={(e) =>
+                        cambiar("nombreFantasia", e.target.value)
+                      }
+                      error={Boolean(errores.nombreFantasia)}
+                      helperText={mensajeCampo(errores.nombreFantasia?.mensaje)}
+                      required
+                      fullWidth
+                    />
+                    <TextField
+                      id="usuario-github"
+                      label={t("miPerfil.usuarioCodigoOpcional")}
+                      placeholder={t("miPerfil.ejUsuarioGithub")}
+                      value={datos.usuarioGitHub}
+                      onChange={(e) => cambiar("usuarioGitHub", e.target.value)}
+                      helperText={t("miPerfil.ayudaUsuarioCodigo")}
+                      fullWidth
+                    />
+                    <div className="mi-perfil-dos-columnas">
                       <TextField
-                        id={`medio-tipo-${indice}`}
-                        label={t('medios.tipo')}
-                        select
-                        value={medio.tipo}
-                        onChange={(e) => cambiarMedio(indice, { tipo: e.target.value })}
-                        fullWidth
-                      >
-                        {TIPOS_CONTACTO.map((tipo) => (
-                          <MenuItem key={tipo.valor} value={tipo.valor}>
-                            {t(tipo.textoKey)}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                      <TextField
-                        id={`medio-contacto-${indice}`}
-                        label={medio.tipo === 'EMAIL' ? t('medios.direccionEmail') : t('miPerfil.numeroConCodigoDePais')}
-                        placeholder={medio.tipo === 'EMAIL' ? t('miPerfil.ejEmail') : t('miPerfil.ejTelefono')}
-                        value={medio.valor}
-                        onChange={(e) => cambiarMedio(indice, { valor: e.target.value })}
-                        error={Boolean(errores[`medio-${indice}`])}
-                        helperText={mensajeCampo(errores[`medio-${indice}`]?.mensaje)}
+                        id="nombre-persona"
+                        label={t("registro.nombreOpcional")}
+                        placeholder={t("miPerfil.ejLucia")}
+                        value={datos.nombre}
+                        onChange={(e) => cambiar("nombre", e.target.value)}
                         fullWidth
                       />
-                      <IconButton
-                        type="button"
-                        aria-label={t('medios.quitar', { numero: indice + 1 })}
-                        onClick={() => cambiar('medios', datos.medios.filter((_, i) => i !== indice))}
-                      >
-                        <FiTrash2 aria-hidden="true" />
-                      </IconButton>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-              <div>
-                <AgregarMedioContactoButton
-                  onClick={() => cambiar('medios', [...datos.medios, { tipo: 'EMAIL', valor: '' }])}
-                />
-              </div>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={datos.aceptaMensajeria}
-                    onChange={(e) => cambiar('aceptaMensajeria', e.target.checked)}
+                      <TextField
+                        id="apellido-persona"
+                        label={t("registro.apellidoOpcional")}
+                        placeholder={t("miPerfil.ejGomez")}
+                        value={datos.apellido}
+                        onChange={(e) => cambiar("apellido", e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                    <TextField
+                      id="pronombres"
+                      label={t("registro.pronombresOpcional")}
+                      placeholder={t("miPerfil.ejEllaElle")}
+                      value={datos.pronombres}
+                      onChange={(e) => cambiar("pronombres", e.target.value)}
+                      helperText={t("miPerfil.separalosConComas")}
+                      fullWidth
+                    />
+                    <CampoMarkdown
+                      id="presentacion"
+                      label={t("miPerfil.presentacionOpcional")}
+                      placeholder={t("miPerfil.ejPresentacion")}
+                      value={datos.presentacion}
+                      onChange={(e) => cambiar("presentacion", e.target.value)}
+                      multiline
+                      minRows={3}
+                      slotProps={{ htmlInput: { maxLength: 280 } }}
+                      helperText={t("miPerfil.caracteres", {
+                        cantidad: datos.presentacion.length,
+                      })}
+                      fullWidth
+                    />
+                  </>
+                ) : (
+                  <>
+                    <TextField
+                      id="nombre-colectivo"
+                      label={t("miPerfil.nombreColectivoObligatorio")}
+                      placeholder={t("registro.nombreColectivoEjemplo")}
+                      value={datos.nombreColectivo}
+                      onChange={(e) =>
+                        cambiar("nombreColectivo", e.target.value)
+                      }
+                      error={Boolean(errores.nombreColectivo)}
+                      helperText={mensajeCampo(
+                        errores.nombreColectivo?.mensaje,
+                      )}
+                      required
+                      fullWidth
+                    />
+                    <TextField
+                      id="tipo-colectivo"
+                      label={t("registro.tipoColectivoObligatorio")}
+                      select
+                      value={datos.tipoDeColectivo}
+                      onChange={(e) =>
+                        cambiar("tipoDeColectivo", e.target.value)
+                      }
+                      error={Boolean(errores.tipoDeColectivo)}
+                      helperText={mensajeCampo(
+                        errores.tipoDeColectivo?.mensaje,
+                      )}
+                      required
+                      fullWidth
+                    >
+                      {TIPOS_COLECTIVO.map((tipo) => (
+                        <MenuItem key={tipo.valor} value={tipo.valor}>
+                          {t(tipo.textoKey)}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    <UbicacionColectivo
+                      pais={datos.pais}
+                      provincia={datos.provincia}
+                      ciudad={datos.ciudad}
+                      onChange={cambiarUbicacion}
+                      labelsAbove
+                      idPrefix="mi-perfil-ubicacion"
+                    />
+                    <CampoMarkdown
+                      id="descripcion-colectivo"
+                      label={t("registro.descripcionObligatoria")}
+                      placeholder={t("miPerfil.ejDescripcionColectivo")}
+                      value={datos.descripcion}
+                      onChange={(e) => cambiar("descripcion", e.target.value)}
+                      error={Boolean(errores.descripcion)}
+                      helperText={mensajeCampo(errores.descripcion?.mensaje)}
+                      required
+                      multiline
+                      minRows={4}
+                      fullWidth
+                    />
+                  </>
+                )}
+              </section>
+            )}
+
+            {(seccionActiva === "habilidades" || seccionActiva === "areas") && (
+              <section
+                className="mi-perfil-tarjeta"
+                id={`mi-perfil-${esColaboradora ? "habilidades" : "areas"}`}
+                aria-labelledby="mi-perfil-seleccion-titulo"
+              >
+                <h2 id="mi-perfil-seleccion-titulo">
+                  {t(
+                    esColaboradora
+                      ? "registro.habilidades"
+                      : "miPerfil.habilidadesYAreas",
+                  )}
+                </h2>
+                <p className="texto-secundario">
+                  {esColaboradora
+                    ? t("miPerfil.elegiHabilidades")
+                    : t("miPerfil.agregaAreas")}
+                </p>
+                {listado.error && (
+                  <AlertaError
+                    error={listado.error}
+                    titulo={t("miPerfil.noPudimosCargarLasOpciones")}
+                    onReintentar={listado.recargar}
                   />
-                }
-                label={t('miPerfil.aceptaMensajes')}
-              />
-            </section>
+                )}
+                <CustomSelect
+                  id="mi-perfil-habilidades"
+                  etiqueta={
+                    esColaboradora
+                      ? t("miPerfil.habilidadesObligatorio")
+                      : t("miPerfil.areasYEtiquetasOpcional")
+                  }
+                  opciones={
+                    esColaboradora ? opcionesHabilidades : opcionesAreas
+                  }
+                  seleccion={etiquetas}
+                  multiple
+                  maxSeleccion={esColaboradora ? undefined : ETIQUETAS_MAX}
+                  permiteCrear={!esColaboradora}
+                  error={errorSeleccion}
+                  onSeleccionar={(valor) =>
+                    cambiar(esColaboradora ? "habilidades" : "etiquetas", [
+                      ...etiquetas,
+                      valor,
+                    ])
+                  }
+                  onQuitar={(valor) =>
+                    cambiar(
+                      esColaboradora ? "habilidades" : "etiquetas",
+                      etiquetas.filter((actual) => actual !== valor),
+                    )
+                  }
+                  placeholder={
+                    listado.cargando
+                      ? t("miPerfil.cargandoOpciones")
+                      : t("perfilesProyecto.placeholderHabilidades")
+                  }
+                  textoVacio={
+                    listado.cargando
+                      ? t("miPerfil.cargandoOpciones")
+                      : t("miPerfil.sinCoincidencias")
+                  }
+                />
+              </section>
+            )}
+
+            {seccionActiva === "contacto" && (
+              <section
+                className="mi-perfil-tarjeta medios-contacto"
+                id="mi-perfil-contacto"
+                aria-labelledby="mi-perfil-contacto-titulo"
+              >
+                <h2 id="mi-perfil-contacto-titulo">
+                  {t("miPerfil.mediosDeContacto")}
+                </h2>
+                <p className="medios-contacto__intro">{t("medios.intro")}</p>
+                <p className="medios-contacto__privado">
+                  <FiLock aria-hidden="true" /> {t("medios.privado")}
+                </p>
+                {datos.medios.length === 0 ? (
+                  <p className="medios-contacto__vacio">{t("medios.vacio")}</p>
+                ) : (
+                  <ol
+                    className="medios-lista"
+                    aria-label={t("miPerfil.mediosDeContacto")}
+                  >
+                    {datos.medios.map((medio, indice) => (
+                      <li
+                        className="medios-item"
+                        key={`${indice}-${medio.tipo}`}
+                      >
+                        <p className="medios-item__titulo">
+                          {t("medios.numero", { numero: indice + 1 })}
+                        </p>
+                        <div className="medios-fila">
+                          <TextField
+                            id={`medio-tipo-${indice}`}
+                            label={t("medios.tipo")}
+                            select
+                            value={medio.tipo}
+                            onChange={(e) =>
+                              cambiarMedio(indice, { tipo: e.target.value })
+                            }
+                            fullWidth
+                          >
+                            {TIPOS_CONTACTO.map((tipo) => (
+                              <MenuItem key={tipo.valor} value={tipo.valor}>
+                                {t(tipo.textoKey)}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <TextField
+                            id={`medio-contacto-${indice}`}
+                            label={
+                              medio.tipo === "EMAIL"
+                                ? t("medios.direccionEmail")
+                                : t("miPerfil.numeroConCodigoDePais")
+                            }
+                            placeholder={
+                              medio.tipo === "EMAIL"
+                                ? t("miPerfil.ejEmail")
+                                : t("miPerfil.ejTelefono")
+                            }
+                            value={medio.valor}
+                            onChange={(e) =>
+                              cambiarMedio(indice, { valor: e.target.value })
+                            }
+                            error={Boolean(errores[`medio-${indice}`])}
+                            helperText={mensajeCampo(
+                              errores[`medio-${indice}`]?.mensaje,
+                            )}
+                            fullWidth
+                          />
+                          <IconButton
+                            type="button"
+                            aria-label={t("medios.quitar", {
+                              numero: indice + 1,
+                            })}
+                            onClick={() =>
+                              cambiar(
+                                "medios",
+                                datos.medios.filter((_, i) => i !== indice),
+                              )
+                            }
+                          >
+                            <FiTrash2 aria-hidden="true" />
+                          </IconButton>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <div>
+                  <AgregarMedioContactoButton
+                    onClick={() =>
+                      cambiar("medios", [
+                        ...datos.medios,
+                        { tipo: "EMAIL", valor: "" },
+                      ])
+                    }
+                  />
+                </div>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={datos.aceptaMensajeria}
+                      onChange={(e) =>
+                        cambiar("aceptaMensajeria", e.target.checked)
+                      }
+                    />
+                  }
+                  label={t("miPerfil.aceptaMensajes")}
+                />
+              </section>
             )}
 
             {errorServidor && (
               <Alert className="mi-perfil-estado" severity="error" role="alert">
-                <span>{t('miPerfil.errorGuardar', { error: errorServidor })}</span>
-                <p className="texto-secundario">{t('miPerfil.tusDatosSiguenAcaPodes')}</p>
+                <span>
+                  {t("miPerfil.errorGuardar", { error: errorServidor })}
+                </span>
+                <p className="texto-secundario">
+                  {t("miPerfil.tusDatosSiguenAcaPodes")}
+                </p>
               </Alert>
             )}
 
@@ -715,12 +892,12 @@ const MiPerfil = () => {
                     setConfirmarDescartar(true);
                   } else {
                     setErrores({});
-                    setErrorServidor('');
+                    setErrorServidor("");
                     setExito(false);
                   }
                 }}
               >
-                {t('comun.cancelar')}
+                {t("comun.cancelar")}
               </Button>
               <Button
                 type="submit"
@@ -729,32 +906,50 @@ const MiPerfil = () => {
                 loading={guardando}
                 startIcon={<FiSave aria-hidden="true" />}
               >
-                {guardando ? t('registro.guardando') : t('miPerfil.guardarCambios')}
+                {guardando
+                  ? t("registro.guardando")
+                  : t("miPerfil.guardarCambios")}
               </Button>
             </div>
             {exito && (
-              <Alert className="mi-perfil-estado" severity="success" role="status" icon={<FiCheck aria-hidden="true" />}>
-                {t('miPerfil.cambiosAplicados')}
+              <Alert
+                className="mi-perfil-estado"
+                severity="success"
+                role="status"
+                icon={<FiCheck aria-hidden="true" />}
+              >
+                {t("miPerfil.cambiosAplicados")}
               </Alert>
             )}
           </form>
         </div>
       </div>
 
-      <Dialogo open={confirmarDescartar} onClose={() => setConfirmarDescartar(false)} aria-labelledby="descartar-cambios-titulo">
-        <DialogTitle id="descartar-cambios-titulo">{t('miPerfil.descartarPregunta')}</DialogTitle>
+      <Dialogo
+        open={confirmarDescartar}
+        onClose={() => setConfirmarDescartar(false)}
+        aria-labelledby="descartar-cambios-titulo"
+      >
+        <DialogTitle id="descartar-cambios-titulo">
+          {t("miPerfil.descartarPregunta")}
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>{t('miPerfil.vasAPerderLosCambios')}</DialogContentText>
+          <DialogContentText>
+            {t("miPerfil.vasAPerderLosCambios")}
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmarDescartar(false)} variant="outlined">
-            {t('miPerfil.seguirEditando')}
+          <Button
+            onClick={() => setConfirmarDescartar(false)}
+            variant="outlined"
+          >
+            {t("miPerfil.seguirEditando")}
           </Button>
           <Button
             onClick={() => {
               setDatos(datosIniciales);
               setErrores({});
-              setErrorServidor('');
+              setErrorServidor("");
               setExito(false);
               setConfirmarDescartar(false);
             }}
@@ -762,7 +957,7 @@ const MiPerfil = () => {
             color="error"
             startIcon={<FiTrash2 aria-hidden="true" />}
           >
-            {t('miPerfil.descartarCambios')}
+            {t("miPerfil.descartarCambios")}
           </Button>
         </DialogActions>
       </Dialogo>
@@ -777,11 +972,23 @@ const ResumenErroresPerfil = ({ errores, cantidad, intento, onIr }) => {
     if (intento > 0) ref.current?.focus();
   }, [intento]);
   return (
-    <Alert severity="error" role="alert" ref={ref} tabIndex={-1} className="resumen-errores" aria-labelledby="mi-perfil-errores-titulo">
+    <Alert
+      severity="error"
+      role="alert"
+      ref={ref}
+      tabIndex={-1}
+      className="resumen-errores"
+      aria-labelledby="mi-perfil-errores-titulo"
+    >
       <AlertTitle id="mi-perfil-errores-titulo" component="h2">
-        {t(cantidad === 1 ? 'miPerfil.revisarUnCampo' : 'miPerfil.revisarVariosCampos', { cantidad })}
+        {t(
+          cantidad === 1
+            ? "miPerfil.revisarUnCampo"
+            : "miPerfil.revisarVariosCampos",
+          { cantidad },
+        )}
       </AlertTitle>
-      <p>{t('miPerfil.corregirCampos')}</p>
+      <p>{t("miPerfil.corregirCampos")}</p>
       <ul className="resumen-errores__lista">
         {Object.entries(errores).map(([campo, detalle]) => (
           <li key={campo}>

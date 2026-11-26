@@ -105,7 +105,9 @@ export function crearAppDeAutenticacion() {
       autenticar,
     ),
   );
-  app.use(crearUsuarioRouter(new UsuarioController(usuarioService), autenticar));
+  app.use(
+    crearUsuarioRouter(new UsuarioController(usuarioService), autenticar),
+  );
   app.use(notFoundHandler);
   app.use(errorHandler);
 

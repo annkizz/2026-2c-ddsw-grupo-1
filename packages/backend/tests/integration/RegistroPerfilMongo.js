@@ -60,7 +60,9 @@ const crearApp = () => {
 
   const app = express();
   app.use(express.json());
-  app.use(crearUsuarioRouter(new UsuarioController(usuarioService), autenticar));
+  app.use(
+    crearUsuarioRouter(new UsuarioController(usuarioService), autenticar),
+  );
   app.use(
     "/colectivos",
     crearColectivoRouter(

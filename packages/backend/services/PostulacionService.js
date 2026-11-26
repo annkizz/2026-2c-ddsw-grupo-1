@@ -199,10 +199,15 @@ export class PostulacionService {
         });
       } catch (error) {
         try {
-          const resultado = await this.postulacionRepository.eliminarSiPendiente(guardada._id);
-          if (resultado.deletedCount !== 1) throw new Error("No se pudo revertir la postulación");
+          const resultado =
+            await this.postulacionRepository.eliminarSiPendiente(guardada._id);
+          if (resultado.deletedCount !== 1)
+            throw new Error("No se pudo revertir la postulación");
         } catch (errorRollback) {
-          throw new AggregateError([error, errorRollback], "Falló la notificación y la reversión de la postulación");
+          throw new AggregateError(
+            [error, errorRollback],
+            "Falló la notificación y la reversión de la postulación",
+          );
         }
         throw error;
       }
@@ -248,7 +253,10 @@ export class PostulacionService {
     return postulaciones.map((postulacion) => {
       const dto = this.toDTO(postulacion);
       const colaboradora = postulacion.idColaborador;
-      if (postulacion.estado === EstadoPostulacion.PENDIENTE && colaboradora?._id) {
+      if (
+        postulacion.estado === EstadoPostulacion.PENDIENTE &&
+        colaboradora?._id
+      ) {
         dto.perfilPublico = {
           id: String(colaboradora._id),
           nombreFantasia: colaboradora.nombreFantasia,
@@ -267,14 +275,21 @@ export class PostulacionService {
   async obtenerColaboracionesParaGestion(idProyecto, actor) {
     const proyecto = await this.proyectoRepository.buscarPorId(idProyecto);
     if (!proyecto) {
-      throw new NotFoundError("Proyecto no encontrado", "PROYECTO_NO_ENCONTRADO");
+      throw new NotFoundError(
+        "Proyecto no encontrado",
+        "PROYECTO_NO_ENCONTRADO",
+      );
     }
     this.validarColectivoDelProyecto(actor, proyecto);
-    const colaboraciones = await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
+    const colaboraciones =
+      await this.colaboracionRepository.obtenerPorProyecto(idProyecto);
     return colaboraciones.map((colaboracion) => {
       const colaborador = colaboracion.idColaborador;
       if (!colaborador) {
-        throw new NotFoundError("Colaboradora no encontrada", "COLABORADORA_NO_ENCONTRADA");
+        throw new NotFoundError(
+          "Colaboradora no encontrada",
+          "COLABORADORA_NO_ENCONTRADA",
+        );
       }
       return {
         idColaborador: String(colaborador._id),
@@ -353,66 +368,153 @@ export class PostulacionService {
       });
     } catch (error) {
       if (error.code === 11000) {
-        throw new ConflictError("Ya existe una invitación pendiente para este perfil", "INVITACION_YA_EXISTENTE");
+        throw new ConflictError(
+          "Ya existe una invitación pendiente para este perfil",
+          "INVITACION_YA_EXISTENTE",
+        );
       }
       throw error;
     }
   }
 
-  async resolverInvitacion(idProyecto, idInvitacion, decision, esAnonima, actor) {
+  async resolverInvitacion(
+    idProyecto,
+    idInvitacion,
+    decision,
+    esAnonima,
+    actor,
+  ) {
     this.validarColaboradora(actor);
-    if (![EstadoPostulacion.ACEPTADA, EstadoPostulacion.RECHAZADA].includes(decision)) {
-      throw new BadRequestError("La decisión debe ser ACEPTADA o RECHAZADA", "DECISION_INVITACION_INVALIDA");
+    if (
+      ![EstadoPostulacion.ACEPTADA, EstadoPostulacion.RECHAZADA].includes(
+        decision,
+      )
+    ) {
+      throw new BadRequestError(
+        "La decisión debe ser ACEPTADA o RECHAZADA",
+        "DECISION_INVITACION_INVALIDA",
+      );
     }
     const repo = this.notificacionRepository;
     const invitacion = await repo.buscarPorId(idInvitacion);
-    if (!invitacion || invitacion.tipo !== TipoNotificacion.INVITACION_PROYECTO ||
-        String(invitacion.idColaborador) !== String(actor.id) ||
-        String(invitacion.idProyecto) !== String(idProyecto)) {
-      throw new NotFoundError("Invitación no encontrada", "INVITACION_NO_ENCONTRADA");
+    if (
+      !invitacion ||
+      invitacion.tipo !== TipoNotificacion.INVITACION_PROYECTO ||
+      String(invitacion.idColaborador) !== String(actor.id) ||
+      String(invitacion.idProyecto) !== String(idProyecto)
+    ) {
+      throw new NotFoundError(
+        "Invitación no encontrada",
+        "INVITACION_NO_ENCONTRADA",
+      );
     }
     if (invitacion.estadoInvitacion !== "PENDIENTE") {
-      throw new ConflictError("La invitación ya fue respondida", "INVITACION_YA_RESUELTA");
+      throw new ConflictError(
+        "La invitación ya fue respondida",
+        "INVITACION_YA_RESUELTA",
+      );
     }
 
     let proyecto;
     let perfil;
     let colaboradora;
     if (decision === EstadoPostulacion.ACEPTADA) {
-      ({ proyecto, perfil } = await this.buscarProyectoYPerfil(idProyecto, invitacion.idPerfil));
+      ({ proyecto, perfil } = await this.buscarProyectoYPerfil(
+        idProyecto,
+        invitacion.idPerfil,
+      ));
       this.validarProyectoAbierto(proyecto);
       if (!this.busquedaAbierta(proyecto) || perfil.busquedaAbierta === false) {
-        throw new ConflictError("La búsqueda de colaboraciones está cerrada", "BUSQUEDA_CERRADA");
+        throw new ConflictError(
+          "La búsqueda de colaboraciones está cerrada",
+          "BUSQUEDA_CERRADA",
+        );
       }
-      if (await this.colaboracionRepository.existeColaboracion(idProyecto, actor.id)) {
-        throw new ConflictError("Ya participás de este proyecto", "COLABORACION_YA_EXISTENTE");
+      if (
+        await this.colaboracionRepository.existeColaboracion(
+          idProyecto,
+          actor.id,
+        )
+      ) {
+        throw new ConflictError(
+          "Ya participás de este proyecto",
+          "COLABORACION_YA_EXISTENTE",
+        );
       }
-      if (await this.postulacionRepository.existePendiente(idProyecto, perfil._id, actor.id)) {
-        throw new ConflictError("Ya tenés una postulación pendiente para este perfil", "POSTULACION_YA_EXISTENTE");
+      if (
+        await this.postulacionRepository.existePendiente(
+          idProyecto,
+          perfil._id,
+          actor.id,
+        )
+      ) {
+        throw new ConflictError(
+          "Ya tenés una postulación pendiente para este perfil",
+          "POSTULACION_YA_EXISTENTE",
+        );
       }
-      const ocupadas = await this.colaboracionRepository.contarPorPerfil(perfil._id);
-      if (perfil.limiteColaboraciones != null && ocupadas >= perfil.limiteColaboraciones) {
-        throw new ConflictError("Se alcanzó el límite de colaboraciones para este perfil", "LIMITE_COLABORACIONES_ALCANZADO");
+      const ocupadas = await this.colaboracionRepository.contarPorPerfil(
+        perfil._id,
+      );
+      if (
+        perfil.limiteColaboraciones != null &&
+        ocupadas >= perfil.limiteColaboraciones
+      ) {
+        throw new ConflictError(
+          "Se alcanzó el límite de colaboraciones para este perfil",
+          "LIMITE_COLABORACIONES_ALCANZADO",
+        );
       }
       colaboradora = await this.colaboradorService.obtenerPorId(actor.id);
-      if (!colaboradora) throw new NotFoundError("Colaboradora no encontrada", "COLABORADORA_NO_ENCONTRADA");
+      if (!colaboradora)
+        throw new NotFoundError(
+          "Colaboradora no encontrada",
+          "COLABORADORA_NO_ENCONTRADA",
+        );
     }
 
-    const actualizada = await repo.cambiarEstadoInvitacion(idInvitacion, actor.id, "PENDIENTE", decision);
-    if (!actualizada) throw new ConflictError("La invitación ya fue respondida", "INVITACION_YA_RESUELTA");
+    const actualizada = await repo.cambiarEstadoInvitacion(
+      idInvitacion,
+      actor.id,
+      "PENDIENTE",
+      decision,
+    );
+    if (!actualizada)
+      throw new ConflictError(
+        "La invitación ya fue respondida",
+        "INVITACION_YA_RESUELTA",
+      );
     if (decision === EstadoPostulacion.ACEPTADA) {
       try {
         await this.colaboracionRepository.crearDesdeInvitacion(
-          new Colaboracion(proyecto, colaboradora, perfil, new Date(), esAnonima),
+          new Colaboracion(
+            proyecto,
+            colaboradora,
+            perfil,
+            new Date(),
+            esAnonima,
+          ),
         );
       } catch (error) {
         try {
-          const revertida = await repo.cambiarEstadoInvitacion(idInvitacion, actor.id, decision, "PENDIENTE");
+          const revertida = await repo.cambiarEstadoInvitacion(
+            idInvitacion,
+            actor.id,
+            decision,
+            "PENDIENTE",
+          );
           if (!revertida) throw new Error("No se pudo reabrir la invitación");
         } catch (errorRollback) {
-          throw new AggregateError([error, errorRollback], "Falló la colaboración y la reversión de la invitación");
+          throw new AggregateError(
+            [error, errorRollback],
+            "Falló la colaboración y la reversión de la invitación",
+          );
         }
-        if (error.code === 11000) throw new ConflictError("Ya participás de este proyecto", "COLABORACION_YA_EXISTENTE");
+        if (error.code === 11000)
+          throw new ConflictError(
+            "Ya participás de este proyecto",
+            "COLABORACION_YA_EXISTENTE",
+          );
         throw error;
       }
       await this.cerrarPerfilSiLleno(perfil, proyecto);
@@ -440,7 +542,8 @@ export class PostulacionService {
     }
     this.validarColectivoDelProyecto(actor, proyecto);
 
-    const postulacion = await this.postulacionRepository.buscarPorId(idPostulacion);
+    const postulacion =
+      await this.postulacionRepository.buscarPorId(idPostulacion);
 
     if (!postulacion || String(postulacion.idProyecto) !== String(idProyecto)) {
       throw new NotFoundError(
@@ -519,7 +622,7 @@ export class PostulacionService {
         "La colaboradora ya participó de este proyecto",
         "COLABORACION_YA_EXISTENTE",
       );
-    }    
+    }
 
     const colaboracionesActivas =
       await this.colaboracionRepository.contarPorPerfil(perfil._id);
@@ -737,5 +840,4 @@ export class PostulacionService {
 
     return dto;
   }
-
 }

@@ -120,8 +120,14 @@ describe("PostulacionService", () => {
       postulacionRepository.obtenerPorProyecto.mockResolvedValue([
         crearPostulacion({ idColaborador: colaborador, esAnonima: true }),
       ]);
-      const [resultado] = await service.obtenerPorProyecto(ID_PROYECTO, actorColectivo);
-      expect(resultado.perfilPublico).toMatchObject({ nombreFantasia: "Dev", habilidades: ["React"] });
+      const [resultado] = await service.obtenerPorProyecto(
+        ID_PROYECTO,
+        actorColectivo,
+      );
+      expect(resultado.perfilPublico).toMatchObject({
+        nombreFantasia: "Dev",
+        habilidades: ["React"],
+      });
       expect(resultado).not.toHaveProperty("colaborador");
       expect(JSON.stringify(resultado)).not.toContain("dev@example.com");
     });
@@ -140,47 +146,119 @@ describe("PostulacionService", () => {
         };
         notificacionRepository.buscarPorId.mockResolvedValue(invitacion);
         notificacionRepository.cambiarEstadoInvitacion.mockImplementation(
-          async (_id, _colaboradora, _estado, decision) => ({ ...invitacion, estadoInvitacion: decision }),
+          async (_id, _colaboradora, _estado, decision) => ({
+            ...invitacion,
+            estadoInvitacion: decision,
+          }),
         );
-        colaboracionRepository.crearDesdeInvitacion = jest.fn(async () => undefined);
+        colaboracionRepository.crearDesdeInvitacion = jest.fn(
+          async () => undefined,
+        );
       });
 
       it("envía una invitación con información del perfil y mensaje opcional", async () => {
         proyecto.titulo = "Proyecto";
         perfil.descripcion = "Diseño";
-        await service.invitar(ID_PROYECTO, ID_PERFIL, ID_COLABORADOR, actorColectivo, "Hola");
+        await service.invitar(
+          ID_PROYECTO,
+          ID_PERFIL,
+          ID_COLABORADOR,
+          actorColectivo,
+          "Hola",
+        );
         expect(notificacionService.crearEventoSistema).toHaveBeenCalledWith(
-          expect.objectContaining({ tipo: "INVITACION_PROYECTO", estadoInvitacion: "PENDIENTE", contenido: expect.stringContaining("Hola") }),
+          expect.objectContaining({
+            tipo: "INVITACION_PROYECTO",
+            estadoInvitacion: "PENDIENTE",
+            contenido: expect.stringContaining("Hola"),
+          }),
         );
       });
 
       it("acepta creando una colaboración anónima y no permite responder por otra persona", async () => {
-        await expect(service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, { rol: "COLABORADOR", id: "otra" }))
-          .rejects.toMatchObject({ codigo: "INVITACION_NO_ENCONTRADA" });
-        await service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, actorColaboradora);
-        expect(colaboracionRepository.crearDesdeInvitacion).toHaveBeenCalledWith(
+        await expect(
+          service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, {
+            rol: "COLABORADOR",
+            id: "otra",
+          }),
+        ).rejects.toMatchObject({ codigo: "INVITACION_NO_ENCONTRADA" });
+        await service.resolverInvitacion(
+          ID_PROYECTO,
+          "inv-1",
+          "ACEPTADA",
+          true,
+          actorColaboradora,
+        );
+        expect(
+          colaboracionRepository.crearDesdeInvitacion,
+        ).toHaveBeenCalledWith(
           expect.objectContaining({ esAnonima: true, perfil, colaborador }),
         );
-        expect(notificacionRepository.cambiarEstadoInvitacion).toHaveBeenCalledWith("inv-1", ID_COLABORADOR, "PENDIENTE", "ACEPTADA");
+        expect(
+          notificacionRepository.cambiarEstadoInvitacion,
+        ).toHaveBeenCalledWith(
+          "inv-1",
+          ID_COLABORADOR,
+          "PENDIENTE",
+          "ACEPTADA",
+        );
       });
 
       it("rechaza sin crear colaboración y bloquea una segunda respuesta", async () => {
-        await service.resolverInvitacion(ID_PROYECTO, "inv-1", "RECHAZADA", true, actorColaboradora);
-        expect(colaboracionRepository.crearDesdeInvitacion).not.toHaveBeenCalled();
+        await service.resolverInvitacion(
+          ID_PROYECTO,
+          "inv-1",
+          "RECHAZADA",
+          true,
+          actorColaboradora,
+        );
+        expect(
+          colaboracionRepository.crearDesdeInvitacion,
+        ).not.toHaveBeenCalled();
         invitacion.estadoInvitacion = "RECHAZADA";
-        await expect(service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, actorColaboradora))
-          .rejects.toMatchObject({ codigo: "INVITACION_YA_RESUELTA" });
+        await expect(
+          service.resolverInvitacion(
+            ID_PROYECTO,
+            "inv-1",
+            "ACEPTADA",
+            true,
+            actorColaboradora,
+          ),
+        ).rejects.toMatchObject({ codigo: "INVITACION_YA_RESUELTA" });
       });
 
       it("impide aceptar sin vacantes y revierte la respuesta si falla la creación", async () => {
         perfil.limiteColaboraciones = 1;
         colaboracionRepository.contarPorPerfil.mockResolvedValueOnce(1);
-        await expect(service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, actorColaboradora))
-          .rejects.toMatchObject({ codigo: "LIMITE_COLABORACIONES_ALCANZADO" });
-        colaboracionRepository.crearDesdeInvitacion.mockRejectedValueOnce(new Error("falló"));
-        await expect(service.resolverInvitacion(ID_PROYECTO, "inv-1", "ACEPTADA", true, actorColaboradora))
-          .rejects.toThrow("falló");
-        expect(notificacionRepository.cambiarEstadoInvitacion).toHaveBeenLastCalledWith("inv-1", ID_COLABORADOR, "ACEPTADA", "PENDIENTE");
+        await expect(
+          service.resolverInvitacion(
+            ID_PROYECTO,
+            "inv-1",
+            "ACEPTADA",
+            true,
+            actorColaboradora,
+          ),
+        ).rejects.toMatchObject({ codigo: "LIMITE_COLABORACIONES_ALCANZADO" });
+        colaboracionRepository.crearDesdeInvitacion.mockRejectedValueOnce(
+          new Error("falló"),
+        );
+        await expect(
+          service.resolverInvitacion(
+            ID_PROYECTO,
+            "inv-1",
+            "ACEPTADA",
+            true,
+            actorColaboradora,
+          ),
+        ).rejects.toThrow("falló");
+        expect(
+          notificacionRepository.cambiarEstadoInvitacion,
+        ).toHaveBeenLastCalledWith(
+          "inv-1",
+          ID_COLABORADOR,
+          "ACEPTADA",
+          "PENDIENTE",
+        );
       });
     });
 
@@ -189,8 +267,10 @@ describe("PostulacionService", () => {
         { idColaborador: colaborador, idPerfil: ID_PERFIL, esAnonima: true },
       ]);
 
-      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, actorColectivo))
-        .resolves.toEqual([{
+      await expect(
+        service.obtenerColaboracionesParaGestion(ID_PROYECTO, actorColectivo),
+      ).resolves.toEqual([
+        {
           idColaborador: ID_COLABORADOR,
           idPerfil: ID_PERFIL,
           nombreFantasia: "Dev",
@@ -198,12 +278,23 @@ describe("PostulacionService", () => {
           apellido: undefined,
           usuarioGitHub: undefined,
           esAnonima: true,
-        }]);
-      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, actorColaboradora))
-        .rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
-      await expect(service.obtenerColaboracionesParaGestion(ID_PROYECTO, { rol: "COLECTIVO", id: "otro" }))
-        .rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
-      expect(colaboracionRepository.obtenerPorProyecto).toHaveBeenCalledTimes(1);
+        },
+      ]);
+      await expect(
+        service.obtenerColaboracionesParaGestion(
+          ID_PROYECTO,
+          actorColaboradora,
+        ),
+      ).rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
+      await expect(
+        service.obtenerColaboracionesParaGestion(ID_PROYECTO, {
+          rol: "COLECTIVO",
+          id: "otro",
+        }),
+      ).rejects.toMatchObject({ codigo: "ACCESO_POSTULACIONES_DENEGADO" });
+      expect(colaboracionRepository.obtenerPorProyecto).toHaveBeenCalledTimes(
+        1,
+      );
     });
   });
 
@@ -225,7 +316,10 @@ describe("PostulacionService", () => {
       });
       expect(postulacionRepository.save).toHaveBeenCalledTimes(1);
       expect(notificacionService.crearEventoSistema).toHaveBeenCalledWith(
-        expect.objectContaining({ tipo: "POSTULACION_RECIBIDA", idPostulacion: "post-1" }),
+        expect.objectContaining({
+          tipo: "POSTULACION_RECIBIDA",
+          idPostulacion: "post-1",
+        }),
       );
       expect(
         colaboracionRepository.crearDesdePostulacion,
@@ -248,31 +342,27 @@ describe("PostulacionService", () => {
       proyecto.busquedaAbierta = false;
 
       await expect(
-        service.crear(
-          ID_PROYECTO,
-          ID_PERFIL,
-          false,
-          actorColaboradora,
-        ),
+        service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora),
       ).rejects.toMatchObject({ codigo: "BUSQUEDA_CERRADA", status: 409 });
       expect(postulacionRepository.save).not.toHaveBeenCalled();
     });
 
     it("revierte la postulación si no se puede guardar la notificación", async () => {
-      notificacionService.crearEventoSistema.mockRejectedValueOnce(new Error("sin notificación"));
-      await expect(service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora)).rejects.toThrow("sin notificación");
-      expect(postulacionRepository.eliminarSiPendiente).toHaveBeenCalledWith("post-1");
+      notificacionService.crearEventoSistema.mockRejectedValueOnce(
+        new Error("sin notificación"),
+      );
+      await expect(
+        service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora),
+      ).rejects.toThrow("sin notificación");
+      expect(postulacionRepository.eliminarSiPendiente).toHaveBeenCalledWith(
+        "post-1",
+      );
     });
 
     it("permite postularse al perfil sin exigir coincidencia de habilidades", async () => {
       colaborador.habilidades = ["Testing"];
 
-      await service.crear(
-        ID_PROYECTO,
-        ID_PERFIL,
-        false,
-        actorColaboradora,
-      );
+      await service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora);
 
       expect(postulacionRepository.save).toHaveBeenCalledTimes(1);
     });
@@ -281,12 +371,7 @@ describe("PostulacionService", () => {
       proyecto.fechaLimiteBusqueda = new Date(Date.now() - 1000);
 
       await expect(
-        service.crear(
-          ID_PROYECTO,
-          ID_PERFIL,
-          false,
-          actorColaboradora,
-        ),
+        service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora),
       ).rejects.toMatchObject({ codigo: "BUSQUEDA_CERRADA", status: 409 });
       expect(postulacionRepository.save).not.toHaveBeenCalled();
     });
@@ -295,12 +380,7 @@ describe("PostulacionService", () => {
       postulacionRepository.existePendiente.mockResolvedValue(true);
 
       await expect(
-        service.crear(
-          ID_PROYECTO,
-          ID_PERFIL,
-          false,
-          actorColaboradora,
-        ),
+        service.crear(ID_PROYECTO, ID_PERFIL, false, actorColaboradora),
       ).rejects.toMatchObject({ codigo: "POSTULACION_YA_EXISTENTE" });
     });
 

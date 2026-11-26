@@ -1,47 +1,56 @@
-import React from 'react';
-import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import DatosColectivo from './DatosColectivo';
+import React from "react";
+import "@testing-library/jest-dom";
+import { fireEvent, render, screen } from "@testing-library/react";
+import DatosColectivo from "./DatosColectivo";
 
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => jest.fn()
+jest.mock("react-router-dom", () => ({
+  useNavigate: () => jest.fn(),
 }));
 
-jest.mock('../../hooks/useAuth.jsx', () => ({
-  useAuth: () => ({ getAccessToken: jest.fn(), recargarSesion: jest.fn() })
+jest.mock("../../hooks/useAuth.jsx", () => ({
+  useAuth: () => ({ getAccessToken: jest.fn(), recargarSesion: jest.fn() }),
 }));
 
-jest.mock('../../hooks/useListado', () => ({
-  useListado: () => ({ datos: [], cargando: false, error: null })
+jest.mock("../../hooks/useListado", () => ({
+  useListado: () => ({ datos: [], cargando: false, error: null }),
 }));
 
-jest.mock('../../service/colectivosService', () => ({
-  TIPOS_COLECTIVO: [{ valor: 'ASOCIACIONES_BARRIALES', textoKey: 'tiposColectivo.ASOCIACIONES_BARRIALES' }],
-  crearColectivo: jest.fn()
+jest.mock("../../service/colectivosService", () => ({
+  TIPOS_COLECTIVO: [
+    {
+      valor: "ASOCIACIONES_BARRIALES",
+      textoKey: "tiposColectivo.ASOCIACIONES_BARRIALES",
+    },
+  ],
+  crearColectivo: jest.fn(),
 }));
 
-describe('DatosColectivo', () => {
-  it('muestra placeholders en los selectores de tipo de colectivo y país', () => {
+describe("DatosColectivo", () => {
+  it("muestra placeholders en los selectores de tipo de colectivo y país", () => {
     render(<DatosColectivo />);
 
-    const tipo = screen.getByRole('combobox', { name: 'Tipo de colectivo (obligatorio)' });
-    const pais = screen.getByRole('combobox', { name: 'País (opcional)' });
+    const tipo = screen.getByRole("combobox", {
+      name: "Tipo de colectivo (obligatorio)",
+    });
+    const pais = screen.getByRole("combobox", { name: "País (opcional)" });
 
-    expect(tipo).toHaveTextContent('Seleccioná un tipo de colectivo');
-    expect(tipo.querySelector('.select-placeholder')).toBeInTheDocument();
-    expect(pais).toHaveTextContent('Seleccioná un país');
-    expect(pais.querySelector('.select-placeholder')).toBeInTheDocument();
+    expect(tipo).toHaveTextContent("Seleccioná un tipo de colectivo");
+    expect(tipo.querySelector(".select-placeholder")).toBeInTheDocument();
+    expect(pais).toHaveTextContent("Seleccioná un país");
+    expect(pais.querySelector(".select-placeholder")).toBeInTheDocument();
   });
 
-  it('muestra la etiqueta traducida del tipo sin cambiar su valor', () => {
+  it("muestra la etiqueta traducida del tipo sin cambiar su valor", () => {
     render(<DatosColectivo />);
 
-    const tipo = screen.getByRole('combobox', { name: 'Tipo de colectivo (obligatorio)' });
+    const tipo = screen.getByRole("combobox", {
+      name: "Tipo de colectivo (obligatorio)",
+    });
     fireEvent.mouseDown(tipo);
-    const opcion = screen.getByRole('option', { name: 'Asociación barrial' });
-    expect(opcion).toHaveAttribute('data-value', 'ASOCIACIONES_BARRIALES');
+    const opcion = screen.getByRole("option", { name: "Asociación barrial" });
+    expect(opcion).toHaveAttribute("data-value", "ASOCIACIONES_BARRIALES");
     fireEvent.click(opcion);
 
-    expect(tipo).toHaveTextContent('Asociación barrial');
+    expect(tipo).toHaveTextContent("Asociación barrial");
   });
 });

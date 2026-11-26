@@ -58,9 +58,7 @@ describe("ProyectoService", () => {
       rechazarPendientesDeProyecto: jest.fn(async () => undefined),
     };
     colectivoRepository = {
-      buscarPorId: jest.fn(async (id) =>
-        id === "col-1" ? colectivo : null,
-      ),
+      buscarPorId: jest.fn(async (id) => (id === "col-1" ? colectivo : null)),
       buscarPorUsuario: jest.fn(async () => colectivo),
       esIdValido: jest.fn((id) => mongoose.isValidObjectId(id)),
       agregarProyecto: jest.fn(async () => undefined),
@@ -378,7 +376,10 @@ describe("ProyectoService", () => {
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe y no guarda nada", async () => {
       await expect(
         service.actualizar("nope", { titulo: "T", descripcion: "D" }),
-      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
+      ).rejects.toMatchObject({
+        status: 404,
+        codigo: "PROYECTO_NO_ENCONTRADO",
+      });
       expect(proyectoRepository.save).not.toHaveBeenCalled();
     });
   });
@@ -414,7 +415,10 @@ describe("ProyectoService", () => {
 
     it("al cerrar la búsqueda se borra la fecha límite", async () => {
       proyectoRepository.buscarPorId.mockResolvedValue(
-        proyectoActivo({ busquedaAbierta: true, fechaLimiteBusqueda: enUnaHora() }),
+        proyectoActivo({
+          busquedaAbierta: true,
+          fechaLimiteBusqueda: enUnaHora(),
+        }),
       );
 
       const resultado = await service.configurarBusqueda("p-1", {
@@ -470,7 +474,10 @@ describe("ProyectoService", () => {
     it("falla con PROYECTO_NO_ENCONTRADO si el proyecto no existe", async () => {
       await expect(
         service.configurarBusqueda("nope", { busquedaAbierta: true }),
-      ).rejects.toMatchObject({ status: 404, codigo: "PROYECTO_NO_ENCONTRADO" });
+      ).rejects.toMatchObject({
+        status: 404,
+        codigo: "PROYECTO_NO_ENCONTRADO",
+      });
     });
   });
 
@@ -672,11 +679,7 @@ describe("ProyectoService", () => {
         })),
       );
 
-      const resultado = await service.obtenerTodos(
-        { estado: "ACTIVO" },
-        1,
-        6,
-      );
+      const resultado = await service.obtenerTodos({ estado: "ACTIVO" }, 1, 6);
 
       expect(resultado.proyectos).toHaveLength(6);
       expect(resultado.total).toBe(8);
@@ -807,15 +810,13 @@ describe("ProyectoService", () => {
     });
 
     it("rechaza un nivel de mapa desconocido", async () => {
-      await expect(
-        service.obtenerUbicaciones("planeta"),
-      ).rejects.toMatchObject({
-        status: 400,
-        codigo: "NIVEL_MAPA_INVALIDO",
-      });
-      expect(
-        proyectoRepository.obtenerActivosParaMapa,
-      ).not.toHaveBeenCalled();
+      await expect(service.obtenerUbicaciones("planeta")).rejects.toMatchObject(
+        {
+          status: 400,
+          codigo: "NIVEL_MAPA_INVALIDO",
+        },
+      );
+      expect(proyectoRepository.obtenerActivosParaMapa).not.toHaveBeenCalled();
     });
   });
 
@@ -889,9 +890,9 @@ describe("ProyectoService", () => {
 describe("preferencia de anonimato de una postulación", () => {
   it("acepta la preferencia y la deja desactivada si se omite", () => {
     expect(crearPostulacionSchema.parse({})).toEqual({ esAnonima: false });
-    expect(
-      crearPostulacionSchema.parse({ esAnonima: true }),
-    ).toEqual({ esAnonima: true });
+    expect(crearPostulacionSchema.parse({ esAnonima: true })).toEqual({
+      esAnonima: true,
+    });
     expect(
       crearPostulacionSchema.safeParse({ idColaborador: "c-1" }).success,
     ).toBe(false);

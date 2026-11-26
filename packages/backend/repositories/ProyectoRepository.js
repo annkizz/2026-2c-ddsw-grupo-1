@@ -9,7 +9,7 @@ export class ProyectoRepository {
 
   obtenerTodos(filtros = {}) {
     const query = {};
-    // se filtra en la base, no se trae todo para memoria 
+    // se filtra en la base, no se trae todo para memoria
     if (filtros.etiquetas !== undefined && filtros.etiquetas.length > 0) {
       if (filtros.etiquetas.length === 1) {
         query.etiquetas = filtros.etiquetas[0];

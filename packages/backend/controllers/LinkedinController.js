@@ -14,11 +14,17 @@ export class LinkedinController {
   };
 
   iniciarAutorizacion = async (req, res) => {
-    res.status(200).json(await this.conexionService.iniciarAutorizacion(req.usuario));
+    res
+      .status(200)
+      .json(await this.conexionService.iniciarAutorizacion(req.usuario));
   };
 
   conectar = async (req, res) => {
-    res.status(201).json(await this.conexionService.completarConexion(req.usuario, req.body));
+    res
+      .status(201)
+      .json(
+        await this.conexionService.completarConexion(req.usuario, req.body),
+      );
   };
 
   desconectar = async (req, res) => {
