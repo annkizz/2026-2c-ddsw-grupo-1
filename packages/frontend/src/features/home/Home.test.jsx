@@ -115,10 +115,7 @@ describe('acceso a inicio de sesión desde Home', () => {
     expect(navigate).toHaveBeenCalledWith('/administrador/destacados', { replace: true });
   });
 
-  it.each([
-    ['colectivo', 'Represento a un colectivo'],
-    ['colaboradora', 'Soy una persona colaboradora'],
-  ])('envía a Logto al elegir registro de %s, incluso si hay sesión activa', (tipo, opcion) => {
+  it('envía directamente a Logto para crear la cuenta sin pedir antes un tipo de perfil', () => {
     const navigate = jest.fn();
     const registrarse = jest.fn();
     useNavigate.mockReturnValue(navigate);
@@ -133,9 +130,9 @@ describe('acceso a inicio de sesión desde Home', () => {
 
     render(<Home />);
     fireEvent.click(screen.getByRole('button', { name: 'Crear una cuenta' }));
-    fireEvent.click(screen.getByText(opcion));
 
-    expect(sessionStorage.getItem('tipoDeCuenta')).toBe(tipo);
+    expect(screen.queryByText('Represento a un colectivo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Soy una persona colaboradora')).not.toBeInTheDocument();
     expect(registrarse).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
   });

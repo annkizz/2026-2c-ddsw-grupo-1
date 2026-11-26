@@ -77,7 +77,7 @@ describe('flujo de autenticación', () => {
     });
   });
 
-  it('conserva el tipo elegido al comenzar un registro en Logto', () => {
+  it('comienza el registro en Logto sin conservar un tipo de cuenta anterior', () => {
     sessionStorage.setItem('tipoDeCuenta', 'colectivo');
     render(
       <AuthProvider>
@@ -87,7 +87,7 @@ describe('flujo de autenticación', () => {
 
     fireEvent.click(screen.getByText('Crear cuenta'));
 
-    expect(sessionStorage.getItem('tipoDeCuenta')).toBe('colectivo');
+    expect(sessionStorage.getItem('tipoDeCuenta')).toBeNull();
     expect(signIn).toHaveBeenCalledWith({
       redirectUri: `${window.location.origin}/callback`,
       interactionMode: 'signUp',

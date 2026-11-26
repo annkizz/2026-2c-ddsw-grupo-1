@@ -88,7 +88,10 @@ export const AuthProvider = ({ children }) => {
     });
   }, [signIn]);
   const registrarse = useCallback(
-    () => signIn({ redirectUri: `${window.location.origin}/callback`, interactionMode: 'signUp' }),
+    () => {
+      borrarTipo();
+      return signIn({ redirectUri: `${window.location.origin}/callback`, interactionMode: 'signUp' });
+    },
     [signIn]
   );
   const cerrarSesion = useCallback(() => logtoSignOut(window.location.origin), [logtoSignOut]);

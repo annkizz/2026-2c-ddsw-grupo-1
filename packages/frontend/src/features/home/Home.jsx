@@ -29,7 +29,6 @@ import DashboardEmptyState from './components/DashboardEmptyState.jsx';
 import IndicadorProgresoPerfil from './components/IndicadorProgresoPerfil.jsx';
 import DashboardColaboradora from './DashboardColaboradora.jsx';
 import DestacadosPortada from './components/DestacadosPortada.jsx';
-import TipoCuenta from '../registro/TipoCuenta.jsx';
 import './Home.css';
 
 const Home = () => {
@@ -46,7 +45,6 @@ const Home = () => {
     registrarse,
     getAccessToken,
   } = useAuth();
-  const [eligiendoTipo, setEligiendoTipo] = useState(false);
   const [proyectos, setProyectos] = useState([]);
   const [cargandoProyectos, setCargandoProyectos] = useState(true);
   const [errorProyectos, setErrorProyectos] = useState(null);
@@ -317,7 +315,7 @@ const Home = () => {
           )}
           <p className="home-cambio">
             {t('inicio.primeraVez')}
-            <Button variant="text" onClick={() => setEligiendoTipo(true)}>
+            <Button variant="text" onClick={registrarse}>
               {t('inicio.crearCuenta')}
             </Button>
           </p>
@@ -344,12 +342,6 @@ const Home = () => {
         </ol>
       </section>
 
-      {eligiendoTipo && (
-        <TipoCuenta
-          onCerrar={() => setEligiendoTipo(false)}
-          onElegir={() => registrarse()}
-        />
-      )}
     </div>
   );
 };
