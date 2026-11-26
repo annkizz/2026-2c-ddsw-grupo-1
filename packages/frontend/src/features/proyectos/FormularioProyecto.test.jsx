@@ -119,6 +119,7 @@ describe('FormularioProyecto por pasos', () => {
     mockParams = { id: 'proyecto-1' };
     obtenerProyectoPorId.mockResolvedValue({
       id: 'proyecto-1',
+      idColectivo: 'colectivo-1',
       titulo: 'Huerta',
       descripcion: 'Turnos',
       etiquetas: [],
@@ -139,5 +140,15 @@ describe('FormularioProyecto por pasos', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
     await waitFor(() => expect(actualizarProyecto).toHaveBeenCalledTimes(1));
+  });
+
+  it('si el proyecto es de otro colectivo muestra un 404, como si la página no existiera', async () => {
+    mockParams = { id: 'proyecto-ajeno' };
+    obtenerProyectoPorId.mockResolvedValue({ id: 'proyecto-ajeno', idColectivo: 'otro-colectivo', titulo: 'Ajeno' });
+    render(<FormularioProyecto />);
+
+    expect(await screen.findByText('Error 404')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'No encontramos esta página' })).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Ajeno')).not.toBeInTheDocument();
   });
 });

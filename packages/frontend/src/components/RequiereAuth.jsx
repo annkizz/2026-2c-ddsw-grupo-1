@@ -1,13 +1,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Alert, AlertTitle, Button } from '@mui/material';
-import { FiLogOut, FiRefreshCw } from 'react-icons/fi';
+import { FiHome, FiLogIn, FiLogOut, FiRefreshCw } from 'react-icons/fi';
 import { t } from '../i18n/t';
 import './Acceso.css';
 import { useAuth } from '../hooks/useAuth.jsx';
 import LoadingSplash from './LoadingSplash/LoadingSplash.jsx';
+import PaginaError from './PaginaError/PaginaError.jsx';
 import { leerTipo } from '../features/registro/tipoElegido';
 
 const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
@@ -19,14 +20,31 @@ const RequiereAuth = ({ children, exigirPerfil = true, tipoRegistro }) => {
     tipoErrorSesion,
     recargarSesion,
     cerrarSesion,
+    iniciarSesion,
   } = useAuth();
 
   if (cargando) {
     return <LoadingSplash message={t('acceso.verificandoSesion')} />;
   }
 
+  // Sin sesión no se redirige en silencio: se muestra el 401 y cómo seguir.
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return (
+      <PaginaError
+        codigo={401}
+        id="sesion-requerida-titulo"
+        accion={
+          <>
+            <Button variant="contained" startIcon={<FiLogIn aria-hidden="true" />} onClick={iniciarSesion}>
+              {t('comun.iniciarSesion')}
+            </Button>
+            <Button component={Link} to="/" variant="outlined" startIcon={<FiHome aria-hidden="true" />}>
+              {t('comun.volverAlInicio')}
+            </Button>
+          </>
+        }
+      />
+    );
   }
 
   if (errorSesion || !sesion) {

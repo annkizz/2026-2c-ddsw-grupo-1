@@ -11,6 +11,10 @@ const ID_USUARIO_COLECTIVO = "d00000000000000000000001";
 const ID_USUARIO_COLABORADORA = "d00000000000000000000002";
 const ID_OTRA_COLABORADORA = "b00000000000000000000002";
 
+// El servicio decide los permisos por el rol del usuario autenticado.
+const USUARIO_COLECTIVO = { _id: ID_USUARIO_COLECTIVO, rol: "COLECTIVO" };
+const USUARIO_COLABORADORA = { _id: ID_USUARIO_COLABORADORA, rol: "COLABORADOR" };
+
 describe("NotificacionService", () => {
   let notificacionRepository;
   let colectivoRepository;
@@ -40,7 +44,7 @@ describe("NotificacionService", () => {
         id: notificacion.id ?? ID_NOTIFICACION,
       })),
       obtenerTodos: jest.fn(async () => []),
-      obtenerTodosPorColaboradora: jest.fn(async () => ({
+      obtenerTodosPaginado: jest.fn(async () => ({
         notificaciones: [],
         total: 0,
         pag: 1,
@@ -51,10 +55,12 @@ describe("NotificacionService", () => {
     colectivoRepository = {
       buscarPorId: jest.fn(async () => colectivo),
       buscarPorUsuario: jest.fn(async () => colectivo),
+      obtenerPorIds: jest.fn(async () => [colectivo]),
     };
     colaboradorRepository = {
       buscarPorId: jest.fn(async () => colaboradora),
       buscarPorUsuario: jest.fn(async () => colaboradora),
+      obtenerPorIds: jest.fn(async () => [colaboradora]),
     };
     notificadorExterno = {
       enviar: jest.fn(async (medio) => ({
@@ -78,7 +84,7 @@ describe("NotificacionService", () => {
         idColaborador: colaboradora._id,
         contenido: "Hola, queremos contactarte.",
       },
-      { _id: ID_USUARIO_COLECTIVO },
+      USUARIO_COLECTIVO,
     );
 
     expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
@@ -97,11 +103,12 @@ describe("NotificacionService", () => {
       idColectivo: ID_COLECTIVO,
       idColaborador: ID_COLABORADORA,
     });
+    // El detalle técnico del proveedor no se expone: se reemplaza por un mensaje genérico.
     expect(resultado.envios).toEqual([
       {
         tipoDeContacto: "EMAIL",
         estado: "FALLIDO",
-        detalle: "El envío por EMAIL no está configurado.",
+        detalle: "No se pudo completar el envío por este medio.",
       },
     ]);
     expect(JSON.stringify(resultado)).not.toContain("privado@example.org");
@@ -120,7 +127,7 @@ describe("NotificacionService", () => {
           idColaborador: colaboradora._id,
           contenido: "Hola, queremos contactarte.",
         },
-        { _id: ID_USUARIO_COLECTIVO },
+        USUARIO_COLECTIVO,
       );
 
       expect(notificacionRepository.save).toHaveBeenCalledTimes(2);
@@ -143,7 +150,7 @@ describe("NotificacionService", () => {
           idColaborador: colaboradora._id,
           contenido: "Hola, queremos contactarte.",
         },
-        { _id: ID_USUARIO_COLECTIVO },
+        USUARIO_COLECTIVO,
       ),
     ).rejects.toMatchObject({
       status: 403,
@@ -164,9 +171,9 @@ describe("NotificacionService", () => {
           idColaborador: colaboradora._id,
           contenido: "Hola, queremos contactarte.",
         },
-        { _id: "d00000000000000000000003" },
+        { _id: "d00000000000000000000003", rol: "COLECTIVO" },
       ),
-    ).rejects.toMatchObject({ status: 403, codigo: "COLECTIVO_AJENO" });
+    ).rejects.toMatchObject({ status: 404, codigo: "COLECTIVO_NO_ENCONTRADO" });
     expect(notificacionRepository.save).not.toHaveBeenCalled();
 
     colectivoRepository.buscarPorUsuario.mockResolvedValue(colectivo);
@@ -178,7 +185,7 @@ describe("NotificacionService", () => {
           idColaborador: colaboradora._id,
           contenido: "Hola, queremos contactarte.",
         },
-        { _id: ID_USUARIO_COLECTIVO },
+        USUARIO_COLECTIVO,
       ),
     ).rejects.toMatchObject({
       status: 404,
@@ -199,15 +206,13 @@ describe("NotificacionService", () => {
         ID_OTRA_COLABORADORA,
         1,
         10,
-        ID_USUARIO_COLABORADORA,
+        USUARIO_COLABORADORA,
       ),
     ).rejects.toMatchObject({
-      status: 403,
-      codigo: "NOTIFICACION_AJENA",
+      status: 404,
+      codigo: "COLABORADORA_NO_ENCONTRADA",
     });
-    expect(
-      notificacionRepository.obtenerTodosPorColaboradora,
-    ).not.toHaveBeenCalled();
+    expect(notificacionRepository.obtenerTodosPaginado).not.toHaveBeenCalled();
   });
 
   it("solo devuelve una notificación individual a su colaboradora destinataria", async () => {
@@ -217,21 +222,21 @@ describe("NotificacionService", () => {
     });
 
     await expect(
-      service.obtenerPorId(ID_NOTIFICACION, ID_USUARIO_COLABORADORA),
+      service.obtenerPorId(ID_NOTIFICACION, USUARIO_COLABORADORA),
     ).rejects.toMatchObject({
-      status: 403,
-      codigo: "NOTIFICACION_AJENA",
+      status: 404,
+      codigo: "NOTIFICACION_NO_ENCONTRADA",
     });
   });
 
-  it("filtra notificaciones por IDs permitidos", async () => {
-    notificacionRepository.obtenerTodos.mockResolvedValue([]);
+  it("cada colaboradora ve solo sus propias notificaciones", async () => {
+    await service.obtenerTodosPaginado(USUARIO_COLABORADORA, 1, 10);
 
-    await service.obtenerTodos({ idColaborador: ID_COLABORADORA });
-
-    expect(notificacionRepository.obtenerTodos).toHaveBeenCalledWith({
-      idColaborador: ID_COLABORADORA,
-    });
+    expect(notificacionRepository.obtenerTodosPaginado).toHaveBeenCalledWith(
+      expect.objectContaining({ idColaborador: ID_COLABORADORA }),
+      1,
+      10,
+    );
   });
 
   it("el adaptador informa explícitamente que los canales externos no están configurados", async () => {

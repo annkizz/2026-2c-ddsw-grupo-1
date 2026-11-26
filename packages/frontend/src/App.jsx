@@ -22,7 +22,6 @@ import MiPerfil from './features/perfil/MiPerfil.jsx';
 import FormularioProyecto from './features/proyectos/FormularioProyecto.jsx';
 import PerfilesProyecto from './features/proyectos/PerfilesProyecto.jsx';
 import ProyectosDestacados from './features/proyectos/ProyectosDestacados.jsx';
-import HabilidadesAdmin from './features/administracion/HabilidadesAdmin.jsx';
 import BuscadorProyectos from './features/busquedas/BuscadorProyectos.jsx';
 import BuscadorColaboradores from './features/busquedas/BuscadorColaboradores.jsx';
 import Mapa from './features/busquedas/Mapa.jsx';
@@ -97,16 +96,6 @@ function App() {
                     <RequiereAuth>
                       <RequiereRol roles={['ADMINISTRADOR']}>
                         <ProyectosDestacados />
-                      </RequiereRol>
-                    </RequiereAuth>
-                  }
-                />
-                <Route
-                  path="/administrador/habilidades"
-                  element={
-                    <RequiereAuth>
-                      <RequiereRol roles={['ADMINISTRADOR']}>
-                        <HabilidadesAdmin />
                       </RequiereRol>
                     </RequiereAuth>
                   }

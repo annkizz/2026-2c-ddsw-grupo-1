@@ -88,7 +88,7 @@ export class ColaboradorService {
       );
     }
     if (this.matchingService && guardado?._id) {
-      await this.matchingService.recalcularColaboradora(guardado._id);
+      await this.matchingService.registrarCambioColaboradora(guardado._id);
     }
     return guardado;
   };
@@ -112,7 +112,7 @@ export class ColaboradorService {
       existente._id,
     );
     if (this.matchingService) {
-      await this.matchingService.recalcularColaboradora(guardado._id);
+      await this.matchingService.registrarCambioColaboradora(guardado._id);
     }
     return guardado;
   };

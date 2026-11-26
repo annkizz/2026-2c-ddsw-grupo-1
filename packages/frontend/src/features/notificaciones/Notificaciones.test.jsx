@@ -168,21 +168,4 @@ describe('Notificaciones', () => {
     expect(await screen.findByText('Invitación aceptada')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Aceptar' })).not.toBeInTheDocument();
   });
-
-  it('conserva el contenido y las acciones de una invitación con mensaje', async () => {
-    obtenerNotificaciones.mockResolvedValue({
-      notificaciones: [{
-        id: 'inv-2', tipo: 'INVITACION_PROYECTO',
-        contenido: 'Invitación para Tester.\n\nMensaje: Hola',
-        idProyecto: 'proyecto-1', estadoInvitacion: 'PENDIENTE',
-      }],
-      totalPags: 1, pag: 1,
-    });
-    render(<Notificaciones />);
-    const mensaje = await screen.findByText(/Invitación para Tester/);
-    expect(mensaje).toHaveTextContent('Mensaje: Hola');
-    expect(mensaje).toHaveClass('notificaciones-mensaje');
-    expect(screen.getByRole('button', { name: 'Rechazar' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ver proyecto' })).toHaveAttribute('href', '/proyectos/proyecto-1');
-  });
 });

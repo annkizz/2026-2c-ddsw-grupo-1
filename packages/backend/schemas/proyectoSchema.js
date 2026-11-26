@@ -43,6 +43,10 @@ const proyectoSchema = new mongoose.Schema(
   { timestamps: true, collection: "proyectos" },
 );
 
+// La tarea de cierre automático busca proyectos activos con fecha de cierre vencida: este índice
+// hace que esa consulta no recorra toda la colección.
+proyectoSchema.index({ estado: 1, fechaLimiteCierre: 1 });
+
 proyectoSchema.loadClass(Proyecto);
 
 export const ProyectoModel = mongoose.model("Proyecto", proyectoSchema);

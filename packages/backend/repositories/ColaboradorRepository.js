@@ -27,6 +27,15 @@ export class ColaboradorRepository {
       .exec();
   }
 
+  // Datos públicos para listar candidatas (sin nombre real, colaboraciones ni medios de contacto).
+  obtenerPublicosPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.model
+      .find({ _id: { $in: ids } })
+      .select("_id nombreFantasia usuarioGitHub pronombres presentacion habilidades aceptaMensajeria")
+      .exec();
+  }
+
   async encontrarPorHabilidadesRequeridas(titulos) {
     if (titulos.length === 0) return [];
     return this.model

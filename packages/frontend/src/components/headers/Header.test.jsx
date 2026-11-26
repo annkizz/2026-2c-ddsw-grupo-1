@@ -152,7 +152,6 @@ describe('Header', () => {
     renderHeader('/');
 
     expect(screen.getByRole('link', { name: 'Proyectos destacados' })).toHaveAttribute('href', '/administrador/destacados');
-    expect(screen.getByRole('link', { name: 'Habilidades' })).toHaveAttribute('href', '/administrador/habilidades');
     expect(screen.queryByRole('link', { name: /Notificaciones/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Menú de usuario/ }));
     const menu = await screen.findByRole('menu', { name: 'Menú de usuario' });

@@ -17,10 +17,11 @@ import {
   RadioGroup,
   TextField,
 } from '@mui/material';
-import { FiAlertCircle, FiArrowLeft, FiLock, FiPlus, FiSave, FiTrash2, FiEdit2, FiUsers } from 'react-icons/fi';
+import { FiAlertCircle, FiPlus, FiSave, FiTrash2, FiEdit2, FiUsers } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
 import EstadoVacio from '../../components/EstadoVacio/EstadoVacio.jsx';
+import PaginaError from '../../components/PaginaError/PaginaError.jsx';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
 import { EsqueletoGrilla } from '../../components/Esqueletos/Esqueletos.jsx';
@@ -301,20 +302,11 @@ const PerfilesProyecto = () => {
   }
 
   const esDueno = Boolean(sesion?.idColectivo) && proyecto.idColectivo === sesion.idColectivo;
+  // Quien no es dueño ve un 404, como si la página no existiera (no se revela que es de otro colectivo).
   if (!esDueno) {
     return (
-      <div className="contenedor-pagina contenedor-pagina--lectura">
-        <EncabezadoPagina titulo={t('perfilesProyecto.titulo')} migas={migas} />
-        <EstadoVacio
-          icono={FiLock}
-          titulo={t('perfilesProyecto.accesoTitulo')}
-          descripcion={t('perfilesProyecto.soloDueno')}
-          accion={
-            <Button component={Link} to={`/proyectos/${id}`} variant="outlined" startIcon={<FiArrowLeft aria-hidden="true" />}>
-              {t('perfilesProyecto.volverAlProyecto')}
-            </Button>
-          }
-        />
+      <div className="contenedor-pagina">
+        <PaginaError codigo={404} id="perfiles-no-encontrado-titulo" />
       </div>
     );
   }

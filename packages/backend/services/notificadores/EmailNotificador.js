@@ -1,6 +1,8 @@
 import { EstadoEnvio } from "../../domain/EstadoEnvio.js";
 import { enmascarar } from "./enmascarar.js";
 
+const TIMEOUT_MS = 10_000;
+
 // Envío por SMTP (Gmail con clave de aplicación, Brevo, Mailtrap, etc.).
 // Variables: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_SECURE.
 // Sin SMTP_HOST no se envía nada: queda SIMULADO y se avisa en el log.
@@ -23,6 +25,11 @@ export class EmailNotificador {
         port: Number(SMTP_PORT) || 587, // vacío o inválido -> 587
         secure: SMTP_SECURE === "true", // true = puerto 465; false = STARTTLS (587)
         auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+        // Por defecto nodemailer espera hasta 2 minutos. Si el servidor bloquea el puerto SMTP,
+        // el mensaje interno quedaría colgado ese tiempo: se corta antes y queda FALLIDO.
+        connectionTimeout: TIMEOUT_MS,
+        greetingTimeout: TIMEOUT_MS,
+        socketTimeout: TIMEOUT_MS,
       });
     }
     return this.transporte;
@@ -38,7 +45,8 @@ export class EmailNotificador {
 
     const transporte = await this.obtenerTransporte();
     await transporte.sendMail({
-      from: this.config.SMTP_FROM ?? this.config.SMTP_USER,
+      // || y no ??: docker-compose pasa SMTP_FROM como "" cuando no se completa
+      from: this.config.SMTP_FROM || this.config.SMTP_USER,
       to: destino,
       subject: asunto,
       text: texto,

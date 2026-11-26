@@ -54,7 +54,7 @@ import {
   actualizarAvance,
 } from '../../service/proyectosService';
 import { t } from '../../i18n/t';
-import { formatearFecha, formatearFechaHora, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
+import { formatearFecha, aInputFecha, aIso, esFechaFutura } from '../../utils/fechas';
 import { resumenCompromiso, etiquetaModalidad, textoCupo } from '../../utils/perfiles';
 import { mensajeDeError } from '../../utils/mensajeDeError';
 import { useLinkedin } from '../../hooks/useLinkedin.js';
@@ -160,7 +160,7 @@ const DetalleProyecto = () => {
   const [guardandoBusqueda, setGuardandoBusqueda] = useState(false);
   const [errorBusqueda, setErrorBusqueda] = useState(null);
 
-  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarEnLinkedin: false });
+  const [nuevoLogro, setNuevoLogro] = useState({ titulo: '', descripcion: '', publicarLogroEnLinkedin: false });
   const [erroresLogro, setErroresLogro] = useState({});
   const [errorLogro, setErrorLogro] = useState(null);
   const [guardandoLogro, setGuardandoLogro] = useState(false);
@@ -606,12 +606,6 @@ const DetalleProyecto = () => {
       if (creado.publicacionLinkedin) setAvisoLinkedin(avisoDePublicacion(creado.publicacionLinkedin));
     } catch (err) {
       const codigo = codigoDeError(err);
-      if (codigo === 'LINKEDIN_RESULTADO_NO_REGISTRADO') {
-        setNuevoLogro({ titulo: '', descripcion: '', publicarEnLinkedin: false });
-        await cargarLogros();
-        setAvisoLinkedin({ severity: 'error', texto: t('linkedin.resultadoNoRegistradoCrear') });
-        return;
-      }
       if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
         linkedin.recargar(); // el estado local estaba desactualizado
       }
@@ -638,12 +632,7 @@ const DetalleProyecto = () => {
       if (codigo === 'LINKEDIN_NO_CONECTADO' || codigo === 'LINKEDIN_CONEXION_VENCIDA') {
         linkedin.recargar();
       }
-      setAvisoLinkedin({
-        severity: 'error',
-        texto: codigo === 'LINKEDIN_RESULTADO_NO_REGISTRADO'
-          ? t('linkedin.resultadoNoRegistrado')
-          : mensajeDeError(err, t('linkedin.errorPublicarContexto')),
-      });
+      setAvisoLinkedin({ severity: 'error', texto: mensajeDeError(err, t('linkedin.errorPublicarContexto')) });
     } finally {
       setPublicandoId(null);
     }
@@ -1085,7 +1074,6 @@ const DetalleProyecto = () => {
                   const colaboradora = postulacion.colaborador;
                   const nombreColaboradora = nombreDe(colaboradora);
                   const pendiente = postulacion.estado === 'PENDIENTE';
-                  const fechaPostulacion = formatearFechaHora(postulacion.fechaPostulacion);
                   const habilidadesPersona = postulacion.perfilPublico?.habilidades ?? (colaboradora?.id ? habilidadesPorColaboradora[colaboradora.id] : undefined);
 
                   return (
@@ -1098,10 +1086,10 @@ const DetalleProyecto = () => {
                             texto={t(`detalleProyecto.estado${postulacion.estado === 'ACEPTADA' ? 'Aceptada' : postulacion.estado === 'RECHAZADA' ? 'Rechazada' : 'Pendiente'}`)}
                           />
                         </div>
-                        {fechaPostulacion && (
+                        {postulacion.fechaPostulacion && (
                           <p className="texto-secundario">
                             {t('detalleProyecto.fechaPostulacion', {
-                              fecha: fechaPostulacion,
+                              fecha: formatearFecha(postulacion.fechaPostulacion),
                             })}
                           </p>
                         )}
@@ -1274,23 +1262,18 @@ const DetalleProyecto = () => {
                                 )}
                               </p>
                             ) : (
-                              <>
-                                {logro.publicacionLinkedin?.estado === 'FALLIDO' && (
-                                  <p className="texto-secundario">{t('linkedin.falloPublicacion')}</p>
-                                )}
-                                <Button
-                                  variant="text"
-                                  startIcon={<FiLinkedin aria-hidden="true" />}
-                                  loading={publicandoId === logro.id}
-                                  onClick={() => handlePublicarLogro(logro)}
-                                >
-                                  {logro.publicacionLinkedin?.estado === 'FALLIDO'
-                                    ? t('linkedin.reintentar')
-                                    : linkedin.estado?.conectado
-                                      ? t('linkedin.compartir')
-                                      : t('linkedin.conectar')}
-                                </Button>
-                              </>
+                              <Button
+                                variant="text"
+                                startIcon={<FiLinkedin aria-hidden="true" />}
+                                loading={publicandoId === logro.id}
+                                onClick={() => handlePublicarLogro(logro)}
+                              >
+                                {logro.publicacionLinkedin?.estado === 'FALLIDO'
+                                  ? t('linkedin.reintentar')
+                                  : linkedin.estado?.conectado
+                                    ? t('linkedin.compartir')
+                                    : t('linkedin.conectar')}
+                              </Button>
                             )}
                           </div>
                         )}

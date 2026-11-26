@@ -8,7 +8,7 @@ export function crearLogroRouter(logroController) {
   router
     .route("/:idProyecto/logros")
     .get((req, res) => logroController.obtenerPorProyecto(req, res))
-    .post(validate(logroCreacionSchema), (req, res) => logroController.crear(req, res));
+    .post(validate(logroSchema), (req, res) => logroController.crear(req, res));
 
   router
     .route("/:idProyecto/logros/:id")
@@ -20,7 +20,9 @@ export function crearLogroRouter(logroController) {
 
   router
     .route("/:idProyecto/logros/:id/linkedin")
-    .post((req, res) => logroController.publicarEnLinkedin(req, res));
+    .post(validate(logroCreacionSchema), 
+    (req, res) => 
+      logroController.publicarEnLinkedin(req, res));
 
   return router;
 }

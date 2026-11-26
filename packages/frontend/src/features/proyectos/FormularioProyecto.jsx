@@ -19,6 +19,8 @@ import {
 import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiCalendar, FiFileText, FiLock, FiMapPin, FiSave, FiTag, FiTrash2 } from 'react-icons/fi';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import AlertaError from '../../components/AlertaError/AlertaError.jsx';
+import PaginaError from '../../components/PaginaError/PaginaError.jsx';
+import { codigoHttp } from '../../utils/mensajeDeError';
 import ResumenErrores from '../../components/ResumenErrores/ResumenErrores.jsx';
 import Dialogo from '../../components/Dialogo/Dialogo.jsx';
 import { EsqueletoFormulario } from '../../components/Esqueletos/Esqueletos.jsx';
@@ -83,6 +85,7 @@ const FormularioProyecto = () => {
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
   const [errorServidor, setErrorServidor] = useState(null);
   const [errorCarga, setErrorCarga] = useState(null);
+  const [noDisponible, setNoDisponible] = useState(false); // proyecto ajeno o inexistente
   const [intentoResumen, setIntentoResumen] = useState(0);
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
   const [paso, setPaso] = useState(0);
@@ -95,6 +98,10 @@ const FormularioProyecto = () => {
       setErrorCarga(null);
       try {
         const proyecto = await obtenerProyectoPorId(id);
+        if (sesion?.idColectivo && String(proyecto.idColectivo) !== String(sesion.idColectivo)) {
+          setNoDisponible(true);
+          return;
+        }
         const cargados = {
           titulo: proyecto.titulo || '',
           descripcion: proyecto.descripcion || '',
@@ -109,11 +116,12 @@ const FormularioProyecto = () => {
         setInicial(cargados);
         setEsFinalizado(proyecto.estado === 'FINALIZADO');
       } catch (err) {
-        setErrorCarga(err);
+        if ([403, 404].includes(codigoHttp(err))) setNoDisponible(true);
+        else setErrorCarga(err);
       } finally {
         setCargandoInicial(false);
       }
-  }, [id, esEdicion]);
+  }, [id, esEdicion, sesion?.idColectivo]);
 
   useEffect(() => {
     cargar();
@@ -336,6 +344,15 @@ const FormularioProyecto = () => {
       <div className="contenedor-pagina">
         <EncabezadoPagina titulo={titulo} migas={migas} />
         <EsqueletoFormulario campos={5} />
+      </div>
+    );
+  }
+
+  // Editar un proyecto de otro colectivo (o uno que no existe): 404, como si la página no existiera.
+  if (noDisponible) {
+    return (
+      <div className="contenedor-pagina">
+        <PaginaError codigo={404} id="editar-no-encontrado-titulo" />
       </div>
     );
   }

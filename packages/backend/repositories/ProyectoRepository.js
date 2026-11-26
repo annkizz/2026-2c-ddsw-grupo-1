@@ -92,29 +92,23 @@ export class ProyectoRepository {
       .exec();
   }
 
-  obtenerAbiertosParaMatching(idsExcluidos, ahora = new Date()) {
-    return this.obtenerParaMatching(idsExcluidos, {
-      busquedaAbierta: true,
-      $and: [
-        { $or: [{ fechaLimiteBusqueda: null }, { fechaLimiteBusqueda: { $gt: ahora } }] },
-        { $or: [{ fechaLimiteCierre: null }, { fechaLimiteCierre: { $gt: ahora } }] },
-      ],
-    });
-  }
-
-  obtenerActivosParaMatching(idsExcluidos) {
-    return this.obtenerParaMatching(idsExcluidos, {});
-  }
-
-  obtenerParaMatching(idsExcluidos, filtros) {
+  obtenerAbiertosParaMatching(idsExcluidos) {
     return this.proyectoModel
       .find({
         estado: Estado.ACTIVO,
         _id: { $nin: idsExcluidos },
-        ...filtros,
       })
       .select("_id titulo descripcion")
       .sort({ fechaInicio: -1 })
+      .exec();
+  }
+
+  // Solo los proyectos indicados que sigan activos (para recalcular el matching de esos y nada más).
+  obtenerAbiertosPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.proyectoModel
+      .find({ estado: Estado.ACTIVO, _id: { $in: ids } })
+      .select("_id titulo descripcion")
       .exec();
   }
 

@@ -1,7 +1,7 @@
 import { Logro } from "../domain/Logro.js";
 import { LogroRepository } from "../repositories/LogroRepository.js";
 import { ProyectoRepository } from "../repositories/ProyectoRepository.js";
-import { AppError, NotFoundError } from "../errors/AppError.js";
+import { NotFoundError } from "../errors/AppError.js";
 import { EstadoEnvio } from "../domain/EstadoEnvio.js";
 import { ConflictError } from "../errors/AppError.js"; 
 export class LogroService {
@@ -25,8 +25,8 @@ export class LogroService {
       publicacionLinkedin: logro.publicacionLinkedin ? {
         estado: logro.publicacionLinkedin.estado,
         urnPost: logro.publicacionLinkedin.urnPost,
-        detalle: logro.publicacionLinkedin.detalle,
-        fecha: logro.publicacionLinkedin.fecha
+        mensajeError: logro.publicacionLinkedin.mensajeError,
+        fechaEnvio: logro.publicacionLinkedin.fechaEnvio
       } : undefined
     };
   }
@@ -64,14 +64,9 @@ export class LogroService {
   async publicarYRegistrar(proyecto, logro, credenciales) {
     const resultado = await this.publicacionLinkedinService.publicarLogro(proyecto, logro, credenciales);
     try {
-      const actualizado = await this.logroRepository.registrarPublicacion(logro._id ?? logro.id, resultado);
-      if (!actualizado) throw new Error("El logro ya no existe");
+      await this.logroRepository.registrarPublicacion(logro._id ?? logro.id, resultado);
     } catch (error) {
       console.error(`[linkedin] no se pudo registrar el resultado: ${error.message}`);
-      throw new AppError(
-        "No se pudo registrar el resultado. Revisá LinkedIn antes de volver a publicar.",
-        "LINKEDIN_RESULTADO_NO_REGISTRADO",
-      );
     }
     return resultado;
 }
