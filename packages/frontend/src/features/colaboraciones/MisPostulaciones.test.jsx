@@ -46,4 +46,14 @@ describe('MisPostulaciones', () => {
     expect(await screen.findByText('Todavía no tenés postulaciones')).toBeInTheDocument();
     expect(obtenerMisPostulaciones).toHaveBeenCalledTimes(2);
   });
+
+  it('muestra la fecha y hora locales de la postulación', async () => {
+    const fecha = '2026-11-18T16:35:00.000Z';
+    obtenerMisPostulaciones.mockResolvedValue([
+      { id: '1', idProyecto: 'p1', estado: 'PENDIENTE', fechaPostulacion: fecha, proyecto: { titulo: 'Proyecto uno' } },
+    ]);
+    render(<MisPostulaciones />);
+    const fechaHora = new Intl.DateTimeFormat('es-AR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(fecha));
+    expect(await screen.findByText(`Postulada el ${fechaHora.replace(/\s+/g, ' ')}`)).toBeInTheDocument();
+  });
 });

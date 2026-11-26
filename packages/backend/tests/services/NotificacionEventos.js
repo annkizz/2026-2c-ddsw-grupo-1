@@ -18,6 +18,7 @@ describe("bandejas de eventos", () => {
     const persona = { _id: "usuario-p", rol: "COLABORADOR" };
     await service.obtenerTodosPaginado(colectivo, 1, 8);
     expect(repository.obtenerTodosPaginado.mock.calls[0][0].$or[0].tipo.$in).toContain("POSTULACION_RECIBIDA");
+    expect(repository.obtenerTodosPaginado.mock.calls[0][0].$or[0].tipo.$in).not.toContain("INVITACION_PROYECTO");
     await service.obtenerTodosPaginado(persona, 1, 8);
     expect(repository.obtenerTodosPaginado.mock.calls[1][0]).toMatchObject({
       tipo: { $ne: "POSTULACION_RECIBIDA" },
@@ -25,5 +26,23 @@ describe("bandejas de eventos", () => {
     await expect(service.obtenerPorId("notificacion", persona)).rejects.toMatchObject({
       codigo: "NOTIFICACION_NO_ENCONTRADA",
     });
+  });
+
+  it("permite consultar la invitación a la destinataria, no al colectivo que la envió", async () => {
+    const repository = {
+      buscarPorId: jest.fn(async () => ({
+        _id: "invitacion", idColectivo: "colectivo", idColaborador: "persona",
+        tipo: "INVITACION_PROYECTO",
+      })),
+    };
+    const service = new NotificacionService(
+      repository,
+      { buscarPorUsuario: async () => ({ _id: "colectivo" }), obtenerPorIds: async () => [] },
+      { buscarPorUsuario: async () => ({ _id: "persona" }), obtenerPorIds: async () => [] },
+    );
+    await expect(service.obtenerPorId("invitacion", { _id: "usuario-c", rol: "COLECTIVO" }))
+      .rejects.toMatchObject({ codigo: "NOTIFICACION_NO_ENCONTRADA" });
+    await expect(service.obtenerPorId("invitacion", { _id: "usuario-p", rol: "COLABORADOR" }))
+      .resolves.toMatchObject({ id: "invitacion", tipo: "INVITACION_PROYECTO" });
   });
 });

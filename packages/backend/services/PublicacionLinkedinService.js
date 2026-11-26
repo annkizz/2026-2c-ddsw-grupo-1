@@ -1,5 +1,5 @@
 import { EstadoEnvio } from "../domain/EstadoEnvio.js";
-import { ForbiddenError } from "../errors/AppError.js";
+import { ForbiddenError, ServiceUnavailableError } from "../errors/AppError.js";
 import { LinkedinClient } from "./linkedin/LinkedinClient.js";
 
 const MAX_TITULO = 200;
@@ -25,11 +25,25 @@ export class PublicacionLinkedinService {
         "ACCESO_PROYECTO_DENEGADO",
       );
     }
+    this.validarFrontendUrl();
     return await this.conexionService.obtenerCredenciales(colectivo._id);
   }
 
+  validarFrontendUrl() {
+    let url;
+    try {
+      url = new URL(this.config.FRONTEND_URL);
+    } catch {
+      throw new ServiceUnavailableError("La URL del frontend no está configurada", "LINKEDIN_URL_INVALIDA");
+    }
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+      throw new ServiceUnavailableError("La URL del frontend no es válida", "LINKEDIN_URL_INVALIDA");
+    }
+    return url.toString().replace(/\/+$/, "");
+  }
+
   textoLogro(proyecto, logro) {
-    const url = `${this.config.FRONTEND_URL}/proyectos/${proyecto._id}`; // ajustá a la ruta del front
+    const url = `${this.validarFrontendUrl()}/proyectos/${proyecto._id}`;
     return (
       `🏆 Nuevo logro en "${escapar(proyecto.titulo, MAX_TITULO)}": ` +
       `${escapar(logro.titulo, MAX_TITULO)}\n\n` +

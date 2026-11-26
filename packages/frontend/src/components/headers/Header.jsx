@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Divider, Drawer, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material';
 import {
   FiBell,
+  FiAward,
   FiChevronDown,
   FiCode,
   FiFileText,
@@ -33,7 +34,8 @@ const ETIQUETA_ROL = {
 const enlacesPorRol = (rol) => {
   if (rol === 'ADMINISTRADOR') {
     return [
-      { to: '/administrador/destacados', texto: t('destacados.titulo'), icono: <FiFileText aria-hidden="true" /> }
+      { to: '/administrador/destacados', texto: t('destacados.titulo'), icono: <FiFileText aria-hidden="true" /> },
+      { to: '/administrador/habilidades', texto: t('administracionHabilidades.titulo'), icono: <FiAward aria-hidden="true" /> }
     ];
   }
   if (rol === 'COLABORADOR') {

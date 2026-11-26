@@ -231,7 +231,6 @@ export class NotificacionService {
                   TipoNotificacion.MENSAJE,
                   TipoNotificacion.INVITACION_POSTULACION,
                   TipoNotificacion.POSTULACION_RECIBIDA,
-                  TipoNotificacion.INVITACION_PROYECTO,
                 ],
               },
             },
@@ -318,6 +317,7 @@ export class NotificacionService {
       (usuario.rol === Rol.COLECTIVO && [
         TipoNotificacion.POSTULACION_ACEPTADA,
         TipoNotificacion.POSTULACION_RECHAZADA,
+        TipoNotificacion.INVITACION_PROYECTO,
       ].includes(notificacion.tipo))
     ) {
       throw new NotFoundError(

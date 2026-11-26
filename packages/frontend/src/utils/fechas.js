@@ -47,6 +47,16 @@ export const formatearFecha = (valor) => {
   }).format(fecha);
 };
 
+export const formatearFechaHora = (valor) => {
+  if (!valor) return null;
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return null;
+  return new Intl.DateTimeFormat(obtenerLocale(), {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  }).format(fecha);
+};
+
 export const aInputFecha = (valor) => fechaComoInput(fechaLocal(valor));
 
 export const aIso = (valor) => {

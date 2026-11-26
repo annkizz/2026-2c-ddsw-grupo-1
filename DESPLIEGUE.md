@@ -1,8 +1,8 @@
 ## Despliegue
 
 La aplicación se ejecuta con **Docker Compose** sobre una máquina virtual con Ubuntu (Google Cloud). Un solo comando
-levanta MongoDB, carga la seed si todavía no se ejecutó en ese volumen, inicia la API y el frontend, y configura HTTPS
-con Caddy.
+levanta MongoDB, inicia la API y el frontend, y configura HTTPS con Caddy. La seed se ejecuta por separado y solo
+cuando se necesita cargar datos de prueba.
 
 Los `Dockerfile` construyen las imágenes de API y frontend; Caddy obtiene y renueva automáticamente un certificado TLS
 para el dominio configurado.
@@ -10,8 +10,8 @@ para el dominio configurado.
 | Servicio   | Qué es                  | Notas                                                                                    |
 | ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
 | `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                                   |
-| `seed`     | Datos iniciales         | Corre antes de la API; carga la seed una sola vez por versión y base de datos.           |
-| `api`      | Backend Express         | Espera a que termine la seed; solo expone su puerto local en `127.0.0.1:3001`.           |
+| `seed`     | Datos iniciales         | Tarea opcional y manual; carga la seed una sola vez por versión y base de datos.         |
+| `api`      | Backend Express         | Espera a que Mongo esté listo; solo expone su puerto local en `127.0.0.1:3001`.           |
 | `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                                  |
 | `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.         |
 
@@ -88,35 +88,74 @@ la API. Sin Docker, configurá la variable en `packages/backend/.env`. Al inicia
 El rol queda guardado en la base de datos: quitar un ID de la variable no revoca un rol ya asignado; para revocarlo
 también hay que quitarlo de la base de datos.
 
+#### Publicación de logros en LinkedIn (opcional)
+
+Para habilitarla, configurá en el `.env` de la raíz `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`,
+`LINKEDIN_STATE_SECRET` (un secreto aleatorio) y `LINKEDIN_TOKEN_KEY` (32 bytes aleatorios codificados en base64).
+No compartas estos valores ni los subas al repositorio. Podés generar la clave con `openssl rand -base64 32`.
+Configurá `FRONTEND_URL` con la URL pública del frontend, sin barra final, y `LINKEDIN_REDIRECT_URI` con esa URL
+seguida de `/linkedin/callback`. Esta última debe coincidir exactamente con la URL autorizada en la aplicación de
+LinkedIn. Para desarrollo local, la plantilla usa `http://localhost:3000`.
+
+En la VM con el dominio `codigoavoluntad.duckdns.org`, los valores correspondientes son:
+
+```dotenv
+APP_DOMAIN=codigoavoluntad.duckdns.org
+ALLOWED_ORIGINS=https://codigoavoluntad.duckdns.org
+FRONTEND_URL=https://codigoavoluntad.duckdns.org
+LINKEDIN_REDIRECT_URI=https://codigoavoluntad.duckdns.org/linkedin/callback
+```
+
+La URL de LinkedIn debe registrarse también como redirect URI en el portal de desarrolladores de LinkedIn. No es el
+callback de Logto, que para este dominio es `https://codigoavoluntad.duckdns.org/callback`.
+
+La aplicación de LinkedIn debe tener habilitados los permisos `openid`, `profile` y `w_member_social`. El colectivo
+conecta su cuenta personal y puede elegir publicar al crear un logro o compartir uno existente. `LINKEDIN_API_VERSION`
+selecciona la versión de la API; verificá que LinkedIn todavía la admita al desplegar.
+Después de cambiar estas variables, recreá la API con `docker compose up -d api`. No se requieren para iniciar la
+aplicación si no se usa esta función.
+
 ### Levantar todo
 
 ```bash
 docker compose up -d --build
 docker compose ps -a
-docker compose logs --tail 20 seed api frontend caddy
+docker compose logs --tail 20 api frontend caddy
 ```
 
 - `--build` construye las imágenes de API y frontend. **Usalo cuando cambie el código.**
 - `-d` deja todo corriendo de fondo.
-- **Esperado:** `mongo`, `api` y `frontend` en `healthy`; `seed` termina con código 0. Caddy queda levantado y solicita
+- **Esperado:** `mongo`, `api` y `frontend` en `healthy`. Caddy queda levantado y solicita
   el certificado automáticamente; la primera emisión puede tardar unos minutos.
 
 En la VM, abrí `https://<subdominio>`. En desarrollo local, el frontend sigue disponible en `http://localhost:3000`;
 la API en `http://localhost:3001`.
 
-### Actualizar los datos iniciales (seed)
+### Cargar los datos iniciales (seed)
+
+La aplicación arranca sin cargar datos de prueba. En una base nueva el catálogo de habilidades queda vacío, por lo que
+no se puede completar el registro de colaboradoras hasta cargar habilidades. Un administrador puede agregarlas desde
+**Habilidades** sin cargar datos demo. Para cargar los datos demo manualmente después de levantarla:
+
+```bash
+docker compose run --rm seed
+```
+
+El servicio `seed` pertenece a un perfil opcional: no se ejecuta con `docker compose up` salvo que se active
+explícitamente ese perfil. El comando anterior espera a que Mongo esté listo y ejecuta la carga una sola vez.
+
+Para volver a cargar la misma versión de los datos:
 
 ```bash
 docker compose stop frontend api
-docker compose build seed     # si cambió el código de la seed
-docker compose run --rm -e SEED_FORCE=true seed
+docker compose run --rm --build -e SEED_FORCE=true seed
 docker compose up -d
 ```
 
-La seed se carga automáticamente en una base nueva y no se vuelve a aplicar en cada `up`, para no borrar datos de prueba.
-El estado de carga se guarda en Mongo. `SEED_FORCE=true` vuelve a cargarla y reinicia los perfiles, colaboraciones y logros
-de los proyectos demo; los proyectos creados por la API quedan intactos. Si se publica una versión nueva de los datos,
-actualizá `idVersionSeed` en `packages/backend/seeds/seed.js` o forzá la carga en la VM.
+El estado de carga se guarda en Mongo: repetir el comando normal no vuelve a cargar la misma versión.
+Una ejecución efectiva, incluida una versión nueva o con `SEED_FORCE=true`, reemplaza los datos de los proyectos demo
+con IDs de la seed y reinicia sus perfiles, colaboraciones y logros. Los proyectos con otros IDs quedan intactos.
+Si se publica una versión nueva de los datos, actualizá `idVersionSeed` en `packages/backend/seeds/seed.js`.
 
 **Esperado:** `Seed listo: 24 habilidades, 6 colectivos, 10 proyectos, 13 perfiles, 7 logros, 15 colaboradoras, 6 colaboraciones`.
 

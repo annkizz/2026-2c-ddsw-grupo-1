@@ -223,26 +223,26 @@ const Notificaciones = () => {
                       )?.slice(0, 1).toUpperCase() ?? <FiBell />}
                     </span>
                     <div className="notificaciones-contenido">
-                      <p className="notificaciones-contraparte">
-                        {esNueva && <span className="insignia insignia--acento notificaciones-nueva">{t('notificaciones.nueva')}</span>}
-                        {contraparte}
-                      </p>
+                      <div className="notificaciones-cabecera">
+                        <p className="notificaciones-contraparte">
+                          {esNueva && <span className="insignia insignia--acento notificaciones-nueva">{t('notificaciones.nueva')}</span>}
+                          {contraparte}
+                        </p>
+                        {fecha && <time dateTime={fecha.iso}>{fecha.texto}</time>}
+                      </div>
                       {tipo && <p className="notificaciones-tipo">{tipo}</p>}
-                      <p>{notificacion.contenido}</p>
-                      {fecha && <time dateTime={fecha.iso}>{fecha.texto}</time>}
+                      <p className="notificaciones-mensaje">{notificacion.contenido}</p>
                       {notificacion.tipo === 'INVITACION_PROYECTO' && (
                         <>
                           {notificacion.estadoInvitacion === 'PENDIENTE' && !esColectivo ? (
                             <>
-                              <FormControlLabel
-                                control={<Checkbox checked={anonimas[notificacion.id] ?? true} onChange={(e) => setAnonimas((actual) => ({ ...actual, [notificacion.id]: e.target.checked }))} />}
-                                label={t('notificaciones.participacionAnonima')}
-                              />
-                              {erroresRespuesta[notificacion.id] && <Alert severity="error" role="alert">{erroresRespuesta[notificacion.id]}</Alert>}
-                              <div>
-                                <Button variant="contained" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'ACEPTADA')}>{t('notificaciones.aceptar')}</Button>
-                                <Button disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'RECHAZADA')}>{t('notificaciones.rechazar')}</Button>
+                              <div className="notificaciones-preferencia">
+                                <FormControlLabel
+                                  control={<Checkbox checked={anonimas[notificacion.id] ?? true} onChange={(e) => setAnonimas((actual) => ({ ...actual, [notificacion.id]: e.target.checked }))} />}
+                                  label={t('notificaciones.participacionAnonima')}
+                                />
                               </div>
+                              {erroresRespuesta[notificacion.id] && <Alert severity="error" role="alert">{erroresRespuesta[notificacion.id]}</Alert>}
                             </>
                           ) : (
                             <p>{t('notificaciones.invitacionEstado', {
@@ -266,10 +266,16 @@ const Notificaciones = () => {
                           ))}
                         </ul>
                       )}
-                      {accion && (
-                        <Link className="notificaciones-enlace" to={accion.href}>
-                          {accion.texto}
-                        </Link>
+                      {(accion || (notificacion.tipo === 'INVITACION_PROYECTO' && notificacion.estadoInvitacion === 'PENDIENTE' && !esColectivo)) && (
+                        <div className="notificaciones-acciones">
+                          {notificacion.tipo === 'INVITACION_PROYECTO' && notificacion.estadoInvitacion === 'PENDIENTE' && !esColectivo && (
+                            <>
+                              <Button variant="contained" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'ACEPTADA')}>{t('notificaciones.aceptar')}</Button>
+                              <Button variant="outlined" disabled={Boolean(resolviendo)} onClick={() => responder(notificacion, 'RECHAZADA')}>{t('notificaciones.rechazar')}</Button>
+                            </>
+                          )}
+                          {accion && <Link className="notificaciones-enlace" to={accion.href}>{accion.texto}</Link>}
+                        </div>
                       )}
                     </div>
                   </li>

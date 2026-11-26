@@ -344,7 +344,7 @@ export class PostulacionService {
     try {
       return await this.notificacionService.crearEventoSistema({
         tipo: TipoNotificacion.INVITACION_PROYECTO,
-        contenido: `El colectivo te invita a colaborar en el proyecto "${proyecto.titulo}", para el perfil "${perfil.descripcion}".${mensaje ? ` Mensaje: ${mensaje}` : ""}`,
+        contenido: `El colectivo te invita a colaborar en el proyecto "${proyecto.titulo}", para el perfil "${perfil.descripcion}".${mensaje ? `\n\nMensaje: ${mensaje}` : ""}`,
         idColectivo: proyecto.idColectivo,
         idColaborador: colaboradora._id ?? colaboradora.id,
         idProyecto: proyecto._id,

@@ -1,8 +1,11 @@
 import '@testing-library/jest-dom';
+import React from 'react';
 import { fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useLinkedin } from '../../hooks/useLinkedin.js';
 import {
+  crearLogro,
   crearPostulacion,
   obtenerColaboraciones,
   obtenerColaboracionesParaGestion,
@@ -10,6 +13,7 @@ import {
   obtenerPostulaciones,
   obtenerPerfiles,
   obtenerProyectoPorId,
+  publicarLogroEnLinkedin,
   resolverPostulacion,
 } from '../../service/proyectosService';
 import {
@@ -29,25 +33,23 @@ jest.mock('../../components/Markdown.jsx', () => ({
 }));
 
 jest.mock('../../hooks/useLinkedin.js', () => ({
-  useLinkedin: () => ({
-    estado: null,
-    conectar: jest.fn(),
-    recargar: jest.fn(),
-  }),
+  useLinkedin: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
-  Link: ({ children, to, ...props }) => (
-    <a href={to} {...props}>
-      {children}
-    </a>
-  ),
-  useNavigate: () => jest.fn(),
-  useLocation: () => ({ state: null }),
-  useParams: () => ({ id: 'proyecto-1' }),
-}));
+jest.mock('react-router-dom', () => {
+  const PropTypes = jest.requireActual('prop-types');
+  const Link = ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>;
+  Link.propTypes = { children: PropTypes.node, to: PropTypes.string };
+  return {
+    Link,
+    useNavigate: () => jest.fn(),
+    useLocation: () => ({ state: null }),
+    useParams: () => ({ id: 'proyecto-1' }),
+  };
+});
 
 jest.mock('../../service/proyectosService', () => ({
+  crearLogro: jest.fn(),
   crearPostulacion: jest.fn(),
   obtenerColaboraciones: jest.fn(),
   obtenerColaboracionesParaGestion: jest.fn(),
@@ -56,6 +58,7 @@ jest.mock('../../service/proyectosService', () => ({
   obtenerPostulaciones: jest.fn(),
   obtenerPerfiles: jest.fn(),
   obtenerProyectoPorId: jest.fn(),
+  publicarLogroEnLinkedin: jest.fn(),
   resolverPostulacion: jest.fn(),
 }));
 
@@ -72,6 +75,7 @@ const irAPestana = async (nombre) =>
 describe('DetalleProyecto - postulaciones', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useLinkedin.mockReturnValue({ estado: null, conectar: jest.fn(), recargar: jest.fn() });
     useAuth.mockReturnValue({
       sesion: { idColaborador: 'colaborador-1', rol: 'COLABORADOR' },
       getAccessToken: jest.fn().mockResolvedValue('token'),
@@ -110,6 +114,74 @@ describe('DetalleProyecto - postulaciones', () => {
     obtenerColaboradoraPorId.mockResolvedValue({ habilidades: [] });
     crearPostulacion.mockResolvedValue({ id: 'postulacion-1', estado: 'PENDIENTE' });
     resolverPostulacion.mockResolvedValue({});
+  });
+
+  it('muestra fecha y hora locales al colectivo', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'), isAuthenticated: true, cargando: false,
+    });
+    const fecha = '2026-11-18T16:35:00.000Z';
+    obtenerPostulaciones.mockResolvedValue([{
+      id: 'post-1', idPerfil: 'perfil-1', estado: 'PENDIENTE', fechaPostulacion: fecha,
+    }]);
+    render(<DetalleProyecto />);
+    await irAPestana('Postulaciones');
+    const fechaHora = new Intl.DateTimeFormat('es-AR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(fecha));
+    expect(await screen.findByText(`Enviada el ${fechaHora.replace(/\s+/g, ' ')}`)).toBeInTheDocument();
+  });
+
+  it('permite publicar un logro al crearlo cuando se elige la opción', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'), isAuthenticated: true, cargando: false,
+    });
+    useLinkedin.mockReturnValue({ estado: { conectado: true, nombre: 'Ada' }, conectar: jest.fn(), recargar: jest.fn() });
+    crearLogro.mockResolvedValue({ id: 'logro-1', titulo: 'Prototipo', publicacionLinkedin: { estado: 'ENVIADO' } });
+    render(<DetalleProyecto />);
+    await irAPestana('Logros');
+    await userEvent.type(screen.getByLabelText(/Título del logro/), 'Prototipo');
+    await userEvent.type(screen.getByRole('textbox', { name: /Descripción del logro/ }), 'Ya funciona');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Publicar también en mi LinkedIn' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar logro' }));
+    await waitFor(() => expect(crearLogro).toHaveBeenCalledWith(
+      'token', 'proyecto-1', expect.objectContaining({ titulo: 'Prototipo', descripcion: 'Ya funciona', publicarEnLinkedin: true }),
+    ));
+    expect(await screen.findByText('¡Logro publicado en LinkedIn!')).toBeInTheDocument();
+  });
+
+  it('permite compartir un logro existente en LinkedIn', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'), isAuthenticated: true, cargando: false,
+    });
+    useLinkedin.mockReturnValue({ estado: { conectado: true }, conectar: jest.fn(), recargar: jest.fn() });
+    obtenerLogros.mockResolvedValue([{ id: 'logro-1', titulo: 'Prototipo', descripcion: 'Ya funciona' }]);
+    publicarLogroEnLinkedin.mockResolvedValue({ id: 'logro-1', titulo: 'Prototipo', publicacionLinkedin: { estado: 'ENVIADO' } });
+    render(<DetalleProyecto />);
+    await irAPestana('Logros');
+    await userEvent.click(await screen.findByRole('button', { name: 'Compartir en LinkedIn' }));
+    await waitFor(() => expect(publicarLogroEnLinkedin).toHaveBeenCalledWith('token', 'proyecto-1', 'logro-1'));
+    expect(await screen.findByText('Publicado en LinkedIn')).toBeInTheDocument();
+  });
+
+  it('advierte que el logro se guardó si no se pudo registrar la publicación', async () => {
+    useAuth.mockReturnValue({
+      sesion: { idColectivo: 'colectivo-1', rol: 'COLECTIVO' },
+      getAccessToken: jest.fn().mockResolvedValue('token'), isAuthenticated: true, cargando: false,
+    });
+    useLinkedin.mockReturnValue({ estado: { conectado: true }, conectar: jest.fn(), recargar: jest.fn() });
+    crearLogro.mockRejectedValue({ response: { data: { codigo: 'LINKEDIN_RESULTADO_NO_REGISTRADO' } } });
+    obtenerLogros.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'logro-1', titulo: 'Prototipo' }]);
+    render(<DetalleProyecto />);
+    await irAPestana('Logros');
+    await userEvent.type(screen.getByLabelText(/Título del logro/), 'Prototipo');
+    await userEvent.type(screen.getByRole('textbox', { name: /Descripción del logro/ }), 'Ya funciona');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Publicar también en mi LinkedIn' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar logro' }));
+    expect(await screen.findByText(/El logro se guardó, pero no se pudo guardar el resultado/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Título del logro/)).toHaveValue('');
+    expect(screen.getByRole('heading', { name: 'Prototipo' })).toBeInTheDocument();
   });
 
   it('muestra las habilidades y el perfil público de una postulante pendiente', async () => {

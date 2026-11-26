@@ -91,6 +91,10 @@ afterAll(async () => {
 beforeEach(async () => {
   await limpiarLaBase();
   await sembrarDatosIniciales();
+  await ProyectoModel.updateMany(
+    { _id: { $in: [PROYECTO_TURNOS, PROYECTO_MAPA, PROYECTO_LABORATORIO] } },
+    { $set: { busquedaAbierta: true } },
+  );
 });
 // con repo real 
 // sin supertest: service + repos reales + mongo real (embebido) + seed
@@ -209,6 +213,46 @@ describe("MatchingService.buscarColaboradorasParaPerfil (integración sobre la s
 });
 
 describe("MatchingService.buscarProyectosParaColaboradora (integración sobre la seed)", () => {
+  it("excluye búsquedas cerradas o vencidas incluso si el proyecto está en caché", async () => {
+    const service = new MatchingService(
+      new ColaboradorRepository(),
+      new ProyectoRepository(),
+      new PerfilRepository(),
+      new ColaboracionRepository(),
+      new MatchingCacheRepository(),
+    );
+    const recomendar = async () => service.buscarProyectosParaColaboradora(LUNA, 1, 8);
+    expect((await recomendar()).proyectos.map((p) => p.id)).toEqual([PROYECTO_TURNOS]);
+
+    await ProyectoModel.updateOne({ _id: PROYECTO_TURNOS }, { $set: { busquedaAbierta: false } });
+    expect(await recomendar()).toMatchObject({ proyectos: [], total: 0, totalPags: 0 });
+    expect(await crearServicio().buscarProyectosParaColaboradora(LUNA)).toEqual([]);
+    await service.recalcularColaboradora(LUNA);
+
+    await ProyectoModel.updateOne(
+      { _id: PROYECTO_TURNOS },
+      { $set: { busquedaAbierta: true, fechaLimiteBusqueda: new Date(Date.now() - 1000) } },
+    );
+    expect((await recomendar()).proyectos).toEqual([]);
+
+    await ProyectoModel.updateOne(
+      { _id: PROYECTO_TURNOS },
+      { $set: { fechaLimiteBusqueda: new Date(Date.now() + 60_000), fechaLimiteCierre: new Date(Date.now() - 1000) } },
+    );
+    expect((await recomendar()).proyectos).toEqual([]);
+
+    await ProyectoModel.updateOne({ _id: PROYECTO_TURNOS }, { $set: { fechaLimiteCierre: null } });
+    expect((await recomendar()).proyectos.map((p) => p.id)).toEqual([PROYECTO_TURNOS]);
+
+    const limite = new Date(Date.now() + 60_000);
+    await ProyectoModel.updateOne({ _id: PROYECTO_TURNOS }, { $set: { fechaLimiteBusqueda: limite } });
+    const repository = new ProyectoRepository();
+    const antesDelLimite = await repository.obtenerAbiertosParaMatching([], new Date(limite.getTime() - 1));
+    const alLlegarAlLimite = await repository.obtenerAbiertosParaMatching([], limite);
+    expect(antesDelLimite.map((p) => String(p._id))).toContain(PROYECTO_TURNOS);
+    expect(alLlegarAlLimite.map((p) => String(p._id))).not.toContain(PROYECTO_TURNOS);
+  });
+
   it("guarda los resultados y no vuelve a calcularlos en la siguiente consulta", async () => {
     const perfilRepository = new PerfilRepository();
     const matchingService = new MatchingService(

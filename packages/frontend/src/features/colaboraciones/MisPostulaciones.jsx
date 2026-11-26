@@ -5,7 +5,7 @@ import { FiArrowRight, FiInfo } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerMisPostulaciones } from '../../service/colaboradorasService';
 import { mensajeDeError } from '../../service/api';
-import { formatearFecha } from '../../utils/fechas';
+import { formatearFechaHora } from '../../utils/fechas';
 import { t } from '../../i18n/t';
 import './MisColaboraciones.css';
 import { markdownATextoPlano } from '../../utils/markdown';
@@ -78,8 +78,8 @@ const MisPostulaciones = () => {
               <h2>{postulacion.proyecto.titulo}</h2>
               <p className="mis-colaboraciones-descripcion">{markdownATextoPlano(postulacion.proyecto.descripcion)}</p>
               <p className="mis-colaboraciones-fecha">
-                {formatearFecha(postulacion.fechaPostulacion)
-                  ? t('misPostulaciones.fecha', { fecha: formatearFecha(postulacion.fechaPostulacion) })
+                {formatearFechaHora(postulacion.fechaPostulacion)
+                  ? t('misPostulaciones.fecha', { fecha: formatearFechaHora(postulacion.fechaPostulacion) })
                   : t('misPostulaciones.sinFecha')}
               </p>
               <div className="mis-colaboraciones-acciones">

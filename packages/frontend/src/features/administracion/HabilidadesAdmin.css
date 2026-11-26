@@ -1,0 +1,22 @@
+.habilidades-admin__formulario,
+.habilidades-admin__catalogo {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.habilidades-admin__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habilidades-admin__lista li {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  overflow-wrap: anywhere;
+}

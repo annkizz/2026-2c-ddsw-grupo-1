@@ -92,11 +92,26 @@ export class ProyectoRepository {
       .exec();
   }
 
-  obtenerAbiertosParaMatching(idsExcluidos) {
+  obtenerAbiertosParaMatching(idsExcluidos, ahora = new Date()) {
+    return this.obtenerParaMatching(idsExcluidos, {
+      busquedaAbierta: true,
+      $and: [
+        { $or: [{ fechaLimiteBusqueda: null }, { fechaLimiteBusqueda: { $gt: ahora } }] },
+        { $or: [{ fechaLimiteCierre: null }, { fechaLimiteCierre: { $gt: ahora } }] },
+      ],
+    });
+  }
+
+  obtenerActivosParaMatching(idsExcluidos) {
+    return this.obtenerParaMatching(idsExcluidos, {});
+  }
+
+  obtenerParaMatching(idsExcluidos, filtros) {
     return this.proyectoModel
       .find({
         estado: Estado.ACTIVO,
         _id: { $nin: idsExcluidos },
+        ...filtros,
       })
       .select("_id titulo descripcion")
       .sort({ fechaInicio: -1 })

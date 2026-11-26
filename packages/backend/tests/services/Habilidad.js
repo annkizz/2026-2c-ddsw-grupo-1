@@ -8,8 +8,7 @@ describe("HabilidadService", () => {
 
   beforeEach(() => {
     repository = {
-      encontrarPorTitulo: jest.fn(async () => null),
-      save: jest.fn(async (habilidad) => habilidad),
+      crear: jest.fn(async (habilidad) => habilidad),
       obtenerTodos: jest.fn(async () => []),
     };
     service = new HabilidadService(repository);
@@ -21,18 +20,13 @@ describe("HabilidadService", () => {
       descripcion: "Pruebas de punta a punta",
     });
 
-    expect(repository.save).toHaveBeenCalledTimes(1);
+    expect(repository.crear).toHaveBeenCalledTimes(1);
     expect(creada.titulo).toBe("Testing E2E con Cypress");
     expect(creada.descripcion).toBe("Pruebas de punta a punta");
   });
 
-  it("busca si ya existe usando el titulo recibido", async () => {
-    await service.crear({ titulo: "React" });
-    expect(repository.encontrarPorTitulo).toHaveBeenCalledWith("React");
-  });
-
-  it("rechaza una habilidad que ya existe y no la guarda", async () => {
-    repository.encontrarPorTitulo.mockResolvedValue({ titulo: "React" });
+  it("propaga el conflicto si la habilidad ya existe", async () => {
+    repository.crear.mockRejectedValue(new ConflictError("La habilidad ya existe", "HABILIDAD_YA_EXISTE"));
 
     await expect(service.crear({ titulo: "react" })).rejects.toThrow(
       ConflictError,
@@ -40,7 +34,6 @@ describe("HabilidadService", () => {
     await expect(service.crear({ titulo: "react" })).rejects.toMatchObject({
       codigo: "HABILIDAD_YA_EXISTE",
     });
-    expect(repository.save).not.toHaveBeenCalled();
   });
 
   it("devuelve todas las habilidades del repositorio", async () => {
