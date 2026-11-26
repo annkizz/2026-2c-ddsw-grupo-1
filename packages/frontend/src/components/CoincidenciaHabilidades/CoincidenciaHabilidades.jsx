@@ -5,7 +5,6 @@ import { compararHabilidades } from '../../utils/habilidades';
 import { t } from '../../i18n/t';
 
 // Muestra las habilidades de un perfil y, si se conocen las de la persona, cuáles cumple y cuáles no.
-// Cada habilidad lleva ícono (✓ / ✕) y texto ("Cumple" / "Falta"): nunca solo color.
 const Lista = ({ titulo, items, conPersona }) => (
   <div className="coincidencias__grupo">
     <p className="perfil-buscado__etiqueta">{titulo}</p>
@@ -21,7 +20,7 @@ const Lista = ({ titulo, items, conPersona }) => (
             {conPersona && (cumple ? <FiCheck aria-hidden="true" /> : <FiX aria-hidden="true" />)}
             <span className="hab-match__texto">{nombre}</span>
             {conPersona && (
-              <span className="hab-match__estado">{cumple ? t('coincidencias.cumple') : t('coincidencias.falta')}</span>
+              <span className="visualmente-oculto"> {cumple ? t('coincidencias.cumple') : t('coincidencias.falta')}</span>
             )}
           </li>
         ))}

@@ -295,14 +295,14 @@ git pull
 docker compose up -d --build
 ```
 
-### Apagar y reiniciar desde cero
+### Apagar y reiniciar
 
 ```bash
-docker compose down         # apaga los contenedores, conserva los datos
-docker compose down -v      # CUIDADO: además borra todos los datos de Mongo
+docker compose down         # apaga los contenedores, conserva los volúmenes
+docker compose up -d        # inicia la aplicación sin ejecutar la seed
 ```
 
-Para volver a un entorno limpio: `docker compose down -v`, `docker compose up -d --build` y `docker compose run --rm seed`.
+No uses `docker compose down -v` para reiniciar: elimina la base de Mongo y los certificados de Caddy.
 
 ### Problemas frecuentes
 
@@ -311,7 +311,7 @@ Para volver a un entorno limpio: `docker compose down -v`, `docker compose up -d
 | `port is already allocated` al levantar                                       | Un contenedor viejo (por ejemplo de la entrega anterior) ocupa el puerto 3000                      | `docker ps`, y luego `docker stop NOMBRE` y `docker rm NOMBRE`. O cambiar `API_PORT` en el `.env` |
 | `Error conectando a MongoDB: getaddrinfo EAI_AGAIN mongo`                     | La API no resuelve el nombre `mongo` en la red de Docker, típico tras un primer arranque fallido   | `docker compose down` y `docker compose up -d`                                                    |
 | La API queda en `health: starting` y se reinicia                              | El proceso se cierra al fallar                                                                     | `docker compose logs --tail 30 api` y actuar según el error                                       |
-| `Authentication failed`                                                       | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | `docker compose down -v`, `docker compose up -d --build` y volver a correr el seed                |
+| `Authentication failed`                                                       | El volumen de Mongo se creó con otro usuario o contraseña (el usuario se crea solo la primera vez) | Revisar las credenciales originales o recuperar una copia de seguridad; no borrar los volúmenes.   |
 | `Falta MONGO_PASSWORD en .env`                                                | No existe el `.env` en la raíz del proyecto                                                        | Crearlo al lado de `docker-compose.yml`                                                           |
 | El seed falla con un error de validación (por ejemplo `proyecto is required`) | La imagen tiene una versión vieja del código                                                       | `git pull`, `docker compose build` y volver a correr el seed                                      |
 | `mongo` se reinicia con `Illegal instruction`                                 | La CPU de la VM no expone instrucciones AVX, que MongoDB 5+ necesita                               | Habilitar el modo de CPU «host passthrough» o usar `image: mongo:4.4`                             |

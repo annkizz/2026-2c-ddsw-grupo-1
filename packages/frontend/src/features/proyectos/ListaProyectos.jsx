@@ -10,7 +10,7 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
-import { FiPlus, FiEye, FiEdit2, FiFolder, FiLock, FiSearch, FiXCircle, FiCheck, FiCalendar } from 'react-icons/fi';
+import { FiPlus, FiEye, FiFolder, FiLock, FiSearch, FiXCircle, FiCheck, FiCalendar } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { obtenerProyectos, cerrarProyecto } from '../../service/proyectosService';
 import { t } from '../../i18n/t';
@@ -253,16 +253,6 @@ const ListaProyectos = () => {
                       >
                         {t('tarjetas.verProyecto')}
                       </Button>
-                      {esDueño && (
-                        <Button
-                          variant="text"
-                          onClick={() => navigate(`/proyectos/${proyecto.id}/editar`)}
-                          startIcon={<FiEdit2 aria-hidden="true" />}
-                          aria-label={t('proyectos.editarProyectoDe', { titulo: proyecto.titulo })}
-                        >
-                          {t('accionesProyecto.editar')}
-                        </Button>
-                      )}
                       {esDueño && !esFinalizado && (
                         <Button
                           variant="text"
