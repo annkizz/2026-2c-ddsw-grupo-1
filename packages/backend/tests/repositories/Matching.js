@@ -38,14 +38,37 @@ describe("consultas de matching", () => {
 
   it("excluye proyectos ya anotados en Mongo y mantiene el orden", async () => {
     const model = crearModelo();
-    await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"]);
+    const ahora = new Date("2026-11-26T12:00:00.000Z");
+    await new ProyectoRepository(model).obtenerAbiertosParaMatching(["p1"], ahora);
     expect(model.find).toHaveBeenCalledWith({
       estado: Estado.ACTIVO,
+      busquedaAbierta: true,
+      $or: [
+        { fechaLimiteBusqueda: null },
+        { fechaLimiteBusqueda: { $gt: ahora } },
+      ],
       _id: { $nin: ["p1"] },
     });
     expect(model.query.select).toHaveBeenCalledWith("_id titulo descripcion");
     expect(model.query.sort).toHaveBeenCalledWith({ fechaInicio: -1 });
     expect(model.query.exec).toHaveBeenCalledTimes(1);
+  });
+
+  it("solo recalcula los proyectos todavía abiertos a colaboraciones", async () => {
+    const model = crearModelo();
+    const ahora = new Date("2026-11-26T12:00:00.000Z");
+
+    await new ProyectoRepository(model).obtenerAbiertosPorIds(["p1", "p2"], ahora);
+
+    expect(model.find).toHaveBeenCalledWith({
+      estado: Estado.ACTIVO,
+      busquedaAbierta: true,
+      $or: [
+        { fechaLimiteBusqueda: null },
+        { fechaLimiteBusqueda: { $gt: ahora } },
+      ],
+      _id: { $in: ["p1", "p2"] },
+    });
   });
 
   it("trae los perfiles de los proyectos candidatos para evaluarlos en memoria", async () => {

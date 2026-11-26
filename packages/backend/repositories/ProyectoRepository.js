@@ -2,6 +2,15 @@ import mongoose from "mongoose";
 import { ProyectoModel } from "../schemas/proyectoSchema.js";
 import { Estado } from "../domain/Estado.js";
 
+const filtroBusquedaVigente = (ahora) => ({
+  estado: Estado.ACTIVO,
+  busquedaAbierta: true,
+  $or: [
+    { fechaLimiteBusqueda: null },
+    { fechaLimiteBusqueda: { $gt: ahora } },
+  ],
+});
+
 export class ProyectoRepository {
   constructor(proyectoModel = ProyectoModel) {
     this.proyectoModel = proyectoModel;
@@ -92,10 +101,10 @@ export class ProyectoRepository {
       .exec();
   }
 
-  obtenerAbiertosParaMatching(idsExcluidos) {
+  obtenerAbiertosParaMatching(idsExcluidos, ahora = new Date()) {
     return this.proyectoModel
       .find({
-        estado: Estado.ACTIVO,
+        ...filtroBusquedaVigente(ahora),
         _id: { $nin: idsExcluidos },
       })
       .select("_id titulo descripcion")
@@ -104,10 +113,13 @@ export class ProyectoRepository {
   }
 
   // Solo los proyectos indicados que sigan activos (para recalcular el matching de esos y nada más).
-  obtenerAbiertosPorIds(ids) {
+  obtenerAbiertosPorIds(ids, ahora = new Date()) {
     if (ids.length === 0) return Promise.resolve([]);
     return this.proyectoModel
-      .find({ estado: Estado.ACTIVO, _id: { $in: ids } })
+      .find({
+        ...filtroBusquedaVigente(ahora),
+        _id: { $in: ids },
+      })
       .select("_id titulo descripcion")
       .exec();
   }
