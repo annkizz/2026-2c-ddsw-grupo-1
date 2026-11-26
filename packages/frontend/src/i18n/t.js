@@ -1,8 +1,9 @@
 import es from '../assets/es.json';
 import pt from '../assets/pt.json';
+import gr from '../assets/gr.json';
 import { useSyncExternalStore } from 'react';
 
-const catalogos = { es, pt };
+const catalogos = { es, pt, gr };
 const claveIdioma = 'idioma';
 const listeners = new Set();
 
@@ -19,7 +20,11 @@ const leerIdioma = () => {
 let idioma = leerIdioma();
 
 export const obtenerIdioma = () => idioma;
-export const obtenerLocale = () => (idioma === 'pt' ? 'pt-BR' : 'es-AR');
+export const obtenerLocale = () => {
+  if (idioma === 'pt') return 'pt-BR';
+  if (idioma === 'gr') return 'gn-PY';
+  return 'es-AR';
+};
 
 export const cambiarIdioma = (nuevoIdioma) => {
   if (!Object.prototype.hasOwnProperty.call(catalogos, nuevoIdioma)) {

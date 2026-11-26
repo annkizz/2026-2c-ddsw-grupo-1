@@ -73,7 +73,7 @@ const textoPendientes = (cantidad) =>
 
 const Header = () => {
   const idioma = useIdioma();
-  const { isAuthenticated, sesion, cerrarSesion } = useAuth();
+  const { isAuthenticated, sesion, iniciarSesion, registrarse, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const { pendientes } = useNotificacionesPendientes();
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -163,8 +163,19 @@ const Header = () => {
           onClick={(evento) => setAnclaIdioma(evento.currentTarget)}
         >
           <FiGlobe aria-hidden="true" />
-          <span>{idioma === 'pt' ? 'PT' : 'ES'}</span>
+          <span>{idioma === 'pt' ? 'PT' : idioma === 'gr' ? 'GN' : 'ES'}</span>
         </button>
+
+        {!isAuthenticated && (
+          <div className="header-auth">
+            <button type="button" className="header-auth__button header-auth__button--login" onClick={iniciarSesion}>
+              {t('comun.iniciarSesion')}
+            </button>
+            <button type="button" className="header-auth__button header-auth__button--signup" onClick={registrarse}>
+              {t('inicio.crearCuenta')}
+            </button>
+          </div>
+        )}
 
         {conPerfil && (
           <div className="header-usuario">
@@ -212,7 +223,8 @@ const Header = () => {
       >
         {[
           { codigo: 'es', nombre: 'Español' },
-          { codigo: 'pt', nombre: 'Português do Brasil (em revisão)' }
+          { codigo: 'pt', nombre: 'Português do Brasil (em revisão)' },
+          { codigo: 'gr', nombre: 'Guarani' }
         ].map(({ codigo, nombre }) => (
           <MenuItem
             key={codigo}
@@ -223,7 +235,7 @@ const Header = () => {
               cambiarIdioma(codigo);
               setAnclaIdioma(null);
             }}
-            lang={codigo === 'pt' ? 'pt-BR' : 'es'}
+            lang={codigo === 'pt' ? 'pt-BR' : codigo === 'gr' ? 'gn-PY' : 'es'}
           >
             {nombre}
           </MenuItem>
