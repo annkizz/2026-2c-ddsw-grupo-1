@@ -66,7 +66,7 @@ LimiteDeErrores.propTypes = { children: PropTypes.node };
 function App() {
   const idioma = useIdioma();
   useEffect(() => {
-    document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'es';
+    document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : idioma === 'gr' ? 'gn-PY' : 'es';
   }, [idioma]);
 
   return (

@@ -163,7 +163,7 @@ const Header = () => {
           onClick={(evento) => setAnclaIdioma(evento.currentTarget)}
         >
           <FiGlobe aria-hidden="true" />
-          <span>{idioma === 'pt' ? 'PT' : 'ES'}</span>
+          <span>{idioma === 'pt' ? 'PT' : idioma === 'gr' ? 'GN' : 'ES'}</span>
         </button>
 
         {conPerfil && (
@@ -212,7 +212,8 @@ const Header = () => {
       >
         {[
           { codigo: 'es', nombre: 'Español' },
-          { codigo: 'pt', nombre: 'Português do Brasil (em revisão)' }
+          { codigo: 'pt', nombre: 'Português do Brasil (em revisão)' },
+          { codigo: 'gr', nombre: 'Guarani' }
         ].map(({ codigo, nombre }) => (
           <MenuItem
             key={codigo}
@@ -223,7 +224,7 @@ const Header = () => {
               cambiarIdioma(codigo);
               setAnclaIdioma(null);
             }}
-            lang={codigo === 'pt' ? 'pt-BR' : 'es'}
+            lang={codigo === 'pt' ? 'pt-BR' : codigo === 'gr' ? 'gn-PY' : 'es'}
           >
             {nombre}
           </MenuItem>
