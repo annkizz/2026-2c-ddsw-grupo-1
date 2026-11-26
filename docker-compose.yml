@@ -1,4 +1,4 @@
-# Levanta MongoDB, API, frontend y proxy HTTPS. El seed se ejecuta manualmente.
+# Levanta MongoDB, seed, API, frontend y proxy HTTPS.
 # Desde la raiz del proyecto:  docker compose up -d --build
 # Las variables ${...} salen del archivo .env de la raiz (ver DESPLIEGUE.md).
 
@@ -13,6 +13,28 @@ x-api-env: &api-env # variables que comparten la API y el seed
   LOGTO_JWKS_URL: ${LOGTO_JWKS_URL:?Falta LOGTO_JWKS_URL en .env}
   LOGTO_AUDIENCE: ${LOGTO_AUDIENCE:?Falta LOGTO_AUDIENCE en .env}
   LOGTO_ADMIN_IDS: ${LOGTO_ADMIN_IDS:-}
+  # Dirección pública del sitio: los mails llevan un enlace para leer el mensaje en la app.
+  FRONTEND_URL: https://${APP_DOMAIN:-localhost}
+  # Linkedin: publicar logros. Si quedan vacías, la app avisa "integración no configurada".
+  LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+  LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+  LINKEDIN_REDIRECT_URI: ${LINKEDIN_REDIRECT_URI:-https://${APP_DOMAIN:-localhost}/linkedin/callback}
+  LINKEDIN_API_VERSION: ${LINKEDIN_API_VERSION:-202608}
+  LINKEDIN_STATE_SECRET: ${LINKEDIN_STATE_SECRET:-}
+  LINKEDIN_TOKEN_KEY: ${LINKEDIN_TOKEN_KEY:-}
+  # Tareas programadas y matching en lote (ver DESPLIEGUE.md, "Tareas programadas"). Vacías = valores por defecto.
+  CRON_CIERRE_AUTOMATICO: ${CRON_CIERRE_AUTOMATICO:-}
+  CRON_MATCHING: ${CRON_MATCHING:-}
+  CRON_MATCHING_COMPLETO: ${CRON_MATCHING_COMPLETO:-}
+  MATCHING_UMBRAL_CAMBIOS: ${MATCHING_UMBRAL_CAMBIOS:-}
+  MATCHING_ESPERA_MAXIMA_MIN: ${MATCHING_ESPERA_MAXIMA_MIN:-}
+  # Envío de notificaciones por mail (ver DESPLIEGUE.md, "Notificaciones"). Sin SMTP_HOST queda SIMULADO.
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASS: ${SMTP_PASS:-}
+  SMTP_FROM: ${SMTP_FROM:-}
 
 services:
   mongo:
@@ -37,17 +59,9 @@ services:
     image: codigo-a-voluntad-api
     restart: unless-stopped
     depends_on:
-      mongo:
-        condition: service_healthy
-    environment:
-      <<: *api-env
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
-      LINKEDIN_REDIRECT_URI: ${LINKEDIN_REDIRECT_URI:-}
-      LINKEDIN_STATE_SECRET: ${LINKEDIN_STATE_SECRET:-}
-      LINKEDIN_TOKEN_KEY: ${LINKEDIN_TOKEN_KEY:-}
-      LINKEDIN_API_VERSION: ${LINKEDIN_API_VERSION:-202608}
-      FRONTEND_URL: ${FRONTEND_URL:-}
+      seed:
+        condition: service_completed_successfully
+    environment: *api-env
     ports:
       - "127.0.0.1:${API_PORT:-3001}:3000" # acceso local; el frontend proxya la API
     healthcheck: # usa la ruta /healthcheck de la API
@@ -61,8 +75,7 @@ services:
       retries: 5
       start_period: 15s
 
-  seed: # tarea manual: carga datos iniciales
-    profiles: ["seed"]
+  seed: # tarea de una sola vez: carga datos iniciales
     build: .
     image: codigo-a-voluntad-api
     restart: "no"
