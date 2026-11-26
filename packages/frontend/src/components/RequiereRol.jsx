@@ -13,9 +13,10 @@ const RequiereRol = ({ roles, fallback, children }) => {
     return <LoadingSplash message={t('acceso.validandoPermisos')} />;
   }
 
+  // Sin acceso se responde como si la página no existiera (404): no se revela que existe.
   if (!roles.includes(sesion.rol)) {
     return (
-      fallback || <PaginaError codigo={403} id="acceso-denegado-titulo" />
+      fallback || <PaginaError codigo={404} id="acceso-denegado-titulo" />
     );
   }
 
