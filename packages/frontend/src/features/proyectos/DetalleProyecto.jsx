@@ -1110,7 +1110,7 @@ const DetalleProyecto = () => {
                               <div>
                                 <p><strong>{t('postulacionPublica.perfil')}</strong> {nombreDe(postulacion.perfilPublico)}</p>
                                 {postulacion.perfilPublico.pronombres?.length > 0 && <p>{t('postulacionPublica.pronombres', { pronombres: postulacion.perfilPublico.pronombres.join(', ') })}</p>}
-                                {postulacion.perfilPublico.presentacion && <p>{postulacion.perfilPublico.presentacion}</p>}
+                                {postulacion.perfilPublico.presentacion && <Markdown texto={postulacion.perfilPublico.presentacion} nivelTitulo={4} />}
                                 {postulacion.perfilPublico.usuarioGitHub && <p>{t('postulacionPublica.github', { usuario: postulacion.perfilPublico.usuarioGitHub })}</p>}
                                 <p><strong>{t('postulacionPublica.habilidades')}</strong> {postulacion.perfilPublico.habilidades?.join(', ') || t('postulacionPublica.sinHabilidades')}</p>
                                 {postulacion.perfilPublico.id && <Link to={`/colaboradoras/${postulacion.perfilPublico.id}`}>{t('postulacionPublica.verPerfil')}</Link>}
