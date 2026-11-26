@@ -136,6 +136,17 @@ describe('Header', () => {
     expect(window.localStorage.getItem('idioma')).toBe('pt');
   });
 
+  it('permite elegir guaraní sin iniciar sesión y recuerda la elección', async () => {
+    configurar(null, false);
+    renderHeader('/');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Idioma' }));
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: 'Guarani' }));
+
+    expect(screen.getByRole('button', { name: 'Ñe\'ẽ' })).toHaveTextContent('GN');
+    expect(window.localStorage.getItem('idioma')).toBe('gr');
+  });
+
   it('el colectivo ve sus proyectos y la búsqueda de colaboradoras', () => {
     configurar({ ...sesionBase, rol: 'COLECTIVO' });
     renderHeader('/');

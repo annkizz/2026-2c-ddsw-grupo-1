@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import es from '../assets/es.json';
 import pt from '../assets/pt.json';
+import gr from '../assets/gr.json';
 import { cambiarIdioma, t, useIdioma } from './t';
 import { formatearFecha } from '../utils/fechas';
 import { crearTema } from '../theme/crearTema';
@@ -28,6 +29,7 @@ it('conserva las claves y los parámetros del catálogo español', () => {
     });
   };
   comprobar(es, pt);
+  comprobar(es, gr);
 });
 
 it('actualiza las traducciones y fechas sin perder el estado de la pantalla', () => {
