@@ -1,4 +1,4 @@
-# Levanta MongoDB, seed, API, frontend y proxy HTTPS.
+# Levanta MongoDB, API, frontend y proxy HTTPS. El seed se ejecuta manualmente.
 # Desde la raiz del proyecto:  docker compose up -d --build
 # Las variables ${...} salen del archivo .env de la raiz (ver DESPLIEGUE.md).
 
@@ -59,8 +59,8 @@ services:
     image: codigo-a-voluntad-api
     restart: unless-stopped
     depends_on:
-      seed:
-        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
     environment: *api-env
     ports:
       - "127.0.0.1:${API_PORT:-3001}:3000" # acceso local; el frontend proxya la API
@@ -75,7 +75,8 @@ services:
       retries: 5
       start_period: 15s
 
-  seed: # tarea de una sola vez: carga datos iniciales
+  seed: # tarea manual: carga datos iniciales
+    profiles: ["seed"]
     build: .
     image: codigo-a-voluntad-api
     restart: "no"
@@ -95,36 +96,41 @@ services:
         REACT_APP_LOGTO_APP_ID: ${REACT_APP_LOGTO_APP_ID:?Falta REACT_APP_LOGTO_APP_ID en .env}
         REACT_APP_LOGTO_RESOURCES: ${REACT_APP_LOGTO_RESOURCES:?Falta REACT_APP_LOGTO_RESOURCES en .env}
     restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
     depends_on:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certificados:/etc/letsencrypt:ro
+      - desafios:/var/www/certbot:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/healthcheck-nginx || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  caddy:
-    image: caddy:2-alpine
+  certbot:
+    image: certbot/certbot:latest
     restart: unless-stopped
     environment:
       APP_DOMAIN: ${APP_DOMAIN:-localhost}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
     depends_on:
       frontend:
         condition: service_healthy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+    entrypoint: ["/bin/sh", "/opt/certbot/renovar.sh"]
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - ./packages/frontend/certbot-renovar.sh:/opt/certbot/renovar.sh:ro
+      - certificados:/etc/letsencrypt
+      - desafios:/var/www/certbot
 
 volumes:
   mongo-data:
-  caddy-data:
-  caddy-config:
+  certificados:
+  desafios:

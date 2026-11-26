@@ -20,7 +20,11 @@ ENV REACT_APP_LOGTO_RESOURCES=$REACT_APP_LOGTO_RESOURCES
 RUN npm run build --workspace=frontend
 
 FROM nginx:1.27-alpine
-COPY packages/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY packages/frontend/nginx.conf packages/frontend/nginx-tls.conf /opt/nginx/
+COPY packages/frontend/nginx-app.conf /etc/nginx/nginx-app.conf
+COPY packages/frontend/nginx-iniciar.sh /docker-entrypoint.d/40-configurar-tls.sh
+COPY packages/frontend/nginx-certificados.sh /opt/nginx/certificados.sh
 COPY --from=build /app/packages/frontend/build /usr/share/nginx/html
+RUN chmod +x /docker-entrypoint.d/40-configurar-tls.sh
 
-EXPOSE 80
+EXPOSE 80 443 8080

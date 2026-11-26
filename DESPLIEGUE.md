@@ -1,19 +1,19 @@
 ## Despliegue
 
 La aplicación se ejecuta con **Docker Compose** sobre una máquina virtual con Ubuntu (Google Cloud). Un solo comando
-levanta MongoDB, inicia la API y el frontend, y configura HTTPS con Caddy. La seed se ejecuta por separado y solo
-cuando se necesita cargar datos de prueba.
+levanta MongoDB, la API, el frontend con Nginx y Certbot. La seed se ejecuta por separado y solo cuando se necesitan
+datos de prueba.
 
-Los `Dockerfile` construyen las imágenes de API y frontend; Caddy obtiene y renueva automáticamente un certificado TLS
-para el dominio configurado.
+Nginx es el único proxy: sirve React, envía `/api` a la API y atiende HTTPS. Certbot obtiene y renueva el certificado;
+Nginx detecta los cambios y lo recarga automáticamente.
 
 | Servicio   | Qué es                  | Notas                                                                                    |
 | ---------- | ----------------------- | ---------------------------------------------------------------------------------------- |
 | `mongo`    | MongoDB 7               | Datos persistentes; puerto ligado solo a `127.0.0.1`.                                   |
 | `seed`     | Datos iniciales         | Tarea opcional y manual; carga la seed una sola vez por versión y base de datos.         |
 | `api`      | Backend Express         | Espera a que Mongo esté listo; solo expone su puerto local en `127.0.0.1:3001`.           |
-| `frontend` | React servido por Nginx | Red interna; proxy `/api` hacia la API.                                                  |
-| `caddy`    | Proxy HTTPS             | Único servicio público; administra certificados y publica los puertos 80 y 443.         |
+| `frontend` | React servido por Nginx | Publica HTTP/HTTPS, sirve React y envía `/api` hacia la API.                            |
+| `certbot`  | Certificados HTTPS      | Solicita y renueva el certificado; no es un proxy ni publica puertos.                    |
 
 ### Requisitos en la VM
 
@@ -29,8 +29,9 @@ En Google Cloud, abrí los puertos **80 y 443** en el firewall de la VM para HTT
 3001 (API) ni 3000 (frontend): esos puertos quedan internos o ligados a loopback.
 
 Usá una IP externa estática para la VM. Registrá un subdominio gratuito (por ejemplo, en DuckDNS) y apuntalo a esa IP.
-Caddy necesita que el DNS resuelva correctamente y que los puertos 80/443 sean accesibles para emitir el certificado;
-comprobá ambos antes de levantar Compose.
+Certbot necesita que el DNS resuelva a la VM y que el puerto 80 sea accesible desde internet para emitir el certificado.
+El puerto 443 debe estar accesible para usar HTTPS. Si el dominio tiene un registro IPv6, también debe apuntar a esta VM
+y permitir la validación; de lo contrario, quitá el registro incorrecto.
 
 ### Obtener el proyecto
 
@@ -56,7 +57,8 @@ nano .env
 
 Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant y el recurso de API.
 `REACT_APP_LOGTO_RESOURCES` debe coincidir con `LOGTO_AUDIENCE`. En la VM, reemplazá también `ALLOWED_ORIGINS` por
-`https://<subdominio>`, y `APP_DOMAIN` por el subdominio sin `https://` ni rutas (por ejemplo, `miapp.duckdns.org`).
+`https://<subdominio>`, `APP_DOMAIN` por el subdominio en minúsculas sin `https://` ni rutas (por ejemplo,
+`miapp.duckdns.org`) y `CERTBOT_EMAIL` por un correo válido para avisos de vencimiento.
 
 | Variable                        | Para qué sirve                                                                                                                                                                      |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -72,7 +74,8 @@ Reemplazá la contraseña de ejemplo y los valores de Logto por los de tu tenant
 | `REACT_APP_LOGTO_ENDPOINT`      | Dominio de tu tenant de Logto, usado al compilar el frontend.                                                                                                                        |
 | `REACT_APP_LOGTO_APP_ID`        | App ID pública de la aplicación frontend en Logto.                                                                                                                                  |
 | `REACT_APP_LOGTO_RESOURCES`     | Recurso de API solicitado por el frontend; debe coincidir con `LOGTO_AUDIENCE`.                                                                                                     |
-| `APP_DOMAIN`                    | Hostname del frontend. En la VM, Caddy lo usa para solicitar y renovar el certificado HTTPS.                                                                                        |
+| `APP_DOMAIN`                    | Hostname público del frontend. En la VM, Nginx y Certbot lo usan para HTTPS.                                                                                                        |
+| `CERTBOT_EMAIL`                 | Correo para el registro y avisos de Let's Encrypt; requerido cuando `APP_DOMAIN` no es `localhost`.                                                                                 |
 
 > La contraseña debe tener **solo letras y números**: se usa dentro de una URL de conexión y caracteres como `@ : / ?` la rompen.
 > En un trabajo académico alcanza con una contraseña simple porque Mongo no es accesible desde fuera de Docker.
@@ -117,16 +120,25 @@ aplicación si no se usa esta función.
 
 ### Levantar todo
 
+Si ya hay un despliegue anterior, antes de actualizar la configuración detené el contenedor que está usando los
+puertos 80 y 443. Podés identificarlo con `docker ps` y detener **solo ese contenedor** con `docker stop <nombre>`.
+No borres los volúmenes de Mongo ni los certificados anteriores durante la migración.
+
 ```bash
 docker compose up -d --build
 docker compose ps -a
-docker compose logs --tail 20 api frontend caddy
+docker compose logs --tail 20 api frontend certbot
 ```
 
 - `--build` construye las imágenes de API y frontend. **Usalo cuando cambie el código.**
 - `-d` deja todo corriendo de fondo.
-- **Esperado:** `mongo`, `api` y `frontend` en `healthy`. Caddy queda levantado y solicita
-  el certificado automáticamente; la primera emisión puede tardar unos minutos.
+- **Esperado:** `mongo`, `api` y `frontend` en `healthy`. En la VM, Certbot solicita el certificado automáticamente;
+  la primera emisión puede tardar unos minutos. Hasta que se emita, HTTPS no estará disponible: HTTP solo atiende el
+  desafío de Let's Encrypt y redirige el resto a HTTPS, sin servir la aplicación en texto plano.
+- Si falla la emisión o renovación, revisá `docker compose logs certbot`: se reintenta cada hora. Las renovaciones se
+  comprueban cada 12 horas y Nginx recarga el certificado cuando cambia. Los certificados y los desafíos se guardan en
+  volúmenes Docker; no uses `docker compose down -v`, porque también borra los datos de Mongo.
+- Con `APP_DOMAIN=localhost`, Certbot no solicita certificados. El acceso local es por HTTP en el puerto 3000.
 
 En la VM, abrí `https://<subdominio>`. En desarrollo local, el frontend sigue disponible en `http://localhost:3000`;
 la API en `http://localhost:3001`.
@@ -299,7 +311,7 @@ docker compose up -d --build
 
 ```bash
 docker compose down         # apaga los contenedores, conserva los datos
-docker compose down -v      # CUIDADO: además borra todos los datos de Mongo
+docker compose down -v      # CUIDADO: borra los datos de Mongo y los certificados de este proyecto
 ```
 
 Para volver a un entorno limpio: `docker compose down -v`, `docker compose up -d --build` y `docker compose run --rm seed`.
@@ -315,7 +327,7 @@ Para volver a un entorno limpio: `docker compose down -v`, `docker compose up -d
 | `Falta MONGO_PASSWORD en .env`                                                | No existe el `.env` en la raíz del proyecto                                                        | Crearlo al lado de `docker-compose.yml`                                                           |
 | El seed falla con un error de validación (por ejemplo `proyecto is required`) | La imagen tiene una versión vieja del código                                                       | `git pull`, `docker compose build` y volver a correr el seed                                      |
 | `mongo` se reinicia con `Illegal instruction`                                 | La CPU de la VM no expone instrucciones AVX, que MongoDB 5+ necesita                               | Habilitar el modo de CPU «host passthrough» o usar `image: mongo:4.4`                             |
-| Responde desde la VM pero no desde afuera                                     | Falta la regla de firewall para el puerto 3000, o se usó `https://`                                | Crear la regla `tcp:3000` y usar `http://`                                                        |
+| HTTPS no responde desde afuera                                               | DNS, firewall o emisión del certificado incorrectos                                               | Revisar DNS, puertos 80/443 y `docker compose logs certbot frontend`                              |
 | `docker: command not found` / `permission denied`                             | Docker no está instalado, o el usuario no está en el grupo `docker`                                | Ver «Requisitos en la VM», o usar `sudo docker ...`                                               |
 | Las notificaciones salen siempre `SIMULADO`                                   | Es lo esperado sin configuración                                                                   | Ver «Notificaciones → envío real»                                                                 |
 
