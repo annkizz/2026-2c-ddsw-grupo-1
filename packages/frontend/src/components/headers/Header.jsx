@@ -299,7 +299,7 @@ const Header = () => {
       >
         {[
           { codigo: "es", nombre: "Español" },
-          { codigo: "pt", nombre: "Português do Brasil (em revisão)" },
+          { codigo: "pt", nombre: "Português" },
           { codigo: "gr", nombre: "Guarani" },
         ].map(({ codigo, nombre }) => (
           <MenuItem
