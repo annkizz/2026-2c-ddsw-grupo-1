@@ -52,6 +52,14 @@ export class NotificacionRepository {
     ).exec();
   }
 
+  // Solo agrega el resultado de los envíos externos: no pisa otros campos que hayan cambiado
+  // mientras se mandaba el mail (por ejemplo, el estado de una invitación ya respondida).
+  registrarEnvios(id, envios) {
+    return this.model
+      .findByIdAndUpdate(id, { $set: { envios } }, { returnDocument: "after", runValidators: true })
+      .exec();
+  }
+
   save(notificacion) {
     const datos = {
       fecha: notificacion.fecha,

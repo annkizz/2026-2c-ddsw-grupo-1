@@ -9,17 +9,28 @@ import { ColaboradorRepository } from "../repositories/ColaboradorRepository.js"
 import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 import { NotificadorExterno } from "./notificadores/NotificadorExterno.js";
 
+// Avisos del sistema que van dirigidos a la colaboradora y se replican por sus medios de contacto
+// (igual que los mensajes directos), con el asunto de cada uno.
+const ASUNTOS_EVENTOS = {
+  [TipoNotificacion.INVITACION_PROYECTO]: (colectivo) =>
+    `${colectivo?.nombre ?? "Un colectivo"} te invita a colaborar en Código a Voluntad`,
+  [TipoNotificacion.POSTULACION_ACEPTADA]: () => "Aceptaron tu postulación en Código a Voluntad",
+  [TipoNotificacion.POSTULACION_RECHAZADA]: () => "Novedades sobre tu postulación en Código a Voluntad",
+};
+
 export class NotificacionService {
   constructor(
     notificacionRepository = new NotificacionRepository(),
     colectivoRepository = new ColectivoRepository(),
     colaboradorRepository = new ColaboradorRepository(),
     notificadorExterno = new NotificadorExterno(),
+    config = process.env,
   ) {
     this.notificacionRepository = notificacionRepository;
     this.colectivoRepository = colectivoRepository;
     this.colaboradorRepository = colaboradorRepository;
     this.notificadorExterno = notificadorExterno;
+    this.config = config;
   }
 
   toDTO(notificacion, nombres = {}) {
@@ -88,11 +99,56 @@ export class NotificacionService {
     );
   }
 
+  // Pie común: enlace para leer y responder en la plataforma (si se conoce la dirección pública)
+  // y por qué le llega el mail.
+  pieDeMensaje() {
+    const enlace = this.config.FRONTEND_URL
+      ? `\n\nLeelo en la plataforma: ${this.config.FRONTEND_URL.replace(/\/$/, "")}/notificaciones`
+      : "";
+    return `${enlace}\n\nRecibís este mail porque aceptaste que te contacten. Podés dejar de recibirlos desde tu perfil.`;
+  }
+
   construirMensaje(colectivo, contenido) {
     return {
       asunto: `Nuevo mensaje de ${colectivo.nombre} en Código a Voluntad`,
-      texto: `${colectivo.nombre} te escribió en Código a Voluntad:\n\n${contenido}`,
+      texto: `${colectivo.nombre} te escribió en Código a Voluntad:\n\n${contenido}${this.pieDeMensaje()}`,
     };
+  }
+
+  construirMensajeEvento(tipo, colectivo, contenido) {
+    return {
+      asunto: ASUNTOS_EVENTOS[tipo](colectivo),
+      texto: `${contenido}${this.pieDeMensaje()}`,
+    };
+  }
+
+  // Manda el mensaje por cada medio de contacto. Nunca lanza: cada medio que falla queda FALLIDO.
+  async enviarPorMediosExternos(colaboradora, mensaje) {
+    return Promise.all(
+      (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
+        try {
+          const resultado = await this.notificadorExterno.enviar(medio, mensaje);
+          const detalle =
+            resultado.estado === EstadoEnvio.FALLIDO
+              ? "No se pudo completar el envío por este medio."
+              : resultado.detalle;
+          return {
+            tipoDeContacto: medio.tipoDeContacto,
+            estado: resultado.estado,
+            ...(detalle && { detalle }),
+          };
+        } catch (error) {
+          console.error(
+            `[notificaciones] Falló el envío por ${medio.tipoDeContacto} (${error.name}).`,
+          );
+          return {
+            tipoDeContacto: medio.tipoDeContacto,
+            estado: EstadoEnvio.FALLIDO,
+            detalle: "No se pudo completar el envío por este medio.",
+          };
+        }
+      }),
+    );
   }
 
   async crear(datosNotificacion, usuario) {
@@ -140,31 +196,7 @@ export class NotificacionService {
     notificacion.id = guardadaInicial.id ?? guardadaInicial._id;
 
     const mensaje = this.construirMensaje(colectivo, notificacion.contenido);
-    const envios = await Promise.all(
-      (colaboradora.mediosDeContacto ?? []).map(async (medio) => {
-        try {
-          const resultado = await this.notificadorExterno.enviar(medio, mensaje);
-          const detalle =
-            resultado.estado === EstadoEnvio.FALLIDO
-              ? "No se pudo completar el envío por este medio."
-              : resultado.detalle;
-          return {
-            tipoDeContacto: medio.tipoDeContacto,
-            estado: resultado.estado,
-            ...(detalle && { detalle }),
-          };
-        } catch (error) {
-          console.error(
-            `[notificaciones] Falló el envío por ${medio.tipoDeContacto} (${error.name}).`,
-          );
-          return {
-            tipoDeContacto: medio.tipoDeContacto,
-            estado: EstadoEnvio.FALLIDO,
-            detalle: "No se pudo completar el envío por este medio.",
-          };
-        }
-      }),
-    );
+    const envios = await this.enviarPorMediosExternos(colaboradora, mensaje);
     envios.forEach((envio) => notificacion.registrarEnvio(envio));
 
     const guardada =
@@ -180,7 +212,28 @@ export class NotificacionService {
   async crearEventoSistema(datos) {
     const notificacion = new Notificacion(datos);
     const guardada = await this.notificacionRepository.save(notificacion);
-    return this.toDTO(guardada);
+    const conEnvios = await this.replicarEvento(guardada);
+    return this.toDTO(conEnvios ?? guardada);
+  }
+
+  // Replica por mail (y los demás medios) los avisos dirigidos a la colaboradora, solo si aceptó
+  // que la contacten. Un problema acá nunca hace fallar el evento: ya quedó guardado en la app.
+  async replicarEvento(guardada) {
+    if (!ASUNTOS_EVENTOS[guardada.tipo] || !guardada.idColaborador) return null;
+    try {
+      const colaboradora = await this.colaboradorRepository.buscarPorId(guardada.idColaborador);
+      if (!colaboradora?.aceptaMensajeria || !(colaboradora.mediosDeContacto ?? []).length) return null;
+
+      const colectivo = guardada.idColectivo
+        ? await this.colectivoRepository.buscarPorId(guardada.idColectivo)
+        : null;
+      const mensaje = this.construirMensajeEvento(guardada.tipo, colectivo, guardada.contenido);
+      const envios = await this.enviarPorMediosExternos(colaboradora, mensaje);
+      return await this.notificacionRepository.registrarEnvios(guardada._id ?? guardada.id, envios);
+    } catch (error) {
+      console.error(`[notificaciones] No se pudo replicar el aviso ${guardada.tipo} (${error.name}).`);
+      return null;
+    }
   }
 
   existeNotificacionDeRechazo(idPostulacion, idColaborador) {
@@ -231,6 +284,7 @@ export class NotificacionService {
                   TipoNotificacion.MENSAJE,
                   TipoNotificacion.INVITACION_POSTULACION,
                   TipoNotificacion.POSTULACION_RECIBIDA,
+                  TipoNotificacion.INVITACION_PROYECTO,
                 ],
               },
             },
@@ -317,7 +371,6 @@ export class NotificacionService {
       (usuario.rol === Rol.COLECTIVO && [
         TipoNotificacion.POSTULACION_ACEPTADA,
         TipoNotificacion.POSTULACION_RECHAZADA,
-        TipoNotificacion.INVITACION_PROYECTO,
       ].includes(notificacion.tipo))
     ) {
       throw new NotFoundError(

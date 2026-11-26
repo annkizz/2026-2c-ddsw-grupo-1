@@ -119,8 +119,6 @@ export class MatchingService {
         const proyectos = await this.calcularProyectosParaColaboradora(
           colaboradora,
           [],
-          null,
-          { incluirCerrados: true },
         );
         cache = await this.matchingCacheRepository.guardar(
           idColaborador,
@@ -174,8 +172,6 @@ export class MatchingService {
     const proyectos = await this.calcularProyectosParaColaboradora(
       colaboradora,
       [],
-      null,
-      { incluirCerrados: true },
     );
     await this.matchingCacheRepository.guardar(idColaborador, proyectos);
   }
@@ -183,14 +179,14 @@ export class MatchingService {
   async recalcularTodas() {
     if (!this.matchingCacheRepository) return;
     const colaboradoras = await this.colaboradorRepository.obtenerTodos();
-    const proyectos =
-      await this.proyectoRepository.obtenerActivosParaMatching([]);
-    const perfiles = proyectos.length
+    const abiertos =
+      await this.proyectoRepository.obtenerAbiertosParaMatching([]);
+    const perfiles = abiertos.length
       ? await this.perfilRepository.obtenerPorProyectos(
-          proyectos.map((proyecto) => proyecto._id),
+          abiertos.map((proyecto) => proyecto._id),
         )
       : [];
-    const datosPrecargados = { proyectos, perfiles };
+    const datosPrecargados = { abiertos, perfiles };
 
     for (const colaboradora of colaboradoras) {
       const proyectos = await this.calcularProyectosParaColaboradora(
@@ -209,21 +205,17 @@ export class MatchingService {
     colaboradora,
     idsExcluidos,
     datosPrecargados = null,
-    { incluirCerrados = false } = {},
   ) {
     if (colaboradora.habilidades.length === 0) return [];
-    // La caché conserva proyectos activos cerrados para poder recomendarlos al reabrirse.
-    const proyectos =
-      datosPrecargados?.proyectos ??
-      (incluirCerrados
-        ? await this.proyectoRepository.obtenerActivosParaMatching(idsExcluidos)
-        : await this.proyectoRepository.obtenerAbiertosParaMatching(idsExcluidos));
-    if (proyectos.length === 0) return [];
+    const abiertos =
+      datosPrecargados?.abiertos ??
+      (await this.proyectoRepository.obtenerAbiertosParaMatching(idsExcluidos));
+    if (abiertos.length === 0) return [];
 
     const perfiles =
       datosPrecargados?.perfiles ??
       (await this.perfilRepository.obtenerPorProyectos(
-        proyectos.map((p) => p._id),
+        abiertos.map((p) => p._id),
       ));
     const evaluar = crearEvaluadorCoincidencia(colaboradora.habilidades);
     const perfilesPorProyecto = new Map();
@@ -235,7 +227,7 @@ export class MatchingService {
     }
 
     const resultados = [];
-    for (const proyecto of proyectos) {
+    for (const proyecto of abiertos) {
       const perfilesDelProyecto =
         perfilesPorProyecto.get(String(proyecto._id)) ?? [];
       const perfilesCompatibles = [];

@@ -1,5 +1,4 @@
 import { HabilidadModel } from "../schemas/habilidadSchema.js";
-import { BadRequestError, ConflictError } from "../errors/AppError.js";
 
 export class HabilidadRepository {
   constructor(model = HabilidadModel) {
@@ -17,22 +16,6 @@ export class HabilidadRepository {
 
   encontrarPorCodigos(codigos) {
     return this.model.find({ codigo: { $in: codigos } }).exec();
-  }
-
-  async crear(habilidad) {
-    const titulo = String(habilidad.titulo).trim();
-    const codigo = normalizarHabilidad(titulo);
-    if (!codigo) {
-      throw new BadRequestError("El título debe contener letras o números", "HABILIDAD_TITULO_INVALIDO");
-    }
-    try {
-      return await this.model.create({ titulo, codigo, descripcion: habilidad.descripcion ?? "" });
-    } catch (error) {
-      if (error.code === 11000) {
-        throw new ConflictError("La habilidad ya existe", "HABILIDAD_YA_EXISTE");
-      }
-      throw error;
-    }
   }
 
   save(unaHabilidad) {

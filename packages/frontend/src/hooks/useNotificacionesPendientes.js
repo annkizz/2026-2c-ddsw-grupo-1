@@ -45,16 +45,11 @@ export const useNotificacionesPendientes = () => {
     try {
       const token = await getAccessToken();
       const resultado = await obtenerNotificaciones(token, { pag: 1, limite: 1 });
-      if (Number.isFinite(resultado?.total)) {
-        setTotal(resultado.total);
-        if (usuarioId && leerVistas(usuarioId) > resultado.total) {
-          marcarVistas(usuarioId, resultado.total);
-        }
-      }
+      if (Number.isFinite(resultado?.total)) setTotal(resultado.total);
     } catch {
       // El contador es informativo: si falla, no se muestra nada.
     }
-  }, [habilitado, getAccessToken, usuarioId]);
+  }, [habilitado, getAccessToken]);
 
   useEffect(() => {
     if (usuarioId) setVistas(leerVistas(usuarioId));

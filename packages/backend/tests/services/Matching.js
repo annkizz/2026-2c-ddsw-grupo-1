@@ -87,7 +87,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     };
     const matchingCacheRepository = { guardar: jest.fn() };
     const proyectoRepository = {
-      obtenerActivosParaMatching: jest.fn().mockResolvedValue([]),
+      obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([]),
     };
     const colaboradorRepository = {
       obtenerTodos: jest.fn().mockResolvedValue(colaboradoras),
@@ -102,7 +102,7 @@ describe("MatchingService con al menos una habilidad requerida", () => {
 
     await service.recalcularTodas();
 
-    expect(proyectoRepository.obtenerActivosParaMatching).toHaveBeenCalledTimes(
+    expect(proyectoRepository.obtenerAbiertosParaMatching).toHaveBeenCalledTimes(
       1,
     );
     expect(perfilRepository.obtenerPorProyectos).not.toHaveBeenCalled();
@@ -147,7 +147,6 @@ describe("MatchingService con al menos una habilidad requerida", () => {
     };
     const proyectoRepository = {
       obtenerAbiertosParaMatching: jest.fn().mockResolvedValue([proyecto]),
-      obtenerActivosParaMatching: jest.fn().mockResolvedValue([proyecto]),
     };
     const perfilRepository = {
       obtenerPorProyectos: jest.fn().mockResolvedValue([perfil]),
