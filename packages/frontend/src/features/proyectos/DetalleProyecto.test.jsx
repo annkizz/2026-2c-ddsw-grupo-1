@@ -192,13 +192,17 @@ describe('DetalleProyecto - postulaciones', () => {
     });
     obtenerPostulaciones.mockResolvedValue([{
       id: 'post-1', idPerfil: 'perfil-1', estado: 'PENDIENTE',
-      perfilPublico: { nombreFantasia: 'Ada', habilidades: ['React'], presentacion: 'Desarrolladora' },
+      perfilPublico: { nombreFantasia: 'Ada', habilidades: ['React'], presentacion: '- Desarrolladora **front** y *diseño*' },
     }]);
     render(<DetalleProyecto />);
     await irAPestana('Postulaciones');
     expect((await screen.findByText('Perfil público:')).parentElement).toHaveTextContent('Ada');
     expect(screen.getByText('Habilidades:').parentElement).toHaveTextContent('React');
-    expect(screen.getByText('Desarrolladora')).toBeInTheDocument();
+    // La presentación se muestra con su formato Markdown, no con los símbolos.
+    expect(screen.getByText('front').tagName).toBe('STRONG');
+    expect(screen.getByText('diseño').tagName).toBe('EM');
+    expect(screen.getByText(/Desarrolladora/).closest('li')).toBeInTheDocument();
+    expect(screen.queryByText(/\*\*front\*\*/)).not.toBeInTheDocument();
   });
 
   it('envía una postulación con la preferencia de anonimato elegida', async () => {
