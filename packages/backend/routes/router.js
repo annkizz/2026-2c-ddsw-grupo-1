@@ -22,6 +22,8 @@ import { PerfilService } from "../services/PerfilService.js";
 import { MatchingController } from "../controllers/MatchingController.js";
 import { MatchingService } from "../services/MatchingService.js";
 import { MatchingCacheRepository } from "../repositories/MatchingCacheRepository.js";
+import { CandidatasPerfilRepository } from "../repositories/CandidatasPerfilRepository.js";
+import { CambioMatchingRepository } from "../repositories/CambioMatchingRepository.js";
 import { crearMatchingRouter } from "./matchingRouter.js";
 import { EtiquetaRepository } from "../repositories/EtiquetaRepository.js";
 import { EtiquetaController } from "../controllers/EtiquetaController.js";
@@ -91,6 +93,8 @@ const matchingService = new MatchingService(
   perfilRepository,
   colaboracionRepository,
   new MatchingCacheRepository(),
+  new CandidatasPerfilRepository(),
+  new CambioMatchingRepository(),
 );
 const usuarioService = new UsuarioService(
   usuarioRepository,

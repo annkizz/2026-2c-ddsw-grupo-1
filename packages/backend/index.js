@@ -7,8 +7,7 @@ import swaggerSpec from "./swagger.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import { MongoDBClient } from "./config/database.js";
-import { iniciarCierreAutomatico } from "./jobs/CierreAutomatico.js";
-import { iniciarRecalculoMatching } from "./jobs/RecalcularMatching.js";
+import { crearTareasProgramadas } from "./jobs/tareasProgramadas.js";
 import { matchingService, proyectoService } from "./routes/router.js";
 
 await MongoDBClient.connect();
@@ -40,6 +39,5 @@ const PORT = process.env.SERVER_PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Backend escuchando en puerto ${PORT}`);
-  iniciarCierreAutomatico(proyectoService);
-  iniciarRecalculoMatching(matchingService);
+  crearTareasProgramadas({ proyectoService, matchingService }).iniciar();
 });

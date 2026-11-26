@@ -75,8 +75,9 @@ export class PerfilService {
       idProyecto,
       String(guardado.id),
     );
+    // No se recalcula en el momento: se anota y lo procesa la tarea programada en lote.
     if (this.matchingService) {
-      await this.matchingService.recalcularTodas();
+      await this.matchingService.registrarCambioPerfil(String(guardado.id), idProyecto);
     }
     return this.toDTO(guardado);
   }
@@ -119,7 +120,7 @@ export class PerfilService {
       throw new NotFoundError("perfil no encontrado", "PERFIL_NO_ENCONTRADO");
     }
     if (this.matchingService) {
-      await this.matchingService.recalcularTodas();
+      await this.matchingService.registrarCambioPerfil(id, idProyecto);
     }
     return this.toDTO(actualizado);
   }
@@ -130,7 +131,7 @@ export class PerfilService {
     await this.perfilRepository.eliminar(id);
     await this.proyectoRepository.quitarPerfil(idProyecto, id);
     if (this.matchingService) {
-      await this.matchingService.recalcularTodas();
+      await this.matchingService.registrarCambioPerfil(id, idProyecto);
     }
   }
 

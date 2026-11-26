@@ -9,6 +9,10 @@ export class MatchingCacheRepository {
     return this.model.findOne({ idColaborador }).lean().exec();
   }
 
+  obtenerTodos() {
+    return this.model.find().lean().exec();
+  }
+
   guardar(idColaborador, proyectos) {
     return this.model
       .findOneAndUpdate(

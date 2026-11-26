@@ -103,6 +103,15 @@ export class ProyectoRepository {
       .exec();
   }
 
+  // Solo los proyectos indicados que sigan activos (para recalcular el matching de esos y nada más).
+  obtenerAbiertosPorIds(ids) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.proyectoModel
+      .find({ estado: Estado.ACTIVO, _id: { $in: ids } })
+      .select("_id titulo descripcion")
+      .exec();
+  }
+
   async buscarPorId(id) {
     if (!mongoose.isValidObjectId(id)) return null;
     return await this.proyectoModel.findById(id).exec();
