@@ -18,6 +18,7 @@ import { EventoWebhook } from "../domain/EventoWebhook.js";
 import { despachadorNulo } from "./webhooks/DespachadorWebhooks.js";
 import { NotificacionService } from "./NotificacionService.js";
 import { TipoNotificacion } from "../domain/TipoNotificacion.js";
+import { NotificacionRepository } from "../repositories/NotificacionRepository.js";
 
 export class PostulacionService {
   constructor(
@@ -28,6 +29,7 @@ export class PostulacionService {
     postulacionRepository = new PostulacionRepository(),
     despachadorWebhooks = despachadorNulo,
     notificacionService = new NotificacionService(),
+    notificacionRepository = new NotificacionRepository(),
   ) {
     this.proyectoRepository = proyectoRepository;
     this.perfilRepository = perfilRepository;
@@ -36,6 +38,7 @@ export class PostulacionService {
     this.postulacionRepository = postulacionRepository;
     this.despachadorWebhooks = despachadorWebhooks;
     this.notificacionService = notificacionService;
+    this.notificacionRepository = notificacionRepository;
   }
 
   async buscarProyectoYPerfil(idProyecto, idPerfil) {
@@ -361,7 +364,7 @@ export class PostulacionService {
     if (![EstadoPostulacion.ACEPTADA, EstadoPostulacion.RECHAZADA].includes(decision)) {
       throw new BadRequestError("La decisión debe ser ACEPTADA o RECHAZADA", "DECISION_INVITACION_INVALIDA");
     }
-    const repo = this.notificacionService.notificacionRepository;
+    const repo = this.notificacionRepository;
     const invitacion = await repo.buscarPorId(idInvitacion);
     if (!invitacion || invitacion.tipo !== TipoNotificacion.INVITACION_PROYECTO ||
         String(invitacion.idColaborador) !== String(actor.id) ||

@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import { useListado } from '../../hooks/useListado';
 import { configurarDestacado } from '../../service/proyectosService';
 import { markdownATextoPlano } from '../../utils/markdown';
-import { t } from '../../i18n/t';
+import { obtenerLocale, t } from '../../i18n/t';
 import './ProyectosDestacados.css';
 
 const SIETE_DIAS = 7 * 24 * 60 * 60 * 1000;
@@ -25,7 +25,7 @@ function fechaInicial(proyecto) {
 }
 
 function mostrarFecha(fecha) {
-  return new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(fecha));
+  return new Intl.DateTimeFormat(obtenerLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(fecha));
 }
 
 export default function ProyectosDestacados() {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { GlobalStyles, ThemeProvider } from '@mui/material';
 import { LogtoProvider } from '@logto/react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -33,6 +33,7 @@ import { NotificadorProvider } from './components/Notificador/Notificador.jsx';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx';
 import PaginaNoEncontrada from './features/errores/PaginaNoEncontrada.jsx';
 import PropTypes from 'prop-types';
+import { t, useIdioma } from './i18n/t';
 
 const logtoConfig = {
   endpoint: process.env.REACT_APP_LOGTO_ENDPOINT,
@@ -43,7 +44,8 @@ const logtoConfig = {
 
 // El tema MUI y las variables CSS salen de los mismos tokens (designTokens.js).
 const TemaApp = ({ children }) => {
-  const theme = useMemo(() => crearTema(tokensBase), []);
+  const idioma = useIdioma();
+  const theme = useMemo(() => crearTema(tokensBase, (clave) => t(clave, {}, idioma)), [idioma]);
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles styles={{ ':root': tokensBase }} />
@@ -62,6 +64,11 @@ TemaApp.propTypes = { children: PropTypes.node };
 LimiteDeErrores.propTypes = { children: PropTypes.node };
 
 function App() {
+  const idioma = useIdioma();
+  useEffect(() => {
+    document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'es';
+  }, [idioma]);
+
   return (
     <LogtoProvider config={logtoConfig}>
       <AuthProvider>

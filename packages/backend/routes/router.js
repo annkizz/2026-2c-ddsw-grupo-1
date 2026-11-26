@@ -153,6 +153,7 @@ const postulacionService = new PostulacionService(
   postulacionRepository,
   despachadorWebhooks,
   notificacionService,
+  notificacionRepository,
 );
 const postulacionController = new PostulacionController(
   postulacionService,

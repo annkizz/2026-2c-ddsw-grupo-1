@@ -120,6 +120,8 @@
     "contactarNombre": "Contactar a {nombre}",
     "invitacionPlataforma": "La invitación quedó enviada dentro de la plataforma.",
     "invitacionDescripcion": "La persona recibirá una invitación a colaborar en este perfil y podrá aceptarla o rechazarla.",
+    "proyectoInvitacion": "Proyecto: {proyecto}",
+    "perfilInvitacion": "Perfil: {perfil}",
     "mensajeOpcional": "Mensaje opcional",
     "enviando": "Enviando…",
     "enviarInvitacion": "Enviar invitación",
@@ -628,6 +630,10 @@
     "descripcion404": "Puede que el enlace esté mal escrito o que la página ya no exista."
   },
   "navegacion": {
+    "idioma": "Idioma",
+    "rolColectivo": "Colectivo",
+    "rolColaborador": "Colaborador",
+    "rolAdministrador": "Administración",
     "principal": "Navegación principal",
     "migas": "Ruta de navegación",
     "inicio": "Inicio",

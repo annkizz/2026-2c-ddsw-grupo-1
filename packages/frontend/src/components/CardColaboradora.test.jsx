@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { invitarAColaborar } from "../service/proyectosService";
@@ -29,6 +29,8 @@ describe("CardColaboradora - mensajería interna", () => {
         <CardColaboradora
           idProyecto="proyecto-1"
           idPerfil="perfil-1"
+          nombreProyecto="Huerta"
+          descripcionPerfil="Diseñadora"
           colaboradora={{
             id: "colaboradora-1",
             nombreFantasia: "Ada",
@@ -39,6 +41,8 @@ describe("CardColaboradora - mensajería interna", () => {
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Contactar" }));
+    expect(screen.getByText("Proyecto: Huerta")).toBeInTheDocument();
+    expect(screen.getByText("Perfil: Diseñadora")).toBeInTheDocument();
     await userEvent.type(
       screen.getByRole("textbox", { name: "Mensaje opcional" }),
       "Hola, queremos invitarte.",
@@ -105,10 +109,51 @@ describe("CardColaboradora - mensajería interna", () => {
         "",
       );
     });
+
     expect(
       await screen.findByText(
         "La invitación quedó en la bandeja de notificaciones de la persona.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("mantiene el diálogo abierto durante el envío y muestra un error", async () => {
+    let rechazar;
+    invitarAColaborar.mockReturnValue(new Promise((_resolve, reject) => {
+      rechazar = reject;
+    }));
+    render(
+      <ul><CardColaboradora idProyecto="p" idPerfil="f" colaboradora={{
+        id: "c", nombreFantasia: "Ada", aceptaMensajeria: true,
+      }} /></ul>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Contactar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Enviar invitación" }));
+    await waitFor(() => expect(invitarAColaborar).toHaveBeenCalled());
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    await act(async () => rechazar(new Error("falló")));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("asocia cada tarjeta de la misma persona con sus propios elementos", () => {
+    const colaboradora = { id: "c", nombreFantasia: "Ada", aceptaMensajeria: true };
+    render(<ul>
+      <CardColaboradora colaboradora={colaboradora} idProyecto="p" idPerfil="f1" />
+      <CardColaboradora colaboradora={colaboradora} idProyecto="p" idPerfil="f2" />
+    </ul>);
+    const tarjetas = screen.getAllByRole("listitem", { name: "Ada" });
+    const titulos = tarjetas.map((tarjeta) => within(tarjeta).getByRole("heading", { name: "Ada" }).id);
+    const descripciones = tarjetas.map((tarjeta) =>
+      within(tarjeta).getByRole("button", { name: "Contactar" }).getAttribute("aria-describedby"),
+    );
+    expect(new Set(titulos).size).toBe(2);
+    expect(new Set(descripciones).size).toBe(2);
+    tarjetas.forEach((tarjeta, indice) => {
+      expect(tarjeta).toHaveAttribute("aria-labelledby", titulos[indice]);
+      expect(tarjeta.querySelector(`[id="${descripciones[indice]}"]`)).not.toBeNull();
+    });
   });
 });

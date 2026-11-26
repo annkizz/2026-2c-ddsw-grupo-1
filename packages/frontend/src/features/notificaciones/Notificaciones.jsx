@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import EncabezadoPagina from '../../components/EncabezadoPagina/EncabezadoPagina.jsx';
 import { EsqueletoLista } from '../../components/Esqueletos/Esqueletos.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { t } from '../../i18n/t';
+import { obtenerLocale, t } from '../../i18n/t';
 import { obtenerNotificaciones } from '../../service/notificacionesService';
 import { resolverInvitacion } from '../../service/proyectosService';
 import { mensajeDeError } from '../../utils/mensajeDeError';
@@ -50,7 +50,7 @@ const fechaVisible = (fecha) => {
   if (Number.isNaN(date.getTime())) return null;
   return {
     iso: date.toISOString(),
-    texto: date.toLocaleString('es-AR', { dateStyle: 'long', timeStyle: 'short' }),
+    texto: date.toLocaleString(obtenerLocale(), { dateStyle: 'long', timeStyle: 'short' }),
   };
 };
 

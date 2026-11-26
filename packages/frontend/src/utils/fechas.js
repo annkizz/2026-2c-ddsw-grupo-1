@@ -1,3 +1,5 @@
+import { obtenerLocale } from '../i18n/t';
+
 const FECHA_RE = /^(\d{4})-(\d{2})-(\d{2})/;
 
 const fechaLocal = (valor) => {
@@ -38,7 +40,7 @@ const fechaComoInput = (fecha) => {
 export const formatearFecha = (valor) => {
   const fecha = fechaLocal(valor);
   if (!fecha) return null;
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(obtenerLocale(), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
